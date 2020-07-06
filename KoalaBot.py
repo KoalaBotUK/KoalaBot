@@ -39,7 +39,7 @@ __status__ = "Development"
 # "Prototype", "Development", or "Production"
 
 # Constants
-COGS_DIR = ".\cogs"
+COGS_DIR = "cogs"
 
 started = False
 
