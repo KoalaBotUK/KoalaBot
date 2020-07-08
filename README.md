@@ -1,2 +1,3 @@
 # KoalaBot
+[![Discord Server](https://img.shields.io/discord/523301176309972993.svg?label=Support_Discord)](https://discord.gg/5etEjVd)
 Discord bot in production...
