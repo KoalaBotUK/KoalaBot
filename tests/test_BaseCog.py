@@ -18,31 +18,26 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Built-in/Generic Imports
 import os
-import asyncio
-import sys
-from unittest import TestCase
-import threading
-import multiprocessing
-
 
 # Libs
 import discord.ext.test as dpytest
+import mock
 import pytest
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot
 from dotenv import load_dotenv
 
 # Own modules
 import KoalaBot
-from cogs import BaseCog, Greetings
-from tests.utils.test_utils import assert_activity, run_bot, run_test_bot
+from cogs import BaseCog
+from tests.utils.test_utils import assert_activity
 
 # Constants
 load_dotenv()
 BOT_NAME = os.environ['DISCORD_NAME']
 BOT_TEST_TOKEN = os.environ['DISCORD_TEST_TOKEN']
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
+DPYTEST_USER = "TestUser#0001"
 
 # Variables
 
@@ -71,29 +66,91 @@ async def test_change_activity():
     dpytest.verify_message("I am now watching you")
 
 
-def test_on_member_join():
-    dpytest.member_join(user="Testies#0002")
-
-    assert False
-
-
-def test_on_member_remove():
-    assert False
+@pytest.mark.asyncio
+async def test_invalid_change_activity():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX+"change_activity oof you")
+    dpytest.verify_message("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
 
 
+def test_playing_new_discord_activity():
+    test_name = "Half Life 3"
+    assert_activity(BaseCog.new_discord_activity("playing", test_name),
+                    type=discord.ActivityType.playing, name=test_name+KoalaBot.KOALA_PLUG)
+
+
+def test_watching_new_discord_activity():
+    test_name = "you"
+    assert_activity(BaseCog.new_discord_activity("watching", test_name),
+                    type=discord.ActivityType.watching, name=test_name+KoalaBot.KOALA_PLUG)
+
+
+def test_listening_new_discord_activity():
+    test_name = "/Darude Sandstorm"
+    assert_activity(BaseCog.new_discord_activity("listening", test_name),
+                    type=discord.ActivityType.listening, name=test_name+KoalaBot.KOALA_PLUG)
+
+
+def test_streaming_new_discord_activity():
+    test_name = "__your room__"
+    assert_activity(BaseCog.new_discord_activity("streaming", test_name),
+                    type=discord.ActivityType.streaming, name=test_name+KoalaBot.KOALA_PLUG,
+                    url=KoalaBot.STREAMING_URL)
+
+
+def test_custom_new_discord_activity():
+    test_name = "1 4M K04L4"
+    assert_activity(BaseCog.new_discord_activity("custom", test_name),
+                    type=discord.ActivityType.custom, name=test_name+KoalaBot.KOALA_PLUG)
+
+
+def test_invalid_new_discord_activity():
+    test_name = "INCORRECT"
+    with pytest.raises(SyntaxError, match="incorrect is not an activity"):
+        BaseCog.new_discord_activity("incorrect", test_name)
+
+
+@mock.patch("discord.client.Client.latency", mock.MagicMock(return_value=0.004))
 @pytest.mark.asyncio
 async def test_ping():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "ping")
-    dpytest.verify_message("S")
+    dpytest.verify_message("Pong! 4ms")
 
 
-def test_clear():
-    assert False
+@pytest.mark.asyncio
+async def test_clear():
+    # dpytest.add_role(discord.role.Permissions.administrator)
+   # with mock.patch.object(discord.TextChannel, 'purge') as mock1:
+    #    await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear")
+    #mock1.assert_called_with(2)
+    with pytest.raises(discord.ext.commands.errors.MissingPermissions,
+                       match=r".* missing Administrator permission.*"):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear")
 
 
-def test_load_cog():
-    assert False
+
+@pytest.mark.asyncio
+async def test_load_cog():
+    with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog BaseCog")
+    mock1.assert_called_with('cogs.BaseCog')
 
 
-def test_unload_cog():
-    assert False
+@pytest.mark.asyncio
+async def test_invalid_load_cog():
+    with pytest.raises(discord.ext.commands.errors.CommandInvokeError,
+                       match=r".* Extension 'cogs.FakeCog' could not be loaded."):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog FakeCog")
+
+
+@pytest.mark.asyncio
+async def test_unload_cog():
+    with mock.patch.object(discord.ext.commands.bot.Bot, 'unload_extension') as mock1:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog BaseCog")
+    mock1.assert_called_with('cogs.BaseCog')
+
+
+@pytest.mark.asyncio
+async def test_setup():
+    with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
+        BaseCog.setup(KoalaBot.client)
+    mock1.assert_called()

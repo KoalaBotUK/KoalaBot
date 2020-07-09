@@ -56,29 +56,11 @@ class BaseCog(commands.Cog):
         :param name: The name of the activity
         :return:
         """
-        await self.bot.change_presence(activity=new_discord_activity(activity, name))
         if str.lower(activity) in ["playing", "watching", "listening", "streaming"]:
+            await self.bot.change_presence(activity=new_discord_activity(activity, name))
             await ctx.send(f"I am now {activity} {name}")
         else:
             await ctx.send("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
-
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        """
-        When a member joins console will receive a notification
-        :param member: Member that has joined
-        :return:
-        """
-        print(f"{member} has joined the server")
-
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        """
-        When a member is removed (kicked or left) console receives a notification
-        :param member: Member that has left
-        :return:
-        """
-        print(f"{member} has left the server")
 
     @commands.command()
     async def ping(self, ctx):
@@ -87,7 +69,7 @@ class BaseCog(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
-        await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
+        await ctx.send(f"Pong! {round(self.bot.latency()*1000)}ms")
 
     @commands.command()
     @commands.has_permissions(administrator=True)
@@ -101,7 +83,7 @@ class BaseCog(commands.Cog):
         await ctx.channel.purge(limit=amount)
 
     @commands.command()
-    @commands.is_owner()
+    @commands.check(KoalaBot.is_owner)
     async def load_cog(self, ctx, extension):
         """
         Loads a cog from the cogs folder
@@ -112,7 +94,7 @@ class BaseCog(commands.Cog):
         self.bot.load_extension(f'cogs.{extension}')
 
     @commands.command()
-    @commands.is_owner()
+    @commands.check(KoalaBot.is_owner)
     async def unload_cog(self, ctx, extension):
         """
         Unloads a running cog
