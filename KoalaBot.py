@@ -2,6 +2,7 @@
 
 """
 Koala Bot Base Code
+Run this to start the Bot
 
 Commented using reStructuredText (reST)
 """
@@ -18,51 +19,53 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Built-in/Generic Imports
 import os
-import sys
-import configparser
-import shutil
-import time
-import codecs
 
 # Libs
-import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from dotenv import load_dotenv
-
-load_dotenv()
 
 # Own modules
 
-
-
 # Constants
+load_dotenv()
+BOT_TOKEN = os.environ['DISCORD_TOKEN']
+BOT_OWNER = os.environ['BOT_OWNER']
 COMMAND_PREFIX = "k!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
-BOT_TOKEN = os.environ['DISCORD_TOKEN']
-BOT_OWNER = eval(os.environ['BOT_OWNER'])
 TEST_USER = "TestUser#0001"  # Test user for dpytest
+
 # Variables
 started = False
-
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
 
 
-def is_owner(ctx: discord.ext.commands.context):
-    return ctx.author.id == BOT_OWNER \
-           or str(ctx.author) == TEST_USER  # For automated testing
+def is_owner(ctx):
+    """
+    A command used to check if the user of a command is the owner, or the testing bot
+    e.g. @commands.check(KoalaBot.is_owner)
+    :param ctx: The context of the message
+    :return: True if owner or test, False otherwise
+    """
+    return ctx.author.id == BOT_OWNER\
+        or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def is_admin(ctx):
+    """
+    A command used to check if the user of a command is the admin, or the testing bot
+    e.g. @commands.check(KoalaBot.is_admin)
+    :param ctx: The context of the message
+    :return: True if admin or test, False otherwise
+    """
     return ctx.author.guild_permissions.administrator\
-           or str(ctx.author) == TEST_USER  # For automated testing
+        or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def load_all_cogs():
     """
-    Loads all cogs in COGS_DIR
-    :return:
+    Loads all cogs in COGS_DIR into the client
     """
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py'):

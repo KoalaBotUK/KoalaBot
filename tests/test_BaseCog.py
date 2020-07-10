@@ -1,25 +1,13 @@
 #!/usr/bin/env python
 
 """
-Koala Bot Base Cog Tests
+Testing KoalaBot BaseCog
 
 Commented using reStructuredText (reST)
-
-TODO: Test with and without permission
 """
-__author__ = "Jack Draper, Kieran Allinson, Viraj Shah"
-__copyright__ = "Copyright (c) 2020 KoalaBot"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah"]
-__license__ = "MIT License"
-__version__ = "0.0.1"
-__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah"
-__email__ = "koalabotuk@gmail.com"
-__status__ = "Development"  # "Prototype", "Development", or "Production"
-
 # Futures
 
 # Built-in/Generic Imports
-import os
 
 # Libs
 import discord.ext.test as dpytest
@@ -27,7 +15,6 @@ import mock
 import pytest
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 # Own modules
 import KoalaBot
@@ -35,16 +22,12 @@ from cogs import BaseCog
 from tests.utils.TestUtils import assert_activity
 
 # Constants
-load_dotenv()
-BOT_NAME = os.environ['DISCORD_NAME']
-BOT_TEST_TOKEN = os.environ['DISCORD_TEST_TOKEN']
-BOT_TOKEN = os.environ['DISCORD_TOKEN']
-DPYTEST_USER = "TestUser#0001"
 
 # Variables
+base_cog = None
 
 
-def setup_function(function):
+def setup_function():
     """ setup any state specific to the execution of the given module."""
     global base_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)

@@ -1,39 +1,21 @@
 #!/usr/bin/env python
 
 """
-Koala Bot Base Code
+Testing utilities for KoalaBot tests
 
 Commented using reStructuredText (reST)
 """
-__author__ = "Jack Draper, Kieran Allinson, Viraj Shah"
-__copyright__ = "Copyright (c) 2020 KoalaBot"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah"]
-__license__ = "MIT License"
-__version__ = "0.0.1"
-__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah"
-__email__ = "koalabotuk@gmail.com"
-__status__ = "Development"  # "Prototype", "Development", or "Production"
-
 # Futures
 
 # Built-in/Generic Imports
-import os
 
 # Libs
 import discord
-from discord.ext.test import factories as dpyfact
-from dotenv import load_dotenv
-
+from discord.ext.test import factories as dpyfactory
 
 # Own modules
-import KoalaBot
-
 
 # Constants
-load_dotenv()
-BOT_NAME = os.environ['DISCORD_NAME']
-BOT_TEST_TOKEN = os.environ['DISCORD_TEST_TOKEN']
-BOT_TOKEN = os.environ['DISCORD_TOKEN']
 
 # Variables
 
@@ -41,45 +23,71 @@ BOT_TOKEN = os.environ['DISCORD_TOKEN']
 def assert_activity(activity: discord.Activity, application_id=None, name=None, url=None,
                     type=None, state=None, details=None, emoji=None, start=None, end=None,
                     large_image_url=None, small_image_url=None, large_image_text=None, small_image_text=None):
+    """
+    A method that asserts all activity properties of the given activity are as provided
+
+    :param activity: The outcome to be tested against
+    :param application_id: assert the application ID of the activity is the same as this
+    :param name: assert the name of the activity is the same as this
+    :param url: assert the url of the activity is the same as this
+    :param type: assert the type of the activity is the same as this
+    :param state: assert the state of the activity is the same as this
+    :param details: assert the details of the activity is the same as this
+    :param emoji: assert the emoji of the activity is the same as this
+    :param start: assert the start of the activity is the same as this
+    :param end: assert the end of the activity is the same as this
+    :param large_image_url: assert the large_image_url of the activity is the same as this
+    :param small_image_url: assert the small_image_url of the activity is the same as this
+    :param large_image_text: assert the large_image_text of the activity is the same as this
+    :param small_image_text: assert the small_image_text of the activity is the same as this
+    """
     # TODO: Add timestamps, assets, party
     assert activity.application_id == application_id \
-           and activity.name == name \
-           and activity.url == url \
-           and activity.type == type \
-           and activity.state == state \
-           and activity.details == details \
-           and activity.emoji == emoji \
-           and activity.start == start \
-           and activity.end == end \
-           and activity.large_image_url == large_image_url \
-           and activity.small_image_url == small_image_url \
-           and activity.large_image_text == large_image_text \
-           and activity.small_image_text == small_image_text
-
-"""
-def run_bot(koala):
-       koala.client.run(BOT_TOKEN)
-
-
-def run_test_bot(distest, test_collector):
-       distest.run_command_line_bot(BOT_NAME, BOT_TEST_TOKEN, "all", 729700330840915978, True, test_collector, 5)
-"""
+        and activity.name == name \
+        and activity.url == url \
+        and activity.type == type \
+        and activity.state == state \
+        and activity.details == details \
+        and activity.emoji == emoji \
+        and activity.start == start \
+        and activity.end == end \
+        and activity.large_image_url == large_image_url \
+        and activity.small_image_url == small_image_url \
+        and activity.large_image_text == large_image_text \
+        and activity.small_image_text == small_image_text
 
 
 class FakeAuthor:
-    def __init__(self, name="FakeUser#0001", id=-1, allPermissions=False):
+    """
+    A class that acts as a discord.Member to replace the ctx.author on a context (ctx)
+    """
+    def __init__(self, name="FakeUser#0001", id=-1, all_permissions=False):
+        """
+        Initialises class variables and creates a random id if not specified
+        :param name: the name of the user including identifier (e.g. KoalaBotUK#1075)
+        :param id: The discord ID of the user
+        :param all_permissions: If the user should be given all permissions (admin etc) or none
+        """
         self.name = name
         if id == -1:
-            self.id = dpyfact.make_id()
+            self.id = dpyfactory.make_id()
         else:
             self.id = id
-        self.allPermissions = allPermissions
+        self.allPermissions = all_permissions
 
     def __str__(self):
+        """
+        The string of this class is the name
+        :return: name
+        """
         return self.name
 
     @property
     def guild_permissions(self):
+        """
+        Imitates discord.Member.guild_permissions and redirects according to allPermissions
+        :return: discord permissions (all or none)
+        """
         if self.allPermissions:
             return discord.Permissions.all()
         else:

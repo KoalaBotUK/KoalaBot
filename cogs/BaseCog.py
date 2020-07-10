@@ -1,7 +1,25 @@
-import KoalaBot
+#!/usr/bin/env python
+
+"""
+Koala Bot Base Cog code and additional base cog functions
+
+Commented using reStructuredText (reST)
+"""
+# Futures
+
+# Built-in/Generic Imports
+
+# Libs
 import discord
 from discord.ext import commands
-import pytest_mock
+
+# Own modules
+import KoalaBot
+
+# Constants
+
+# Variables
+
 
 def new_discord_activity(activity, name):
     """
@@ -11,7 +29,7 @@ def new_discord_activity(activity, name):
     koalabot.uk is added to the end of any activity
     :param activity: The new activity of the bot
     :param name: The name of the activity
-    :return:
+    :return: The custom activity created
     """
     name = name + KoalaBot.KOALA_PLUG  # Added to every presence change, do not alter
     lower_activity = str.lower(activity)
@@ -29,8 +47,16 @@ def new_discord_activity(activity, name):
         raise SyntaxError(f"{activity} is not an activity")
     return discord.Activity(type=activity_type, name=name)
 
+
 class BaseCog(commands.Cog):
+    """
+        A discord.py cog with general commands useful to managers of the bot and servers
+    """
     def __init__(self, bot):
+        """
+        Initialises local variables
+        :param bot: The bot client for this cog
+        """
         self.bot = bot
         self._last_member = None
         self.started = False
@@ -39,9 +65,8 @@ class BaseCog(commands.Cog):
     async def on_ready(self):
         """
         Ran after all cogs have been started and bot is ready
-        :return:
         """
-        if not self.started:
+        if not self.started:  # Used to prevent changing activity every time the bot connects to discord servers
             await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
             self.started = True
         print("Bot is ready.")
@@ -54,7 +79,6 @@ class BaseCog(commands.Cog):
         :param ctx: Context of the command
         :param activity: The new activity of the bot
         :param name: The name of the activity
-        :return:
         """
         if str.lower(activity) in ["playing", "watching", "listening", "streaming"]:
             await self.bot.change_presence(activity=new_discord_activity(activity, name))
@@ -67,19 +91,16 @@ class BaseCog(commands.Cog):
         """
         Returns the ping of the bot
         :param ctx: Context of the command
-        :return:
         """
         await ctx.send(f"Pong! {round(self.bot.latency()*1000)}ms")
 
     @commands.command()
-    #@commands.has_permissions(administrator=True)
     @commands.check(KoalaBot.is_admin)
     async def clear(self, ctx, amount=2):
         """
         Clears a given number of messages from the given channel
         :param ctx: Context of the command
         :param amount: Amount of lines to delete
-        :return:
         """
         await ctx.channel.purge(limit=amount)
 
@@ -90,9 +111,9 @@ class BaseCog(commands.Cog):
         Loads a cog from the cogs folder
         :param ctx: Context of the command
         :param extension: The name of the cog
-        :return:
         """
         self.bot.load_extension(f'cogs.{extension}')
+        ctx.send(f'{extension} Cog Loaded')
 
     @commands.command()
     @commands.check(KoalaBot.is_owner)
@@ -101,13 +122,14 @@ class BaseCog(commands.Cog):
         Unloads a running cog
         :param ctx: Context of the command
         :param extension: The name of the cog
-        :return:
         """
         self.bot.unload_extension(f'cogs.{extension}')
+        ctx.send(f'{extension} Cog UnLoaded')
 
 
 def setup(bot: KoalaBot) -> None:
-    """Load the Bot cog."""
+    """
+    Load this cog to the KoalaBot.
+    :param bot: the bot client for KoalaBot
+    """
     bot.add_cog(BaseCog(bot))
-
-
