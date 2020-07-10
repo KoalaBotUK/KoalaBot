@@ -1,5 +1,5 @@
 import discord
-from discord.ext import commands#
+from discord.ext import commands
 import KoalaBot
 
 
@@ -9,7 +9,7 @@ class Greetings(commands.Cog):
         self._last_member = None
 
     @commands.command()
-    async def hello(self, ctx, *, member: discord.Member = None):
+    async def hello(self, ctx, *, member: discord.Member = None):  # pragma: no cover
         """Says hello"""
         member = member or ctx.author
         if self._last_member is None or self._last_member.id != member.id:

@@ -72,7 +72,8 @@ class BaseCog(commands.Cog):
         await ctx.send(f"Pong! {round(self.bot.latency()*1000)}ms")
 
     @commands.command()
-    @commands.has_permissions(administrator=True)
+    #@commands.has_permissions(administrator=True)
+    @commands.check(KoalaBot.is_admin)
     async def clear(self, ctx, amount=2):
         """
         Clears a given number of messages from the given channel

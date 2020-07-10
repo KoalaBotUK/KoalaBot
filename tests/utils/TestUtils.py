@@ -17,12 +17,13 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 # Futures
 
 # Built-in/Generic Imports
-from unittest import TestCase
-from dotenv import load_dotenv
 import os
 
 # Libs
 import discord
+from discord.ext.test import factories as dpyfact
+from dotenv import load_dotenv
+
 
 # Own modules
 import KoalaBot
@@ -55,9 +56,31 @@ def assert_activity(activity: discord.Activity, application_id=None, name=None, 
            and activity.large_image_text == large_image_text \
            and activity.small_image_text == small_image_text
 
+"""
 def run_bot(koala):
        koala.client.run(BOT_TOKEN)
 
+
 def run_test_bot(distest, test_collector):
        distest.run_command_line_bot(BOT_NAME, BOT_TEST_TOKEN, "all", 729700330840915978, True, test_collector, 5)
+"""
 
+
+class FakeAuthor:
+    def __init__(self, name="FakeUser#0001", id=-1, allPermissions=False):
+        self.name = name
+        if id == -1:
+            self.id = dpyfact.make_id()
+        else:
+            self.id = id
+        self.allPermissions = allPermissions
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def guild_permissions(self):
+        if self.allPermissions:
+            return discord.Permissions.all()
+        else:
+            return discord.Permissions.none()

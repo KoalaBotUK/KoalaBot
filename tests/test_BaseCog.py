@@ -4,6 +4,8 @@
 Koala Bot Base Cog Tests
 
 Commented using reStructuredText (reST)
+
+TODO: Test with and without permission
 """
 __author__ = "Jack Draper, Kieran Allinson, Viraj Shah"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
@@ -30,7 +32,7 @@ from dotenv import load_dotenv
 # Own modules
 import KoalaBot
 from cogs import BaseCog
-from tests.utils.test_utils import assert_activity
+from tests.utils.TestUtils import assert_activity
 
 # Constants
 load_dotenv()
@@ -117,15 +119,24 @@ async def test_ping():
 
 
 @pytest.mark.asyncio
-async def test_clear():
-    # dpytest.add_role(discord.role.Permissions.administrator)
-   # with mock.patch.object(discord.TextChannel, 'purge') as mock1:
-    #    await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear")
-    #mock1.assert_called_with(2)
-    with pytest.raises(discord.ext.commands.errors.MissingPermissions,
-                       match=r".* missing Administrator permission.*"):
+async def test_default_clear():
+    with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear")
+    mock1.assert_called_with(limit=2)
 
+
+@pytest.mark.asyncio
+async def test_clear():
+    with mock.patch.object(discord.TextChannel, 'purge') as mock1:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear 4")
+    mock1.assert_called_with(limit=4)
+
+
+@pytest.mark.asyncio
+async def test_invalid_clear():
+    with pytest.raises(discord.ext.commands.errors.BadArgument,
+                       match="Converting to \"int\" failed for parameter \"amount\"."):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear a")
 
 
 @pytest.mark.asyncio
@@ -147,6 +158,14 @@ async def test_unload_cog():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'unload_extension') as mock1:
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog BaseCog")
     mock1.assert_called_with('cogs.BaseCog')
+
+
+@pytest.mark.asyncio
+async def test_invalid_unload_cog():
+    with pytest.raises(discord.ext.commands.errors.CommandInvokeError,
+                       match="Command raised an exception: ExtensionNotLoaded:"
+                             " Extension 'cogs.FakeCog' has not been loaded."):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog FakeCog")
 
 
 @pytest.mark.asyncio

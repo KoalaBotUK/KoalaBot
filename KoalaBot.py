@@ -42,16 +42,21 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = eval(os.environ['BOT_OWNER'])
-
+TEST_USER = "TestUser#0001"  # Test user for dpytest
 # Variables
 started = False
 
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
 
 
-def is_owner(ctx):
+def is_owner(ctx: discord.ext.commands.context):
     return ctx.author.id == BOT_OWNER \
-           or str(ctx.author) == "TestUser#0001"  # For automated testing
+           or str(ctx.author) == TEST_USER  # For automated testing
+
+
+def is_admin(ctx):
+    return ctx.author.guild_permissions.administrator\
+           or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def load_all_cogs():
@@ -61,12 +66,11 @@ def load_all_cogs():
     """
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py'):
-            client.load_extension(f'cogs.{filename[:-3]}')
+            client.load_extension(COGS_DIR.replace("/", ".")+f'.{filename[:-3]}')
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     load_all_cogs()
     # Starts bot using the given BOT_ID
-
     client.run(BOT_TOKEN)
