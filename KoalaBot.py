@@ -21,10 +21,12 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 
 # Libs
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
+from utils.KoalaDBManager import KoalaDBManager as DBManager
 
 # Constants
 load_dotenv()
@@ -35,10 +37,13 @@ STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
+DATABASE_PATH = "Koala.db"
+
 
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
+database_manager = DBManager(DATABASE_PATH)
 
 
 def is_owner(ctx):
@@ -72,8 +77,17 @@ def load_all_cogs():
             client.load_extension(COGS_DIR.replace("/", ".")+f'.{filename[:-3]}')
 
 
+def get_channel_from_id(id):
+    return client.get_channel(id=id)
+
+def get_message_from_id(id):
+    messageable = discord.abc.Messageable
+    return messageable.fetch_message(id=id)
+
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
+    database_manager.create_base_tables()
     load_all_cogs()
+    database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
