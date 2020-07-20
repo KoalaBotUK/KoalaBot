@@ -53,8 +53,7 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
-    return ctx.author.id == BOT_OWNER\
-        or str(ctx.author) == TEST_USER  # For automated testing
+    return ctx.author.id == int(BOT_OWNER) or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def is_admin(ctx):
@@ -64,8 +63,8 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-    return ctx.author.guild_permissions.administrator\
-        or str(ctx.author) == TEST_USER  # For automated testing
+
+    return ctx.author.guild_permissions.administrator or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def load_all_cogs():
