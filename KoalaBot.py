@@ -53,6 +53,7 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
+    print(ctx.author.id, int(BOT_OWNER))
     return ctx.author.id == int(BOT_OWNER) or str(ctx.author) == TEST_USER  # For automated testing
 
 

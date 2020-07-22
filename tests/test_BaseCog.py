@@ -25,11 +25,13 @@ from tests.utils.TestUtils import assert_activity
 
 # Variables
 base_cog = None
+bot = None
 
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global base_cog
+    global bot
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     base_cog = BaseCog.BaseCog(bot)
     bot.add_cog(base_cog)
@@ -94,7 +96,7 @@ def test_invalid_new_discord_activity():
         BaseCog.new_discord_activity("incorrect", test_name)
 
 
-@mock.patch("discord.client.Client.latency", mock.MagicMock(return_value=0.004))
+@mock.patch("builtins.round", mock.MagicMock(return_value=4))
 @pytest.mark.asyncio
 async def test_ping():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "ping")
@@ -137,10 +139,30 @@ async def test_invalid_load_cog():
 
 
 @pytest.mark.asyncio
-async def test_unload_cog():
-    with mock.patch.object(discord.ext.commands.bot.Bot, 'unload_extension') as mock1:
+async def test_unload_base_cog():
+    with mock.patch.object(discord.ext.commands.Context, 'send') as mock1:
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog BaseCog")
-    mock1.assert_called_with('cogs.BaseCog')
+    mock1.assert_called_with("Sorry, you can't unload the base cog")
+
+
+@pytest.mark.asyncio
+async def test_load_valid_cog():
+    base_cog.COGS_DIR = "tests/fake_load_all_cogs"
+    with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog Greetings")
+    mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
+
+
+@pytest.mark.asyncio
+async def test_load_and_unload_valid_cog():
+    base_cog.COGS_DIR = "tests/fake_load_all_cogs"
+    with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog Greetings")
+    mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
+
+    with mock.patch.object(discord.ext.commands.bot.Bot, 'unload_extension') as mock1:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog Greetings")
+    mock1.assert_called_with('tests.fake_load_all_cogs.Greetings')
 
 
 @pytest.mark.asyncio
