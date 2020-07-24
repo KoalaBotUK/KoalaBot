@@ -11,15 +11,15 @@ Commented using reStructuredText (reST)
 
 # Libs
 import discord
-from discord.ext import commands
 import discord.ext.test as dpytest
 import mock
 import pytest
+from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from tests.utils.TestUtilsCog import TestUtilsCog
 from tests.utils.TestUtils import FakeAuthor
+from tests.utils.TestUtilsCog import TestUtilsCog
 
 # Constants
 

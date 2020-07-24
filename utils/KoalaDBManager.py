@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Koala Bot database management code
+Koala Bot SQLite3 Database Manager code
 
 Commented using reStructuredText (reST)
 """
@@ -10,10 +10,8 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import sqlite3
 
-
 # Libs
-import discord
-from discord.ext import commands
+
 
 # Own modules
 
@@ -29,8 +27,7 @@ class KoalaDBManager:
         self.db_file_path = db_file_path
 
     def create_connection(self):
-        """ create a database connection to the SQLite database
-            specified by db_file
+        """ Create a database connection to the SQLite3 database specified in db_file_path
         :return: Connection object or None
         """
         conn = None
@@ -43,15 +40,15 @@ class KoalaDBManager:
         return conn
 
     def db_execute_select(self, sql_str, args=None):
-        """ execute a sql statement with the connection stored in this object
-        :param sql_str: a CREATE TABLE statement
-        :return:
+        """ Execute an SQL selection with the connection stored in this object
+        :param sql_str: An SQL SELECT statement
+        :return: void
         """
         try:
             conn = self.create_connection()
             c = conn.cursor()
             if args:
-                c.execute(sql_str,args)
+                c.execute(sql_str, args)
             else:
                 c.execute(sql_str)
             results = c.fetchall()
@@ -62,10 +59,10 @@ class KoalaDBManager:
             print(e)
 
     def db_execute_commit(self, sql_str, args=None):
-        """ execute a sql statement with the connection stored in this object
-        :param sql_str: a CREATE TABLE statement
+        """ Execute an SQL transaction with the connection stored in this object
+        :param sql_str: An SQL transaction
         :param args: Any arguments for the commit
-        :return:
+        :return: void
         """
         try:
             conn = self.create_connection()
@@ -81,48 +78,18 @@ class KoalaDBManager:
             print(e)
 
     def create_base_tables(self):
-        sql_create_koala_extensions_table = """
-        CREATE TABLE IF NOT EXISTS KoalaExtensions (
-        extension_id text NOT NULL PRIMARY KEY,
-        subscription_required integer NOT NULL,
-        available boolean NOT NULL,
-        enabled boolean NOT NULL
+        sql_create_guild_welcome_messages_table = """
+        CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
+        guild_id integer NOT NULL UNIQUE PRIMARY KEY,
+        welcome_message text
         );"""
 
-        sql_create_guild_extensions_table = """
-        CREATE TABLE IF NOT EXISTS GuildExtensions (
-        extension_id text NOT NULL,
-        guild_id integer NOT NULL,
-        PRIMARY KEY (extension_id,guild_id),
-        FOREIGN KEY (extension_id) REFERENCES KoalaExtensions (extension_id)
-        );"""
-
-        self.db_execute_commit(sql_create_koala_extensions_table)
-        self.db_execute_commit(sql_create_guild_extensions_table)
-
+        self.db_execute_commit(sql_create_guild_welcome_messages_table)
         pass
 
-    def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
-        sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
+    def fetch_all_tables(self):
+        return self.db_execute_select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
 
-        if len(self.db_execute_select(sql_check_extension_exists)) > 0:
-            sql_update_extension = f"""
-            UPDATE KoalaExtensions
-            SET subscription_required = '{subscription_required}',
-                available = '{available}',
-                enabled = '{enabled}'
-            WHERE extension_id = '{extension_id}'"""
-            self.db_execute_commit(sql_update_extension)
-
-        else:
-            sql_insert_extension = f"""
-            INSERT INTO KoalaExtensions 
-            VALUES ('{extension_id}','{subscription_required}','{available}','{enabled}')"""
-
-            self.db_execute_commit(sql_insert_extension)
-
-    def give_guild_extension(self, guild_id, extension_id):
-        sql_insert_guild_extension = f"""
-        INSERT INTO GuildExtensions 
-        VALUES ('{extension_id}','{guild_id}')"""
-        self.db_execute_commit(sql_insert_guild_extension)
+    def clear_all_tables(self, tables):
+        for table in tables:
+            self.db_execute_commit('DELETE FROM ' + table[0] + ';')

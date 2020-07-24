@@ -10,10 +10,10 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
-import discord
 from discord.ext import commands
 
 # Own modules
@@ -41,51 +41,51 @@ def setup_function():
 async def test_on_ready():
     await base_cog.on_ready()
     dpytest.verify_activity(discord.Activity(type=discord.ActivityType.playing,
-                                             name=KoalaBot.COMMAND_PREFIX+"help"+KoalaBot.KOALA_PLUG))
+                                             name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
 
 
 @pytest.mark.asyncio
 async def test_change_activity():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX+"change_activity watching you")
-    dpytest.verify_activity(discord.Activity(type=discord.ActivityType.watching, name="you"+KoalaBot.KOALA_PLUG))
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity watching you")
+    dpytest.verify_activity(discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
     dpytest.verify_message("I am now watching you")
 
 
 @pytest.mark.asyncio
 async def test_invalid_change_activity():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX+"change_activity oof you")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity oof you")
     dpytest.verify_message("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
 
 
 def test_playing_new_discord_activity():
     test_name = "Half Life 3"
     assert_activity(BaseCog.new_discord_activity("playing", test_name),
-                    type=discord.ActivityType.playing, name=test_name+KoalaBot.KOALA_PLUG)
+                    type=discord.ActivityType.playing, name=test_name + KoalaBot.KOALA_PLUG)
 
 
 def test_watching_new_discord_activity():
     test_name = "you"
     assert_activity(BaseCog.new_discord_activity("watching", test_name),
-                    type=discord.ActivityType.watching, name=test_name+KoalaBot.KOALA_PLUG)
+                    type=discord.ActivityType.watching, name=test_name + KoalaBot.KOALA_PLUG)
 
 
 def test_listening_new_discord_activity():
     test_name = "/Darude Sandstorm"
     assert_activity(BaseCog.new_discord_activity("listening", test_name),
-                    type=discord.ActivityType.listening, name=test_name+KoalaBot.KOALA_PLUG)
+                    type=discord.ActivityType.listening, name=test_name + KoalaBot.KOALA_PLUG)
 
 
 def test_streaming_new_discord_activity():
     test_name = "__your room__"
     assert_activity(BaseCog.new_discord_activity("streaming", test_name),
-                    type=discord.ActivityType.streaming, name=test_name+KoalaBot.KOALA_PLUG,
+                    type=discord.ActivityType.streaming, name=test_name + KoalaBot.KOALA_PLUG,
                     url=KoalaBot.STREAMING_URL)
 
 
 def test_custom_new_discord_activity():
     test_name = "1 4M K04L4"
     assert_activity(BaseCog.new_discord_activity("custom", test_name),
-                    type=discord.ActivityType.custom, name=test_name+KoalaBot.KOALA_PLUG)
+                    type=discord.ActivityType.custom, name=test_name + KoalaBot.KOALA_PLUG)
 
 
 def test_invalid_new_discord_activity():

@@ -16,6 +16,7 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 
+
 # Constants
 
 # Variables
@@ -52,6 +53,7 @@ class BaseCog(commands.Cog):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
+
     def __init__(self, bot):
         """
         Initialises local variables
@@ -92,7 +94,7 @@ class BaseCog(commands.Cog):
         Returns the ping of the bot
         :param ctx: Context of the command
         """
-        await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
+        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
 
     @commands.command()
     @commands.check(KoalaBot.is_admin)
@@ -123,11 +125,8 @@ class BaseCog(commands.Cog):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        if extension == "BaseCog":
-            await ctx.send("Sorry, you can't unload the base cog")
-        else:
-            self.bot.unload_extension(f'cogs.{extension}')
-            await ctx.send(f'{extension} Cog Unloaded')
+        self.bot.unload_extension(f'cogs.{extension}')
+        await ctx.send(f'{extension} Cog Unloaded')
 
 
 def setup(bot: KoalaBot) -> None:
