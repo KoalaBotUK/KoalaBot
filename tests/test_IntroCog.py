@@ -10,6 +10,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+import discord.ext.commands.errors as discorderrors
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
@@ -35,6 +36,22 @@ def setup_function():
     bot.add_cog(intro_cog)
     dpytest.configure(bot)
     print("Tests starting")
+
+
+@pytest.mark.asyncio
+async def test_get_guild_welcome_message():
+    DBManager.db_execute_commit(sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (1234567890, 'TestGetGuildWelcomeMessage');""")
+    select = IntroCog.get_guild_welcome_message(1234567890)
+    assert 'TestGetGuildWelcomeMessage' in select
+
+
+@pytest.mark.asyncio
+async def test_get_invalid_guild_welcome_message():
+    """
+    Test that invalid/nonexistent guilds get a default message
+    """
+    select = IntroCog.get_guild_welcome_message(404)
+    assert 'default message' in select
 
 
 @pytest.mark.asyncio
@@ -82,53 +99,36 @@ async def test_update_welcome_message():
     dpytest.verify_message(None)
     await dpytest.message('Y')
     dpytest.verify_message(equals=False, text=test_welcome)
-    row = DBManager.db_execute_select(
-        sql_str=f"""SELECT FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
-    if row is None:
-        assert False, f"There's no entry for this guild in the database. Or the SQL SELECT statement failed"
-    elif len(row) != 1:
-        assert False, f"There's {len(row)} entries for the guild {dpytest.get_config().guilds[0].id} in the database after an update"
-    value = str(row[0][1])
-    assert value == test_welcome
+    row = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
 
 
 @pytest.mark.asyncio
 async def test_cancel_update_welcome_message():
+    guild = dpytest.get_config().guilds[0]
     test_welcome = "This should not be updated in the database"
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
     dpytest.verify_message(None)
     await dpytest.message('N')
     dpytest.verify_message(equals=False, text='Not changing welcome')
     # Now verify the database hasn't been changed
-    row = DBManager.db_execute_select(
-        f"""SELECT FROM GuildWelcomeMessages WHERE guild_id = '{dpytest.get_config().guilds[0].id}';""")[0]
-    if row is None:
-        assert False, f"There's no entry for this guild in the database. Or the SQL SELECT statement failed"
-    elif len(row) != 1:
-        assert False, f"There's {len(row)} entries for the guild {dpytest.get_config().guilds[0].id} in the database after an update"
-    value = str(row[0][1])
-    assert value != test_welcome
-
-
-@pytest.mark.asyncio
-async def test_get_guild_welcome_message():
-    DBManager.db_execute_commit(sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (1234567890, 'TestGetGuildWelcomeMessage');""")
-    select = IntroCog.get_guild_welcome_message(1234567890)
-    assert 'TestGetGuildWelcomeMessage' in select
-
-
-@pytest.mark.asyncio
-async def test_get_invalid_guild_welcome_message():
-    """
-    Test that invalid/nonexistent guilds get a default message
-    """
-    select = IntroCog.get_guild_welcome_message(404)
-    assert 'default message' in select
-
+    rows = DBManager.db_execute_select(f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
+    if len(rows) != 1:
+        assert False, f"There are {len(rows)} rows for guild id {guild.id} in the database when there should only be 1"
+    else:
+        row = rows[0]
+        if len(row) != 2:
+            assert False, f"There's {len(row)} columns in this row. Check your table creation/setup code"
+        else:
+            assert row[1] != test_welcome
 
 @pytest.mark.asyncio
 async def test_update_to_null_welcome_message():
-    assert False
+    """
+    Test that update_welcome_message doesn't fire without a parameter
+    """
+    with pytest.raises(discorderrors.MissingRequiredArgument) as exc:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+    assert str(exc.value) == 'new_message is a required argument that is missing.'
 
 
 @pytest.mark.asyncio
