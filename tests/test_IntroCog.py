@@ -112,12 +112,18 @@ async def test_cancel_update_welcome_message():
 
 @pytest.mark.asyncio
 async def test_get_guild_welcome_message():
-    assert False
+    DBManager.db_execute_commit(sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (1234567890, 'TestGetGuildWelcomeMessage');""")
+    select = IntroCog.get_guild_welcome_message(1234567890)
+    assert 'TestGetGuildWelcomeMessage' in select
 
 
 @pytest.mark.asyncio
 async def test_get_invalid_guild_welcome_message():
-    assert False
+    """
+    Test that invalid/nonexistent guilds get a default message
+    """
+    select = IntroCog.get_guild_welcome_message(404)
+    assert 'default message' in select
 
 
 @pytest.mark.asyncio
