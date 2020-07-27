@@ -3,3 +3,4 @@ pytest
 dpytest
 python-dotenv
 discord.py
+facebook-sdk

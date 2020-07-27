@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Koala Bot Base Cog code and additional base cog functions
+Koala Bot Cog prividing Social Feed updates
 Commented using reStructuredText (reST)
 TODO: - FB GraphAPI Wrapper
       - Page Access Tokens
@@ -19,6 +19,7 @@ import concurrent.futures
 
 # Libs
 import discord
+import facebook
 from discord.ext import commands
 from dotenv import load_dotenv
 import requests
@@ -31,6 +32,11 @@ load_dotenv()
 
 
 # Variables
+
+token = {}
+
+graph = facebook.GraphAPI(token)
+
 
 class SocialAlert(commands.Cog):
     '''
