@@ -25,13 +25,11 @@ from tests.utils.TestUtils import assert_activity
 
 # Variables
 base_cog = None
-bot = None
 
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global base_cog
-    global bot
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     base_cog = BaseCog.BaseCog(bot)
     bot.add_cog(base_cog)

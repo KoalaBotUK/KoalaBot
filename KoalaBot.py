@@ -38,6 +38,8 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 DATABASE_PATH = "Koala.db"
+KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
+
 
 
 # Variables
@@ -80,9 +82,6 @@ def load_all_cogs():
 def get_channel_from_id(id):
     return client.get_channel(id=id)
 
-def get_message_from_id(id):
-    messageable = discord.abc.Messageable
-    return messageable.fetch_message(id=id)
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
