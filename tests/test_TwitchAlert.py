@@ -155,7 +155,7 @@ def test_end_empty_loop(twitch_cog):
 
 
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7362))
-@pytest.mark.asyncio
+@pytest.mark.skip(reason="Not Complete")  # @pytest.mark.asyncio
 async def test_loop_check_live(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
     expected_embed = discord.Embed(colour=KoalaBot.KOALA_GREEN,
