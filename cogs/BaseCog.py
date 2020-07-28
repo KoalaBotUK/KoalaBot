@@ -60,6 +60,7 @@ class BaseCog(commands.Cog):
         self.bot = bot
         self._last_member = None
         self.started = False
+        self.COGS_DIR = KoalaBot.COGS_DIR
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -75,7 +76,7 @@ class BaseCog(commands.Cog):
     @commands.check(KoalaBot.is_owner)
     async def change_activity(self, ctx, activity, name):
         """
-        Allows admins to change the activity of the bot
+        Allows the bot owner to change the activity of the bot
         :param ctx: Context of the command
         :param activity: The new activity of the bot
         :param name: The name of the activity
@@ -92,7 +93,7 @@ class BaseCog(commands.Cog):
         Returns the ping of the bot
         :param ctx: Context of the command
         """
-        await ctx.send(f"Pong! {round(self.bot.latency()*1000)}ms")
+        await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
 
     @commands.command()
     @commands.check(KoalaBot.is_admin)
@@ -112,8 +113,8 @@ class BaseCog(commands.Cog):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        self.bot.load_extension(f'cogs.{extension}')
-        ctx.send(f'{extension} Cog Loaded')
+        self.bot.load_extension(self.COGS_DIR.replace("/", ".")+f'.{extension}')
+        await ctx.send(f'{extension} Cog Loaded')
 
     @commands.command()
     @commands.check(KoalaBot.is_owner)
@@ -123,8 +124,11 @@ class BaseCog(commands.Cog):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        self.bot.unload_extension(f'cogs.{extension}')
-        ctx.send(f'{extension} Cog UnLoaded')
+        if extension == "BaseCog":
+            await ctx.send("Sorry, you can't unload the base cog")
+        else:
+            self.bot.unload_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
+            await ctx.send(f'{extension} Cog Unloaded')
 
 
 def setup(bot: KoalaBot) -> None:

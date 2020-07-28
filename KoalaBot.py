@@ -21,10 +21,12 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 
 # Libs
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
+from utils.KoalaDBManager import KoalaDBManager as DBManager
 
 # Constants
 load_dotenv()
@@ -35,10 +37,15 @@ STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
+DATABASE_PATH = "Koala.db"
+KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
+
+
 
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
+database_manager = DBManager(DATABASE_PATH)
 
 
 def is_owner(ctx):
@@ -48,8 +55,8 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
-    return ctx.author.id == BOT_OWNER\
-        or str(ctx.author) == TEST_USER  # For automated testing
+    print(ctx.author.id, int(BOT_OWNER))
+    return ctx.author.id == int(BOT_OWNER) or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def is_admin(ctx):
@@ -59,8 +66,8 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-    return ctx.author.guild_permissions.administrator\
-        or str(ctx.author) == TEST_USER  # For automated testing
+
+    return ctx.author.guild_permissions.administrator or str(ctx.author) == TEST_USER  # For automated testing
 
 
 def load_all_cogs():
@@ -72,8 +79,14 @@ def load_all_cogs():
             client.load_extension(COGS_DIR.replace("/", ".")+f'.{filename[:-3]}')
 
 
+def get_channel_from_id(id):
+    return client.get_channel(id=id)
+
+
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
+    database_manager.create_base_tables()
     load_all_cogs()
+    database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
