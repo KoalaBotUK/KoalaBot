@@ -24,14 +24,14 @@ import requests
 
 # Own modules
 import KoalaBot
+from KoalaBot import KOALA_GREEN
 import utils.KoalaUtils
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 load_dotenv()
 DEFAULT_MESSAGE = "{username} is live, come watch!, {stream_link}"
-KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
-CLIENT_ID = os.environ['TWITCH_TOKEN']
+TWITCH_CLIENT_ID = os.environ['TWITCH_TOKEN']
 TWITCH_SECRET = os.environ['TWITCH_SECRET']
 
 
@@ -47,10 +47,12 @@ class TwitchAlert(commands.Cog):
         :param bot: The bot client for this cog
         """
         self.bot = bot
+        KoalaBot.database_manager.create_base_tables()
         KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, True)
         self.ta_database_manager = TwitchAlertDBManager(KoalaBot.database_manager)
         self.ta_database_manager.create_tables()
         self.loop_thread = None
+        self.stop_loop = False
 
     @commands.command(aliases=["twitch_alert create"])
     @commands.check(KoalaBot.is_admin)
@@ -90,7 +92,7 @@ class TwitchAlert(commands.Cog):
         self.ta_database_manager.add_ta_to_channel(twitch_alert_id, channel_id)
 
         # Response Message
-        new_embed = discord.Embed(title="Added to channel",
+        new_embed = discord.Embed(title="Added to Channel",
                                   description="channel ID "+channel_id+" Added to Twitch Alert!", colour=KOALA_GREEN)
         new_embed.set_footer(text=f"Twitch Alert ID: {twitch_alert_id}")
         await ctx.send(embed=new_embed)
@@ -133,6 +135,7 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         if self.loop_thread is None:
+            self.stop_loop = False
             self.loop_thread = asyncio.get_event_loop().create_task(self.loop_check_live())
         else:
             raise Exception("Loop is already running!")
@@ -144,7 +147,9 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         if self.loop_thread is not None:
-            self.loop_thread.exit()
+            self.stop_loop = True
+            self.loop_thread.cancel()
+            self.loop_thread = None
         else:
             raise Exception("Loop is not running!")
         pass
@@ -156,7 +161,7 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         print("Twitch Alert Loop Started")
-        while True:
+        while not self.stop_loop:
             sql_find_users = """SELECT twitch_username FROM UserInTwitchAlert"""
             users = self.ta_database_manager.database_manager.db_execute_select(sql_find_users)
             usernames = []
@@ -269,7 +274,7 @@ class TwitchAPIHandler:
         self.client_id = client_id
         self.client_secret = client_secret
         self.oauth_token = self.get_new_twitch_oauth()
-        self.headers = {'Client-ID': CLIENT_ID, 'Authorization': 'Bearer '+self.oauth_token}
+        self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer '+self.oauth_token}
 
     def get_new_twitch_oauth(self):
         """
@@ -283,23 +288,6 @@ class TwitchAPIHandler:
         )
         response = requests.post('https://id.twitch.tv/oauth2/token', data=params)
         return response.json().get('access_token')
-
-    def refresh_twitch_oauth(self):
-        """
-        Refresh the current Twitch API OAuth2 token
-        :return:
-        """
-        headers = {
-            'grant_type': 'refresh_token',
-            'refresh_token': self.oauth_token,
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
-        }
-        response = requests.post('https://id.twitch.tv/oauth2/token', headers=headers)
-        self.oauth_token = response.json().get('refresh_token')
-
-        # Updates headers with new OAuth token
-        self.headers = {'Client-ID': CLIENT_ID, 'Authorization': 'Bearer '+self.oauth_token}
 
     def requests_get(self, url, params=None):
         """
@@ -345,8 +333,11 @@ class TwitchAlertDBManager:
     """
     def __init__(self, database_manager: KoalaDBManager):
         self.database_manager = database_manager
-        self.twitch_handler = TwitchAPIHandler(CLIENT_ID, TWITCH_SECRET)
+        self.twitch_handler = TwitchAPIHandler(TWITCH_CLIENT_ID, TWITCH_SECRET)
         self.loop_thread = None
+
+    def get_parent_database_manager(self):
+        return self.database_manager
 
     def create_tables(self):
         """
@@ -471,10 +462,16 @@ class TwitchAlertDBManager:
             None = use default Twitch Alert message
         :return:
         """
-        sql_insert_user_twitch_alert = f"""
-        INSERT INTO UserInTwitchAlert(twitch_alert_id, twitch_username, custom_message) 
-        VALUES({twitch_alert_id},'{str.lower(twitch_username)}', '{custom_message}')
-        """
+        if custom_message:
+            sql_insert_user_twitch_alert = f"""
+            INSERT INTO UserInTwitchAlert(twitch_alert_id, twitch_username, custom_message) 
+            VALUES({twitch_alert_id},'{str.lower(twitch_username)}', '{custom_message}')
+            """
+        else:
+            sql_insert_user_twitch_alert = f"""
+            INSERT INTO UserInTwitchAlert(twitch_alert_id, twitch_username) 
+            VALUES({twitch_alert_id},'{str.lower(twitch_username)}')
+            """
         self.database_manager.db_execute_commit(sql_insert_user_twitch_alert)
 
 

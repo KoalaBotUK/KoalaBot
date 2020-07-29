@@ -1,3 +1,6 @@
+# Databases (avoid saving private info to git)
+*.db
+
 # Editors
 .vscode/
 .idea/

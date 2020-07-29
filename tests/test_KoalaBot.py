@@ -48,7 +48,7 @@ def test_invalid_test_user_is_owner(test_ctx):
 
 
 def test_owner_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=KoalaBot.BOT_OWNER)
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER))
     assert KoalaBot.is_owner(test_ctx)
 
 
