@@ -22,6 +22,7 @@ from discord.ext import commands
 import KoalaBot
 from cogs import TwitchAlert
 from utils import KoalaDBManager
+from utils.KoalaColours import *
 
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
@@ -40,7 +41,7 @@ def setup_module():
 
 def test_create_live_embed():
     # Create the expected embed with information required
-    expected = discord.Embed(colour=KoalaBot.KOALA_GREEN,
+    expected = discord.Embed(colour=KOALA_GREEN,
                              title="<:twitch:734024383957434489>  Test is now streaming!",
                              description="https://twitch.tv/test")
     expected.add_field(name="Stream Title", value="Test Title")
@@ -55,6 +56,10 @@ def test_create_live_embed():
     # Get response and assert equal
     result = TwitchAlert.create_live_embed(stream_info, user_info, game_info)
     assert dpytest.embed_eq(result, expected)
+
+def test_is_channel_in_guild():
+    example_bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+
 
 
 @pytest.mark.asyncio

@@ -11,7 +11,6 @@ TODO: Remove TA from x
 
 # Built-in/Generic Imports
 import os
-import time
 import asyncio
 import concurrent.futures
 
@@ -24,8 +23,8 @@ import requests
 
 # Own modules
 import KoalaBot
-from KoalaBot import KOALA_GREEN
-import utils.KoalaUtils
+from utils.KoalaColours import *
+from utils.KoalaUtils import error_embed
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -56,13 +55,14 @@ class TwitchAlert(commands.Cog):
         self.loop_thread = None
         self.stop_loop = False
 
-    @commands.command(aliases=["twitch_alert create"])
+    @commands.command(aliases=["twitch create"])
     @commands.check(KoalaBot.is_admin)
-    async def create_twitch_alert(self, ctx, *default_live_message):
+    async def create_twitch_alert(self, ctx, channel_id, *default_live_message):
         """
         Creates a twitch alert that can store twitch users and channels where
         if the user goes live, a notification will be put in the chosen channel
         :param ctx: The discord context of the command
+        :param channel_id: The channel ID where the twitch alert is being used
         :param default_live_message: The default live message of users within this Twitch Alert,
         leave empty for program default
         :return:
@@ -74,54 +74,63 @@ class TwitchAlert(commands.Cog):
             default_message = " ".join(default_live_message)
 
         # Creates a new Twitch Alert with the used guild ID and default message if provided
-        new_id = self.ta_database_manager.create_new_ta(ctx.message.guild.id, default_message)
+        self.ta_database_manager.create_new_ta(ctx.message.guild.id, channel_id, default_message)
 
         # Returns an embed with information altered
-        new_embed = discord.Embed(title="New Twitch Alert Created!", colour=KOALA_GREEN)
-        new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
+        new_embed = discord.Embed(title="New Twitch Alert Created!", colour=KOALA_GREEN,
+                                  description=f"Guild: {ctx.message.guild.id}\n"
+                                              f"Channel: {channel_id}")
+        # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
         await ctx.send(embed=new_embed)
 
-    @commands.command(aliases=["twitch_alert add_channel"])
+    @commands.command(aliases=["twitch add_user"])
     @commands.check(KoalaBot.is_admin)
-    async def add_twitch_alert_to_channel(self, ctx, twitch_alert_id, channel_id):
-        """
-        Adds a Twitch Alert to a given channel
-        :param ctx: The discord context of the command
-        :param twitch_alert_id: The Twitch Alert ID which will be put into a given channel
-        :param channel_id: The discord channel ID
-        :return:
-        """
-        self.ta_database_manager.add_ta_to_channel(twitch_alert_id, channel_id)
-
-        # Response Message
-        new_embed = discord.Embed(title="Added to Channel",
-                                  description="channel ID "+channel_id+" Added to Twitch Alert!", colour=KOALA_GREEN)
-        new_embed.set_footer(text=f"Twitch Alert ID: {twitch_alert_id}")
-        await ctx.send(embed=new_embed)
-
-    @commands.command()
-    @commands.check(KoalaBot.is_admin)
-    async def add_user_to_twitch_alert(self, ctx, twitch_alert_id, twitch_username, *custom_live_message):
+    async def add_user_to_twitch_alert(self, ctx, channel_id, twitch_username, *custom_live_message):
         """
         Add a Twitch user to a Twitch Alert
         :param ctx: The discord context of the command
-        :param twitch_alert_id: The Twitch Alert ID the user will be added to
+        :param channel_id: The channel ID where the twitch alert is being used
         :param twitch_username: The Twitch Username of the user being added (lowercase)
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
+        # Check the channel specified is in this guild
+        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
+            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
+            return
+
+        self.ta_database_manager.create_new_ta(ctx.message.guild.id, channel_id)
+
         # Setting the custom message as required
         if custom_live_message:
             custom_message = " ".join(custom_live_message)
         else:
             custom_message = None
 
-        self.ta_database_manager.add_user_to_ta(twitch_alert_id, twitch_username, custom_message)
+        self.ta_database_manager.add_user_to_ta(channel_id, twitch_username, custom_message)
 
         # Response Message
-        new_embed = discord.Embed(title="Added User to Twitch Alert", colour=KOALA_GREEN)
-        new_embed.set_footer(text=f"Twitch Alert ID: {twitch_alert_id}")
+        new_embed = discord.Embed(title="Added User to Twitch Alert", colour=KOALA_GREEN,
+                                  description=f"Channel: {channel_id}\n"
+                                              f"User: {twitch_username}\n"
+                                              f"Default Message: {custom_message}")
+        # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
         await ctx.send(embed=new_embed)
+
+    @commands.command(aliases=["twitch remove_user"])
+    @commands.check(KoalaBot.is_admin)
+    async def remove_user_from_twitch_alert(self, ctx, channel_id, twitch_username):
+        sql_get_message_id = f"""SELECT message_id 
+                                 FROM UserInTwitchAlert 
+                                 WHERE twitch_username = '{twitch_username}'
+                                    AND channel_id = {channel_id}"""
+        message_id = self.ta_database_manager.database_manager.db_execute_select(sql_get_message_id)[0][0]
+        if message_id is not None:
+            await (await self.bot.get_channel(int(channel_id)).fetch_message(message_id)).delete()
+        sql_remove_entry = f"""DELETE FROM UserInTwitchAlert WHERE twitch_username = {twitch_username} AND channel_id = {channel_id}"""
+        self.ta_database_manager.database_manager.db_execute_commit(sql_remove_entry)
+
+
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -181,61 +190,57 @@ class TwitchAlert(commands.Cog):
                     users_left = 100
 
                     # Deals with online streams
-                    for user_result in user_streams:
-                        if user_result.get('type') == "live":
-                            current_username = str.lower(user_result.get("user_name"))
+                    for streams_details in user_streams:
+                        if streams_details.get('type') == "live":
+                            current_username = str.lower(streams_details.get("user_name"))
                             print(current_username + " is live")
                             usernames.remove(current_username)
 
                             sql_find_message_id = f"""
-                            SELECT message_id 
+                            SELECT channel_id, message_id 
                             FROM UserInTwitchAlert 
                             WHERE twitch_username = '{current_username}'"""
 
-                            message_id = self.ta_database_manager.database_manager.db_execute_select(
-                                sql_find_message_id)[0]
-                            # If no Alert is present
-                            if message_id[0] is None:
+                            results = self.ta_database_manager.database_manager.db_execute_select(
+                                sql_find_message_id)
 
-                                sql_find_channel_id = f"""
-                                SELECT TwitchAlertInChannel.twitch_alert_id, channel_id 
-                                FROM TwitchAlertInChannel 
-                                JOIN TwitchAlerts TA on TwitchAlertInChannel.twitch_alert_id = TA.twitch_alert_id 
-                                JOIN UserInTwitchAlert UITA on TA.twitch_alert_id = UITA.twitch_alert_id 
-                                WHERE UITA.twitch_username = '{current_username}'"""
-                                results = self.ta_database_manager.database_manager.db_execute_select(
-                                    sql_find_channel_id)
+                            new_message_embed = None
 
-                                for result in results:
-                                    channel = self.bot.get_channel(id=result[1])
-                                    with concurrent.futures.ThreadPoolExecutor() as pool2:
-                                        user_account = await asyncio.get_event_loop(). \
-                                            run_in_executor(pool2,
-                                                            self.ta_database_manager.twitch_handler.get_user_data,
-                                                            user_result.get("user_name"))
+                            for result in results:
 
-                                        game_details = await asyncio.get_event_loop(). \
-                                            run_in_executor(pool2,
-                                                            self.ta_database_manager.twitch_handler.get_game_data,
-                                                            user_result.get("game_id"))
+                                # If no Alert is posted
+                                if result[1] is None:
+                                    channel = self.bot.get_channel(id=int(result[0]))
+
+                                    if new_message_embed is None:
+                                        with concurrent.futures.ThreadPoolExecutor() as pool2:
+                                            user_details = await asyncio.get_event_loop(). \
+                                                run_in_executor(pool2,
+                                                                self.ta_database_manager.twitch_handler.get_user_data,
+                                                                streams_details.get("user_name"))
+
+                                            game_details = await asyncio.get_event_loop(). \
+                                                run_in_executor(pool2,
+                                                                self.ta_database_manager.twitch_handler.get_game_data,
+                                                                streams_details.get("game_id"))
+
+                                            new_message_embed = create_live_embed(streams_details, user_details, game_details)
 
                                     new_message = await channel.send(
-                                        embed=create_live_embed(user_result, user_account, game_details))
+                                        embed=create_live_embed(streams_details, user_details, game_details))
 
                                     sql_update_message_id = f"""
                                     UPDATE UserInTwitchAlert 
                                     SET message_id = {new_message.id} 
-                                    WHERE twitch_alert_id = {result[0]} 
+                                    WHERE channel_id = {result[0]} 
                                         AND twitch_username = '{current_username}'"""
                                     self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
 
                     # Deals with remaining offline streams
                     sql_select_offline_streams_with_message_ids = f"""
-                    SELECT TAIC.channel_id, message_id
+                    SELECT channel_id, message_id
                     FROM UserInTwitchAlert
-                    JOIN TwitchAlerts TA on UserInTwitchAlert.twitch_alert_id = TA.twitch_alert_id
-                    JOIN TwitchAlertInChannel TAIC on TA.twitch_alert_id = TAIC.twitch_alert_id
-                    WHERE message_id NOT NULL 
+                    WHERE message_id NOT NULL
                     AND twitch_username in ({','.join(['?'] * len(usernames))})"""
 
                     results = self.ta_database_manager.database_manager.db_execute_select(
@@ -270,6 +275,9 @@ def create_live_embed(stream_info, user_info, game_info):
 
     return embed
 
+
+def is_channel_in_guild(bot: discord.client, guild_id, channel_id):
+    return bot.get_channel(int(channel_id)) in bot.get_guild(guild_id).channels
 
 class TwitchAPIHandler:
     """
@@ -353,40 +361,32 @@ class TwitchAlertDBManager:
         # TwitchAlerts
         sql_create_twitch_alerts_table = """
         CREATE TABLE IF NOT EXISTS TwitchAlerts (
-        twitch_alert_id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
         guild_id integer NOT NULL,
-        default_message text NOT NULL,
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
-        );"""
-
-        # TwitchAlertInChannel
-        sql_create_twitch_alert_in_channel_table = """
-        CREATE TABLE IF NOT EXISTS TwitchAlertInChannel (
-        twitch_alert_id integer NOT NULL,
         channel_id integer NOT NULL,
-        PRIMARY KEY (twitch_alert_id, channel_id),
-        FOREIGN KEY (twitch_alert_id) REFERENCES TwitchAlerts (twitch_alert_id)
+        default_message text NOT NULL,
+        PRIMARY KEY (guild_id, channel_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
         );"""
 
         # UserInTwitchAlert
         sql_create_user_in_twitch_alert_table = """
         CREATE TABLE IF NOT EXISTS UserInTwitchAlert (
-        twitch_alert_id integer NOT NULL,
+        channel_id integer NOT NULL,
         twitch_username text NOT NULL,
         custom_message text,
         message_id integer,
-        PRIMARY KEY (twitch_alert_id, twitch_username),
-        FOREIGN KEY (twitch_alert_id) REFERENCES TwitchAlerts (twitch_alert_id)
+        PRIMARY KEY (channel_id, twitch_username),
+        FOREIGN KEY (channel_id) REFERENCES TwitchAlerts (channel_id)
         );"""
 
         # TeamInTwitchAlert
         sql_create_team_in_twitch_alert_table = """
         CREATE TABLE IF NOT EXISTS TeamInTwitchAlert (
-        twitch_alert_id integer NOT NULL,
+        channel_id integer NOT NULL,
         twitch_team_name text NOT NULL,
         custom_message text,
-        PRIMARY KEY (twitch_alert_id, twitch_team_name),
-        FOREIGN KEY (twitch_alert_id) REFERENCES TwitchAlerts (twitch_alert_id)
+        PRIMARY KEY (channel_id, twitch_team_name),
+        FOREIGN KEY (channel_id) REFERENCES TwitchAlerts (channel_id)
         );"""
 
         # UserInTwitchTeam
@@ -399,39 +399,20 @@ class TwitchAlertDBManager:
         FOREIGN KEY (twitch_team_name) REFERENCES TeamInTwitchAlert (twitch_team_name)
         );"""
 
-        # TwitchDisplayInChannel
-        sql_create_twitch_display_in_channel_table = """
-        CREATE TABLE IF NOT EXISTS TwitchDisplayInChannel (
-        twitch_alert_id integer NOT NULL,
-        channel_id integer NOT NULL,
-        message_id text NOT NULL,
-        PRIMARY KEY (twitch_alert_id, channel_id),        
-        FOREIGN KEY (twitch_alert_id) REFERENCES TwitchAlerts (twitch_alert_id)
-        );"""
-
         # Create Tables
         self.database_manager.db_execute_commit(sql_create_twitch_alerts_table)
-        self.database_manager.db_execute_commit(sql_create_twitch_alert_in_channel_table)
         self.database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
         self.database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
         self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
-        self.database_manager.db_execute_commit(sql_create_twitch_display_in_channel_table)
 
-    def create_new_ta(self, guild_id, default_message):
+    def create_new_ta(self, guild_id, channel_id, default_message=None):
         """
         Creates a new Twitch Alert and gives the ID associated with it
         :param guild_id: The discord guild ID where the Twitch Alert is located
+        :param channel_id: The discord channel ID of the twitch Alert
         :param default_message: The default message of users in the Twitch Alert
         :return: The created Twitch Alert ID
         """
-        sql_search = [-1]
-        new_id = None
-
-        # Creates a new ID which is not already being used within the database
-        while sql_search:
-            new_id = utils.KoalaUtils.random_id()
-            sql_get_new_ta_id = f"""SELECT twitch_alert_id FROM TwitchAlerts WHERE twitch_alert_id={new_id}"""
-            sql_search = self.database_manager.db_execute_select(sql_get_new_ta_id)
 
         # Sets the default message if not provided
         if default_message is None:
@@ -439,45 +420,42 @@ class TwitchAlertDBManager:
 
         # Insert new Twitch Alert to database
         sql_insert_twitch_alert = f"""
-        INSERT INTO TwitchAlerts(twitch_alert_id, guild_id, default_message) 
-        VALUES({new_id},{guild_id},'{default_message}')
+        INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) 
+        VALUES({guild_id},{channel_id},'{default_message}')
         """
         self.database_manager.db_execute_commit(sql_insert_twitch_alert)
 
-        return new_id
-
-    def add_ta_to_channel(self, twitch_alert_id, channel_id):
-        """
-        Add Twitch Alert to a given channel
-        :param twitch_alert_id: The Twitch Alert ID
-        :param channel_id: The discord Channel ID
-        :return:
-        """
-        sql_insert_twitch_alert_channel = f"""
-        INSERT INTO TwitchAlertInChannel(twitch_alert_id, channel_id) VALUES({twitch_alert_id},'{channel_id}')
-        """
-        self.database_manager.db_execute_commit(sql_insert_twitch_alert_channel)
-
-    def add_user_to_ta(self, twitch_alert_id, twitch_username, custom_message):
+    def add_user_to_ta(self, channel_id, twitch_username, custom_message, guild_id=None):
         """
         Add a twitch user to a given Twitch Alert
-        :param twitch_alert_id: The Twitch Alert ID
+        :param channel_id: The discord channel ID of the twitch Alert
         :param twitch_username: The Twitch username of the user to be added
         :param custom_message: The custom Message of the user's live notification.
             None = use default Twitch Alert message
         :return:
         """
+        sql_search_ta_exists = f"SELECT guild_id FROM TwitchAlerts WHERE channel_id = {channel_id}"
+        result = self.database_manager.db_execute_select(sql_search_ta_exists)
+        if result[0] is None:
+            if guild_id is None:
+                raise KeyError("Channel ID is not defined in TwitchAlerts")
+            else:
+                sql_insert_default_ta = f"""INSERT INTO TwitchAlerts(guild_id, channel_id, default_message)
+                    VALUES({guild_id},{channel_id},'{DEFAULT_MESSAGE}')"""
+
+
         if custom_message:
             sql_insert_user_twitch_alert = f"""
-            INSERT INTO UserInTwitchAlert(twitch_alert_id, twitch_username, custom_message) 
-            VALUES({twitch_alert_id},'{str.lower(twitch_username)}', '{custom_message}')
+            INSERT INTO UserInTwitchAlert(channel_id, twitch_username, custom_message) 
+            VALUES({channel_id},'{str.lower(twitch_username)}', '{custom_message}')
             """
         else:
             sql_insert_user_twitch_alert = f"""
-            INSERT INTO UserInTwitchAlert(twitch_alert_id, twitch_username) 
-            VALUES({twitch_alert_id},'{str.lower(twitch_username)}')
+            INSERT INTO UserInTwitchAlert(channel_id, twitch_username) 
+            VALUES({channel_id},'{str.lower(twitch_username)}')
             """
         self.database_manager.db_execute_commit(sql_insert_user_twitch_alert)
+
 
 
 def setup(bot: KoalaBot) -> None:
