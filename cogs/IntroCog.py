@@ -47,6 +47,8 @@ def get_guild_welcome_message(guild_id: int):
     """
     welcome_messages = DBManager.db_execute_select(sql_str=
                                                    f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild_id}';""")
+    for row in welcome_messages:
+        print(row[1] + '\n\r')
     if len(welcome_messages) < 1:
         # If there's no current row representing this (for whatever reason), add one to the table
         DBManager.db_execute_commit(sql_str=
@@ -113,7 +115,7 @@ class IntroCog(commands.Cog):
         """
         await dm_welcome_message([member], f"{get_guild_welcome_message(member.guild.id)}")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.is_owner) # TODO Change to is_admin in production
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx, *args):
         """
@@ -127,7 +129,7 @@ class IntroCog(commands.Cog):
         ignored_roles = [ctx.guild.get_role(role) for role in args if isinstance(role, int)]
         ignored_roles.append([role for role in args if isinstance(role, discord.Role)])
 
-        dm_members = [member for member in non_bot_members if not any(member.roles) in ignored_roles]
+        dm_members = [member for member in non_bot_members if not (any(member.roles) in ignored_roles)]
 
         await ctx.send(f"This will DM {len(dm_members)} people. Are you sure you wish to do this? Y/N")
 
@@ -138,7 +140,7 @@ class IntroCog(commands.Cog):
             await ctx.send('Timed out')
         else:
             conf_msg = confirmation_message.content.rstrip().strip().lower()
-            if conf_msg != ('y' or 'n'):
+            if conf_msg not in ['y', 'n']:
                 await ctx.send('Invalid input. Please restart with the command.')
             else:
                 if conf_msg == 'n':
@@ -148,7 +150,7 @@ class IntroCog(commands.Cog):
                                              f"{get_guild_welcome_message(ctx.guild.id)}")
         return
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.is_owner) # TODO change to is_admin in production
     @commands.command(name="update_welcome_message")
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
@@ -168,7 +170,7 @@ class IntroCog(commands.Cog):
             await ctx.send('Timed out')
         else:
             conf_msg = confirmation_message.content.rstrip().strip().lower()
-            if conf_msg != ('y' or 'n'):
+            if conf_msg not in ['y', 'n']:
                 await ctx.send('Invalid input. Please restart with the command.')
             else:
                 if conf_msg == 'n':

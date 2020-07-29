@@ -11,12 +11,13 @@ Commented using reStructuredText (reST)
 
 # Libs
 import asyncio
+import threading
+
 import discord.ext.commands.errors as discorderrors
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
-import mock
-import threading
+
 # Own modules
 import KoalaBot
 from cogs import IntroCog
@@ -42,10 +43,14 @@ def setup_function():
 
 @pytest.mark.asyncio
 async def test_on_guild_join():
-    guild = dpytest.get_config().guilds[0]
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestGuildJoin', id_num=420)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1, client.user)
     # Try testing guild join on startup
     rows = DBManager.db_execute_select(
-        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
+        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {guild.id};""")
 
     if len(rows) < 1:
         assert False, "There's no row for the created guild in the database"
@@ -60,28 +65,11 @@ async def test_on_guild_join():
         assert message[0] == guild.id and message[1] == 'default message'
     assert exc is None
 
-    """test_config = dpytest.get_config()
-    client = test_config.client
-    guild = dpytest.back.make_guild('TestGuildJoin')
-    test_config.guilds.append(guild)
-    await dpytest.member_join(1, client.user)
-    rows = DBManager.db_execute_select(
-        f\"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';\""")
-
-    if len(rows) == 1:
-        row = rows[0]
-        assert row[1] == 'default message', "Wrong message in row."
-    else:
-        for r in rows:
-            print(str(r[1]) + "\r\n")
-        # If there's zero/more than one entry right now, there's an issue. Raise an error
-        assert False, f"{len(rows)} entries for this guild (id = {guild.id}) found in the database. Check guild_join listener"
-    """
-
 
 @pytest.mark.asyncio
 async def test_get_guild_welcome_message():
-    DBManager.db_execute_commit(sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (1234567890, 'TestGetGuildWelcomeMessage');""")
+    DBManager.db_execute_commit(
+        sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (1234567890, 'TestGetGuildWelcomeMessage');""")
     select = IntroCog.get_guild_welcome_message(1234567890)
     assert 'TestGetGuildWelcomeMessage' in select
 
@@ -101,9 +89,8 @@ async def test_duplicate_guild_get_welcome_message():
         sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (12345678908, 'FakeGuildTestMessage 1');""")
     DBManager.db_execute_commit(
         sql_str="""INSERT INTO GuildWelcomeMessages (guild_id,welcome_message) VALUES (12345678908, 'FakeGuildTestMessage 2');""")
-    with pytest.raises(RuntimeError):
-        msg = IntroCog.get_guild_welcome_message(12345678908)
-    assert False, msg
+    msg = IntroCog.get_guild_welcome_message(12345678908)
+    assert 'FakeGuildTestMessage 1' in msg
 
 
 @pytest.mark.asyncio
@@ -116,12 +103,9 @@ async def test_dm_welcome_message():
 
 @pytest.mark.asyncio
 async def test_on_member_join():
-    welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
-    member = await dpytest.member_join()
-
-    msg = dpytest.verify_message()
-    assert welcome_message in msg.content
-    dpytest.verify_message(welcome_message, equals=False)
+    welcome_message = DBManager.db_execute_select()
+    await dpytest.member_join()
+    dpytest.verify_message(welcome_message)
 
 
 @pytest.mark.asyncio
@@ -164,7 +148,7 @@ async def test_update_to_null_welcome_message():
 @pytest.mark.asyncio
 async def test_update_welcome_message():
     guild = dpytest.get_config().guilds[0]
-    test_welcome = "This is not a default message"
+    test_welcome = "This is not a default message and should be in the database"
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
     dpytest.verify_message('Y/N', equals=False)
     await dpytest.message('Y')
@@ -179,7 +163,6 @@ async def test_update_welcome_message():
         if len(row) != 2:
             assert False, f"There's {len(row)} columns in this row. Check your table creation/setup code"
         else:
-            # dpytest.verify_message(test_welcome, False)
             assert row[1] == test_welcome, row[1]
 
 
@@ -210,19 +193,22 @@ async def test_timeout_update_welcome_message():
             test_welcome = "This should not be updated in the database"
             await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
 
+            # Timer to force timeout
             async def stub():
                 return
+
             t = threading.Timer(5.01, stub)
             t.start()
             t.join()
         assert exc.value == 'Timed out'
         assert test_welcome not in IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
+
     timer = threading.Timer(5, timeout_thread)
     timer.start()
     timer.join()
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope='session', autouse=True)
 def setup_db():
+    DBManager.clear_all_tables(DBManager.fetch_all_tables())
     yield DBManager
-    # DBManager.clear_all_tables(DBManager.fetch_all_tables())

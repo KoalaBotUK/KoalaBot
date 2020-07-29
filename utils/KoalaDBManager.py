@@ -80,7 +80,7 @@ class KoalaDBManager:
     def create_base_tables(self):
         sql_create_guild_welcome_messages_table = """
         CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
-        guild_id integer NOT NULL UNIQUE PRIMARY KEY,
+        guild_id integer NOT NULL PRIMARY KEY,
         welcome_message text
         );"""
 
