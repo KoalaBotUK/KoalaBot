@@ -135,5 +135,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Own modules
-tests/Koala.db
+# Databases
+.db

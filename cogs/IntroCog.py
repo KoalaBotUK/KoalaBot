@@ -122,7 +122,14 @@ class IntroCog(commands.Cog):
         :param args: Member IDs, Roles or Member mentions to avoid sending the message to
         :return: void
         """
-        await ctx.send('Are you sure you wish to do this? Y/N')
+        non_bot_members = [member for member in ctx.guild.members if not member.bot]
+
+        ignored_roles = [ctx.guild.get_role(role) for role in args if isinstance(role, int)]
+        ignored_roles.append([role for role in args if isinstance(role, discord.Role)])
+
+        dm_members = [member for member in non_bot_members if not any(member.roles) in ignored_roles]
+
+        await ctx.send(f"This will DM {len(dm_members)} people. Are you sure you wish to do this? Y/N")
 
         try:
             confirmation_message = await self.bot.wait_for('message', timeout=5.0,
