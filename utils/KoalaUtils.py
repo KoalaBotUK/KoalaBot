@@ -40,3 +40,7 @@ def error_embed(description, error_type="Error"):
     :return: The completed embed
     """
     return discord.Embed(title=f"{error_type}: {description}", colour=ERROR_RED)
+
+
+def is_channel_in_guild(bot: discord.client, guild_id, channel_id):
+    return bot.get_channel(int(channel_id)) in bot.get_guild(guild_id).channels

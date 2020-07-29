@@ -24,7 +24,7 @@ import requests
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
-from utils.KoalaUtils import error_embed
+from utils.KoalaUtils import error_embed, is_channel_in_guild
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -55,9 +55,9 @@ class TwitchAlert(commands.Cog):
         self.loop_thread = None
         self.stop_loop = False
 
-    @commands.command(aliases=["twitch create"])
+    @commands.command(aliases=["twitch edit_message"])
     @commands.check(KoalaBot.is_admin)
-    async def create_twitch_alert(self, ctx, channel_id, *default_live_message):
+    async def edit_default_message(self, ctx, channel_id, *default_live_message):
         """
         Creates a twitch alert that can store twitch users and channels where
         if the user goes live, a notification will be put in the chosen channel
@@ -74,12 +74,14 @@ class TwitchAlert(commands.Cog):
             default_message = " ".join(default_live_message)
 
         # Creates a new Twitch Alert with the used guild ID and default message if provided
-        self.ta_database_manager.create_new_ta(ctx.message.guild.id, channel_id, default_message)
+        default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id, default_message)
+
 
         # Returns an embed with information altered
-        new_embed = discord.Embed(title="New Twitch Alert Created!", colour=KOALA_GREEN,
+        new_embed = discord.Embed(title="Default Message Edited", colour=KOALA_GREEN,
                                   description=f"Guild: {ctx.message.guild.id}\n"
-                                              f"Channel: {channel_id}")
+                                              f"Channel: {channel_id}\n"
+                                              f"Default Message: {default_message}")
         # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
         await ctx.send(embed=new_embed)
 
@@ -99,11 +101,12 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
-        self.ta_database_manager.create_new_ta(ctx.message.guild.id, channel_id)
+        default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id)
 
         # Setting the custom message as required
         if custom_live_message:
             custom_message = " ".join(custom_live_message)
+            default_message = custom_message
         else:
             custom_message = None
 
@@ -113,7 +116,7 @@ class TwitchAlert(commands.Cog):
         new_embed = discord.Embed(title="Added User to Twitch Alert", colour=KOALA_GREEN,
                                   description=f"Channel: {channel_id}\n"
                                               f"User: {twitch_username}\n"
-                                              f"Default Message: {custom_message}")
+                                              f"Message: {default_message}")
         # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
         await ctx.send(embed=new_embed)
 
@@ -276,8 +279,8 @@ def create_live_embed(stream_info, user_info, game_info):
     return embed
 
 
-def is_channel_in_guild(bot: discord.client, guild_id, channel_id):
-    return bot.get_channel(int(channel_id)) in bot.get_guild(guild_id).channels
+
+
 
 class TwitchAPIHandler:
     """
@@ -405,13 +408,13 @@ class TwitchAlertDBManager:
         self.database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
         self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
 
-    def create_new_ta(self, guild_id, channel_id, default_message=None):
+    def new_ta(self, guild_id, channel_id, default_message=None):
         """
         Creates a new Twitch Alert and gives the ID associated with it
         :param guild_id: The discord guild ID where the Twitch Alert is located
         :param channel_id: The discord channel ID of the twitch Alert
         :param default_message: The default message of users in the Twitch Alert
-        :return: The created Twitch Alert ID
+        :return: The new default_message
         """
 
         # Sets the default message if not provided
@@ -420,10 +423,11 @@ class TwitchAlertDBManager:
 
         # Insert new Twitch Alert to database
         sql_insert_twitch_alert = f"""
-        INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) 
+        REPLACE INTO TwitchAlerts(guild_id, channel_id, default_message) 
         VALUES({guild_id},{channel_id},'{default_message}')
         """
         self.database_manager.db_execute_commit(sql_insert_twitch_alert)
+        return default_message
 
     def add_user_to_ta(self, channel_id, twitch_username, custom_message, guild_id=None):
         """
