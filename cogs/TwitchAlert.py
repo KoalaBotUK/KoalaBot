@@ -41,15 +41,17 @@ class TwitchAlert(commands.Cog):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
-    def __init__(self, bot):
+    def __init__(self, bot, database_manager=None):
         """
         Initialises local variables
         :param bot: The bot client for this cog
         """
+        if not database_manager:
+            database_manager = KoalaBot.database_manager
         self.bot = bot
-        KoalaBot.database_manager.create_base_tables()
-        KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, True)
-        self.ta_database_manager = TwitchAlertDBManager(KoalaBot.database_manager)
+        database_manager.create_base_tables()
+        database_manager.insert_extension("TwitchAlert", 0, False, True)
+        self.ta_database_manager = TwitchAlertDBManager(database_manager)
         self.ta_database_manager.create_tables()
         self.loop_thread = None
         self.stop_loop = False
@@ -170,9 +172,12 @@ class TwitchAlert(commands.Cog):
                 usernames.append(user[0])
                 users_left -= 1
                 if users_left == 0 or users[-1] == user:
+
                     with concurrent.futures.ThreadPoolExecutor() as pool:
                         user_streams = await asyncio.get_event_loop(). \
                             run_in_executor(pool, self.ta_database_manager.twitch_handler.get_streams_data, usernames)
+
+                    # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
                     users_left = 100
 
                     # Deals with online streams
@@ -242,7 +247,7 @@ class TwitchAlert(commands.Cog):
                     SET message_id = NULL
                     WHERE twitch_username in ({','.join(['?'] * len(usernames))})"""
                     self.ta_database_manager.database_manager.db_execute_commit(sql_update_offline_streams, usernames)
-            time.sleep(1)
+            await asyncio.sleep(1)
         pass
 
 

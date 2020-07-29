@@ -9,7 +9,7 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
-import time
+import asyncio
 
 # Libs
 import discord.ext.test as dpytest
@@ -67,11 +67,13 @@ async def test_setup():
 # Test TwitchAlert
 
 @pytest.fixture
-def twitch_cog():
+async def twitch_cog():
     """ setup any state specific to the execution of the given module."""
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    twitch_cog = TwitchAlert.TwitchAlert(bot)
+    database_manager = KoalaDBManager.KoalaDBManager(DB_PATH)
+    twitch_cog = TwitchAlert.TwitchAlert(bot, database_manager=database_manager)
     bot.add_cog(twitch_cog)
+    await dpytest.empty_queue()
     dpytest.configure(bot)
     print("Tests starting")
     return twitch_cog
@@ -154,24 +156,29 @@ def test_end_empty_loop(twitch_cog):
         twitch_cog.end_loop()
 
 
-@mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7362))
-@pytest.mark.skip(reason="Not Complete")  # @pytest.mark.asyncio
+@mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7363))
+@mock.patch("cogs.TwitchAlert.TwitchAPIHandler.get_streams_data",
+            mock.MagicMock(return_value={'id': '3215560150671170227', 'user_id': '27446517',
+                                         "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
+                                         'title': 'Music 24/7'}))
+@pytest.mark.skip(reason="Issues with testing inside asyncio event loop")
+@pytest.mark.asyncio
 async def test_loop_check_live(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
     expected_embed = discord.Embed(colour=KoalaBot.KOALA_GREEN,
-                             title="<:twitch:734024383957434489>  Monstercat is now streaming!",
-                             description="https://twitch.tv/monstercat")
+                                   title="<:twitch:734024383957434489>  Monstercat is now streaming!",
+                                   description="https://twitch.tv/monstercat")
     expected_embed.add_field(name="Stream Title", value="Non Stop Music - Monstercat Radio :notes:")
     expected_embed.add_field(name="Playing", value="Music & Performing Arts")
-    expected_embed.set_thumbnail(url="https://static-cdn.jtvnw.net/jtv_user_pictures/monstercat-profile_image-3e109d75f8413319-300x300.jpeg")
-
+    expected_embed.set_thumbnail(url="https://static-cdn.jtvnw.net/jtv_user_pictures/"
+                                     "monstercat-profile_image-3e109d75f8413319-300x300.jpeg")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "create_twitch_alert")
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_twitch_alert_to_channel 7362 {this_channel.id}")
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert 7362 monstercat")
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_twitch_alert_to_channel 7363 {this_channel.id}")
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert 7363 monstercat")
+    await dpytest.empty_queue()
     twitch_cog.start_loop()
-    time.sleep(2)
+    await asyncio.sleep(10)
     dpytest.verify_embed(expected_embed)
-
 
 
 # Test TwitchAPIHandler
