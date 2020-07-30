@@ -103,7 +103,7 @@ async def test_dm_welcome_message():
 
 @pytest.mark.asyncio
 async def test_on_member_join():
-    welcome_message = DBManager.db_execute_select()
+    welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
     await dpytest.member_join()
     dpytest.verify_message(welcome_message)
 
@@ -147,15 +147,15 @@ async def test_update_to_null_welcome_message():
 
 @pytest.mark.asyncio
 async def test_update_welcome_message():
+    dpytest.back.make_guild()
     guild = dpytest.get_config().guilds[0]
     test_welcome = "This is not a default message and should be in the database"
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
     dpytest.verify_message('Y/N', equals=False)
-    await dpytest.message('Y')
-    dpytest.verify_message(equals=False, text='new custom part of the message')
+    await dpytest.message('N')
+    dpytest.verify_message(equals=False, text='Not changing welcome')
     # Now verify the database hasn't been changed
     rows = DBManager.db_execute_select(f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
-
     if len(rows) != 1:
         assert False, f"There are {len(rows)} rows for guild id {guild.id} in the database when there should only be 1"
     else:
@@ -163,7 +163,7 @@ async def test_update_welcome_message():
         if len(row) != 2:
             assert False, f"There's {len(row)} columns in this row. Check your table creation/setup code"
         else:
-            assert row[1] == test_welcome, row[1]
+            assert row[1] == test_welcome
 
 
 @pytest.mark.asyncio
