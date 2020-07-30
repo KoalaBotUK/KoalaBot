@@ -48,6 +48,7 @@ async def test_on_guild_join():
     guild = dpytest.back.make_guild('TestGuildJoin', id_num=420)
     test_config.guilds.append(guild)
     await dpytest.member_join(1, client.user)
+    await asyncio.sleep(0.5)
     # Try testing guild join on startup
     rows = DBManager.db_execute_select(
         f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {guild.id};""")
@@ -55,15 +56,14 @@ async def test_on_guild_join():
     if len(rows) < 1:
         assert False, "There's no row for the created guild in the database"
 
-    with pytest.raises(RuntimeError) as exc:
-        rows = DBManager.db_execute_select(
-            f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
-        assert len(rows) != 0, "There's no row for the test created guild in the database"
-        assert len(rows) > 1, "There's duplicate rows for the test created guild in the database"
-        message = rows[0]
-        assert len(message) == 2, "Database row has incorrect number of columns. For some unknown reason."
-        assert message[0] == guild.id and message[1] == 'default message'
-    assert exc is None
+    rows = DBManager.db_execute_select(
+        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
+
+    assert len(rows) != 0, "There's no row for the test created guild in the database"
+    assert not len(rows) > 1, "There's duplicate rows for the test created guild in the database"
+    message = rows[0]
+    assert len(message) == 2, "Database row has incorrect number of columns. For some unknown reason."
+    assert message[0] == guild.id and message[1] == 'default message'
 
 
 @pytest.mark.asyncio
