@@ -29,6 +29,23 @@ KoalaBot and confirm you have read and understand our Privacy Policy <insert-lin
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 
+async def dm_group_message(members, message):
+    """
+    DMs members in a list of members
+    :param members: list of members to DM
+    :param message: The message to send to the group
+    :return: how many were dm'ed successfully.
+    """
+    count = 0
+    for member in members:
+        try:
+            await member.send(message)
+            count = count + 1
+        except Exception:  # In case of user dms being closed
+            pass
+    return count
+
+
 def get_guild_welcome_message(guild_id: int):
     """
     Retrieves a guild's customised welcome message from the database. Includes the basic legal message constant
@@ -48,23 +65,6 @@ def get_guild_welcome_message(guild_id: int):
 
     guild_welcome_message = welcome_message_row[1]
     return f"{guild_welcome_message} \r\n {BASE_LEGAL_MESSAGE}"
-
-
-async def dm_welcome_message(members, guild_welcome_message):
-    """
-    DMs members in a guild that guild's welcome message
-    :param members: all guild members
-    :param guild_welcome_message: The welcome message of the guild
-    :return: how many were dm'ed successfully.
-    """
-    count = 0
-    for member in members:
-        try:
-            await member.send(guild_welcome_message)
-            count = count + 1
-        except Exception:  # In case of user dms being closed
-            pass
-    return count
 
 
 class IntroCog(commands.Cog):
@@ -98,7 +98,7 @@ class IntroCog(commands.Cog):
         :param member: Member which just joined guild
         :return: void
         """
-        await dm_welcome_message([member], f"{get_guild_welcome_message(member.guild.id)}")
+        await dm_group_message([member], get_guild_welcome_message(member.guild.id))
 
     @commands.check(KoalaBot.is_owner) # TODO Change to is_admin in production
     @commands.command(name="send_welcome_message")
@@ -126,8 +126,8 @@ class IntroCog(commands.Cog):
                 if conf_msg == 'n':
                     await ctx.send('Okay, I won\'t send the welcome message out.')
                 else:
-                    await dm_welcome_message(non_bot_members,
-                                             f"{get_guild_welcome_message(ctx.guild.id)}")
+                    await dm_group_message(non_bot_members,
+                                           get_guild_welcome_message(ctx.guild.id))
 
     @commands.check(KoalaBot.is_owner) # TODO change to is_admin in production
     @commands.command(name="update_welcome_message")

@@ -94,10 +94,10 @@ async def test_duplicate_guild_get_welcome_message():
 
 
 @pytest.mark.asyncio
-async def test_dm_welcome_message():
+async def test_dm_group_message():
     welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
     test_member = dpytest.get_config().members[0]
-    await (IntroCog.dm_welcome_message([test_member], welcome_message))
+    await (IntroCog.dm_group_message([test_member], welcome_message))
     dpytest.verify_message('default message', equals=False)
 
 
@@ -256,5 +256,5 @@ async def test_timeout_update_welcome_message():
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    # DBManager.clear_all_tables(DBManager.fetch_all_tables())
+    DBManager.clear_all_tables(DBManager.fetch_all_tables())
     yield DBManager
