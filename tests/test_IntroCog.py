@@ -109,13 +109,6 @@ async def test_on_member_join():
 
 
 @pytest.mark.asyncio
-async def test_send_welcome_message():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
-    await dpytest.message('Y')
-    dpytest.verify_message('default message', equals=False)
-
-
-@pytest.mark.asyncio
 async def test_on_member_join_after_update():
     test_welcome = "This is not a default message"
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
@@ -127,9 +120,43 @@ async def test_on_member_join_after_update():
 
 
 @pytest.mark.asyncio
-async def test_invalid_yes_no_input():
-    test_welcome = "This should not be updated in the database"
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
+async def test_send_welcome_message():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
+    dpytest.verify_message('Are you sure you wish to do this? Y/N', equals=False)
+    await dpytest.message('Y')
+    dpytest.verify_message('default message', equals=False)
+
+
+@pytest.mark.asyncio
+async def test_cancel_send_welcome_message():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
+    await dpytest.message('N')
+    dpytest.verify_message(f"Okay, I won't send the welcome message out.", equals=False)
+
+
+@pytest.mark.asyncio
+async def test_timeout_send_welcome_message():
+    async def timeout_thread():
+        with pytest.raises(asyncio.TimeoutError) as exc:
+            await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
+            dpytest.verify_message('Are you sure you wish to do this? Y/N')
+            # Timer to force timeout
+
+            async def stub():
+                return
+
+            t = threading.Timer(5.01, stub)
+            t.start()
+            t.join()
+        assert exc.value == 'Timed out'
+    timer = threading.Timer(5, timeout_thread)
+    timer.start()
+    timer.join()
+
+
+@pytest.mark.asyncio
+async def test_invalid_confirmation_send_welcome_message():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message ")
     dpytest.verify_message('Y/N', False)
     await dpytest.message('3')
     dpytest.verify_message('Invalid input', False)
@@ -147,13 +174,24 @@ async def test_update_to_null_welcome_message():
 
 @pytest.mark.asyncio
 async def test_update_welcome_message():
-    dpytest.back.make_guild()
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestUpdateWelcomeMessage', id_num=1337)
+    test_config.guilds.append(guild)
+    user = dpytest.back.make_user('Test update welcome user', 1234)
+    await dpytest.member_join(test_config.guilds.index(guild), client.user)
+    await asyncio.sleep(0.5)
+    assert IntroCog.get_guild_welcome_message(guild.id)
+    test_welcome = "This is not a default message and should be in the database"
+    await dpytest.member_join(test_config.guilds.index(guild))
+
     guild = dpytest.get_config().guilds[0]
     test_welcome = "This is not a default message and should be in the database"
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome, member=test_config.members.index({user, guild}))
     dpytest.verify_message('Y/N', equals=False)
-    await dpytest.message('N')
-    dpytest.verify_message(equals=False, text='Not changing welcome')
+    await dpytest.message('Y', member=test_config.members.index({user, guild}))
+    dpytest.verify_message(equals=False, text=test_welcome)
+    await asyncio.sleep(1)
     # Now verify the database hasn't been changed
     rows = DBManager.db_execute_select(f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
     if len(rows) != 1:
@@ -163,6 +201,7 @@ async def test_update_welcome_message():
         if len(row) != 2:
             assert False, f"There's {len(row)} columns in this row. Check your table creation/setup code"
         else:
+            assert test_welcome in IntroCog.get_guild_welcome_message(guild.id)
             assert row[1] == test_welcome
 
 
@@ -184,6 +223,15 @@ async def test_cancel_update_welcome_message():
             assert False, f"There's {len(row)} columns in this row. Check your table creation/setup code"
         else:
             assert row[1] != test_welcome
+
+
+@pytest.mark.asyncio
+async def test_invalid_confirmation_update_welcome_message():
+    test_welcome = "This should not be updated in the database"
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
+    dpytest.verify_message('Y/N', False)
+    await dpytest.message('3')
+    dpytest.verify_message('Invalid input', False)
 
 
 @pytest.mark.asyncio

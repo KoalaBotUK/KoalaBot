@@ -29,16 +29,6 @@ KoalaBot and confirm you have read and understand our Privacy Policy <insert-lin
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 
-def is_command_invoker(user, ctx):
-    """
-    Check that the user that responds to wait_for() is the one who invoked the command
-    :param user: The response
-    :param ctx: The context of the message
-    :return: void
-    """
-    return user.id == ctx.message.author.id
-
-
 def get_guild_welcome_message(guild_id: int):
     """
     Retrieves a guild's customised welcome message from the database. Includes the basic legal message constant
@@ -47,16 +37,11 @@ def get_guild_welcome_message(guild_id: int):
     """
     welcome_messages = DBManager.db_execute_select(sql_str=
                                                    f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild_id}';""")
-    for row in welcome_messages:
-        print(row[1] + '\n\r')
     if len(welcome_messages) < 1:
         # If there's no current row representing this (for whatever reason), add one to the table
         DBManager.db_execute_commit(sql_str=
                                     f"""INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, 'default message');""")
         welcome_message_row = [0, 'default message']
-    elif len(welcome_messages) > 1:
-        # There should never be more than one. Ever.
-        raise RuntimeError
     else:
         # Return the one that exists
         welcome_message_row = welcome_messages[0]
@@ -77,7 +62,7 @@ async def dm_welcome_message(members, guild_welcome_message):
         try:
             await member.send(guild_welcome_message)
             count = count + 1
-        except:  # In case of user dms being closed
+        except Exception:  # In case of user dms being closed
             pass
     return count
 
@@ -117,7 +102,7 @@ class IntroCog(commands.Cog):
 
     @commands.check(KoalaBot.is_owner) # TODO Change to is_admin in production
     @commands.command(name="send_welcome_message")
-    async def send_welcome_message(self, ctx, *args):
+    async def send_welcome_message(self, ctx):
         """
         Allows admins to send out their welcome message manually to all members of a guild.
         :param ctx: Context of the command
@@ -126,12 +111,7 @@ class IntroCog(commands.Cog):
         """
         non_bot_members = [member for member in ctx.guild.members if not member.bot]
 
-        ignored_roles = [ctx.guild.get_role(role) for role in args if isinstance(role, int)]
-        ignored_roles.append([role for role in args if isinstance(role, discord.Role)])
-
-        dm_members = [member for member in non_bot_members if not (any(member.roles) in ignored_roles)]
-
-        await ctx.send(f"This will DM {len(dm_members)} people. Are you sure you wish to do this? Y/N")
+        await ctx.send(f"This will DM {len(non_bot_members)} people. Are you sure you wish to do this? Y/N")
 
         try:
             confirmation_message = await self.bot.wait_for('message', timeout=5.0,
@@ -146,9 +126,8 @@ class IntroCog(commands.Cog):
                 if conf_msg == 'n':
                     await ctx.send('Okay, I won\'t send the welcome message out.')
                 else:
-                    await dm_welcome_message(ctx.guild.members,
+                    await dm_welcome_message(non_bot_members,
                                              f"{get_guild_welcome_message(ctx.guild.id)}")
-        return
 
     @commands.check(KoalaBot.is_owner) # TODO change to is_admin in production
     @commands.command(name="update_welcome_message")

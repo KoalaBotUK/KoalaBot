@@ -40,8 +40,6 @@ TEST_USER = "TestUser#0001"  # Test user for dpytest
 DATABASE_PATH = "Koala.db"
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 
-
-
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
