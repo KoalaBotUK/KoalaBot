@@ -135,6 +135,30 @@ async def test_cancel_send_welcome_message():
 
 
 @pytest.mark.asyncio
+async def test_invalid_confirmation_send_welcome_message():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message ")
+    dpytest.verify_message('Y/N', False)
+    await dpytest.message('3')
+    dpytest.verify_message('Invalid input', False)
+
+
+@pytest.mark.asyncio
+async def test_lower_case_yes_confirmation_send_welcome_message():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message ")
+    dpytest.verify_message('Y/N', False)
+    await dpytest.message('y')
+    dpytest.verify_message('default message', False)
+
+
+@pytest.mark.asyncio
+async def test_lower_case_no_confirmation_send_welcome_message():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message ")
+    dpytest.verify_message('Y/N', False)
+    await dpytest.message('n')
+    dpytest.verify_message(f"Okay, I won't send the welcome message out.", equals=False)
+
+
+@pytest.mark.asyncio
 async def test_timeout_send_welcome_message():
     async def timeout_thread():
         with pytest.raises(asyncio.TimeoutError) as exc:
@@ -152,14 +176,6 @@ async def test_timeout_send_welcome_message():
     timer = threading.Timer(5, timeout_thread)
     timer.start()
     timer.join()
-
-
-@pytest.mark.asyncio
-async def test_invalid_confirmation_send_welcome_message():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message ")
-    dpytest.verify_message('Y/N', False)
-    await dpytest.message('3')
-    dpytest.verify_message('Invalid input', False)
 
 
 @pytest.mark.asyncio

@@ -22,10 +22,10 @@ from utils import KoalaDBManager
 
 # Constants
 load_dotenv()
+BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
+KoalaBot and confirm you have read and understand our Privacy Policy <insert-link-here>"""
 
 # Variables
-base_legal_message = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
-KoalaBot and confirm you have read and understand our Privacy Policy <insert-link-here>"""
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 
@@ -47,7 +47,7 @@ def get_guild_welcome_message(guild_id: int):
         welcome_message_row = welcome_messages[0]
 
     guild_welcome_message = welcome_message_row[1]
-    return f"{guild_welcome_message} \r\n {base_legal_message}"
+    return f"{guild_welcome_message} \r\n {BASE_LEGAL_MESSAGE}"
 
 
 async def dm_welcome_message(members, guild_welcome_message):
