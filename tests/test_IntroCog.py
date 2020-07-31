@@ -183,42 +183,24 @@ async def test_update_to_null_welcome_message():
     """
     Test that update_welcome_message doesn't fire without a parameter
     """
-    with pytest.raises(discorderrors.MissingRequiredArgument) as exc:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
-    assert str(exc.value) == 'new_message is a required argument that is missing.'
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message" + "")
+    dpytest.verify_message('Please put in a welcome message to update to.')
 
 
 @pytest.mark.asyncio
 async def test_update_welcome_message():
-    test_config = dpytest.get_config()
-    client = test_config.client
-    guild = dpytest.back.make_guild('TestUpdateWelcomeMessage', id_num=1337)
-    test_config.guilds.append(guild)
-    user = dpytest.back.make_user('Test update welcome user', 1234)
-    await dpytest.member_join(test_config.guilds.index(guild), client.user)
-    await asyncio.sleep(0.5)
-    assert IntroCog.get_guild_welcome_message(guild.id)
-    test_welcome = "This is not a default message and should be in the database"
-    await dpytest.member_join(test_config.guilds.index(guild))
-
     guild = dpytest.get_config().guilds[0]
-    test_welcome = "This is not a default message and should be in the database"
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome, member=test_config.members.index({user, guild}))
-    dpytest.verify_message('Y/N', equals=False)
-    await dpytest.message('Y', member=test_config.members.index({user, guild}))
-    dpytest.verify_message(equals=False, text=test_welcome)
+    old_message = IntroCog.get_guild_welcome_message(guild.id)
+    assert 'default message' in old_message
+    test_welcome = "This should be updated in the database"
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
+    dpytest.verify_message('Y/N', False)
+    await dpytest.message('Y')
+    dpytest.verify_message("Your new custom part of the welcome message is " + test_welcome)
     await asyncio.sleep(1)
-    # Now verify the database hasn't been changed
-    rows = DBManager.db_execute_select(f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = '{guild.id}';""")
-    if len(rows) != 1:
-        assert False, f"There are {len(rows)} rows for guild id {guild.id} in the database when there should only be 1"
-    else:
-        row = rows[0]
-        if len(row) != 2:
-            assert False, f"There's {len(row)} columns in this row. Check your table creation/setup code"
-        else:
-            assert test_welcome in IntroCog.get_guild_welcome_message(guild.id)
-            assert row[1] == test_welcome
+    new_message = IntroCog.get_guild_welcome_message(guild.id)
+    assert new_message != old_message
+    assert new_message == f"{test_welcome} \r\n {IntroCog.BASE_LEGAL_MESSAGE}"
 
 
 @pytest.mark.asyncio
@@ -274,5 +256,5 @@ async def test_timeout_update_welcome_message():
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    DBManager.clear_all_tables(DBManager.fetch_all_tables())
+    # DBManager.clear_all_tables(DBManager.fetch_all_tables())
     yield DBManager

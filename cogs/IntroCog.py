@@ -131,16 +131,19 @@ class IntroCog(commands.Cog):
 
     @commands.check(KoalaBot.is_owner) # TODO change to is_admin in production
     @commands.command(name="update_welcome_message")
-    async def update_welcome_message(self, ctx, *, new_message: str):
+    async def update_welcome_message(self, ctx, *, new_message: str = None):
         """
         Allows admins to change their customisable part of the welcome message of a guild.
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
         :return: void
         """
-        await ctx.send("""Your current welcome message is: \r\n {0} \r\n
+        if new_message is None:
+            await ctx.send('Please put in a welcome message to update to.')
+            return
+        await ctx.send("""Your current welcome message is: \r\n {0}
         \r\n\r\n Your new welcome message will be: \r\n {1}
-        \r\n\r\n Do you accept this change? Y/N""".format(get_guild_welcome_message(ctx.message.guild.id), new_message))
+        \r\n\r\n Do you accept this change? Y/N""".format(get_guild_welcome_message(ctx.message.guild.id), f"{new_message}\r\n{BASE_LEGAL_MESSAGE}" ))
 
         try:
             confirmation_message = await self.bot.wait_for('message', timeout=5.0,
