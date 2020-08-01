@@ -183,7 +183,8 @@ async def test_update_to_null_welcome_message():
     """
     Test that update_welcome_message doesn't fire without a parameter
     """
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message" + "")
+    with pytest.raises(discorderrors.MissingRequiredArgument):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
     dpytest.verify_message('Please put in a welcome message to update to.')
 
 

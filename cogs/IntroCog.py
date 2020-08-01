@@ -23,7 +23,8 @@ from utils import KoalaDBManager
 # Constants
 load_dotenv()
 BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
-KoalaBot and confirm you have read and understand our Privacy Policy <insert-link-here>"""
+KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
+the following link: http://legal.koalabot.uk/"""
 
 # Variables
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
@@ -106,7 +107,6 @@ class IntroCog(commands.Cog):
         """
         Allows admins to send out their welcome message manually to all members of a guild.
         :param ctx: Context of the command
-        :param args: Member IDs, Roles or Member mentions to avoid sending the message to
         :return: void
         """
         non_bot_members = [member for member in ctx.guild.members if not member.bot]
@@ -131,16 +131,13 @@ class IntroCog(commands.Cog):
 
     @commands.check(KoalaBot.is_owner) # TODO change to is_admin in production
     @commands.command(name="update_welcome_message")
-    async def update_welcome_message(self, ctx, *, new_message: str = None):
+    async def update_welcome_message(self, ctx, *, new_message: str):
         """
         Allows admins to change their customisable part of the welcome message of a guild.
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
         :return: void
         """
-        if new_message is None:
-            await ctx.send('Please put in a welcome message to update to.')
-            return
         await ctx.send("""Your current welcome message is: \r\n {0}
         \r\n\r\n Your new welcome message will be: \r\n {1}
         \r\n\r\n Do you accept this change? Y/N""".format(get_guild_welcome_message(ctx.message.guild.id), f"{new_message}\r\n{BASE_LEGAL_MESSAGE}" ))
@@ -161,6 +158,11 @@ class IntroCog(commands.Cog):
                     DBManager.db_execute_commit(
                         sql_str=f"""UPDATE GuildWelcomeMessages SET welcome_message = '{new_message}' WHERE guild_id = {ctx.message.guild.id};""")
                     await ctx.send(f"Your new custom part of the welcome message is {new_message}")
+
+    @update_welcome_message.error
+    async def on_update_error(self, ctx, error):
+        if isinstance(error, discord.ext.commands.MissingRequiredArgument):
+            await ctx.send('Please put in a welcome message to update to.')
 
 
 def setup(bot: KoalaBot) -> None:
