@@ -103,7 +103,13 @@ async def test_dm_group_message():
 
 @pytest.mark.asyncio
 async def test_on_member_join():
-    welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestMemberJoin', id_num=1234)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1, client.user)
+    await asyncio.sleep(0.5)
+    welcome_message = IntroCog.get_guild_welcome_message(guild.id)
     await dpytest.member_join()
     dpytest.verify_message(welcome_message)
 
@@ -183,9 +189,11 @@ async def test_update_to_null_welcome_message():
     """
     Test that update_welcome_message doesn't fire without a parameter
     """
+    old_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
     with pytest.raises(discorderrors.MissingRequiredArgument):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
     dpytest.verify_message('Please put in a welcome message to update to.')
+    assert old_message == IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
 
 
 @pytest.mark.asyncio
@@ -259,3 +267,9 @@ async def test_timeout_update_welcome_message():
 def setup_db():
     DBManager.clear_all_tables(DBManager.fetch_all_tables())
     yield DBManager
+
+
+@pytest.fixture(scope='function', autouse=True)
+async def setup_clean_messages():
+    await dpytest.empty_queue()
+    yield dpytest
