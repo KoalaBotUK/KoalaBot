@@ -4,3 +4,4 @@ pytest
 dpytest
 python-dotenv
 discord.py
+validators
