@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 
 """
+TODO
+check it works with multiple roles per server
+check with works with multiple servers
+integrate email bits
+"""
+
+"""
 Koala Bot Base Cog code and additional base cog functions
 Commented using reStructuredText (reST)
 """
@@ -13,6 +20,7 @@ import string
 
 
 # Libs
+import discord
 import validators
 from discord.ext import commands
 
@@ -42,7 +50,7 @@ class Verification(commands.Cog):
         self.bot = bot
         self._last_member = None
         self.started = False
-        self.DBmanager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
+        self.DBmanager = KoalaDBManager.KoalaDBManager("../" + KoalaBot.DATABASE_PATH)
         self.DBmanager.db_execute_commit("CREATE TABLE IF NOT EXISTS server_info (guild_id, role_id, domain)")
         self.DBmanager.db_execute_commit(
             "CREATE TABLE IF NOT EXISTS verified_users (guild_id, user_id, domain, token, verified, role_assigned)")
@@ -60,25 +68,29 @@ class Verification(commands.Cog):
         # sends a dm to a user if the server they are joining has any verification enabled
         if exists:
             await member.send(
-                "Hi, I see you've logged in. Please verify with a student email address with `k!verify <email>`")
+                f"Hi, I see you've logged in. Please verify with a student email address with `k!verify {member.guild.id} <email>`")
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        self.DBmanager.db_execute_commit("DELETE FROM verified_users WHERE guild_id=? AND user_id=?", (member.guild.id, member.id))
 
     @commands.command(name="enable_verification")
-    async def enable(self, ctx, domain, role):
+    async def enable(self, ctx, domain, role=None):
         """
         Enables verification for a role
         :param ctx: context of the message
         :param domain: domain to be verified
         :param role: role to be verified
         """
-        if not role:
-            await ctx.send("Please provide a role to give to verified users")
+        if not role or not domain:
+            await ctx.send(f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
             return
 
         if not validators.domain(domain):
             await ctx.send("Please provide a valid domain")
             return
 
-        role_id = role[3:-1]
+        role_id = int(role[3:-1])
         exists = self.DBmanager.db_execute_select("SELECT * FROM server_info WHERE guild_id=? AND role_id=?",
                                                   args=(ctx.guild.id, role_id))
         if exists:
@@ -97,14 +109,14 @@ class Verification(commands.Cog):
         :param domain: domain to stop verifying
         :param role: role to stop verifying
         """
-        role_id = role[3:-1]
+        role_id = int(role[3:-1])
         self.DBmanager.db_execute_commit("DELETE FROM server_info WHERE domain=? AND role_id=? AND guild_id=?",
                                          args=(domain, role_id, ctx.guild.id))
         await ctx.send(f"Emails with {domain} no longer give {role}")
 
     @commands.check(is_dm_channel)
     @commands.command(name="verify")
-    async def verify(self, ctx, guild_id, email):
+    async def verify(self, ctx, guild_id : int, email):
         """
         Starts the verification process for a user
         :param ctx: context for the message sent
@@ -113,7 +125,8 @@ class Verification(commands.Cog):
         """
         domain = email.split("@", 1)[1]
         exists = self.DBmanager.db_execute_select("SELECT * FROM server_info WHERE guild_id=? AND domain=?",
-                                                  args=(ctx.guild.id, domain))
+                                                  (guild_id, domain))
+
         if not exists:
             await ctx.send("That is not a domain that server allows")
             return
@@ -124,14 +137,14 @@ class Verification(commands.Cog):
             return
 
         already_verified = self.DBmanager.db_execute_select("SELECT * FROM verified_users WHERE user_id=? AND domain=?",
-                                                            args=(ctx.author.id, domain))
+                                                            (ctx.author.id, domain))
         if already_verified:
             await ctx.send("You are already verified for that role")
             return
 
         verification_code = ''.join(random.choice(string.ascii_letters) for i in range(8))
         self.DBmanager.db_execute_commit("INSERT INTO verified_users VALUES (?, ?, ?, ?, ?, ?)",
-                                         args=(ctx.guild.id, ctx.author.id, domain, verification_code, 0, 0))
+                                         args=(guild_id, ctx.author.id, domain, verification_code, 0, 0))
 
         # send email code, link something like https://koalabot.uk/verify?code={verification_code}"
 
@@ -141,6 +154,8 @@ class Verification(commands.Cog):
         """
         Loop updating roles for those who have clicked the link/verified in some way
         """
+        print("Verification loop has started")
+        await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             newly_verified = self.DBmanager.db_execute_select(
                 "SELECT guild_id, user_id, domain FROM verified_users WHERE verified=? AND role_assigned=?",
@@ -148,15 +163,16 @@ class Verification(commands.Cog):
             for guild_id, user_id, domain in newly_verified:
                 guild = self.bot.get_guild(guild_id)
                 member = guild.get_member(user_id)
-                role_id = self.DBmanager.db_execute_select(
+                role_ids = self.DBmanager.db_execute_select(
                     "SELECT role_id FROM server_info WHERE guild_id=? AND domain=?",
                     (guild_id, domain))
-                await member.add_roles(guild.get_role(role_id))
+                for id in role_ids:
+                    role = discord.utils.get(guild.roles, id=id[0])
+                    await member.add_roles(role)
                 self.DBmanager.db_execute_commit(
                     "UPDATE verified_users SET role_assigned=? WHERE guild_id=? AND user_id=?",
                     (1, guild_id, user_id))
-            await asyncio.sleep(10)
-
+            await asyncio.sleep(5)
 
 def setup(bot: KoalaBot) -> None:
     """
