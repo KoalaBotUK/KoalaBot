@@ -81,7 +81,6 @@ class IntroCog(commands.Cog):
         """
         On bot joining guild, add this guild to the database of guild welcome messages.
         :param guild: Guild KoalaBot just joined
-        :return: void
         """
         if (len(DBManager.db_execute_select(
                 f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id == {guild.id};""")) == 0):
@@ -97,17 +96,15 @@ class IntroCog(commands.Cog):
         """
         On member joining guild, send DM to member with welcome message.
         :param member: Member which just joined guild
-        :return: void
         """
         await dm_group_message([member], get_guild_welcome_message(member.guild.id))
 
-    @commands.check(KoalaBot.is_owner) # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx):
         """
         Allows admins to send out their welcome message manually to all members of a guild.
         :param ctx: Context of the command
-        :return: void
         """
         non_bot_members = [member for member in ctx.guild.members if not member.bot]
 
@@ -129,14 +126,13 @@ class IntroCog(commands.Cog):
                     await dm_group_message(non_bot_members,
                                            get_guild_welcome_message(ctx.guild.id))
 
-    @commands.check(KoalaBot.is_owner) # TODO change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="update_welcome_message")
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
         Allows admins to change their customisable part of the welcome message of a guild.
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
-        :return: void
         """
         await ctx.send("""Your current welcome message is: \r\n {0}
         \r\n\r\n Your new welcome message will be: \r\n {1}
