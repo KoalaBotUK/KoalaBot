@@ -93,10 +93,21 @@ async def test_duplicate_guild_get_welcome_message():
 
 
 @pytest.mark.asyncio
-async def test_dm_group_message():
+async def test_dm_single_group_message():
     welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
     test_member = dpytest.get_config().members[0]
     await (IntroCog.dm_group_message([test_member], welcome_message))
+    dpytest.verify_message('default message', equals=False)
+
+
+@pytest.mark.asyncio
+async def test_dm_plural_group_message():
+    welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
+    test_member = dpytest.get_config().members[0]
+    test_member_2 = await dpytest.member_join()
+    await dpytest.empty_queue()
+    await (IntroCog.dm_group_message([test_member, test_member_2], welcome_message))
+    dpytest.verify_message('default message', equals=False)
     dpytest.verify_message('default message', equals=False)
 
 
@@ -115,11 +126,15 @@ async def test_on_member_join():
 
 @pytest.mark.asyncio
 async def test_on_guild_remove():
-    row = DBManager.db_execute_select(
-        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
-    assert len(row) == 0
     test_config = dpytest.get_config()
     client = test_config.client
+    guild = dpytest.back.make_guild('TestGuildRemove', id_num=8086)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1, client.user)
+    await asyncio.sleep(0.5)
+    row = DBManager.db_execute_select(
+        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
+    assert len(row) == 1, row
     bot_member = dpytest.get_config().guilds[0].get_member(client.user.id)
     await dpytest.kick_callback(dpytest.get_config().guilds[0], bot_member)
     await asyncio.sleep(0.5)
