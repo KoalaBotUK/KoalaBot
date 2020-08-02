@@ -43,6 +43,23 @@ class SocialAlert(commands.Cog):
 pass
 
 
+def create_social_embed(platform, user_info, post_info):
+    """
+    Creates an embed for social notifications
+    :param platform: Social platform
+    :param user_info: User information from API calls
+    :param post_info: Post information from API calls
+    :return: Created embed
+    """
+    embed = discord.Embed
+    embed.title = platform + "New post from" + user_info
+
+    embed.description = post_info
+    # TODO:Make it more fancy with icons etc
+
+    return embed
+
+
 class FacebookGraphAPIHandler:
     """
     A wrapper to interact with the Facebook GraphAPI
