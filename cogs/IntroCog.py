@@ -99,6 +99,16 @@ class IntroCog(commands.Cog):
         """
         await dm_group_message([member], get_guild_welcome_message(member.guild.id))
 
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        """
+        On bot leaving guild, remove the guild from the database of guild welcome messages
+        :param guild: Guild KoalaBot just left
+        """
+        DBManager.db_execute_commit(f"""DELETE FROM GuildWelcomeMessages WHERE guild_id = {guild.id};""")
+        import datetime
+        print(f"{datetime.datetime.now()}: KoalaBot has left guild {guild.id}.")
+
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx):
@@ -136,7 +146,8 @@ class IntroCog(commands.Cog):
         """
         await ctx.send("""Your current welcome message is: \r\n {0}
         \r\n\r\n Your new welcome message will be: \r\n {1}
-        \r\n\r\n Do you accept this change? Y/N""".format(get_guild_welcome_message(ctx.message.guild.id), f"{new_message}\r\n{BASE_LEGAL_MESSAGE}" ))
+        \r\n\r\n Do you accept this change? Y/N""".format(get_guild_welcome_message(ctx.message.guild.id),
+                                                          f"{new_message}\r\n{BASE_LEGAL_MESSAGE}"))
 
         try:
             confirmation_message = await self.bot.wait_for('message', timeout=5.0,

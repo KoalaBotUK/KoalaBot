@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# TODO Test rig broken, restart from beginning and fix.
 """
 Testing KoalaBot IntroCog
 
@@ -17,7 +16,7 @@ import discord.ext.commands.errors as discorderrors
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
-import discord
+
 # Own modules
 import KoalaBot
 from cogs import IntroCog
@@ -115,6 +114,21 @@ async def test_on_member_join():
 
 
 @pytest.mark.asyncio
+async def test_on_guild_remove():
+    row = DBManager.db_execute_select(
+        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
+    assert len(row) == 0
+    test_config = dpytest.get_config()
+    client = test_config.client
+    bot_member = dpytest.get_config().guilds[0].get_member(client.user.id)
+    await dpytest.kick_callback(dpytest.get_config().guilds[0], bot_member)
+    await asyncio.sleep(0.5)
+    row = DBManager.db_execute_select(
+        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
+    assert len(row) == 0
+
+
+@pytest.mark.asyncio
 async def test_on_member_join_after_update():
     test_welcome = "This is not a default message"
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)
@@ -170,6 +184,7 @@ async def test_timeout_send_welcome_message():
         with pytest.raises(asyncio.TimeoutError) as exc:
             await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
             dpytest.verify_message('Are you sure you wish to do this? Y/N')
+
             # Timer to force timeout
 
             async def stub():
@@ -179,6 +194,7 @@ async def test_timeout_send_welcome_message():
             t.start()
             t.join()
         assert exc.value == 'Timed out'
+
     timer = threading.Timer(5, timeout_thread)
     timer.start()
     timer.join()
