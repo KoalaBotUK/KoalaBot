@@ -2,8 +2,6 @@
 
 """
 TODO
-check it works with multiple roles per server
-check with works with multiple servers
 integrate email bits
 """
 
@@ -17,7 +15,7 @@ Commented using reStructuredText (reST)
 import asyncio
 import random
 import string
-
+import inspect
 
 # Libs
 import discord
@@ -63,34 +61,52 @@ class Verification(commands.Cog):
         :param member: the user who joined
         """
         exists = self.DBmanager.db_execute_select("SELECT * FROM server_info WHERE guild_id=?",
-                                                  args=(member.guild.id,))
+                                                  (member.guild.id,))
 
         # sends a dm to a user if the server they are joining has any verification enabled
         if exists:
             await member.send(
-                f"Hi, I see you've logged in. Please verify with a student email address with `k!verify {member.guild.id} <email>`")
+                f"Hi, I see you've logged in. Please verify with an allowed email address with `k!verify {member.guild.id} <email>`")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
-        self.DBmanager.db_execute_commit("DELETE FROM verified_users WHERE guild_id=? AND user_id=?", (member.guild.id, member.id))
+        self.DBmanager.db_execute_commit("DELETE FROM verified_users WHERE guild_id=? AND user_id=?",
+                                         (member.guild.id, member.id))
 
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="enable_verification")
-    async def enable(self, ctx, domain, role=None):
+    async def enable(self, ctx, domain=None, role=None):
         """
         Enables verification for a role
         :param ctx: context of the message
         :param domain: domain to be verified
         :param role: role to be verified
         """
+
         if not role or not domain:
-            await ctx.send(f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+            await ctx.send(
+                f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+            return
+
+        try:
+            role_id = int(role[3:-1])
+        except ValueError:
+            await ctx.send(f"Please give a role by @mentioning it")
+            return
+        except TypeError:
+            await ctx.send("Please give a role by @mentioning it")
+            return
+
+        role_valid = discord.utils.get(ctx.guild.roles, id=role_id)
+
+        if not role_valid:
+            await ctx.send("Please supply a valid role")
             return
 
         if not validators.domain(domain):
             await ctx.send("Please provide a valid domain")
             return
 
-        role_id = int(role[3:-1])
         exists = self.DBmanager.db_execute_select("SELECT * FROM server_info WHERE guild_id=? AND role_id=?",
                                                   args=(ctx.guild.id, role_id))
         if exists:
@@ -101,22 +117,37 @@ class Verification(commands.Cog):
                                          args=(ctx.guild.id, role_id, domain))
         await ctx.send(f"Verification enabled for <@&{role_id}> for emails with the domain {domain}")
 
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="disable_verification")
-    async def disable(self, ctx, domain, role):
+    async def disable(self, ctx, domain=None, role=None):
         """
         Disables verification for a specific role
         :param ctx: context of the message
         :param domain: domain to stop verifying
         :param role: role to stop verifying
         """
-        role_id = int(role[3:-1])
+
+        if not role or not domain:
+            await ctx.send(
+                f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+            return
+
+        try:
+            role_id = int(role[3:-1])
+        except ValueError:
+            await ctx.send("Please give a role by @mentioning it")
+            return
+        except TypeError:
+            await ctx.send("Please give a role by @mentioning it")
+            return
+
         self.DBmanager.db_execute_commit("DELETE FROM server_info WHERE domain=? AND role_id=? AND guild_id=?",
-                                         args=(domain, role_id, ctx.guild.id))
+                                         (domain, role_id, ctx.guild.id))
         await ctx.send(f"Emails with {domain} no longer give {role}")
 
     @commands.check(is_dm_channel)
     @commands.command(name="verify")
-    async def verify(self, ctx, guild_id : int, email):
+    async def verify(self, ctx, guild_id: int, email):
         """
         Starts the verification process for a user
         :param ctx: context for the message sent
@@ -173,6 +204,7 @@ class Verification(commands.Cog):
                     "UPDATE verified_users SET role_assigned=? WHERE guild_id=? AND user_id=?",
                     (1, guild_id, user_id))
             await asyncio.sleep(5)
+
 
 def setup(bot: KoalaBot) -> None:
     """
