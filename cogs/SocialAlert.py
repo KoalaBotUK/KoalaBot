@@ -30,9 +30,8 @@ import KoalaBot
 # Constants
 load_dotenv()
 
+
 # Variables
-
-
 
 
 class SocialAlert(commands.Cog):
@@ -48,15 +47,22 @@ class FacebookGraphAPIHandler:
     """
     A wrapper to interact with the Facebook GraphAPI
     """
-    def __init__(self, client_id: str, client_secret: str):
+
+    def __init__(self, client_id: str, client_secret: str, short_token: str):
         self.client_id = client_id
         self.client_secret = client_secret
+        self.short_token = short_token
         self.oauth_token = self.get_new_facebook_oauth()
         self.graph = facebook.GraphAPI(self.oauth_token)
 
-
     def get_new_facebook_oauth(self):
-        pass
+        """
+        Get a new long-lived access token from Facebook
+        :return: New long-lived access token
+        """
+        access_token_url = "https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id={}&client_secret={}&fb_exchange_token={}".format(
+            self.client_id, self.client_secret, self.short_token)
+        return requests.get(access_token_url).json()['access_token']
 
     def get_post_info(self, page_id):
         """
@@ -73,6 +79,7 @@ class FacebookGraphAPIHandler:
         :return: Dictionary with the page's data
         """
         return self.graph.get_object(page_id)
+
 
 def setup(bot: KoalaBot) -> None:
     """
