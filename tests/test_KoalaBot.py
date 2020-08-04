@@ -21,6 +21,7 @@ import KoalaBot
 from tests.utils.TestUtils import FakeAuthor
 from tests.utils.TestUtilsCog import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
+
 # Constants
 
 # Variables
@@ -125,4 +126,3 @@ async def test_dm_empty_group_message():
     x = await KoalaBot.dm_group_message([], test_message)
     dpytest.verify_message(assert_nothing=True)
     assert x == 0
-

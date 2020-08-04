@@ -92,7 +92,7 @@ class IntroCog(commands.Cog):
         import datetime
         print(f"{datetime.datetime.now()}: KoalaBot has left guild {guild.id}.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.is_owner)
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx):
         """
@@ -117,9 +117,9 @@ class IntroCog(commands.Cog):
                     await ctx.send('Okay, I won\'t send the welcome message out.')
                 else:
                     await KoalaBot.dm_group_message(non_bot_members,
-                                           get_guild_welcome_message(ctx.guild.id))
+                                                    get_guild_welcome_message(ctx.guild.id))
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.is_owner)
     @commands.command(name="update_welcome_message")
     async def update_welcome_message(self, ctx, *, new_message: str):
         """

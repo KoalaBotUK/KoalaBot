@@ -210,6 +210,9 @@ async def test_update_to_null_welcome_message():
 
 @pytest.mark.asyncio
 async def test_update_welcome_message():
+    """
+    Test that update_welcome_message actually updates the entry in the database
+    """
     guild = dpytest.get_config().guilds[0]
     test_welcome = "This should be updated in the database"
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + test_welcome)

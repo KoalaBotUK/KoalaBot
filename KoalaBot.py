@@ -74,7 +74,7 @@ def load_all_cogs():
     """
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py'):
-            client.load_extension(COGS_DIR.replace("/", ".")+f'.{filename[:-3]}')
+            client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
 
 def get_channel_from_id(id):
