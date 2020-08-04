@@ -112,6 +112,12 @@ async def test_dm_plural_group_message():
 
 
 @pytest.mark.asyncio
+async def test_dm_empty_group_message():
+    await IntroCog.dm_group_message([], 'this should not be sent')
+    dpytest.verify_message(assert_nothing=True)
+
+
+@pytest.mark.asyncio
 async def test_on_member_join():
     test_config = dpytest.get_config()
     client = test_config.client
@@ -133,10 +139,10 @@ async def test_on_guild_remove():
     await dpytest.member_join(1, client.user)
     await asyncio.sleep(0.5)
     row = DBManager.db_execute_select(
-        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
+        f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = 8086;""")
     assert len(row) == 1, row
     bot_member = dpytest.get_config().guilds[0].get_member(client.user.id)
-    await dpytest.kick_callback(dpytest.get_config().guilds[0], bot_member)
+    await dpytest.kick_callback(guild, bot_member)
     await asyncio.sleep(0.5)
     row = DBManager.db_execute_select(
         f"""SELECT * FROM GuildWelcomeMessages WHERE guild_id = {dpytest.get_config().guilds[0].id};""")
