@@ -51,6 +51,7 @@ async def setup_clean_messages():
     await dpytest.empty_queue()
     yield dpytest
 
+
 def test_test_user_is_owner(test_ctx):
     assert KoalaBot.is_owner(test_ctx)
 

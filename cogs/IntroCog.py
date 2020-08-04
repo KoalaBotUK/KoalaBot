@@ -80,7 +80,7 @@ class IntroCog(commands.Cog):
         On member joining guild, send DM to member with welcome message.
         :param member: Member which just joined guild
         """
-        await dm_group_message([member], get_guild_welcome_message(member.guild.id))
+        await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -116,7 +116,7 @@ class IntroCog(commands.Cog):
                 if conf_msg == 'n':
                     await ctx.send('Okay, I won\'t send the welcome message out.')
                 else:
-                    await dm_group_message(non_bot_members,
+                    await KoalaBot.dm_group_message(non_bot_members,
                                            get_guild_welcome_message(ctx.guild.id))
 
     @commands.check(KoalaBot.is_admin)
