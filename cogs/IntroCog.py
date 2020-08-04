@@ -30,23 +30,6 @@ the following link: http://legal.koalabot.uk/"""
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 
-async def dm_group_message(members, message):
-    """
-    DMs members in a list of members
-    :param members: list of members to DM
-    :param message: The message to send to the group
-    :return: how many were dm'ed successfully.
-    """
-    count = 0
-    for member in members:
-        try:
-            await member.send(message)
-            count = count + 1
-        except Exception:  # In case of user dms being closed
-            pass
-    return count
-
-
 def get_guild_welcome_message(guild_id: int):
     """
     Retrieves a guild's customised welcome message from the database. Includes the basic legal message constant

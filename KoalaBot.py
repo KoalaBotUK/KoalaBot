@@ -81,6 +81,23 @@ def get_channel_from_id(id):
     return client.get_channel(id=id)
 
 
+async def dm_group_message(members: [discord.Member], message: str):
+    """
+    DMs members in a list of members
+    :param members: list of members to DM
+    :param message: The message to send to the group
+    :return: how many were dm'ed successfully.
+    """
+    count = 0
+    for member in members:
+        try:
+            await member.send(message)
+            count = count + 1
+        except Exception:  # In case of user dms being closed
+            pass
+    return count
+
+
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()

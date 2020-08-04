@@ -93,31 +93,6 @@ async def test_duplicate_guild_get_welcome_message():
 
 
 @pytest.mark.asyncio
-async def test_dm_single_group_message():
-    welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
-    test_member = dpytest.get_config().members[0]
-    await (IntroCog.dm_group_message([test_member], welcome_message))
-    dpytest.verify_message('default message', equals=False)
-
-
-@pytest.mark.asyncio
-async def test_dm_plural_group_message():
-    welcome_message = IntroCog.get_guild_welcome_message(dpytest.get_config().guilds[0].id)
-    test_member = dpytest.get_config().members[0]
-    test_member_2 = await dpytest.member_join()
-    await dpytest.empty_queue()
-    await (IntroCog.dm_group_message([test_member, test_member_2], welcome_message))
-    dpytest.verify_message('default message', equals=False)
-    dpytest.verify_message('default message', equals=False)
-
-
-@pytest.mark.asyncio
-async def test_dm_empty_group_message():
-    await IntroCog.dm_group_message([], 'this should not be sent')
-    dpytest.verify_message(assert_nothing=True)
-
-
-@pytest.mark.asyncio
 async def test_on_member_join():
     test_config = dpytest.get_config()
     client = test_config.client
