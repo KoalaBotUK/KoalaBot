@@ -78,6 +78,22 @@ class KoalaDBManager:
             print(e)
 
     def create_base_tables(self):
+        sql_create_koala_extensions_table = """
+        CREATE TABLE IF NOT EXISTS KoalaExtensions (
+        extension_id text NOT NULL PRIMARY KEY,
+        subscription_required integer NOT NULL,
+        available boolean NOT NULL,
+        enabled boolean NOT NULL
+        );"""
+
+        sql_create_guild_extensions_table = """
+        CREATE TABLE IF NOT EXISTS GuildExtensions (
+        extension_id text NOT NULL,
+        guild_id integer NOT NULL,
+        PRIMARY KEY (extension_id,guild_id),
+        FOREIGN KEY (extension_id) REFERENCES KoalaExtensions (extension_id)
+        );"""
+
         sql_create_guild_welcome_messages_table = """
         CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
         guild_id integer NOT NULL PRIMARY KEY,
@@ -85,6 +101,9 @@ class KoalaDBManager:
         );"""
 
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
+        self.db_execute_commit(sql_create_koala_extensions_table)
+        self.db_execute_commit(sql_create_guild_extensions_table)
+
         pass
 
     def fetch_all_tables(self):
