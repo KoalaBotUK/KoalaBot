@@ -34,3 +34,39 @@ def setup_function():
     bot.add_cog(role_colour_cog)
     dpytest.configure(bot)
     print("Tests starting")
+
+
+@pytest.mark.asyncio
+async def test_colour_change_perm_check_valid():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_colour_change_perm_check_invalid():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_command_missing_args():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_command_valid_args():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_command_invalid_args():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_colour_check_valid_colour():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_colour_check_invalid_colour():
+    assert False
+
