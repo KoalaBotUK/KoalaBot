@@ -56,9 +56,9 @@ async def get_invalid_role_colours(guild: discord.Guild):
 
 
 async def get_discord_colour_from_hex_str(colour_str: str):
-    r = int(colour_str[1:3], 16)
-    g = int(colour_str[3:5], 16)
-    b = int(colour_str[5:], 16)
+    r = int(colour_str[0:2], 16)
+    g = int(colour_str[2:4], 16)
+    b = int(colour_str[4:], 16)
     return discord.Color.from_rgb(r, g, b)
 
 
@@ -124,7 +124,7 @@ class RoleColourCog(commands.Cog):
         """
         REGEX USED - ^#([A-Fa-f0-9]{6})$
         """
-
+        colour_str = colour_str.upper()
         if colour_str is None:
             await ctx.send("You have not specified a colour.")
         elif not re.match("^([A-Fa-f0-9]{6})$", colour_str):
@@ -133,14 +133,14 @@ class RoleColourCog(commands.Cog):
             # TODO Need to fix it so that old colour roles are removed from the user
             # First remove any previous custom colour role the user has
             for role in ctx.author.roles:
-                if re.match("^KoalaBot\[0x#([A-Fa-f0-9]{6})]$", role.name):
+                if re.match("^KoalaBot\[0x([A-Fa-f0-9]{6})]$", role.name):
                     await ctx.author.remove_roles(role)
 
             # Second check that if a role is empty, it gets deleted from the server
             empty_colour_roles = [role for role in ctx.guild.roles if
-                                  re.match("^KoalaBot\[0x#([A-Fa-f0-9]{6})]$", role.name) and len(role.members) == 0]
+                                  re.match("^KoalaBot\[0x([A-Fa-f0-9]{6})]$", role.name) and len(role.members) == 0]
             for role in empty_colour_roles:
-                role.delete("Pruned, since was a custom colour role with no members")
+                await role.delete(reason="Pruned, since was a custom colour role with no members")
 
             # Third check that the colour doesn't already exist in the server, and if so just add the new user to that
             if f"KoalaBot[0x{colour_str}]" in [role.name for role in ctx.guild.roles]:
