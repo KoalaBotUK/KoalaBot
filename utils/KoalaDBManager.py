@@ -99,7 +99,6 @@ class KoalaDBManager:
 
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
-
         pass
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
