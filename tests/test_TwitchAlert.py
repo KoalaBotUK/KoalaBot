@@ -14,6 +14,7 @@ import asyncio
 # Libs
 import discord.ext.test as dpytest
 import mock
+import pytest_ordering as pytest
 import pytest
 import discord
 from discord.ext import commands
@@ -217,6 +218,7 @@ def twitch_alert_db_manager():
     return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH))
 
 
+@pytest.mark.first
 def test_before_create_tables(twitch_alert_db_manager):
     parent_database_manager = twitch_alert_db_manager.get_parent_database_manager()
     sql_check_table_exists = """SELECT name FROM sqlite_master WHERE type='table' AND name='TwitchAlerts';"""
