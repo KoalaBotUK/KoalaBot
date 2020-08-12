@@ -41,9 +41,8 @@ def setup_module():
 
 def test_create_live_embed():
     # Create the expected embed with information required
-    expected = discord.Embed(colour=KOALA_GREEN,
-                             title="<:twitch:734024383957434489>  Test is now streaming!",
-                             description="https://twitch.tv/test")
+    expected = discord.Embed(colour=KOALA_GREEN, title="https://twitch.tv/test")
+    expected.set_author(name="Test is now streaming!", icon_url="https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free/128/social-twitch-circle-512.png")
     expected.add_field(name="Stream Title", value="Test Title")
     expected.add_field(name="Playing", value="TestGame")
     expected.set_thumbnail(url="http://koalabot.uk")
