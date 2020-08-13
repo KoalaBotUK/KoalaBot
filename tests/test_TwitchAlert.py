@@ -121,14 +121,79 @@ async def test_edit_default_message_existing(twitch_cog):
 @pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert(twitch_cog):
     assert_embed = discord.Embed(title="Added User to Twitch Alert",
-                                 description= f"Channel: {dpytest.get_config().channels[0].id}\n"
-                                              f"User: monstercat\n"
-                                              f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
+                                 description=f"Channel: {dpytest.get_config().channels[0].id}\n"
+                                             f"User: monstercat\n"
+                                             f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
                                  colour=KOALA_GREEN)
 
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monstercat")
     dpytest.verify_embed(embed=assert_embed)
 
+
+@pytest.mark.asyncio(order=3)
+async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
+
+    guild = dpytest.backend.make_guild(name="TestGuild2")
+    channel = dpytest.backend.make_text_channel(name="TestChannel2", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(1, name="TestUser", discrim=1)
+    await dpytest.member_join(1, dpytest.get_config().client.user)
+
+    assert_embed = discord.Embed(title="Added User to Twitch Alert",
+                                 description=f"Channel: {channel.id}\n"
+                                             f"User: monstercat\n"
+                                             f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
+                                 colour=KOALA_GREEN)
+
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monstercat", channel=-1, member=member)
+    dpytest.verify_embed(embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
+
+
+@pytest.mark.asyncio(order=3)
+async def test_add_user_to_twitch_alert_custom_message(twitch_cog):
+    test_custom_message = "We be live gamers!"
+
+    guild = dpytest.backend.make_guild(name="TestGuild2")
+    channel = dpytest.backend.make_text_channel(name="TestChannel2", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(1, name="TestUser", discrim=1)
+    await dpytest.member_join(1, dpytest.get_config().client.user)
+
+    assert_embed = discord.Embed(title="Added User to Twitch Alert",
+                                 description=f"Channel: {channel.id}\n"
+                                             f"User: monstercat\n"
+                                             f"Message: {test_custom_message}",
+                                 colour=KOALA_GREEN)
+
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {channel.id} monstercat {test_custom_message}", channel=-1, member=member)
+    dpytest.verify_embed(embed=assert_embed)
+
+    sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
+    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) is not None
+
+@pytest.mark.asyncio()
+async def test_remove_user_from_twitch_alert(twitch_cog):
+    guild = dpytest.backend.make_guild(name="TestGuild2")
+    channel = dpytest.backend.make_text_channel(name="TestChannel2", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(1, name="TestUser", discrim=1)
+    await dpytest.member_join(1, dpytest.get_config().client.user)
+
+    assert_embed = discord.Embed(title="Added User to Twitch Alert",
+                                 description=f"Channel: {channel.id}\n"
+                                             f"User: monstercat\n"
+                                             f"Message: {test_custom_message}",
+                                 colour=KOALA_GREEN)
+
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {channel.id} monstercat {test_custom_message}", channel=-1, member=member)
+    dpytest.verify_embed(embed=assert_embed)
+
+    sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
+    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) is not None
+    pass
 
 @pytest.mark.asyncio()
 async def test_on_ready(twitch_cog):
