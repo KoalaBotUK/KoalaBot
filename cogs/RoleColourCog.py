@@ -57,7 +57,7 @@ class RoleColourCog(commands.Cog):
         b_sqr_diff = b_diff ** 2
         return math.sqrt(r_sqr_diff + g_sqr_diff + b_sqr_diff)
 
-    def get_roles_allowed_to_change_colour(self, ctx) -> List[discord.Role]:
+    def get_roles_allowed_to_change_colour(self, ctx) -> List[int]:
         """
         Function that returns the list of roles in a guild that are allowed to change their name colour
         :param ctx: The context of the message
@@ -66,7 +66,7 @@ class RoleColourCog(commands.Cog):
         raw_colour_change_perms_list = self.cr_database_manager.get_parent_database_manager().db_execute_select(
             f"""SELECT * FROM GuildColourChangePermissions WHERE guild_id = {ctx.guild.id};""")
         colour_change_perms_role_ids = [row[1] for row in raw_colour_change_perms_list]
-        colour_change_perms_roles = [ctx.guild.get_role(role_id) for role_id in colour_change_perms_role_ids]
+        colour_change_perms_roles = [role_id for role_id in colour_change_perms_role_ids]
         return colour_change_perms_roles
 
     def get_protected_roles(self, ctx):
@@ -132,7 +132,8 @@ class RoleColourCog(commands.Cog):
         Sends a message with the list of roles currently allowed to manually choose a custom colour to the channel this command is called in
         :param ctx: Context of the command
         """
-        allowed_colour_change_roles = self.get_roles_allowed_to_change_colour(ctx)
+        allowed_colour_change_roles = [ctx.guild.get_role(role_id) for role_id in
+                                       self.get_roles_allowed_to_change_colour(ctx)]
         msg = "Colour Protected roles are: \n"
         for allowed_colour_change_role in allowed_colour_change_roles:
             msg += f"{allowed_colour_change_role.mention}, "
@@ -163,7 +164,7 @@ class RoleColourCog(commands.Cog):
         self.cr_database_manager.remove_guild_protected_colour_role(ctx.guild.id, old_protected_role.id)
         await ctx.send(f"Removed {old_protected_role.mention} from the list of colour protected roles.")
 
-    @commands.has_any_role(*[get_roles_allowed_to_change_colour])
+    @commands.check(KoalaBot.has_any_role_in_list(get_roles_allowed_to_change_colour))
     @commands.command(name="custom_colour")
     async def change_colour(self, ctx, colour_str: str):
         """
@@ -233,8 +234,10 @@ class RoleColourCog(commands.Cog):
 
     @change_colour.error
     async def change_colour_error(self, ctx, error):
-        if isinstance(error, discord.ext.commands.CheckFailure):
+        if isinstance(error, discord.ext.commands.MissingAnyRole):
             await ctx.send(f"{ctx.author.mention}, you do not have permission to have a custom colour.")
+            print(self.get_roles_allowed_to_change_colour(ctx))
+            print(ctx.author.roles)
 
 
 def setup(bot: KoalaBot) -> None:
