@@ -12,6 +12,7 @@ Commented using reStructuredText (reST)
 # Libs
 import discord
 from discord.ext.test import factories as dpyfactory
+from typing import List
 
 # Own modules
 
@@ -67,6 +68,7 @@ class FakeAuthor:
         :param name: the name of the user including identifier (e.g. KoalaBotUK#1075)
         :param id: The discord ID of the user
         :param all_permissions: If the user should be given all permissions (admin etc) or none
+        :param roles: The role IDs of the user's roles
         """
         self.name = name
         if id == -1:

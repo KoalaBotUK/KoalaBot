@@ -73,6 +73,8 @@ def is_admin(ctx):
 def has_any_role_in_list(role_list):
     async def predicate(ctx):
         author_roles = [role.id for role in ctx.author.roles]
+        print(author_roles)
+        print(role_list)
         return any(author_roles) in role_list
     return commands.check(predicate)
 
