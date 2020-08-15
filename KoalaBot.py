@@ -24,7 +24,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-
+import logging
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
 
@@ -37,13 +37,16 @@ STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
+TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 DATABASE_PATH = "Koala.db"
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
-
+IS_DPYTEST = True
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
 database_manager = DBManager(DATABASE_PATH)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
+logger = logging.getLogger('discord')
 
 
 def is_owner(ctx):
@@ -102,6 +105,6 @@ if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
     load_all_cogs()
-    database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
+    # database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
