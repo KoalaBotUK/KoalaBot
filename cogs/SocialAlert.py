@@ -20,6 +20,7 @@ import concurrent.futures
 # Libs
 import discord
 import facebook
+import tweepy
 from discord.ext import commands
 from dotenv import load_dotenv
 import requests
@@ -96,6 +97,28 @@ class FacebookGraphAPIHandler:
         :return: Dictionary with the page's data
         """
         return self.graph.get_object(page_id)
+
+
+class TwitterAPIHandler:
+    """
+    A wrapper to interact with the Twitter Streaming API
+    """
+
+    def __init__(self, client_id: str, client_secret: str, access_token: str, token_secret: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.access_token = access_token
+        self.token_secret = token_secret
+        self.api = self.authenticate()
+
+    def authenticate(self):
+        """
+        Authenticates with Twitter using the tweepy handler
+        :return: Twitter API object
+        """
+        auth = tweepy.OAuthHandler(self.client_id, self.client_secret)
+        auth.set_access_token(self.access_token, self.token_secret)
+        return tweepy.API(auth)
 
 
 def setup(bot: KoalaBot) -> None:
