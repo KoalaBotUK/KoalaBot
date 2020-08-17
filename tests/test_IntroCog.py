@@ -193,7 +193,7 @@ async def test_ask_for_confirmation(msg_content, is_invalid, expected):
     author = dpytest.get_config().members[0]
     channel = dpytest.get_config().channels[0]
     message = dpytest.back.make_message(author=author, content=msg_content, channel=channel)
-    x = await IntroCog.ask_for_confirmation(message)
+    x = await IntroCog.ask_for_confirmation(message, channel)
     assert x == expected
     if is_invalid:
         dpytest.verify_message()
@@ -229,6 +229,16 @@ async def test_send_welcome_message_cancelled():
     dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
     dpytest.verify_message("Okay, I won't send out the welcome message then.")
     dpytest.verify_message(assert_nothing=True)
+
+
+@pytest.mark.asyncio
+async def test_send_welcome_message_timeout():
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=None)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
+        dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
+        dpytest.verify_message('Timed out.')
+        dpytest.verify_message("Okay, I won't send out the welcome message then.")
+        dpytest.verify_message(assert_nothing=True)
 
 
 @pytest.fixture(scope='session', autouse=True)
