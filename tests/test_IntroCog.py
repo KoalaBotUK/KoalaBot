@@ -9,16 +9,17 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 import asyncio
-
+import mock
 # Libs
 import discord.ext.test as dpytest
 import discord.ext.test.factories as dpyfactory
 import pytest
 from discord.ext import commands
-
+import discord
 # Own modules
 import KoalaBot
 from cogs import IntroCog
+from tests.utils.TestUtilsCog import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -26,6 +27,7 @@ fake_guild_id = 1000
 non_existent_guild_id = 9999
 
 # Variables
+utils_cog = None
 intro_cog = None
 DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH)
 DBManager.create_base_tables()
@@ -33,10 +35,12 @@ DBManager.create_base_tables()
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
-    global intro_cog
+    global intro_cog, utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+    utils_cog = TestUtilsCog(bot)
     intro_cog = IntroCog.IntroCog(bot)
     bot.add_cog(intro_cog)
+    bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
     return dpytest.get_config()
@@ -156,6 +160,29 @@ async def test_on_member_join():
     welcome_message = IntroCog.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
     dpytest.verify_message(welcome_message)
+
+
+@pytest.mark.asyncio
+async def test_wait_for_message():
+    bot = dpytest.get_config().client
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx = utils_cog.get_last_ctx()
+
+    import threading
+    t2 = threading.Timer(interval=1.0, function=dpytest.message, args=("y"))
+    t2.start()
+    fut = IntroCog.wait_for_message(bot, ctx)
+    t2.join()
+    assert fut, dpytest.sent_queue
+
+
+@pytest.mark.asyncio
+async def test_wait_for_message_timeout():
+    bot = dpytest.get_config().client
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx = utils_cog.get_last_ctx()
+    with pytest.raises(asyncio.TimeoutError):
+        await IntroCog.wait_for_message(bot, ctx)
 
 
 @pytest.fixture(scope='session', autouse=True)
