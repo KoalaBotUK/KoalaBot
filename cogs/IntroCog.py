@@ -131,8 +131,10 @@ class IntroCog(commands.Cog):
         if confirmation_received:
             await ctx.send("Okay, sending out the welcome message now.")
             await KoalaBot.dm_group_message(non_bot_members, get_guild_welcome_message(ctx.guild.id))
+            return True
         else:
             await ctx.send("Okay, I won't send out the welcome message then.")
+            return False
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="update_welcome_message", rest_is_raw=True)
