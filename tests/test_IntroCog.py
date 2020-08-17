@@ -9,7 +9,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 import asyncio
-
+import mock
 # Libs
 import discord.ext.test as dpytest
 import discord.ext.test.factories as dpyfactory
@@ -209,6 +209,26 @@ async def test_confirm_message(msg_content, expected):
     message = dpytest.back.make_message(author=author, content=msg_content, channel=channel)
     x = await IntroCog.confirm_message(message)
     assert x is expected
+
+
+@pytest.mark.asyncio
+async def test_send_welcome_message():
+    msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
+    dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
+    dpytest.verify_message("Okay, sending out the welcome message now.")
+    dpytest.verify_message(f"{IntroCog.DEFAULT_WELCOME_MESSAGE}\r\n{IntroCog.BASE_LEGAL_MESSAGE}")
+
+
+@pytest.mark.asyncio
+async def test_send_welcome_message_cancelled():
+    msg_mock = dpytest.back.make_message('n', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
+    dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
+    dpytest.verify_message("Okay, I won't send out the welcome message then.")
+    dpytest.verify_message(assert_nothing=True)
 
 
 @pytest.fixture(scope='session', autouse=True)
