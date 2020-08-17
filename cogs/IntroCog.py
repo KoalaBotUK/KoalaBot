@@ -30,6 +30,38 @@ DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the 
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 
+def wait_for_message(bot: discord.Client, ctx: commands.Context) -> discord.Message:
+    try:
+        confirmation = bot.wait_for('message', timeout=5.0, check=lambda message: message.author == ctx.author)
+    except Exception:
+        confirmation = None
+    return confirmation
+
+
+async def ask_for_confirmation(confirmation: discord.Message):
+    channel = confirmation.channel
+    if not confirmation:
+        await channel.send('Timed out.')
+        return False
+    else:
+        x = await confirm_message(confirmation)
+        if x is None:
+            await channel.send('Invalid input, please redo the command.')
+            return False
+        return x
+
+
+async def confirm_message(message: discord.Message):
+    conf_message = message.content.rstrip().strip().lower()
+    if conf_message not in ['y', 'n']:
+        return
+    else:
+        if conf_message == 'y':
+            return True
+        else:
+            return False
+
+
 def get_guild_welcome_message(guild_id: int):
     """
     Retrieves a guild's customised welcome message from the database. Includes the basic legal message constant
@@ -85,24 +117,6 @@ class IntroCog(commands.Cog):
         KoalaBot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
-    async def ask_for_confirmation(self, ctx):
-        try:
-            confirmation = await self.bot.wait_for('message', timeout=5.0,
-                                                   check=lambda message: message.author == ctx.author)
-        except asyncio.TimeoutError:
-            await ctx.send('Timed out.')
-            return False
-        else:
-            conf_msg = confirmation.content.rstrip().strip().lower()
-            if conf_msg not in ['y', 'n']:
-                await ctx.send('Invalid input, please redo the command.')
-                return False
-            else:
-                if conf_msg == 'n':
-                    return False
-                else:
-                    return True
-
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx):
@@ -113,7 +127,7 @@ class IntroCog(commands.Cog):
         non_bot_members = get_non_bot_members(ctx.guild)
 
         await ctx.send(f"This will DM {len(non_bot_members)} people. Are you sure you wish to do this? Y/N")
-        confirmation_received = await self.ask_for_confirmation(ctx)
+        confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx))
         if confirmation_received:
             await ctx.send("Okay, sending out the welcome message now.")
             await KoalaBot.dm_group_message(non_bot_members, get_guild_welcome_message(ctx.guild.id))
@@ -131,7 +145,7 @@ class IntroCog(commands.Cog):
         await ctx.send(f"""Your current welcome message is: \n\r{get_guild_welcome_message(ctx.guild.id)}
             \n\r\n\rYour new welcome message will be: \n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}\n\rWould you like to 
             update the message? Y/N?""")
-        confirmation_received = await self.ask_for_confirmation(ctx)
+        confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx))
         if confirmation_received:
             try:
                 await ctx.send("Okay, updating the welcome message of the guild in the database now.")
