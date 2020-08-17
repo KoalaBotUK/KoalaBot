@@ -30,20 +30,22 @@ DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the 
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 
-def wait_for_message(bot: discord.Client, ctx: commands.Context) -> discord.Message:
+def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
     try:
         confirmation = bot.wait_for('message', timeout=5.0, check=lambda message: message.author == ctx.author)
+        return confirmation
     except Exception:
         confirmation = None
-    return confirmation
+    return confirmation, ctx.channel
 
 
-async def ask_for_confirmation(confirmation: discord.Message):
-    channel = confirmation.channel
-    if not confirmation:
+async def ask_for_confirmation(confirmation: discord.Message, channel: discord.TextChannel):
+    if confirmation is None:
+        channel = channel
         await channel.send('Timed out.')
         return False
     else:
+        channel = confirmation.channel
         x = await confirm_message(confirmation)
         if x is None:
             await channel.send('Invalid input, please redo the command.')
@@ -127,7 +129,11 @@ class IntroCog(commands.Cog):
         non_bot_members = get_non_bot_members(ctx.guild)
 
         await ctx.send(f"This will DM {len(non_bot_members)} people. Are you sure you wish to do this? Y/N")
-        confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx))
+        try:
+            confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
+        except asyncio.TimeoutError:
+            await ctx.send('Timed out.')
+            confirmation_received = False
         if confirmation_received:
             await ctx.send("Okay, sending out the welcome message now.")
             await KoalaBot.dm_group_message(non_bot_members, get_guild_welcome_message(ctx.guild.id))
@@ -145,13 +151,17 @@ class IntroCog(commands.Cog):
         :param new_message: New customised part of the welcome message
         """
         await ctx.send(f"""Your current welcome message is: \n\r{get_guild_welcome_message(ctx.guild.id)}
-            \n\r\n\rYour new welcome message will be: \n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}\n\rWould you like to 
-            update the message? Y/N?""")
-        confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx))
+            \n\r\n\rYour new welcome message will be: \n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}
+            \n\rWould you like to update the message? Y/N?""")
+        try:
+            confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
+        except asyncio.TimeoutError:
+            await ctx.send('Timed out.')
+            confirmation_received = False
         if confirmation_received:
             try:
                 await ctx.send("Okay, updating the welcome message of the guild in the database now.")
-                updated_entry = await DBManager.update_guild_welcome_message(ctx.guild.id, repr(new_message))
+                updated_entry = await DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
                 await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
             except None:
                 await ctx.send("Something went wrong, please contact the bot developers for support.")
