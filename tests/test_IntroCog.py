@@ -9,13 +9,13 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 import asyncio
-import mock
+
 # Libs
 import discord.ext.test as dpytest
 import discord.ext.test.factories as dpyfactory
 import pytest
 from discord.ext import commands
-import discord
+
 # Own modules
 import KoalaBot
 from cogs import IntroCog
@@ -197,6 +197,18 @@ async def test_ask_for_confirmation(msg_content, is_invalid, expected):
     assert x == expected
     if is_invalid:
         dpytest.verify_message()
+
+
+@pytest.mark.parametrize("msg_content, expected",
+                         [('y', True), ('n', False), ('Y', True), ('N', False), ('', None), (' ', None),
+                          ('y ', True), (' n', False)])
+@pytest.mark.asyncio
+async def test_confirm_message(msg_content, expected):
+    author = dpytest.get_config().members[0]
+    channel = dpytest.get_config().channels[0]
+    message = dpytest.back.make_message(author=author, content=msg_content, channel=channel)
+    x = await IntroCog.confirm_message(message)
+    assert x is expected
 
 
 @pytest.fixture(scope='session', autouse=True)
