@@ -185,6 +185,20 @@ async def test_wait_for_message_timeout():
         await IntroCog.wait_for_message(bot, ctx)
 
 
+@pytest.mark.parametrize("msg_content, is_invalid, expected",
+                         [('y', False, True), ('n', False, False), ('Y', False, True), ('N', False, False),
+                          ('x', True, False), (' ', True, False), ('', True, False), ('yy', True, False)])
+@pytest.mark.asyncio
+async def test_ask_for_confirmation(msg_content, is_invalid, expected):
+    author = dpytest.get_config().members[0]
+    channel = dpytest.get_config().channels[0]
+    message = dpytest.back.make_message(author=author, content=msg_content, channel=channel)
+    x = await IntroCog.ask_for_confirmation(message)
+    assert x == expected
+    if is_invalid:
+        dpytest.verify_message()
+
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
     DBManager.clear_all_tables(DBManager.fetch_all_tables())
