@@ -26,7 +26,6 @@ from utils import KoalaDBManager
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
 
-
 # Variables
 
 
@@ -173,8 +172,7 @@ async def test_loop_check_live(twitch_cog):
     twitch_cog.start_loop()
     time.sleep(2)
     dpytest.verify_embed(expected_embed)
-
-
+    
 # Test TwitchAPIHandler
 
 @pytest.fixture

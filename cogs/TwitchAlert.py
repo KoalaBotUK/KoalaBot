@@ -40,7 +40,6 @@ class TwitchAlert(commands.Cog):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
-
     def __init__(self, bot):
         """
         Initialises local variables
@@ -95,6 +94,7 @@ class TwitchAlert(commands.Cog):
         new_embed = discord.Embed(title="Added to Channel",
                                   description="channel ID " + channel_id + " Added to Twitch Alert!",
                                   colour=KOALA_GREEN)
+
         new_embed.set_footer(text=f"Twitch Alert ID: {twitch_alert_id}")
         await ctx.send(embed=new_embed)
 
@@ -271,7 +271,6 @@ class TwitchAPIHandler:
     """
     A wrapper to interact with the twitch API
     """
-
     def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
@@ -333,7 +332,6 @@ class TwitchAlertDBManager:
     """
     A class for interacting with the Koala twitch database
     """
-
     def __init__(self, database_manager: KoalaDBManager):
         self.database_manager = database_manager
         self.twitch_handler = TwitchAPIHandler(TWITCH_CLIENT_ID, TWITCH_SECRET)
