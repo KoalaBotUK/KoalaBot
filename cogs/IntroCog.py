@@ -119,7 +119,7 @@ class IntroCog(commands.Cog):
         KoalaBot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx):
         """
@@ -142,7 +142,7 @@ class IntroCog(commands.Cog):
             await ctx.send("Okay, I won't send out the welcome message then.")
             return False
 
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="update_welcome_message")
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
