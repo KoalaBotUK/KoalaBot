@@ -1,5 +1,6 @@
 requests
 mock
+pytest-ordering
 pytest
 discord.py==1.3.4
 dpytest==0.0.20
