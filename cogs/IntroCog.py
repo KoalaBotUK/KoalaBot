@@ -119,7 +119,7 @@ class IntroCog(commands.Cog):
         KoalaBot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.is_owner)
     @commands.command(name="send_welcome_message")
     async def send_welcome_message(self, ctx):
         """
@@ -142,16 +142,16 @@ class IntroCog(commands.Cog):
             await ctx.send("Okay, I won't send out the welcome message then.")
             return False
 
-    @commands.check(KoalaBot.is_admin)
-    @commands.command(name="update_welcome_message", rest_is_raw=True)
+    @commands.check(KoalaBot.is_owner)
+    @commands.command(name="update_welcome_message")
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
         Allows admins to change their customisable part of the welcome message of a guild.
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
         """
-        await ctx.send(f"""Your current welcome message is: \n\r{get_guild_welcome_message(ctx.guild.id)}
-            \n\r\n\rYour new welcome message will be: \n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}
+        await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}
+            \n\n\rYour new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}
             \n\rWould you like to update the message? Y/N?""")
         try:
             confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
@@ -161,7 +161,8 @@ class IntroCog(commands.Cog):
         if confirmation_received:
             try:
                 await ctx.send("Okay, updating the welcome message of the guild in the database now.")
-                updated_entry = await DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
+                new_message = new_message.lstrip()
+                updated_entry = DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
                 await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
             except None:
                 await ctx.send("Something went wrong, please contact the bot developers for support.")
