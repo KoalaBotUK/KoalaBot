@@ -14,7 +14,6 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 
-
 # Constants
 
 # Variables
@@ -24,7 +23,6 @@ class Greetings(commands.Cog):
     """
     A cog used for tests that greets the user
     """
-
     def __init__(self, bot):
         """
         Initialises class variables
