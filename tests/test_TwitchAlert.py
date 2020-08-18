@@ -14,6 +14,7 @@ import asyncio
 # Libs
 import discord.ext.test as dpytest
 import mock
+import pytest_ordering as pytest
 import pytest
 import discord
 from discord.ext import commands
@@ -26,6 +27,7 @@ from utils.KoalaColours import *
 
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
+
 
 # Variables
 
@@ -42,7 +44,7 @@ def setup_module():
 def test_create_live_embed():
     # Create the expected embed with information required
     expected = discord.Embed(colour=KOALA_GREEN, title="https://twitch.tv/test")
-    expected.set_author(name="Test is now streaming!", icon_url="https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free/128/social-twitch-circle-512.png")
+    expected.set_author(name="Test is now streaming!", icon_url=TwitchAlert.TWITCH_ICON)
     expected.add_field(name="Stream Title", value="Test Title")
     expected.add_field(name="Playing", value="TestGame")
     expected.set_thumbnail(url="http://koalabot.uk")
@@ -53,12 +55,25 @@ def test_create_live_embed():
     game_info = {'name': "TestGame"}
 
     # Get response and assert equal
-    result = TwitchAlert.create_live_embed(stream_info, user_info, game_info)
+    result = TwitchAlert.create_live_embed(stream_info, user_info, game_info, "")
     assert dpytest.embed_eq(result, expected)
 
-def test_is_channel_in_guild():
-    example_bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+def test_create_live_embed_with_message():
+    # Create the expected embed with information required
+    expected = discord.Embed(colour=KOALA_GREEN, title="https://twitch.tv/test", description="Hello Message")
+    expected.set_author(name="Test is now streaming!", icon_url=TwitchAlert.TWITCH_ICON)
+    expected.add_field(name="Stream Title", value="Test Title")
+    expected.add_field(name="Playing", value="TestGame")
+    expected.set_thumbnail(url="http://koalabot.uk")
 
+    # Create JSON required to pass to method
+    stream_info = {'user_name': "Test", 'title': "Test Title"}
+    user_info = {'profile_image_url': "http://koalabot.uk"}
+    game_info = {'name': "TestGame"}
+
+    # Get response and assert equal
+    result = TwitchAlert.create_live_embed(stream_info, user_info, game_info, "Hello Message")
+    assert dpytest.embed_eq(result, expected)
 
 
 @pytest.mark.asyncio
@@ -69,7 +84,6 @@ async def test_setup():
 
 
 # Test TwitchAlert
-
 @pytest.fixture
 async def twitch_cog():
     """ setup any state specific to the execution of the given module."""
@@ -92,12 +106,12 @@ async def test_edit_default_message_default_from_none(twitch_cog):
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
                                              f"Channel: {this_channel.id}\n"
                                              f"Default Message: {TwitchAlert.DEFAULT_MESSAGE}")
-    #assert_embed.set_footer(text="Twitch Alert ID: 7357")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"edit_default_message {this_channel.id}")
     dpytest.verify_embed(embed=assert_embed)
     sql_check_db_updated = f"SELECT * FROM TwitchAlerts WHERE channel_id = {this_channel.id}"
     assert KoalaBot.database_manager.db_execute_select(sql_check_db_updated) is not None
+
 
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=2)
@@ -105,18 +119,18 @@ async def test_edit_default_message_existing(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
     sql_add_twitch_alert = f"INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) " \
                            f"VALUES {dpytest.get_config().guilds[0].id}, {this_channel.id}," \
-                            "'{user} is good'"
+                           "'{user} is good'"
     KoalaBot.database_manager.db_execute_commit(sql_add_twitch_alert)
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
                                              f"Channel: {this_channel.id}\n"
                                              "Default Message: {user} is bad")
-    #assert_embed.set_footer(text="Twitch Alert ID: 7357")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "edit_default_message "+str(this_channel.id)+" {user} is bad")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "edit_default_message " + str(this_channel.id) + " {user} is bad")
     dpytest.verify_embed(embed=assert_embed)
     sql_check_db_updated = f"SELECT * FROM TwitchAlerts WHERE channel_id = {this_channel.id}"
     assert KoalaBot.database_manager.db_execute_select(sql_check_db_updated) is not None
+
 
 @pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert(twitch_cog):
@@ -126,40 +140,37 @@ async def test_add_user_to_twitch_alert(twitch_cog):
                                              f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
                                  colour=KOALA_GREEN)
 
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monstercat")
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monstercat")
     dpytest.verify_embed(embed=assert_embed)
 
 
 @pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
-
-    guild = dpytest.backend.make_guild(name="TestGuild2")
-    channel = dpytest.backend.make_text_channel(name="TestChannel2", guild=guild)
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
-    assert_embed = discord.Embed(title="Added User to Twitch Alert",
-                                 description=f"Channel: {channel.id}\n"
-                                             f"User: monstercat\n"
-                                             f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
-                                 colour=KOALA_GREEN)
-
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monstercat", channel=-1, member=member)
-    dpytest.verify_embed(embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monstercat",
+        channel=-1, member=member)
+    dpytest.verify_embed(
+        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
 
 
 @pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert_custom_message(twitch_cog):
     test_custom_message = "We be live gamers!"
 
-    guild = dpytest.backend.make_guild(name="TestGuild2")
-    channel = dpytest.backend.make_text_channel(name="TestChannel2", guild=guild)
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
-    member = await dpytest.member_join(1, name="TestUser", discrim=1)
-    await dpytest.member_join(1, dpytest.get_config().client.user)
+    member = await dpytest.member_join(-1, name="TestUser", discrim=1)
+    await dpytest.member_join(-1, dpytest.get_config().client.user)
 
     assert_embed = discord.Embed(title="Added User to Twitch Alert",
                                  description=f"Channel: {channel.id}\n"
@@ -167,33 +178,162 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog):
                                              f"Message: {test_custom_message}",
                                  colour=KOALA_GREEN)
 
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {channel.id} monstercat {test_custom_message}", channel=-1, member=member)
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {channel.id} monstercat {test_custom_message}", channel=-1,
+        member=member)
     dpytest.verify_embed(embed=assert_embed)
 
     sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
-    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) is not None
+    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) == [
+        (test_custom_message,)]
+
 
 @pytest.mark.asyncio()
-async def test_remove_user_from_twitch_alert(twitch_cog):
-    guild = dpytest.backend.make_guild(name="TestGuild2")
-    channel = dpytest.backend.make_text_channel(name="TestChannel2", guild=guild)
+async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
+    test_custom_message = "We be live gamers!"
+
+    # Creates guild and channels and adds user and bot
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(-1, name="TestUser", discrim=1)
+    await dpytest.member_join(-1, dpytest.get_config().client.user)
+
+    # Creates Twitch Alert
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {channel.id} monstercat {test_custom_message}", channel=-1,
+        member=member)
+
+    sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
+    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) == [
+        (test_custom_message,)]
+    await dpytest.empty_queue()
+    # Removes Twitch Alert
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}remove_user_from_twitch_alert {channel.id} monstercat", channel=-1,
+                          member=member)
+    new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
+                              description=f"Channel: {channel.id}\n"
+                                          f"User: monstercat")
+    dpytest.verify_embed(new_embed)
+    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) == []
+    pass
+
+
+@pytest.mark.asyncio(order=3)
+async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
-    assert_embed = discord.Embed(title="Added User to Twitch Alert",
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}remove_user_from_twitch_alert {dpytest.get_config().channels[0].id} monstercat",
+        channel=-1, member=member)
+    dpytest.verify_embed(
+        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
+
+
+@pytest.mark.asyncio()
+async def test_add_team_to_twitch_alert(twitch_cog):
+    # Creates guild and channels and adds user and bot
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(-1, name="TestUser", discrim=1)
+    await dpytest.member_join(-1, dpytest.get_config().client.user)
+    assert_embed = discord.Embed(title="Added Team to Twitch Alert",
                                  description=f"Channel: {channel.id}\n"
-                                             f"User: monstercat\n"
-                                             f"Message: {test_custom_message}",
+                                             f"Team: faze\n"
+                                             f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
                                  colour=KOALA_GREEN)
+    # Creates Twitch Alert
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_team_to_twitch_alert {channel.id} faze", channel=-1,
+                          member=member)
+    dpytest.verify_embed(assert_embed)
 
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {channel.id} monstercat {test_custom_message}", channel=-1, member=member)
-    dpytest.verify_embed(embed=assert_embed)
 
-    sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
-    assert twitch_cog.ta_database_manager.database_manager.db_execute_select(sql_check_updated_server) is not None
+@pytest.mark.asyncio()
+async def test_add_team_to_twitch_alert_with_message(twitch_cog):
+    # Creates guild and channels and adds user and bot
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(-1, name="TestUser", discrim=1)
+    await dpytest.member_join(-1, dpytest.get_config().client.user)
+    assert_embed = discord.Embed(title="Added Team to Twitch Alert",
+                                 description=f"Channel: {channel.id}\n"
+                                             f"Team: faze\n"
+                                             f"Message: wooo message",
+                                 colour=KOALA_GREEN)
+    # Creates Twitch Alert
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_team_to_twitch_alert {channel.id} faze wooo message",
+                          channel=-1, member=member)
+    dpytest.verify_embed(assert_embed)
+
+
+@pytest.mark.asyncio()
+async def test_add_team_to_twitch_alert_wrong_guild(twitch_cog):
+    # Creates guild and channels and adds user and bot
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(-1, name="TestUser", discrim=1)
+    await dpytest.member_join(-1, dpytest.get_config().client.user)
+    # Creates Twitch Alert
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}add_team_to_twitch_alert {dpytest.get_config().channels[0].id} faze ", channel=-1,
+        member=member)
+    dpytest.verify_embed(
+        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
+
+
+@pytest.mark.asyncio()
+async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
+    test_custom_message = "We be live gamers!"
+
+    # Creates guild and channels and adds user and bot
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(-1, name="TestUser", discrim=1)
+    await dpytest.member_join(-1, dpytest.get_config().client.user)
+
+    # Creates Twitch Alert
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_team_to_twitch_alert {channel.id} faze {test_custom_message}",
+                          channel=-1, member=member)
+    await dpytest.empty_queue()
+    # Removes Twitch Alert
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}remove_team_from_twitch_alert {channel.id} faze", channel=-1,
+                          member=member)
+    new_embed = discord.Embed(title="Removed Team from Twitch Alert", colour=KOALA_GREEN,
+                              description=f"Channel: {channel.id}\n"
+                                          f"Team: faze")
+    dpytest.verify_embed(new_embed)
     pass
+
+
+@pytest.mark.asyncio(order=3)
+async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
+    guild = dpytest.backend.make_guild(name="TestGuild")
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    dpytest.get_config().guilds.append(guild)
+    dpytest.get_config().channels.append(channel)
+    member = await dpytest.member_join(1, name="TestUser", discrim=1)
+    await dpytest.member_join(1, dpytest.get_config().client.user)
+
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}remove_team_from_twitch_alert {dpytest.get_config().channels[0].id} monstercat",
+        channel=-1, member=member)
+    dpytest.verify_embed(
+        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
+
 
 @pytest.mark.asyncio()
 async def test_on_ready(twitch_cog):
@@ -271,6 +411,14 @@ def test_requests_get(twitch_api_handler):
                                            params=(('user_login', 'monstercat'),)).json().get("data") is not None
 
 
+def test_requests_get_kraken(twitch_api_handler):
+    # When Twitch API v5 becomes depreciated this will no longer function
+    assert twitch_api_handler.requests_get("https://api.twitch.tv/kraken/teams/uosvge",
+                                           headers={'Client-ID': TwitchAlert.TWITCH_CLIENT_ID,
+                                                    'Accept': 'application/vnd.twitchtv.v5+json'}
+                                           ).json().get("users") is not None
+
+
 def test_get_streams_data(twitch_api_handler):
     usernames = ['monstercat', 'jaydwee']
     print(twitch_api_handler.get_streams_data(usernames))
@@ -285,14 +433,36 @@ def test_get_game_data(twitch_api_handler):
     assert twitch_api_handler.get_game_data('26936').get('name') == 'Music & Performing Arts'
 
 
+def test_get_team_users(twitch_api_handler):
+    # assumes uosvge is in the team called uosvge
+    members = twitch_api_handler.get_team_users('uosvge')
+    for member in members:
+        if member.get('name') == 'uosvge':
+            assert True
+            return
+    assert False
+
+
 # Test TwitchAlertDBManager
 @pytest.fixture
-def twitch_alert_db_manager():
-    setup_module()
-    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH))
+def twitch_alert_db_manager(twitch_cog):
+    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH), twitch_cog.bot)
 
 
+@pytest.fixture
+def twitch_alert_db_manager_tables(twitch_cog):
+    twitch_alert_db_manager = TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH), twitch_cog.bot)
+    twitch_alert_db_manager.create_tables()
+    return twitch_alert_db_manager
+
+
+def test_get_parent_database_manager(twitch_alert_db_manager):
+    assert type(twitch_alert_db_manager.get_parent_database_manager()) is KoalaDBManager.KoalaDBManager
+
+
+@pytest.mark.first
 def test_before_create_tables(twitch_alert_db_manager):
+    setup_module()
     parent_database_manager = twitch_alert_db_manager.get_parent_database_manager()
     sql_check_table_exists = """SELECT name FROM sqlite_master WHERE type='table' AND name='TwitchAlerts';"""
     assert parent_database_manager.db_execute_select(sql_check_table_exists) == []
@@ -307,39 +477,83 @@ def test_create_tables(twitch_alert_db_manager):
         assert parent_database_manager.db_execute_select(sql_check_table_exists) != []
 
 
-def test_create_new_ta_default_message_none(twitch_alert_db_manager):
-    twitch_alert_db_manager.create_tables()
-    new_twitch_alert_id = twitch_alert_db_manager.new_ta(1234, 123456789)
-    parent_database_manager = twitch_alert_db_manager.get_parent_database_manager()
-    sql_find_twitch_alert = f"""SELECT guild_id, default_message 
-                                FROM TwitchAlerts 
-                                WHERE channel_id = 123456789"""
-    result = parent_database_manager.db_execute_select(sql_find_twitch_alert)
-    assert result[0][0] == 1234
-    assert result[0][1] == TwitchAlert.DEFAULT_MESSAGE
+def test_new_ta(twitch_alert_db_manager_tables):
+    assert TwitchAlert.DEFAULT_MESSAGE == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=2345)
+    sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
+    assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
+        [(1234, TwitchAlert.DEFAULT_MESSAGE)]
 
 
-def test_add_user_to_ta_default_message(twitch_alert_db_manager):
-    twitch_alert_db_manager.create_tables()
-    twitch_alert_db_manager.new_ta(1234, 1234567891, None)
-    twitch_alert_db_manager.add_user_to_ta(1234567891, "monstercat", None)
-    parent_database_manager = twitch_alert_db_manager.get_parent_database_manager()
+def test_new_ta_message(twitch_alert_db_manager_tables):
+    test_message = "Test message"
+    assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=12345, channel_id=23456,
+                                                                 default_message=test_message)
+    sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 23456"
+    assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
+        [(12345, test_message,)]
+
+
+def test_new_ta_replace(twitch_alert_db_manager_tables):
+    test_message = "Test message"
+    test_new_ta_message(twitch_alert_db_manager_tables=twitch_alert_db_manager_tables)
+    assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=2345,
+                                                                 default_message=test_message, replace=True)
+    sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
+    assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
+        [(1234, test_message)]
+    pass
+
+
+def test_add_user_to_ta_default_message(twitch_alert_db_manager_tables):
+    twitch_alert_db_manager_tables.new_ta(1234, 1234567891, None)
+    twitch_alert_db_manager_tables.add_user_to_ta(1234567891, "monstercat", None)
+    parent_database_manager = twitch_alert_db_manager_tables.get_parent_database_manager()
     sql_find_twitch_alert = f"""SELECT twitch_username, custom_message
                                 FROM UserInTwitchAlert
-                                WHERE channel_id = 1234567891"""
+                                WHERE channel_id = 1234567891 AND twitch_username = 'monstercat'"""
     result = parent_database_manager.db_execute_select(sql_find_twitch_alert)
     assert result[0][0] == "monstercat"
     assert result[0][1] is None
 
 
-def test_add_user_to_ta_custom_message(twitch_alert_db_manager):
-    twitch_alert_db_manager.create_tables()
-    twitch_alert_db_manager.new_ta(1234, 1234567892, None)
-    twitch_alert_db_manager.add_user_to_ta(1234567892, "monstercat", "FiddleSticks {user} is live!")
-    parent_database_manager = twitch_alert_db_manager.get_parent_database_manager()
+def test_add_user_to_ta_custom_message(twitch_alert_db_manager_tables):
+    twitch_alert_db_manager_tables.new_ta(1234, 1234567892, None)
+    twitch_alert_db_manager_tables.add_user_to_ta(1234567892, "monstercat", "FiddleSticks {user} is live!")
+    parent_database_manager = twitch_alert_db_manager_tables.get_parent_database_manager()
     sql_find_twitch_alert = f"""SELECT twitch_username, custom_message
                                 FROM UserInTwitchAlert
-                                WHERE channel_id = 1234567892"""
+                                WHERE channel_id = 1234567892 AND twitch_username = 'monstercat'"""
     result = parent_database_manager.db_execute_select(sql_find_twitch_alert)
     assert result[0][0] == "monstercat"
     assert result[0][1] == "FiddleSticks {user} is live!"
+
+
+def test_remove_user_from_ta(twitch_alert_db_manager_tables):
+    test_add_user_to_ta_default_message(twitch_alert_db_manager_tables)
+    twitch_alert_db_manager_tables.remove_user_from_ta(1234567891, "monstercat")
+    parent_database_manager = twitch_alert_db_manager_tables.get_parent_database_manager()
+    sql_find_twitch_alert = f"""SELECT twitch_username, custom_message
+                                FROM UserInTwitchAlert
+                                WHERE channel_id = 1234567891 AND twitch_username = 'monstercat'"""
+    assert parent_database_manager.db_execute_select(sql_find_twitch_alert) == []
+
+
+@pytest.mark.asyncio()
+async def test_delete_message(twitch_alert_db_manager_tables):
+    with mock.patch.object(discord.TextChannel, 'fetch_message') as mock1:
+        await twitch_alert_db_manager_tables.delete_message(1234, dpytest.get_config().channels[0].id)
+    mock1.assert_called_with(1234)
+
+def test_sql_create_ta_not_exists():
+    pass
+
+
+
+
+
+def test_update_team_members():
+    pass
+
+
+def test_update_all_teams_members():
+    pass
