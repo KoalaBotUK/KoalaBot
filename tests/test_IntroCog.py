@@ -242,6 +242,23 @@ async def test_send_welcome_message_timeout():
 
 
 @pytest.mark.asyncio
+async def test_cancel_update_welcome_message():
+    guild = dpytest.get_config().guilds[0]
+    old_message = IntroCog.get_guild_welcome_message(guild.id)
+    new_message = "this is a non default message"
+    msg_mock = dpytest.back.make_message('n', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
+
+    dpytest.verify_message(f"""Your current welcome message is:\n\r{old_message}
+            \n\n\rYour new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}
+            \n\rWould you like to update the message? Y/N?""")
+    dpytest.verify_message("Okay, I won't update the welcome message then.")
+    dpytest.verify_message(assert_nothing=True)
+    assert DBManager.fetch_guild_welcome_message(guild.id) != new_message
+
+
+@pytest.mark.asyncio
 async def test_update_welcome_message():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)
