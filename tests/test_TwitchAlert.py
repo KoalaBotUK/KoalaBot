@@ -375,7 +375,7 @@ def test_end_empty_loop(twitch_cog):
             mock.MagicMock(return_value={'id': '3215560150671170227', 'user_id': '27446517',
                                          "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
                                          'title': 'Music 24/7'}))
-@pytest.mark.skip(reason="Issues with testing inside asyncio event loop")
+@pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
 @pytest.mark.asyncio
 async def test_loop_check_live(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
@@ -394,6 +394,19 @@ async def test_loop_check_live(twitch_cog):
     await asyncio.sleep(10)
     dpytest.verify_embed(expected_embed)
 
+
+def test_create_alert_embed(twitch_cog):
+    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
+     "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
+     'title': 'Music 24/7'}
+
+    assert type(twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
+
+
+@pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
+@pytest.mark.asyncio
+async def test_loop_check_team_live(twitch_cog):
+    assert False, "Not Implemented"
 
 # Test TwitchAPIHandler
 
@@ -430,7 +443,7 @@ def test_get_user_data(twitch_api_handler):
 
 
 def test_get_game_data(twitch_api_handler):
-    assert twitch_api_handler.get_game_data('26936').get('name') == 'Music & Performing Arts'
+    assert 'music' in twitch_api_handler.get_game_data('26936').get('name').lower()
 
 
 def test_get_team_users(twitch_api_handler):
@@ -450,8 +463,7 @@ def twitch_alert_db_manager(twitch_cog):
 
 
 @pytest.fixture
-def twitch_alert_db_manager_tables(twitch_cog):
-    twitch_alert_db_manager = TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH), twitch_cog.bot)
+def twitch_alert_db_manager_tables(twitch_alert_db_manager):
     twitch_alert_db_manager.create_tables()
     return twitch_alert_db_manager
 
@@ -544,16 +556,125 @@ async def test_delete_message(twitch_alert_db_manager_tables):
         await twitch_alert_db_manager_tables.delete_message(1234, dpytest.get_config().channels[0].id)
     mock1.assert_called_with(1234)
 
-def test_sql_create_ta_not_exists():
+
+@pytest.mark.skip(reason="Depreciated Method")
+def test_sql_create_ta_not_exists(twitch_alert_db_manager_tables):
+    result = twitch_alert_db_manager_tables.sql_create_ta_not_exists(547, 548)
+    expected = f"""INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) 
+                   VALUES(547,548,'{TwitchAlert.DEFAULT_MESSAGE}'); """
+    assert result.replace(" ", "").replace("\n", "") == expected.replace(" ", "").replace("\n", "")
+
+
+@pytest.mark.skip(reason="Depreciated Method")
+def test_sql_create_ta_not_exists_error(twitch_alert_db_manager_tables):
+    with pytest.raises(KeyError,
+                       match="Channel ID is not defined in TwitchAlerts"):
+        twitch_alert_db_manager_tables.sql_create_ta_not_exists(None, 555)
+
+
+@pytest.mark.skip(reason="Depreciated Method")
+def test_sql_create_ta_not_exists_empty(twitch_alert_db_manager_tables):
+    test_new_ta(twitch_alert_db_manager_tables)
+    result = twitch_alert_db_manager_tables.sql_create_ta_not_exists(1234, 2345)
+    assert result == ""
+
+
+def test_add_team_to_ta(twitch_alert_db_manager_tables):
+    twitch_alert_db_manager_tables.add_team_to_ta(channel_id=566, twitch_team="faze", custom_message=None, guild_id=568)
+    sql_select_team = "SELECT custom_message FROM TeamInTwitchAlert " \
+                      "WHERE channel_id = 566 AND twitch_team_name = 'faze'"
+    assert twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_team) == [(None,)]
+
+
+def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_id=573, guild_id=574):
+    twitch_alert_db_manager_tables.add_team_to_ta(channel_id=channel_id, twitch_team="faze",
+                                                  custom_message="Message here", guild_id=guild_id)
+    sql_select_team = "SELECT custom_message FROM TeamInTwitchAlert " \
+                      f"WHERE channel_id = {channel_id} AND twitch_team_name = 'faze'"
+    assert twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_team) == \
+        [("Message here",)]
+
+
+def test_remove_team_from_ta(twitch_alert_db_manager_tables):
+    test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_id=590, guild_id=591)
+    twitch_alert_db_manager_tables.remove_team_from_ta(590, "faze")
+    sql_select_team = "SELECT custom_message FROM TeamInTwitchAlert " \
+                      "WHERE channel_id = 590 AND twitch_team_name = 'faze'"
+    assert twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_team) == []
+
+
+def test_remove_team_from_ta_invalid(twitch_alert_db_manager_tables):
+    with pytest.raises(AttributeError,
+                       match="Team name not found"):
+        twitch_alert_db_manager_tables.remove_team_from_ta(590, 590)
+
+
+def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
+    test_update_team_members(twitch_alert_db_manager_tables)
+    sql_add_message = "UPDATE UserInTwitchTeam SET message_id = 1 " \
+                      "WHERE team_twitch_alert_id = 604 AND twitch_username = 'monstercat'"
+    twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)
+    with mock.patch.object(TwitchAlert.TwitchAlertDBManager, 'delete_message') as mock1:
+        twitch_alert_db_manager_tables.remove_team_from_ta(605, "monstercat")
+    mock1.assert_called_with(1, 605)
+
+
+def test_update_team_members(twitch_alert_db_manager_tables):
+    sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
+                                 "VALUES(604,605,'monstercat')"
+    twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
+    twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
+    sql_select_monstercat_team = "SELECT twitch_username " \
+                                 "FROM UserInTwitchTeam " \
+                                 "WHERE team_twitch_alert_id = 604 AND twitch_username='monstercat'"
+    result = twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_monstercat_team)
+    assert result != []
     pass
 
 
-
-
-
-def test_update_team_members():
+def test_update_all_teams_members(twitch_alert_db_manager_tables):
+    sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
+                                 "VALUES(614,615,'monstercat')"
+    twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
+    sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
+                                 "VALUES(616,617,'monstercat')"
+    twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
+    twitch_alert_db_manager_tables.update_all_teams_members()
+    sql_select_monstercats_team = "SELECT twitch_username " \
+                                  "FROM UserInTwitchTeam " \
+                                  "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
+                                  "AND twitch_username='monstercat'"
+    result = twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_monstercats_team)
+    assert len(result) == 2
     pass
 
 
-def test_update_all_teams_members():
+def test_delete_all_offline_streams(twitch_alert_db_manager_tables):
+    sql_add_message = "INSERT INTO UserInTwitchAlert(channel_id, twitch_username, custom_message, message_id) " \
+                      "VALUES(654,'monstercat',Null,1) "
+    twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)
+    twitch_alert_db_manager_tables.delete_all_offline_streams(False, ['monstercat'])
+    sql_select_messages = "SELECT message_id,twitch_username FROM UserInTwitchAlert " \
+                          "WHERE twitch_username = 'monstercat' AND channel_id = 654"
+    result = twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_messages)
+    assert len(result) == 1
+    assert result[0][0] is None
     pass
+
+
+def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
+    test_update_all_teams_members(twitch_alert_db_manager_tables)
+    sql_add_message = "UPDATE UserInTwitchTeam SET message_id = 1 " \
+                      "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
+                      "AND twitch_username = 'monstercat'"
+    twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)
+    twitch_alert_db_manager_tables.delete_all_offline_streams(True, ['monstercat'])
+    sql_select_messages = "SELECT message_id,twitch_username FROM UserInTwitchTeam " \
+                          "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
+                          "AND twitch_username = 'monstercat'"
+    result = twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_messages)
+    assert len(result) == 2
+    assert result[0][0] is None
+    assert result[1][0] is None
+    pass
+
