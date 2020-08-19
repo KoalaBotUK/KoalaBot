@@ -101,7 +101,6 @@ async def twitch_cog():
 @pytest.mark.asyncio(order=1)
 async def test_edit_default_message_default_from_none(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
-    KoalaBot.database_manager.db_execute_commit(f"DELETE FROM TwitchAlerts WHERE channel_id={this_channel.id}")
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
                                              f"Channel: {this_channel.id}\n"
@@ -109,18 +108,12 @@ async def test_edit_default_message_default_from_none(twitch_cog):
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"edit_default_message {this_channel.id}")
     dpytest.verify_embed(embed=assert_embed)
-    sql_check_db_updated = f"SELECT * FROM TwitchAlerts WHERE channel_id = {this_channel.id}"
-    assert KoalaBot.database_manager.db_execute_select(sql_check_db_updated) is not None
 
 
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=2)
 async def test_edit_default_message_existing(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
-    sql_add_twitch_alert = f"INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) " \
-                           f"VALUES {dpytest.get_config().guilds[0].id}, {this_channel.id}," \
-                           "'{user} is good'"
-    KoalaBot.database_manager.db_execute_commit(sql_add_twitch_alert)
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
                                              f"Channel: {this_channel.id}\n"
@@ -128,8 +121,6 @@ async def test_edit_default_message_existing(twitch_cog):
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "edit_default_message " + str(this_channel.id) + " {user} is bad")
     dpytest.verify_embed(embed=assert_embed)
-    sql_check_db_updated = f"SELECT * FROM TwitchAlerts WHERE channel_id = {this_channel.id}"
-    assert KoalaBot.database_manager.db_execute_select(sql_check_db_updated) is not None
 
 
 @pytest.mark.asyncio(order=3)
