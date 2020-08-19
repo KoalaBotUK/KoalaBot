@@ -10,8 +10,7 @@ import csv
 # Substitute:   If the player is acting as a substitute instead of a full time player, Bool
 
 # Player tuple : (PlayerName, Rank, [Players they want to play with], [in-game role], attitude, availability, Substitute)
-# Team list : [[Players in team], Average rank of team, [Subs in team], [Dictionary of roles in team]]
-# This is taken down to just the [Player in team] at the output.
+
 
 matrix_values = [("a", 10, ["b", "c"], [], 1, 0, False), ("b", 9, ["c", "f"], [], 1, 0, False),
                  ("c", 8, ["a", "b", "d"], [], 0, 0, False),
@@ -30,7 +29,7 @@ test_teams = [([('a', 10, ['b', 'c'], [], 1, 0, False), ('b', 9, ['c', 'f'], [],
                 ('i', 2, ['h', 'j'], [], 0, 0, False)], 3.6, [])]
 
 # All roles in the game, can be altered by whoever starts team making
-all_roles_in_game = ["Support", "DPS", "Tank"]
+all_roles_in_game = []#["Support", "DPS", "Tank"]
 
 # Maximum number of a role in a team, optimises team to ensure at least this many players in the team can take on each role.
 max_role_in_team = 2
@@ -39,23 +38,23 @@ max_team_size = 5
 
 rank_depreciation = 5
 
+# Team list : [[Players in team], Average rank of team, [Subs in team], {Dictionary of roles in team}, [Index location of players]]
+# This is taken down to just the [Player in team] at the output.
 test_team = [[('a', 10, ['b', 'c'], ["Support", "DPS"], 1, 0, False), ('b', 9, ['c', 'f'], ["Support", "DPS"], 1, 0, False),
             ('e', 6, ['a', 'g'], ["Support", "DPS"], 1, 0, False), ('c', 8, ['a', 'b', 'd'], ["DPS", "Tank"], 0, 0, False),
-            ('g', 4, ['e', 'f'], ["DPS", "Tank"], 1, 0, False)], 7.4, [], []]
+            ('g', 4, ['e', 'f'], ["DPS", "Tank"], 1, 0, False)], 7.4, [], {"Support": 3, "DPS": 5, "Tank": 2}, [0, 1, 2, 4, 6]]
 
 # If this team is a one-off team. If it is one-off then availability doesn't need to be taken into account.
 one_off = False
 
 
 def main(player_list):
-    teams = []
     sub_list = get_subs(player_list)
-    players_left = [player for player in player_list if player not in sub_list]
-    print(players_left)
-    # team = create_teams(players_left)
-    # sub_list.append(players_left)
-    # teams = add_subs(teams, sub_list)
-    # output_to_csv(teams)
+    players_list = [player for player in player_list if player not in sub_list]
+    teams = create_teams(players_list)
+    sub_list + unused_players(teams, players_list)
+    teams = add_subs(teams, sub_list)
+    output_to_csv(teams)
 
 
 def get_subs(player_list):
@@ -64,6 +63,19 @@ def get_subs(player_list):
         if player[6]:
             sub_list.append(player)
     return sub_list
+
+
+def add_subs(teams, sub_list):
+    for sub in sub_list:
+        posn = pposn = 0
+        team = teams[0]
+        for x in teams:
+            if abs(sub[1] - x[1]) < abs(sub[1] - team[1]):
+                pposn = posn
+                team = x
+            posn += 1
+        teams[pposn][2].append(sub)
+    return teams
 
 
 def update_dictionary(team):
@@ -78,26 +90,33 @@ def update_dictionary(team):
 
 def create_teams(player_list):
     teams = []
-    team = [player_list[0]]
     while len(player_list) >= max_team_size:
-        while len(team) < max_team_size:
-            matrix = average_matrix(create_matrix(player_list, team))
-            team.append(get_highest_compatible_player(matrix, team))
+        team = [[player_list[0]], player_list[0][1], [], {}, [0]]
+        while len(team[0]) < max_team_size:
+            team[1] = average_rank(team[0])
             team[3] = update_dictionary(team)
+            matrix = average_matrix(create_matrix(player_list, team))
+            next_player = get_highest_compatible_player(matrix, team, player_list)
+            team[0].append(next_player)
+            team[4].append(player_list.index(next_player))
         teams.append(team)
-        for player in team:
+        for player in team[0]:
             player_list.remove(player)
     return teams
 
 
-def get_highest_compatible_player(matrix, team):
-    rows = []
-    positions = []
-    for x in team:
-        rows.append(matrix[x[1]])
-        positions.append(x[1])
-    for y in rows:
-        print("stopping error, replace later")
+def average_rank(player_list):
+    return (sum([item[1] for item in player_list]))/len(player_list)
+
+
+def get_highest_compatible_player(matrix, team, player_list):
+    check = []
+    for posn in team[4]:
+        check.append(matrix[posn])
+    new_list = [sum(x) for x in zip(*check)]
+    for posn in team[4]:
+        new_list[posn] = -1
+    return player_list[new_list.index(max(new_list))]
 
 
 def create_matrix(player_list, team):
@@ -122,17 +141,25 @@ def compatibility_value(player_one, player_two, team):
     if player_one[0] == player_two[0]:
         return -1
     return (5 * check_compatible_role(player_one, player_two, team)) + (4 * want_to_play(player_one, player_two)) + (3 * check_attitude(player_one, player_two)) + (
-            2 * rank_difference) + (1 * availability_compatibility(player_one, player_two))
+            2 * rank_difference(player_one, player_two)) + (1 * availability_compatibility(player_one, player_two))
 
 
 def simulate_change(player, team):
-    pass
+    team.append(player)
+    dictionary = update_dictionary(team)
+    maximum_value = dictionary.get(max(dictionary, key=lambda key: dictionary[key]))
+    diff = 0
+    for x in dictionary.keys():
+        diff += maximum_value - dictionary[x]
+    if diff > 3*len(all_roles_in_game):
+        return 0
+    return (3*len(all_roles_in_game) - diff) / 3*len(all_roles_in_game)
 
 
 def check_compatible_role(player_one, player_two, team):
-    if len(all_roles_in_game):
+    if not all_roles_in_game:
         return 0
-    if player_one in team[0] & player_two in team[0]:
+    if (player_one in team[0] & player_two in team[0]) | (player_one not in team[0] & player_two not in team[0]):
         return 0
     if player_one in team[0] & player_two not in team[0]:
         return simulate_change(player_two, team)
@@ -175,10 +202,22 @@ def unused_players(teams, player_list):
 
 def output_to_csv(teams):
     name = "C:\\Users\\Kieran\\Desktop\\test\\test_output_" + str(round(time.time() * 1000)) + ".csv"
+    team_cond = condense_teams(teams)
     with open(name, mode='w') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')
-        for x in teams:
+        csv_writer.writerow(["Players", "Substitutes"])
+        for x in team_cond:
             csv_writer.writerow(x)
+
+
+def condense_teams(teams):
+    team_cond = []
+    for x in teams:
+        team_cond.append([x[0], x[2]])
+    for n in team_cond:
+        n[0] = [i[0] for i in n[0]]
+        n[1] = [i[0] for i in n[1]]
+    return team_cond
 
 
 def read_csv(location):
@@ -205,6 +244,11 @@ def parse_empty_list(input_list):
     if input_list == ['']:
         return []
     return input_list
+
+
+def print_matrix(matrix):
+    for n in matrix:
+        print(n)
 
 
 if __name__ == '__main__':
