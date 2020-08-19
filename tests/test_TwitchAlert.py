@@ -26,7 +26,6 @@ from utils import KoalaDBManager
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
 
-
 # Variables
 
 
@@ -160,12 +159,11 @@ def test_end_empty_loop(twitch_cog):
 async def test_loop_check_live(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
     expected_embed = discord.Embed(colour=KoalaBot.KOALA_GREEN,
-                                   title="<:twitch:734024383957434489>  Monstercat is now streaming!",
-                                   description="https://twitch.tv/monstercat")
+                             title="<:twitch:734024383957434489>  Monstercat is now streaming!",
+                             description="https://twitch.tv/monstercat")
     expected_embed.add_field(name="Stream Title", value="Non Stop Music - Monstercat Radio :notes:")
     expected_embed.add_field(name="Playing", value="Music & Performing Arts")
-    expected_embed.set_thumbnail(
-        url="https://static-cdn.jtvnw.net/jtv_user_pictures/monstercat-profile_image-3e109d75f8413319-300x300.jpeg")
+    expected_embed.set_thumbnail(url="https://static-cdn.jtvnw.net/jtv_user_pictures/monstercat-profile_image-3e109d75f8413319-300x300.jpeg")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "create_twitch_alert")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_twitch_alert_to_channel 7362 {this_channel.id}")
@@ -173,6 +171,7 @@ async def test_loop_check_live(twitch_cog):
     twitch_cog.start_loop()
     time.sleep(2)
     dpytest.verify_embed(expected_embed)
+
 
 
 # Test TwitchAPIHandler

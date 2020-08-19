@@ -15,7 +15,6 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 
-
 # Constants
 
 # Variables
@@ -25,7 +24,6 @@ class TestUtilsCog(commands.Cog):
     """
     A discord cog that can be used when testing
     """
-
     def __init__(self, bot):
         """
         Initialises the class variables of this cog

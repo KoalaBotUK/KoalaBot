@@ -15,6 +15,7 @@ import time
 import asyncio
 import concurrent.futures
 
+
 # Libs
 import discord
 from discord.ext import commands
@@ -40,7 +41,6 @@ class TwitchAlert(commands.Cog):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
-
     def __init__(self, bot):
         """
         Initialises local variables
@@ -93,8 +93,7 @@ class TwitchAlert(commands.Cog):
 
         # Response Message
         new_embed = discord.Embed(title="Added to Channel",
-                                  description="channel ID " + channel_id + " Added to Twitch Alert!",
-                                  colour=KOALA_GREEN)
+                                  description="channel ID "+channel_id+" Added to Twitch Alert!", colour=KOALA_GREEN)
         new_embed.set_footer(text=f"Twitch Alert ID: {twitch_alert_id}")
         await ctx.send(embed=new_embed)
 
@@ -256,9 +255,9 @@ def create_live_embed(stream_info, user_info, game_info):
     :return: The embed created
     """
     embed = discord.Embed(colour=KOALA_GREEN)
-    embed.title = "<:twitch:734024383957434489>  " + stream_info.get("user_name") + " is now streaming!"
+    embed.title = "<:twitch:734024383957434489>  "+stream_info.get("user_name")+" is now streaming!"
 
-    embed.description = "https://twitch.tv/" + str.lower(stream_info.get("user_name"))
+    embed.description = "https://twitch.tv/"+str.lower(stream_info.get("user_name"))
     embed.add_field(name="Stream Title", value=stream_info.get("title"))
 
     embed.add_field(name="Playing", value=game_info.get("name"))
@@ -271,12 +270,11 @@ class TwitchAPIHandler:
     """
     A wrapper to interact with the twitch API
     """
-
     def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
         self.oauth_token = self.get_new_twitch_oauth()
-        self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer ' + self.oauth_token}
+        self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer '+self.oauth_token}
 
     def get_new_twitch_oauth(self):
         """
@@ -333,7 +331,6 @@ class TwitchAlertDBManager:
     """
     A class for interacting with the Koala twitch database
     """
-
     def __init__(self, database_manager: KoalaDBManager):
         self.database_manager = database_manager
         self.twitch_handler = TwitchAPIHandler(TWITCH_CLIENT_ID, TWITCH_SECRET)

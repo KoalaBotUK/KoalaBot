@@ -1,7 +1,6 @@
 import abc
 import sqlite3
 
-
 class TwitchAlertUtils:
     pass
 

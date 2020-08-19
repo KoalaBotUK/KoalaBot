@@ -1,6 +1,6 @@
 requests
 mock
 pytest
-dpytest==0.0.20
+dpytest
 python-dotenv
-discord.py==1.3.4
+discord.py
