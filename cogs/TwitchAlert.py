@@ -38,8 +38,8 @@ class TwitchAlert(commands.Cog):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
-
     def __init__(self, bot, database_manager=None):
+
         """
         Initialises local variables
         :param bot: The bot client for this cog
@@ -118,6 +118,7 @@ class TwitchAlert(commands.Cog):
                                               f"User: {twitch_username}\n"
                                               f"Message: {default_message}")
         # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
+
         await ctx.send(embed=new_embed)
 
     @commands.command(aliases=["twitch remove_user"])
@@ -413,6 +414,7 @@ def create_live_embed(stream_info, user_info, game_info, message):
     embed.set_author(name=stream_info.get("user_name") + " is now streaming!",
                      icon_url=TWITCH_ICON)
     embed.title = "https://twitch.tv/" + str.lower(stream_info.get("user_name"))
+
 
     embed.add_field(name="Stream Title", value=stream_info.get("title"))
 

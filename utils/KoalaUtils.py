@@ -19,6 +19,7 @@ from utils.KoalaColours import *
 # Constants
 ID_LENGTH = 18
 
+
 # Variables
 
 

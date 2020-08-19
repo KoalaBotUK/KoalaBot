@@ -379,6 +379,7 @@ async def test_loop_check_live(twitch_cog):
     expected_embed.add_field(name="Playing", value="Music & Performing Arts")
     expected_embed.set_thumbnail(url="https://static-cdn.jtvnw.net/jtv_user_pictures/"
                                      "monstercat-profile_image-3e109d75f8413319-300x300.jpeg")
+
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "create_twitch_alert")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_twitch_alert_to_channel 7363 {this_channel.id}")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert 7363 monstercat")
@@ -387,7 +388,7 @@ async def test_loop_check_live(twitch_cog):
     await asyncio.sleep(10)
     dpytest.verify_embed(expected_embed)
 
-
+    
 def test_create_alert_embed(twitch_cog):
     stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
      "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
