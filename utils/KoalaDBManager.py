@@ -126,32 +126,3 @@ class KoalaDBManager:
         INSERT INTO GuildExtensions 
         VALUES ('{extension_id}','{guild_id}')"""
         self.db_execute_commit(sql_insert_guild_extension)
-
-    def fetch_all_tables(self):
-        return self.db_execute_select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
-
-    def clear_all_tables(self, tables):
-        for table in tables:
-            self.db_execute_commit('DELETE FROM ' + table[0] + ';')
-
-    def fetch_guild_welcome_message(self, guild_id):
-        msg = self.db_execute_select(f"SELECT * FROM GuildWelcomeMessages WHERE guild_id = {guild_id};")
-        if len(msg) == 0:
-            return None
-        return msg[0][1]
-
-    def update_guild_welcome_message(self, guild_id, new_message: str):
-        self.db_execute_commit(
-            f"UPDATE GuildWelcomeMessages SET welcome_message = \"{new_message}\" WHERE guild_id = {guild_id};")
-        return new_message
-
-    def remove_guild_welcome_message(self, guild_id):
-        rows = self.db_execute_select(f"SELECT * FROM GuildWelcomeMessages WHERE guild_id = {guild_id};")
-        self.db_execute_commit(f"DELETE FROM GuildWelcomeMessages WHERE guild_id = {guild_id};")
-        return len(rows)
-
-    def new_guild_welcome_message(self, guild_id):
-        from cogs import IntroCog
-        self.db_execute_commit(
-            f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, \"{IntroCog.DEFAULT_WELCOME_MESSAGE}\");")
-        return self.fetch_guild_welcome_message(guild_id)
