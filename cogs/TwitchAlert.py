@@ -658,24 +658,6 @@ class TwitchAlertDBManager:
         """
         await (await self.bot.get_channel(int(channel_id)).fetch_message(message_id)).delete()
 
-    def sql_create_ta_not_exists(self, guild_id, channel_id):
-        """
-        Creates SQL for creating a Twitch Alert if not already made, otherwise returns a blank string
-        :param guild_id: The discord guild id for the twitch alert
-        :param channel_id: The discord channel id of the twitch alert
-        :return:
-        TODO: Remove old method
-        """
-        sql_search_ta_exists = f"SELECT guild_id FROM TwitchAlerts WHERE channel_id = {channel_id}"
-        result = self.database_manager.db_execute_select(sql_search_ta_exists)
-        if not result and guild_id is None:
-            raise KeyError("Channel ID is not defined in TwitchAlerts")
-        elif not result:
-            return f"""INSERT INTO TwitchAlerts(guild_id, channel_id, default_message)
-                                        VALUES({guild_id},{channel_id},'{DEFAULT_MESSAGE}'); """
-        else:
-            return ""
-
     def add_team_to_ta(self, channel_id, twitch_team, custom_message, guild_id=None):
         """
         Add a twitch team to a given Twitch Alert

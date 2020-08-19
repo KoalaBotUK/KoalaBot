@@ -557,28 +557,6 @@ async def test_delete_message(twitch_alert_db_manager_tables):
     mock1.assert_called_with(1234)
 
 
-@pytest.mark.skip(reason="Depreciated Method")
-def test_sql_create_ta_not_exists(twitch_alert_db_manager_tables):
-    result = twitch_alert_db_manager_tables.sql_create_ta_not_exists(547, 548)
-    expected = f"""INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) 
-                   VALUES(547,548,'{TwitchAlert.DEFAULT_MESSAGE}'); """
-    assert result.replace(" ", "").replace("\n", "") == expected.replace(" ", "").replace("\n", "")
-
-
-@pytest.mark.skip(reason="Depreciated Method")
-def test_sql_create_ta_not_exists_error(twitch_alert_db_manager_tables):
-    with pytest.raises(KeyError,
-                       match="Channel ID is not defined in TwitchAlerts"):
-        twitch_alert_db_manager_tables.sql_create_ta_not_exists(None, 555)
-
-
-@pytest.mark.skip(reason="Depreciated Method")
-def test_sql_create_ta_not_exists_empty(twitch_alert_db_manager_tables):
-    test_new_ta(twitch_alert_db_manager_tables)
-    result = twitch_alert_db_manager_tables.sql_create_ta_not_exists(1234, 2345)
-    assert result == ""
-
-
 def test_add_team_to_ta(twitch_alert_db_manager_tables):
     twitch_alert_db_manager_tables.add_team_to_ta(channel_id=566, twitch_team="faze", custom_message=None, guild_id=568)
     sql_select_team = "SELECT custom_message FROM TeamInTwitchAlert " \
