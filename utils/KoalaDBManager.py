@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Koala Bot database management code
+Koala Bot SQLite3 Database Manager code
 
 Commented using reStructuredText (reST)
 """
@@ -12,8 +12,7 @@ import sqlite3
 
 
 # Libs
-import discord
-from discord.ext import commands
+
 
 # Own modules
 
@@ -29,8 +28,7 @@ class KoalaDBManager:
         self.db_file_path = db_file_path
 
     def create_connection(self):
-        """ create a database connection to the SQLite database
-            specified by db_file
+        """ Create a database connection to the SQLite3 database specified in db_file_path
         :return: Connection object or None
         """
         conn = None
@@ -43,15 +41,15 @@ class KoalaDBManager:
         return conn
 
     def db_execute_select(self, sql_str, args=None):
-        """ execute a sql statement with the connection stored in this object
-        :param sql_str: a CREATE TABLE statement
-        :return:
+        """ Execute an SQL selection with the connection stored in this object
+        :param sql_str: An SQL SELECT statement
+        :return: void
         """
         try:
             conn = self.create_connection()
             c = conn.cursor()
             if args:
-                c.execute(sql_str,args)
+                c.execute(sql_str, args)
             else:
                 c.execute(sql_str)
             results = c.fetchall()
@@ -62,10 +60,10 @@ class KoalaDBManager:
             print(e)
 
     def db_execute_commit(self, sql_str, args=None):
-        """ execute a sql statement with the connection stored in this object
-        :param sql_str: a CREATE TABLE statement
+        """ Execute an SQL transaction with the connection stored in this object
+        :param sql_str: An SQL transaction
         :param args: Any arguments for the commit
-        :return:
+        :return: void
         """
         try:
             conn = self.create_connection()
@@ -97,6 +95,13 @@ class KoalaDBManager:
         FOREIGN KEY (extension_id) REFERENCES KoalaExtensions (extension_id)
         );"""
 
+        sql_create_guild_welcome_messages_table = """
+        CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
+        guild_id integer NOT NULL PRIMARY KEY,
+        welcome_message text
+        );"""
+
+        self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
 
