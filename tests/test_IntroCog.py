@@ -52,7 +52,6 @@ def setup_function():
                                                  "fake guild welcome message"),
                                                 (non_existent_guild_id, None)])
 @pytest.mark.asyncio
-@pytest.mark.db_manager_functions
 async def test_db_manager_fetch_welcome_message(guild_id, expected):
     await add_fake_guild_to_db(101)
     val = DBManager.fetch_guild_welcome_message(guild_id)
@@ -63,7 +62,6 @@ async def test_db_manager_fetch_welcome_message(guild_id, expected):
         222, "you're here! you're gonna have fun", "you\'re here! you\'re gonna have fun"), (333, '', ''),
                                                              (444, None, 'None')])
 @pytest.mark.asyncio
-@pytest.mark.db_manager_functions
 async def test_db_manager_update_welcome_message(guild_id, new_message, expected):
     await add_fake_guild_to_db(guild_id)
     DBManager.update_guild_welcome_message(guild_id, new_message)
@@ -73,7 +71,6 @@ async def test_db_manager_update_welcome_message(guild_id, new_message, expected
 
 
 @pytest.mark.asyncio
-@pytest.mark.db_manager_functions
 async def test_db_manager_new_guild_welcome_message():
     val = DBManager.new_guild_welcome_message(fake_guild_id)
     assert val == IntroCog.DEFAULT_WELCOME_MESSAGE
@@ -81,7 +78,6 @@ async def test_db_manager_new_guild_welcome_message():
 
 @pytest.mark.parametrize("guild_id, expected", [(fake_guild_id, 1), (non_existent_guild_id, 0)])
 @pytest.mark.asyncio
-@pytest.mark.db_manager_functions
 async def test_db_manager_remove_guild_welcome_message(guild_id, expected):
     count = DBManager.remove_guild_welcome_message(guild_id)
     assert count == expected
