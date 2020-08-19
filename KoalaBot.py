@@ -21,7 +21,6 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 
 # Libs
-import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -38,9 +37,6 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 DATABASE_PATH = "Koala.db"
-KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
-
-
 
 # Variables
 started = False
@@ -55,7 +51,6 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
-    print(ctx.author.id, int(BOT_OWNER))
     return ctx.author.id == int(BOT_OWNER) or str(ctx.author) == TEST_USER  # For automated testing
 
 
