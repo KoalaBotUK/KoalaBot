@@ -21,6 +21,7 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 
 # Libs
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import logging
