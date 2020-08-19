@@ -107,6 +107,31 @@ class KoalaDBManager:
 
         pass
 
+    def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
+        sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
+
+        if len(self.db_execute_select(sql_check_extension_exists)) > 0:
+            sql_update_extension = f"""
+            UPDATE KoalaExtensions
+            SET subscription_required = '{subscription_required}',
+                available = '{available}',
+                enabled = '{enabled}'
+            WHERE extension_id = '{extension_id}'"""
+            self.db_execute_commit(sql_update_extension)
+
+        else:
+            sql_insert_extension = f"""
+            INSERT INTO KoalaExtensions 
+            VALUES ('{extension_id}','{subscription_required}','{available}','{enabled}')"""
+
+            self.db_execute_commit(sql_insert_extension)
+
+    def give_guild_extension(self, guild_id, extension_id):
+        sql_insert_guild_extension = f"""
+        INSERT INTO GuildExtensions 
+        VALUES ('{extension_id}','{guild_id}')"""
+        self.db_execute_commit(sql_insert_guild_extension)
+
     def fetch_all_tables(self):
         return self.db_execute_select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
 
