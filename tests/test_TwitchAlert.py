@@ -11,6 +11,7 @@ Commented using reStructuredText (reST)
 import os
 import asyncio
 
+
 # Libs
 import discord.ext.test as dpytest
 import mock
@@ -24,6 +25,7 @@ import KoalaBot
 from cogs import TwitchAlert
 from utils import KoalaDBManager
 from utils.KoalaColours import *
+
 
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
@@ -399,6 +401,7 @@ def test_create_alert_embed(twitch_cog):
 async def test_loop_check_team_live(twitch_cog):
     assert False, "Not Implemented"
 
+
 # Test TwitchAPIHandler
 
 @pytest.fixture
@@ -646,4 +649,3 @@ def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
     assert result[0][0] is None
     assert result[1][0] is None
     pass
-
