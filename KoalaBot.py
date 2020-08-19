@@ -104,6 +104,6 @@ if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
     load_all_cogs()
-    # database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
+    database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
