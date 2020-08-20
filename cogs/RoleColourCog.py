@@ -8,20 +8,21 @@ KoalaBot Cog for guild members wishing to change their role colour
 
 # Built-in/Generic Imports
 
+import math
 import re
+from typing import List
 
 # Libs
 import discord
 from discord.ext import commands
-import math
-from typing import List
+
 # Own modules
 import KoalaBot
-from utils import ColourRoleDBManager as ColourRoleDBManager
+# Variables
+from utils.KoalaDBManager import KoalaDBManager
+
 
 # Constants
-
-# Variables
 
 
 async def get_discord_colour_from_hex_str(colour_str: str) -> discord.Colour:
@@ -29,6 +30,12 @@ async def get_discord_colour_from_hex_str(colour_str: str) -> discord.Colour:
     g = int(colour_str[2:4], 16)
     b = int(colour_str[4:], 16)
     return discord.Colour.from_rgb(r, g, b)
+
+
+def is_allowed_to_change_colour(ctx: commands.Context):
+    cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
+    allowed_roles = cr_database_manager.get_colour_change_roles(ctx.guild.id)
+    return commands.has_any_role(allowed_roles)
 
 
 class RoleColourCog(commands.Cog):
@@ -44,7 +51,7 @@ class RoleColourCog(commands.Cog):
         self.bot = bot
         KoalaBot.database_manager.create_base_tables()
         KoalaBot.database_manager.insert_extension("ColourRole", 1, False, True)
-        self.cr_database_manager = ColourRoleDBManager.ColourRoleDBManager(KoalaBot.database_manager)
+        self.cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
         self.cr_database_manager.create_tables()
 
     @staticmethod
@@ -63,16 +70,13 @@ class RoleColourCog(commands.Cog):
         :param ctx: The context of the message
         :return: The list of roles able to change their name colour in the guild
         """
-        raw_colour_change_perms_list = self.cr_database_manager.get_parent_database_manager().db_execute_select(
-            f"""SELECT * FROM GuildColourChangePermissions WHERE guild_id = {ctx.guild.id};""")
-        colour_change_perms_role_ids = [row[1] for row in raw_colour_change_perms_list]
-        colour_change_perms_roles = [role_id for role_id in colour_change_perms_role_ids]
+        colour_change_perms_roles = self.cr_database_manager.get_colour_change_roles(ctx.guild.id)
+        if not colour_change_perms_roles:
+            return []
         return colour_change_perms_roles
 
-    def get_protected_roles(self, ctx):
-        raw_protected_list = self.cr_database_manager.get_parent_database_manager().db_execute_select(
-            f"""SELECT * FROM GuildInvalidCustomColourRoles WHERE guild_id = {ctx.guild.id};""")
-        protected_role_ids = [row[1] for row in raw_protected_list]
+    def get_protected_roles(self, ctx: commands.Context):
+        protected_role_ids = self.cr_database_manager.get_protected_colour_roles(ctx.guild.id)
         protected_roles = [ctx.guild.get_role(role_id) for role_id in protected_role_ids]
         return protected_roles
 
@@ -88,7 +92,8 @@ class RoleColourCog(commands.Cog):
                                 discord.Color.from_rgb(255, 255, 255)])
         return illegal_colours
 
-    def check_if_valid_custom_colour(self, invalid_colours: List[discord.Colour], new_custom_colour: discord.Color) -> (bool, discord.Colour):
+    def check_if_valid_custom_colour(self, invalid_colours: List[discord.Colour], new_custom_colour: discord.Color) -> (
+            bool, discord.Colour):
         if len(invalid_colours) == 0 or invalid_colours is None:
             # There is no invalid colour on this server.
             return [True, None]
@@ -111,9 +116,10 @@ class RoleColourCog(commands.Cog):
         """
         new_colour_change_perms_role = await commands.RoleConverter().convert(ctx, role_args)
         self.cr_database_manager.add_colour_change_role_perms(ctx.guild.id, new_colour_change_perms_role.id)
-        await ctx.send(f"Added {new_colour_change_perms_role.mention} to the list of roles allowed to get a custom colour.")
+        await ctx.send(
+            f"Added {new_colour_change_perms_role.mention} to the list of roles allowed to get a custom colour.")
 
-    @commands.check(KoalaBot.is_owner) # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="remove_colour_change_role")
     async def remove_colour_change_role(self, ctx, role_args):
         """
@@ -123,7 +129,8 @@ class RoleColourCog(commands.Cog):
         """
         old_colour_change_allowed_role = await commands.RoleConverter().convert(ctx, role_args)
         self.cr_database_manager.remove_colour_change_role_perms(ctx.guild.id, old_colour_change_allowed_role.id)
-        await ctx.send(f"Removed {old_colour_change_allowed_role.mention} from the list of roles allowed to get a custom colour.")
+        await ctx.send(
+            f"Removed {old_colour_change_allowed_role.mention} from the list of roles allowed to get a custom colour.")
 
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="list_allowed_colour_change_roles")
@@ -164,7 +171,7 @@ class RoleColourCog(commands.Cog):
         self.cr_database_manager.remove_guild_protected_colour_role(ctx.guild.id, old_protected_role.id)
         await ctx.send(f"Removed {old_protected_role.mention} from the list of colour protected roles.")
 
-    @commands.check(KoalaBot.has_any_role_in_list(get_roles_allowed_to_change_colour))
+    @commands.check(is_allowed_to_change_colour)
     @commands.command(name="custom_colour")
     async def change_colour(self, ctx, colour_str: str):
         """
@@ -187,7 +194,8 @@ class RoleColourCog(commands.Cog):
             if colour_conflict is not None:
                 colour_conflict = colour_conflict.value
             if not valid_colour:
-                await ctx.send(f"Specified colour {colour_str} is too close to a protected colour {hex(colour_conflict)}. Please choose a different colour")
+                await ctx.send(
+                    f"Specified colour {colour_str} is too close to a protected colour {hex(colour_conflict)}. Please choose a different colour")
             else:
                 # First remove any previous custom colour role the user has
                 for role in ctx.author.roles:
@@ -236,8 +244,76 @@ class RoleColourCog(commands.Cog):
     async def change_colour_error(self, ctx, error):
         if isinstance(error, discord.ext.commands.MissingAnyRole):
             await ctx.send(f"{ctx.author.mention}, you do not have permission to have a custom colour.")
-            print(self.get_roles_allowed_to_change_colour(ctx))
+            print(self.get_roles_allowed_to_change_colour(ctx.guild.id))
             print(ctx.author.roles)
+
+
+class ColourRoleDBManager:
+    """
+    A class for interacting with the Koala Colour Role database
+    """
+
+    def __init__(self, database_manager: KoalaDBManager):
+        self.database_manager = database_manager
+
+    def get_parent_database_manager(self):
+        return self.database_manager
+
+    def create_tables(self):
+        """
+        Creates all the tables associated with the Custom Colour Role extension
+        """
+        # GuildColourChangePermissions
+        sql_create_guild_colour_change_permissions_table = """
+        CREATE TABLE IF NOT EXISTS GuildColourChangePermissions (
+        guild_id integer NOT NULL,
+        role_id integer NOT NULL,
+        PRIMARY KEY (guild_id, role_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
+        );"""
+
+        # GuildInvalidCustomColours
+        sql_create_guild_colour_change_invalid_colours_table = """
+        CREATE TABLE IF NOT EXISTS GuildInvalidCustomColourRoles (
+        guild_id integer NOT NULL,
+        role_id integer NOT NULL,
+        PRIMARY KEY (guild_id, role_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
+        );"""
+
+        # Create Tables
+        self.database_manager.db_execute_commit(sql_create_guild_colour_change_permissions_table)
+        self.database_manager.db_execute_commit(sql_create_guild_colour_change_invalid_colours_table)
+
+    def add_colour_change_role_perms(self, guild_id, role_id):
+        self.database_manager.db_execute_commit(
+            f"""INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES ({guild_id}, {role_id});""")
+
+    def remove_colour_change_role_perms(self, guild_id, role_id):
+        self.database_manager.db_execute_commit(
+            f"""DELETE FROM GuildColourChangePermissions WHERE guild_id = {guild_id} AND role_id = {role_id};""")
+
+    def add_guild_protected_colour_role(self, guild_id, role_id):
+        self.database_manager.db_execute_commit(
+            f"""INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES ({guild_id}, {role_id});""")
+
+    def remove_guild_protected_colour_role(self, guild_id, role_id):
+        self.database_manager.db_execute_commit(
+            f"""DELETE FROM GuildInvalidCustomColourRoles WHERE guild_id = {guild_id} AND role_id = {role_id};""")
+
+    def get_protected_colour_roles(self, guild_id):
+        rows = self.database_manager.db_execute_commit(
+            f"""SELECT * from GuildInvalidCustomColourRoles WHERE guild_id = {guild_id};""")
+        if rows is None:
+            return None
+        return [row[1] for row in rows]
+
+    def get_colour_change_roles(self, guild_id):
+        rows = self.database_manager.db_execute_commit(
+            f"""SELECT * from GuildColourChangePermissions WHERE guild_id = {guild_id};""")
+        if rows is None:
+            return None
+        return [row[1] for row in rows]
 
 
 def setup(bot: KoalaBot) -> None:
@@ -246,5 +322,3 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(RoleColourCog(bot))
-
-

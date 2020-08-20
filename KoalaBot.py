@@ -70,15 +70,6 @@ def is_admin(ctx):
     return ctx.author.guild_permissions.administrator or str(ctx.author) == TEST_USER  # For automated testing
 
 
-def has_any_role_in_list(role_list):
-    async def predicate(ctx):
-        author_roles = [role.id for role in ctx.author.roles]
-        print(author_roles)
-        print(role_list)
-        return any(author_roles) in role_list
-    return commands.check(predicate)
-
-
 def load_all_cogs():
     """
     Loads all cogs in COGS_DIR into the client

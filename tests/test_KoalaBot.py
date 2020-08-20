@@ -11,15 +11,15 @@ Commented using reStructuredText (reST)
 
 # Libs
 import discord
-from discord.ext import commands
 import discord.ext.test as dpytest
 import mock
 import pytest
+from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from tests.utils.TestUtilsCog import TestUtilsCog
 from tests.utils.TestUtils import FakeAuthor
+from tests.utils.TestUtilsCog import TestUtilsCog
 
 # Constants
 
@@ -74,27 +74,6 @@ def test_admin_is_admin(test_ctx):
 def test_not_admin_is_admin(test_ctx):
     test_ctx.author = FakeAuthor(all_permissions=False)
     assert not KoalaBot.is_admin(test_ctx)
-
-
-def test_has_any_role_in_list_no_roles_at_all():
-    member: discord.Member = dpytest.get_config().members[0]
-    guild: discord.Guild = dpytest.get_config().guilds[0]
-    assert KoalaBot.has_any_role_in_list([role.id for role in guild.roles])
-
-
-@pytest.mark.asyncio
-async def test_has_any_role_in_list_member_has_role():
-    member: discord.Member = dpytest.get_config().members[0]
-    print(member)
-    guild: discord.Guild = dpytest.get_config().guilds[0]
-    role = dpytest.back.make_role(name="Test Role", guild=guild)
-    await dpytest.add_role(member, role)
-    print(member.roles)
-    assert not KoalaBot.has_any_role_in_list([role for role in guild.roles])
-
-
-def test_has_any_role_in_list_member_does_not_have_role():
-    assert False
 
 
 def test_load_all_cogs():
