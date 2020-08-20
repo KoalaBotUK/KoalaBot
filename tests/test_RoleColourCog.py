@@ -18,7 +18,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from cogs import RoleColourCog
+from cogs import ColourRole
 
 # Constants
 
@@ -30,7 +30,7 @@ def setup_function():
     """ setup any state specific to the execution of the given module."""
     global role_colour_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    role_colour_cog = RoleColourCog.RoleColourCog(bot)
+    role_colour_cog = ColourRole.ColourRole(bot)
     bot.add_cog(role_colour_cog)
     dpytest.configure(bot)
     print("Tests starting")

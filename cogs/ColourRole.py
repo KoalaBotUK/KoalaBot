@@ -11,7 +11,6 @@ KoalaBot Cog for guild members wishing to change their role colour
 import math
 import re
 from typing import List
-
 # Libs
 import discord
 from discord.ext import commands
@@ -24,21 +23,13 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 
-
-async def get_discord_colour_from_hex_str(colour_str: str) -> discord.Colour:
-    r = int(colour_str[0:2], 16)
-    g = int(colour_str[2:4], 16)
-    b = int(colour_str[4:], 16)
-    return discord.Colour.from_rgb(r, g, b)
-
-
 def is_allowed_to_change_colour(ctx: commands.Context):
     cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
     allowed_roles = cr_database_manager.get_colour_change_roles(ctx.guild.id)
     return commands.has_any_role(allowed_roles)
 
 
-class RoleColourCog(commands.Cog):
+class ColourRole(commands.Cog):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
@@ -171,9 +162,40 @@ class RoleColourCog(commands.Cog):
         self.cr_database_manager.remove_guild_protected_colour_role(ctx.guild.id, old_protected_role.id)
         await ctx.send(f"Removed {old_protected_role.mention} from the list of colour protected roles.")
 
+    @staticmethod
+    async def is_valid_colour_str(colour_str: str):
+        colour_str = colour_str.upper()
+        return re.match("^([A-Fa-f0-9]{6})$", colour_str)
+
+    @staticmethod
+    async def get_discord_colour_from_hex_str(colour_str: str) -> discord.Colour:
+        colour_str = colour_str.upper()
+        r = int(colour_str[0:2], 16)
+        g = int(colour_str[2:4], 16)
+        b = int(colour_str[4:], 16)
+        return discord.Colour.from_rgb(r, g, b)
+
+    async def remove_author_custom_colour_role(self, ctx: commands.Context):
+        author: discord.Member = ctx.author
+        for role in author.roles:
+            if re.match("^KoalaBot\[0x([A-Fa-f0-9]{6})]$", role.name):
+                await author.remove_roles(role)
+
+    async def remove_empty_guild_custom_colour_roles(self, ctx: commands.Context):
+        guild: discord.Guild = ctx.guild
+        guild_roles: List[discord.Role] = guild.roles
+        empty_custom_colour_roles: List[discord.Role] = [role for role in guild_roles if
+                                                         re.match("^KoalaBot\[0x([A-Fa-f0-9]{6})]$", role.name) and len(
+                                                             role.members) == 0]
+        for role in empty_custom_colour_roles:
+            await role.delete(reason="Pruned, since was a custom colour role with no members")
+
+    async def does_colour_role_already_exist(self, ctx: commands.Context, colour_str: str):
+        return f"KoalaBot[0x{colour_str}]" in [role.name for role in ctx.guild.roles]
+
     @commands.check(is_allowed_to_change_colour)
     @commands.command(name="custom_colour")
-    async def change_colour(self, ctx, colour_str: str):
+    async def change_colour(self, ctx: commands.Context, colour_str: str):
         """
         Allows a user with colour change perms to change their name colour to a custom colour of their choosing, so long
         as it's not too close to an already existing colour.
@@ -181,11 +203,23 @@ class RoleColourCog(commands.Cog):
         :param colour_str:
         :return:
         """
-        colour_str = colour_str.upper()
         if colour_str is None:
             await ctx.send("You have not specified a colour.")
+        else:
+            if not ColourRole.is_valid_colour_str(colour_str):
+                await ctx.send("Invalid string specified, make sure it's a valid colour hex string.")
+            else:
+                role_colour = await ColourRole.get_discord_colour_from_hex_str(colour_str)
+                raw_valid_colour_tuple = self.check_if_valid_custom_colour(self.get_invalid_role_colours(ctx),
+                                                                           role_colour)
+                if not raw_valid_colour_tuple[0]:
+                    await ctx.send(
+                        f"Specified colour {colour_str.upper()} is too close to a protected colour {hex(raw_valid_colour_tuple[1])}"
+                        + "Please choose a different colour.")
+                else:
+
         elif not re.match("^([A-Fa-f0-9]{6})$", colour_str):
-            await ctx.send("Invalid string specified, make sure it's a valid colour hex string.")
+        await ctx.send("Invalid string specified, make sure it's a valid colour hex string.")
         else:
             role_colour = await get_discord_colour_from_hex_str(colour_str)
             valid_colour_raw = self.check_if_valid_custom_colour(self.get_invalid_role_colours(ctx), role_colour)
@@ -198,9 +232,7 @@ class RoleColourCog(commands.Cog):
                     f"Specified colour {colour_str} is too close to a protected colour {hex(colour_conflict)}. Please choose a different colour")
             else:
                 # First remove any previous custom colour role the user has
-                for role in ctx.author.roles:
-                    if re.match("^KoalaBot\[0x([A-Fa-f0-9]{6})]$", role.name):
-                        await ctx.author.remove_roles(role)
+
 
                 # Check that if a role is empty, it gets deleted from the server
                 empty_colour_roles = [role for role in ctx.guild.roles if
@@ -242,7 +274,7 @@ class RoleColourCog(commands.Cog):
 
     @change_colour.error
     async def change_colour_error(self, ctx, error):
-        if isinstance(error, discord.ext.commands.MissingAnyRole):
+        if isinstance(error, discord.ext.commands.CheckFailure):
             await ctx.send(f"{ctx.author.mention}, you do not have permission to have a custom colour.")
             print(self.get_roles_allowed_to_change_colour(ctx.guild.id))
             print(ctx.author.roles)
@@ -321,4 +353,4 @@ def setup(bot: KoalaBot) -> None:
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(RoleColourCog(bot))
+    bot.add_cog(ColourRole(bot))
