@@ -39,16 +39,11 @@ def create_teams(player_list):
 
 
 def unused_players(teams, player_list):
-    unused_players_list = []
-    for x in player_list:
-        for y in teams:
-            if x not in y[0]:
-                unused_players_list.append(x)
-                print("YEYEYE")
-    return unused_players_list
-
-
-print(unused_players(test_teams, matrix_values))
+    used_players = []
+    for team in teams:
+        for player in team[0]:
+            used_players.append(player)
+    return [x for x in player_list if x not in used_players]
 
 
 def output_to_csv(teams):
