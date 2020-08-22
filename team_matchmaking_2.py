@@ -12,7 +12,6 @@ from tkinter.filedialog import askopenfilename
 
 # Player tuple : (PlayerName, Rank, [Players they want to play with], [in-game role], attitude, availability, Substitute)
 
-
 matrix_values = [("a", 10, ["b", "c"], [], 1, 0, False), ("b", 9, ["c", "f"], [], 1, 0, False),
                  ("c", 8, ["a", "b", "d"], [], 0, 0, False),
                  ("d", 7, ["h", "i", "j"], [], 0, 0, False), ("e", 6, ["a", "g"], [], 1, 0, False),
@@ -21,13 +20,6 @@ matrix_values = [("a", 10, ["b", "c"], [], 1, 0, False), ("b", 9, ["c", "f"], []
                  ("i", 2, ["h", "j"], [], 0, 0, False),
                  ("j", 1, ["i"], [], 0, 0, False), ("k", 7, ["i"], [], 0, 0, True), ("l", 8, ["i"], [], 0, 0, True),
                  ("m", 1, ["i"], [], 0, 0, True)]
-
-test_teams = [([('a', 10, ['b', 'c'], [], 1, 0, False), ('b', 9, ['c', 'f'], [], 1, 0, False),
-                ('e', 6, ['a', 'g'], [], 1, 0, False), ('c', 8, ['a', 'b', 'd'], [], 0, 0, False),
-                ('g', 4, ['e', 'f'], [], 1, 0, False)], 7.4, []),
-              ([('d', 7, ['h', 'i', 'j'], [], 0, 0, False), ('h', 3, ['b', 'c', 'd'], [], 0, 0, False),
-                ('j', 1, ['i'], [], 0, 0, False), ('f', 5, ['e', 'a', 'g'], [], 1, 0, False),
-                ('i', 2, ['h', 'j'], [], 0, 0, False)], 3.6, [])]
 
 # All roles in the game, can be altered by whoever starts team making
 all_roles_in_game = []
@@ -204,8 +196,6 @@ def unused_players(teams, player_list):
 
 
 def output_to_csv(teams):
-    filename = askopenfilename()
-    print(filename)
     name = "test_output_" + str(round(time.time() * 1000)) + ".csv"
     team_cond = condense_teams(teams)
     with open(name, mode='w') as csv_file:
