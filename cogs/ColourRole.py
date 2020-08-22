@@ -11,6 +11,7 @@ KoalaBot Cog for guild members wishing to change their role colour
 import math
 import re
 from typing import List
+
 # Libs
 import discord
 from discord.ext import commands
@@ -45,6 +46,7 @@ class ColourRole(commands.Cog):
         self.cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
         self.cr_database_manager.create_tables()
 
+        
     def get_colour_from_hex_str(self, colour_str: str) -> discord.Colour:
 
         colour_str = colour_str.upper()

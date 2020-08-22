@@ -14,6 +14,7 @@ import discord
 from discord.ext.test import factories as dpyfactory
 from typing import List
 
+
 # Own modules
 
 # Constants
@@ -44,24 +45,25 @@ def assert_activity(activity: discord.Activity, application_id=None, name=None, 
     """
     # TODO: Add timestamps, assets, party
     assert activity.application_id == application_id \
-        and activity.name == name \
-        and activity.url == url \
-        and activity.type == type \
-        and activity.state == state \
-        and activity.details == details \
-        and activity.emoji == emoji \
-        and activity.start == start \
-        and activity.end == end \
-        and activity.large_image_url == large_image_url \
-        and activity.small_image_url == small_image_url \
-        and activity.large_image_text == large_image_text \
-        and activity.small_image_text == small_image_text
+           and activity.name == name \
+           and activity.url == url \
+           and activity.type == type \
+           and activity.state == state \
+           and activity.details == details \
+           and activity.emoji == emoji \
+           and activity.start == start \
+           and activity.end == end \
+           and activity.large_image_url == large_image_url \
+           and activity.small_image_url == small_image_url \
+           and activity.large_image_text == large_image_text \
+           and activity.small_image_text == small_image_text
 
 
 class FakeAuthor:
     """
     A class that acts as a discord.Member to replace the ctx.author on a context (ctx)
     """
+
     def __init__(self, name="FakeUser#0001", id=-1, all_permissions=False):
         """
         Initialises class variables and creates a random id if not specified

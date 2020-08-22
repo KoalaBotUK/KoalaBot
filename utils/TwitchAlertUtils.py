@@ -1,6 +1,7 @@
 import abc
 import sqlite3
 
+
 class TwitchAlertUtils:
     pass
 
@@ -33,5 +34,3 @@ class TwitchAlertDBInterface(metaclass=abc.ABCMeta):
     def update_alert_default_message(self, new_default_message: str):
         """Extract text from the data set"""
         raise NotImplementedError
-
-
