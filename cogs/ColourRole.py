@@ -10,8 +10,7 @@ KoalaBot Cog for guild members wishing to change their role colour
 
 import math
 import re
-from typing import List
-
+from typing import List, Tuple, Any
 # Libs
 import discord
 from discord.ext import commands
@@ -46,16 +45,100 @@ class ColourRole(commands.Cog):
         self.cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
         self.cr_database_manager.create_tables()
 
-        
     def get_colour_from_hex_str(self, colour_str: str) -> discord.Colour:
-
-        colour_str = colour_str.upper()
-        return discord.Colour.from_rgb(1, 1, 1)
+        r = int(colour_str[:2], 16)
+        g = int(colour_str[2:4], 16)
+        b = int(colour_str[-2:], 16)
+        return discord.Colour.from_rgb(r, g, b)
 
     @commands.check(is_allowed_to_change_colour)
     @commands.command(name="custom_colour")
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
-        return
+        colour_str = colour_str.upper()
+        if not ColourRole.is_valid_colour_str(colour_str):
+            await ctx.send("Invalid colour string specified, make sure it's a valid colour hex.")
+        else:
+            colour = self.get_colour_from_hex_str(colour_str)
+            # Check if the custom colour is valid
+            invalid_colours = self.get_guild_protected_colours(ctx)
+            valid_colour_check = ColourRole.is_valid_custom_colour(colour, invalid_colours)
+            if not valid_colour_check[0]:
+                fail: discord.Colour = valid_colour_check[1]
+                await ctx.send(
+                    f"Colour chosen was too close to an already protected colour {hex(fail.value)}. Please choose a different colour.")
+            else:
+                # Check if the role exists already
+                if ColourRole.role_already_exists(ctx, colour_str):
+                    # add that role to the author
+                    role = discord.utils.get(ctx.guild.roles, name=f"KoalaBot[0x{colour_str}]")
+                    await ctx.author.add_roles(role)
+                else:
+                    # create the role
+                    role: discord.Role = await self.create_custom_colour_role(colour, colour_str, ctx)
+                    # add that role to the person
+                    await ctx.author.add_roles(role)
+                await ctx.send(f"Your new custom role colour is {colour_str}, with the role {role.mention}")
+
+    async def create_custom_colour_role(self, colour: discord.Colour, colour_str: str,
+                                        ctx: commands.Context) -> discord.Role:
+        colour_role: discord.Role = await ctx.guild.create_role(name=f"KoalaBot[0x{colour_str}]",
+                                                                colour=colour,
+                                                                mentionable=False, hoist=False)
+        role_pos = self.calculate_custom_colour_role_position(ctx)
+        await colour_role.edit(position=role_pos)
+        await colour_role.edit(position=role_pos)
+        return colour_role
+
+    def calculate_custom_colour_role_position(self, ctx: commands.Context) -> int:
+        protected_role_list = self.get_protected_roles(ctx)
+        sorted_protected_role_list = sorted(protected_role_list, key=lambda x: x.position)
+        if sorted_protected_role_list is None:
+            role_pos = sorted(ctx.guild.roles, key=lambda x: x.position)[0].position - 1
+        else:
+            role_pos = sorted_protected_role_list[0].position - 1
+        if role_pos < 1:
+            role_pos = 1
+        return role_pos
+
+    def get_guild_protected_colours(self, ctx: commands.Context) -> List[discord.Colour]:
+        return ColourRole.get_protected_colours(self.get_protected_roles(ctx))
+
+    @staticmethod
+    def is_valid_colour_str(colour_str: str):
+        return re.match("^([A-F0-9]{6})$", colour_str)
+
+    @staticmethod
+    def get_protected_colours(roles: List[discord.Role]) -> List[discord.Colour]:
+        role_colours = [role.colour for role in roles]
+        role_colours.extend([discord.Colour.from_rgb(0, 0, 0), discord.Colour.from_rgb(54, 54, 54),
+                             discord.Colour.from_rgb(255, 255, 255)])
+        return role_colours
+
+    @staticmethod
+    def get_rgb_colour_distance(colour1: discord.Colour, colour2: discord.Colour) -> float:
+        r_diff = colour2.r - colour1.r
+        r_sqr_diff = r_diff ** 2
+        g_diff = colour2.g - colour1.g
+        g_sqr_diff = g_diff ** 2
+        b_diff = colour2.b - colour1.b
+        b_sqr_diff = b_diff ** 2
+        return math.sqrt(r_sqr_diff + g_sqr_diff + b_sqr_diff)
+
+    @staticmethod
+    def is_valid_custom_colour(custom_colour: discord.Colour, protected_colours: List[discord.Colour]) -> Tuple[
+        bool, Any]:
+        if not protected_colours:
+            return True, None
+        for protected_colour in protected_colours:
+            if ColourRole.get_rgb_colour_distance(custom_colour, protected_colour) < 8:
+                return False, protected_colour
+        return True, None
+
+    @staticmethod
+    def role_already_exists(ctx: commands.Context, colour_str: str):
+        role_name = f"KoalaBot[0x{colour_str}]"
+        guild: discord.Guild = ctx.guild
+        return role_name in [role.name for role in guild.roles]
 
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="list_protected_role_colours")
