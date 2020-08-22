@@ -1,5 +1,6 @@
 import time
 import csv
+from tkinter.filedialog import askopenfilename
 
 # Player name:  Discord tag input by player, String
 # Rank:         List input by creator, [Int]
@@ -29,7 +30,7 @@ test_teams = [([('a', 10, ['b', 'c'], [], 1, 0, False), ('b', 9, ['c', 'f'], [],
                 ('i', 2, ['h', 'j'], [], 0, 0, False)], 3.6, [])]
 
 # All roles in the game, can be altered by whoever starts team making
-all_roles_in_game = []#["Support", "DPS", "Tank"]
+all_roles_in_game = []
 
 # Maximum number of a role in a team, optimises team to ensure at least this many players in the team can take on each role.
 max_role_in_team = 2
@@ -159,11 +160,13 @@ def simulate_change(player, team):
 def check_compatible_role(player_one, player_two, team):
     if not all_roles_in_game:
         return 0
-    if (player_one in team[0] & player_two in team[0]) | (player_one not in team[0] & player_two not in team[0]):
+    if (player_one in team[0]) & (player_two in team[0]):
         return 0
-    if player_one in team[0] & player_two not in team[0]:
+    if (player_one not in team[0]) & (player_two not in team[0]):
+        return 0
+    if (player_one in team[0]) & (player_two not in team[0]):
         return simulate_change(player_two, team)
-    if player_one not in team[0] & player_two in team[0]:
+    if (player_one not in team[0]) & (player_two in team[0]):
         return simulate_change(player_one, team)
 
 
@@ -201,7 +204,9 @@ def unused_players(teams, player_list):
 
 
 def output_to_csv(teams):
-    name = "C:\\Users\\Kieran\\Desktop\\test\\test_output_" + str(round(time.time() * 1000)) + ".csv"
+    filename = askopenfilename()
+    print(filename)
+    name = "test_output_" + str(round(time.time() * 1000)) + ".csv"
     team_cond = condense_teams(teams)
     with open(name, mode='w') as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')
@@ -220,9 +225,10 @@ def condense_teams(teams):
     return team_cond
 
 
-def read_csv(location):
+def read_csv():
+    filename = askopenfilename()
     player_list = []
-    with open(location) as csv_file:
+    with open(filename) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line = 0
         for row in csv_reader:
