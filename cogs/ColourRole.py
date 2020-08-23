@@ -25,8 +25,12 @@ from utils.KoalaDBManager import KoalaDBManager
 
 def is_allowed_to_change_colour(ctx: commands.Context):
     cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
-    allowed_roles = cr_database_manager.get_colour_change_roles(ctx.guild.id)
-    return commands.has_any_role(allowed_roles)
+    allowed_role_ids = cr_database_manager.get_colour_change_roles(ctx.guild.id)
+    allowed_set = set(allowed_role_ids)
+    author: discord.Member = ctx.author
+    author_role_ids = [role.id for role in author.roles]
+    author_set = set(author_role_ids)
+    return allowed_set & author_set
 
 
 class ColourRole(commands.Cog):
@@ -54,7 +58,19 @@ class ColourRole(commands.Cog):
     @commands.check(is_allowed_to_change_colour)
     @commands.command(name="custom_colour")
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
+        """
+        Command for a user with the correct role to be able to change their
+
+        :param ctx:
+        :param colour_str:
+        :return:
+        """
         colour_str = colour_str.upper()
+        if colour_str == "NO":
+            await self.prune_author_old_colour_roles(ctx)
+            await ctx.send("Okay, removing your old custom colour role then.")
+            await self.prune_guild_empty_colour_roles(ctx)
+            return
         if not ColourRole.is_valid_colour_str(colour_str):
             await ctx.send("Invalid colour string specified, make sure it's a valid colour hex.")
         else:
@@ -67,6 +83,8 @@ class ColourRole(commands.Cog):
                 await ctx.send(
                     f"Colour chosen was too close to an already protected colour {hex(fail.value)}. Please choose a different colour.")
             else:
+                # remove the author's old colour roles
+                await self.prune_author_old_colour_roles(ctx)
                 # Check if the role exists already
                 if ColourRole.role_already_exists(ctx, colour_str):
                     # add that role to the author
@@ -78,6 +96,44 @@ class ColourRole(commands.Cog):
                     # add that role to the person
                     await ctx.author.add_roles(role)
                 await ctx.send(f"Your new custom role colour is {colour_str}, with the role {role.mention}")
+                # prune any empty guild colour roles then
+                await self.prune_guild_empty_colour_roles(ctx)
+
+    @custom_colour.error
+    async def custom_colour_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.CheckFailure):
+            await ctx.send("You don't have the required role to use this command.")
+
+    async def prune_author_old_colour_roles(self, ctx: commands.Context):
+        author: discord.Member = ctx.author
+        roles: List[discord.Role] = [role for role in author.roles if
+                                     re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
+        if not roles:
+            KoalaBot.logger.debug(
+                f"User {author.id} in guild {ctx.guild.id} changed their colour. Found no old colour roles to prune.")
+            return
+        await author.remove_roles(*roles)
+        msg = "Removed their roles with role id(s) "
+        for i in roles:
+            msg += str(i.id)
+            msg += ", "
+        msg = msg[:-2] + "."
+        KoalaBot.logger.debug(
+            f"User {author.id} in guild {ctx.guild.id} changed their colour. {msg}")
+
+    async def prune_guild_empty_colour_roles(self, ctx: commands.Context):
+        guild: discord.Guild = ctx.guild
+        roles: List[discord.Role] = [role for role in guild.roles if
+                                     re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name) and len(role.members) == 0]
+        if not roles:
+            KoalaBot.logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
+            return
+        msg = "Role IDs were "
+        for role in roles:
+            msg += str(role.id) + ", "
+            await role.delete(reason="Pruned since empty colour role")
+        msg = msg[:-2]
+        KoalaBot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
 
     async def create_custom_colour_role(self, colour: discord.Colour, colour_str: str,
                                         ctx: commands.Context) -> discord.Role:
@@ -130,7 +186,10 @@ class ColourRole(commands.Cog):
         if not protected_colours:
             return True, None
         for protected_colour in protected_colours:
-            if ColourRole.get_rgb_colour_distance(custom_colour, protected_colour) < 8:
+            colour_distance = ColourRole.get_rgb_colour_distance(custom_colour, protected_colour)
+            KoalaBot.logger.info(
+                f"Colour distance between {hex(custom_colour.value)} and {hex(protected_colour.value)} is {colour_distance}.")
+            if colour_distance < 8:
                 return False, protected_colour
         return True, None
 
@@ -272,14 +331,14 @@ class ColourRoleDBManager:
         self.database_manager.db_execute_commit(
             f"""DELETE FROM GuildInvalidCustomColourRoles WHERE guild_id = {guild_id} AND role_id = {role_id};""")
 
-    def get_protected_colour_roles(self, guild_id):
+    def get_protected_colour_roles(self, guild_id) -> List[int]:
         rows = self.database_manager.db_execute_select(
             f"""SELECT * from GuildInvalidCustomColourRoles WHERE guild_id = {guild_id};""")
         if rows is None:
             return None
         return [row[1] for row in rows]
 
-    def get_colour_change_roles(self, guild_id):
+    def get_colour_change_roles(self, guild_id) -> List[int]:
         rows = self.database_manager.db_execute_select(
             f"""SELECT * from GuildColourChangePermissions WHERE guild_id = {guild_id};""")
         if rows is None:
