@@ -121,6 +121,14 @@ class TwitterAPIHandler:
         return tweepy.API(auth)
 
 
+class StreamListener(tweepy.StreamListener):
+    def on_status(self, status):
+        return status.text
+
+    def on_error(self, status_code):
+        if status_code == 420:
+            return False
+
 def setup(bot: KoalaBot) -> None:
     """
     Load this cog to the KoalaBot.
