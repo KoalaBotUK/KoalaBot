@@ -95,7 +95,7 @@ class BaseCog(commands.Cog):
         """
         await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
 
-    @commands.command(name="clear", aliases=["clear"])
+    @commands.command(name="clear")
     @commands.check(KoalaBot.is_admin)
     async def clear(self, ctx, amount=2):
         """
