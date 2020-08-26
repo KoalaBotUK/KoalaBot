@@ -68,10 +68,11 @@ class ColourRole(commands.Cog):
         colour_str = colour_str.upper()
         if colour_str == "NO":
             await self.prune_author_old_colour_roles(ctx)
-            await ctx.send("Okay, removing your old custom colour role then.")
+            removed = await ctx.send("Okay, removing your old custom colour role then.")
+            if not removed:
+                await ctx.send(f"{ctx.author.mention} you don't have any colour roles to remove.")
             await self.prune_guild_empty_colour_roles(ctx)
-            return
-        if not ColourRole.is_valid_colour_str(colour_str):
+        elif not ColourRole.is_valid_colour_str(colour_str):
             await ctx.send("Invalid colour string specified, make sure it's a valid colour hex.")
         else:
             colour = self.get_colour_from_hex_str(colour_str)
@@ -95,6 +96,7 @@ class ColourRole(commands.Cog):
                     role: discord.Role = await self.create_custom_colour_role(colour, colour_str, ctx)
                     # add that role to the person
                     await ctx.author.add_roles(role)
+                    await ctx.author.add_roles(role)
                 await ctx.send(f"Your new custom role colour is {colour_str}, with the role {role.mention}")
                 # prune any empty guild colour roles then
                 await self.prune_guild_empty_colour_roles(ctx)
@@ -104,14 +106,14 @@ class ColourRole(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             await ctx.send("You don't have the required role to use this command.")
 
-    async def prune_author_old_colour_roles(self, ctx: commands.Context):
+    async def prune_author_old_colour_roles(self, ctx: commands.Context) -> bool:
         author: discord.Member = ctx.author
         roles: List[discord.Role] = [role for role in author.roles if
                                      re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
         if not roles:
             KoalaBot.logger.debug(
                 f"User {author.id} in guild {ctx.guild.id} changed their colour. Found no old colour roles to prune.")
-            return
+            return False
         await author.remove_roles(*roles)
         msg = "Removed their roles with role id(s) "
         for i in roles:
@@ -120,6 +122,7 @@ class ColourRole(commands.Cog):
         msg = msg[:-2] + "."
         KoalaBot.logger.debug(
             f"User {author.id} in guild {ctx.guild.id} changed their colour. {msg}")
+        return True
 
     async def prune_guild_empty_colour_roles(self, ctx: commands.Context):
         guild: discord.Guild = ctx.guild
@@ -161,7 +164,9 @@ class ColourRole(commands.Cog):
 
     @staticmethod
     def is_valid_colour_str(colour_str: str):
-        return re.match("^([A-F0-9]{6})$", colour_str)
+        if re.match("^([A-F0-9]{6})$", colour_str):
+            return True
+        return False
 
     @staticmethod
     def get_protected_colours(roles: List[discord.Role]) -> List[discord.Colour]:
@@ -172,13 +177,24 @@ class ColourRole(commands.Cog):
 
     @staticmethod
     def get_rgb_colour_distance(colour1: discord.Colour, colour2: discord.Colour) -> float:
+
         r_diff = colour2.r - colour1.r
         r_sqr_diff = r_diff ** 2
         g_diff = colour2.g - colour1.g
         g_sqr_diff = g_diff ** 2
         b_diff = colour2.b - colour1.b
         b_sqr_diff = b_diff ** 2
-        return math.sqrt(r_sqr_diff + g_sqr_diff + b_sqr_diff)
+        '''
+        # SIMPLE ALGORITHM FOR IT
+        dist = math.sqrt(r_sqr_diff + g_sqr_diff + b_sqr_diff)
+        '''
+        # MORE ACCURATE
+        r_avg: float = (colour1.r + colour2.r) / 2
+        b_fra = (255 - r_avg) / 256
+        r_fra = r_avg / 256
+        dist_sqr = ((2 + r_fra) * r_sqr_diff) + (4 * g_sqr_diff) + ((2 + b_fra) * b_sqr_diff)
+        dist = math.sqrt(dist_sqr)
+        return dist
 
     @staticmethod
     def is_valid_custom_colour(custom_colour: discord.Colour, protected_colours: List[discord.Colour]) -> Tuple[
@@ -189,7 +205,7 @@ class ColourRole(commands.Cog):
             colour_distance = ColourRole.get_rgb_colour_distance(custom_colour, protected_colour)
             KoalaBot.logger.info(
                 f"Colour distance between {hex(custom_colour.value)} and {hex(protected_colour.value)} is {colour_distance}.")
-            if colour_distance < 8:
+            if colour_distance < 30:
                 return False, protected_colour
         return True, None
 
