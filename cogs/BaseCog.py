@@ -72,11 +72,11 @@ class BaseCog(commands.Cog):
             self.started = True
         print("Bot is ready.")
 
-    @commands.command()
+    @commands.command(name="activity", aliases=["change_activity"])
     @commands.check(KoalaBot.is_owner)
     async def change_activity(self, ctx, activity, name):
         """
-        Allows the bot owner to change the activity of the bot
+        Change the activity of the bot
         :param ctx: Context of the command
         :param activity: The new activity of the bot
         :param name: The name of the activity
@@ -95,7 +95,7 @@ class BaseCog(commands.Cog):
         """
         await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
 
-    @commands.command()
+    @commands.command(name="clear", aliases=["clear"])
     @commands.check(KoalaBot.is_admin)
     async def clear(self, ctx, amount=2):
         """
@@ -105,7 +105,7 @@ class BaseCog(commands.Cog):
         """
         await ctx.channel.purge(limit=amount)
 
-    @commands.command()
+    @commands.command(name="loadCog", aliases=["load_cog"])
     @commands.check(KoalaBot.is_owner)
     async def load_cog(self, ctx, extension):
         """
@@ -116,7 +116,7 @@ class BaseCog(commands.Cog):
         self.bot.load_extension(self.COGS_DIR.replace("/", ".")+f'.{extension}')
         await ctx.send(f'{extension} Cog Loaded')
 
-    @commands.command()
+    @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(KoalaBot.is_owner)
     async def unload_cog(self, ctx, extension):
         """

@@ -20,7 +20,7 @@ import requests
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
-from utils.KoalaUtils import error_embed, is_channel_in_guild
+from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -55,18 +55,24 @@ class TwitchAlert(commands.Cog):
         self.loop_team_thread = None
         self.stop_loop = False
 
-    @commands.command(aliases=["twitch edit_message"])
+    @commands.command(name="twitchEditMsg", aliases=["edit_default_message"])
     @commands.check(KoalaBot.is_admin)
-    async def edit_default_message(self, ctx, channel_id, *default_live_message):
+    async def edit_default_message(self, ctx, raw_channel_id, *default_live_message):
         """
         Creates a twitch alert that can store twitch users and channels where
         if the user goes live, a notification will be put in the chosen channel
         :param ctx: The discord context of the command
-        :param channel_id: The channel ID where the twitch alert is being used
+        :param raw_channel_id: The channel ID where the twitch alert is being used
         :param default_live_message: The default live message of users within this Twitch Alert,
         leave empty for program default
         :return:
         """
+        try:
+            channel_id = extract_id(raw_channel_id)
+        except TypeError:
+            channel_id = ctx.message.channel.id
+            default_live_message = (raw_channel_id, )+default_live_message
+
         # Assigning default message if provided
         if len(default_live_message) == 0:
             default_message = None
@@ -85,17 +91,24 @@ class TwitchAlert(commands.Cog):
         # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
         await ctx.send(embed=new_embed)
 
-    @commands.command(aliases=["twitch add_user"])
+    @commands.command(name="twitchAdd", aliases=['add_user_to_twitch_alert'])
     @commands.check(KoalaBot.is_admin)
-    async def add_user_to_twitch_alert(self, ctx, channel_id, twitch_username, *custom_live_message):
+    async def add_user_to_twitch_alert(self, ctx, raw_channel_id, twitch_username, *custom_live_message):
         """
         Add a Twitch user to a Twitch Alert
         :param ctx: The discord context of the command
-        :param channel_id: The channel ID where the twitch alert is being used
+        :param raw_channel_id: The channel ID where the twitch alert is being used
         :param twitch_username: The Twitch Username of the user being added (lowercase)
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
+        try:
+            channel_id = extract_id(raw_channel_id)
+        except TypeError:
+            custom_live_message = (twitch_username,) + custom_live_message
+            twitch_username = raw_channel_id
+            channel_id = ctx.message.channel.id
+
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -121,16 +134,22 @@ class TwitchAlert(commands.Cog):
 
         await ctx.send(embed=new_embed)
 
-    @commands.command(aliases=["twitch remove_user"])
+    @commands.command(name="twitchRemove", aliases=['remove_user_from_twitch_alert'])
     @commands.check(KoalaBot.is_admin)
-    async def remove_user_from_twitch_alert(self, ctx, channel_id, twitch_username):
+    async def remove_user_from_twitch_alert(self, ctx, raw_channel_id, twitch_username):
         """
         Removes a user from a Twitch Alert
         :param ctx: the discord context
-        :param channel_id: The discord channel ID of the Twitch Alert
+        :param raw_channel_id: The discord channel ID of the Twitch Alert
         :param twitch_username: The username of the user to be removed
         :return:
         """
+        try:
+            channel_id = extract_id(raw_channel_id)
+        except TypeError:
+            twitch_username = raw_channel_id
+            channel_id = ctx.message.channel.id
+
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -144,17 +163,24 @@ class TwitchAlert(commands.Cog):
 
         await ctx.send(embed=new_embed)
 
-    @commands.command(aliases=["twitch add_team"])
+    @commands.command(name="twitchAddTeam", aliases=["add_team_to_twitch_alert"])
     @commands.check(KoalaBot.is_admin)
-    async def add_team_to_twitch_alert(self, ctx, channel_id, team_name, *custom_live_message):
+    async def add_team_to_twitch_alert(self, ctx, raw_channel_id, team_name, *custom_live_message):
         """
         Add a Twitch team to a Twitch Alert
         :param ctx: The discord context of the command
-        :param channel_id: The channel ID where the twitch alert is being used
+        :param raw_channel_id: The channel ID where the twitch alert is being used
         :param team_name: The Twitch team being added (lowercase)
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
+        try:
+            channel_id = extract_id(raw_channel_id)
+        except TypeError:
+            custom_live_message = (team_name,) + custom_live_message
+            team_name = raw_channel_id
+            channel_id = ctx.message.channel.id
+
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -178,16 +204,22 @@ class TwitchAlert(commands.Cog):
         # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
         await ctx.send(embed=new_embed)
 
-    @commands.command(aliases=["twitch remove_team"])
+    @commands.command(name="twitchRemoveTeam", aliases=["remove_team_from_twitch_alert"])
     @commands.check(KoalaBot.is_admin)
-    async def remove_team_from_twitch_alert(self, ctx, channel_id, team_name):
+    async def remove_team_from_twitch_alert(self, ctx, raw_channel_id, team_name):
         """
         Removes a team from a Twitch Alert
         :param ctx: the discord context
-        :param channel_id: The discord channel ID of the Twitch Alert
+        :param raw_channel_id: The discord channel ID of the Twitch Alert
         :param team_name: The Twitch team being added (lowercase)
         :return:
         """
+        try:
+            channel_id = extract_id(raw_channel_id)
+        except TypeError:
+            team_name = raw_channel_id
+            channel_id = ctx.message.channel.id
+
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -265,7 +297,7 @@ class TwitchAlert(commands.Cog):
                     for streams_details in user_streams:
                         if streams_details.get('type') == "live":
                             current_username = str.lower(streams_details.get("user_name"))
-                            print(current_username + " is live")
+                            # print(current_username + " is live")
                             usernames.remove(current_username)
 
                             sql_find_message_id = f"""
@@ -305,7 +337,7 @@ class TwitchAlert(commands.Cog):
 
                     # Deals with remaining offline streams
                     self.ta_database_manager.delete_all_offline_streams(False, usernames)
-            await asyncio.sleep(1)
+            await asyncio.sleep(60)
         pass
 
     def create_alert_embed(self, stream_data, message):
@@ -340,19 +372,19 @@ class TwitchAlert(commands.Cog):
             usernames = []
             for user in users_and_teams:
                 usernames.append(user[0])
-            print(usernames)
+            # (usernames)
             with concurrent.futures.ThreadPoolExecutor() as pool2:
                 streams_data = await asyncio.get_event_loop(). \
                     run_in_executor(pool2,
                                     self.ta_database_manager.twitch_handler.get_streams_data,
                                     usernames)
-            print(streams_data)
+            # print(streams_data)
 
             # Deals with online streams
             for stream_data in streams_data:
                 if stream_data.get('type') == "live":
                     current_username = str.lower(stream_data.get("user_name"))
-                    print(current_username + " is live")
+                    # print(current_username + " is live")
                     usernames.remove(current_username)
 
                     sql_find_message_id = f"""
@@ -394,7 +426,7 @@ class TwitchAlert(commands.Cog):
             # Deals with remaining offline streams
             self.ta_database_manager.delete_all_offline_streams(True, usernames)
 
-        await asyncio.sleep(10)
+        await asyncio.sleep(60)
     pass
 
 
@@ -460,6 +492,10 @@ class TwitchAPIHandler:
             headers = self.headers
 
         result = requests.get(url, headers=headers, params=params)
+        if result.json().get("error"):
+            self.get_new_twitch_oauth()
+            result = requests.get(url, headers=headers, params=params)
+
         return result
 
     def get_streams_data(self, usernames):
