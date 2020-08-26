@@ -52,6 +52,18 @@ def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
     return arr
 
 
+def random_colour_str():
+    import random
+    return hex(random.randint(0, 16777216))
+
+
+def make_list_of_colour_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
+    arr = []
+    for i in range(length):
+        arr.append(dpytest.back.make_role(f"KoalaBot[{random_colour_str().upper()}]", guild))
+    return arr
+
+
 def independent_get_protected_colours(guild_id):
     dbm: KoalaDBManager = KoalaBot.database_manager
     rows = dbm.db_execute_select(f"""SELECT * FROM GuildInvalidCustomColourRoles WHERE guild_id = {guild_id};""")
@@ -142,6 +154,93 @@ async def test_is_allowed_to_change_colour_true():
 async def test_get_colour_from_hex_str(hex_str, value):
     colour: discord.Colour = role_colour_cog.get_colour_from_hex_str(hex_str)
     assert colour.value == value, str(colour.r) + " " + str(colour.g) + " " + str(colour.b) + " " + str(colour.value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("colour_str, expected",
+                         [("", False), (".", False), (" ", False), ("223", False), ("a", False), ("ffgeaa", False),
+                          ("FFeehu", False), ("FFee66", True), ("ffeea7", True), ("ABCDEF", True)])
+async def test_is_valid_colour_str(colour_str, expected):
+    assert role_colour_cog.is_valid_colour_str(colour_str.upper()) == expected
+
+
+@pytest.mark.parametrize("colour1_str, colour2_str, expected",
+                         [("ffffff", "ffffff", 0), ("FFFFFF", "ffffff", 0), ("ffffff", "000000", 764.8339663572415),
+                          ("ff74aa", "6900ff", 362.23060571789074), ("223636", "363636", 29.47456530637899)])
+@pytest.mark.asyncio
+async def test_get_rgb_colour_distance(colour1_str, colour2_str, expected):
+    colour1 = role_colour_cog.get_colour_from_hex_str(colour1_str)
+    colour2 = role_colour_cog.get_colour_from_hex_str(colour2_str)
+    dist = role_colour_cog.get_rgb_colour_distance(colour1, colour2)
+    assert dist == expected
+
+
+@pytest.mark.asyncio
+async def test_role_already_exists():
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    role_exists = role_colour_cog.role_already_exists(ctx, "ffae14")
+    assert not role_exists
+    await guild.create_role(name="KoalaBot[0xffae14]")
+    role_exists = role_colour_cog.role_already_exists(ctx, "ffae14")
+    assert role_exists
+
+
+@pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
+@pytest.mark.asyncio
+async def test_get_protected_roles(num_roles):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = make_list_of_roles(guild, num_roles)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    for role in roles:
+        DBManager.add_guild_protected_colour_role(guild.id, role.id)
+    return_roles = role_colour_cog.get_protected_roles(ctx)
+    assert set(roles) == set(return_roles)
+
+
+@pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
+@pytest.mark.asyncio
+async def test_get_custom_colour_allowed_roles(num_roles):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = make_list_of_roles(guild, num_roles)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    for role in roles:
+        DBManager.add_colour_change_role_perms(guild.id, role.id)
+    return_roles = role_colour_cog.get_custom_colour_allowed_roles(ctx)
+    assert set(roles) == set(return_roles)
+
+
+@pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
+@pytest.mark.asyncio
+async def test_prune_guild_empty_colour_roles(num_roles):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = make_list_of_colour_roles(guild, num_roles)
+    assert set(roles).issubset(guild.roles)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    await role_colour_cog.prune_guild_empty_colour_roles(ctx)
+    assert not any(roles) in guild.roles
+
+
+@pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
+@pytest.mark.asyncio
+async def test_prune_author_old_colour_roles(num_roles):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = make_list_of_colour_roles(guild, num_roles)
+    assert set(roles).issubset(guild.roles)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    await role_colour_cog.prune_author_old_colour_roles(ctx)
+    author: discord.Member = ctx.author
+    assert not any(roles) in author.roles
+
+
+@pytest.mark.asyncio
+async def test_calculate_custom_colour_role_position():
+    assert False
 
 
 @pytest.mark.asyncio
