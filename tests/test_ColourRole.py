@@ -11,6 +11,7 @@ Commented using reStructuredText (reST)
 from typing import List
 import re
 import mock
+import asyncio
 import random
 # Libs
 import discord.ext.test as dpytest
@@ -215,11 +216,9 @@ async def test_role_already_exists():
 async def test_get_protected_roles(num_roles):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = await make_list_of_roles(guild, num_roles)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
-    ctx: commands.Context = utils_cog.get_last_ctx()
     for role in roles:
         DBManager.add_guild_protected_colour_role(guild.id, role.id)
-    return_roles = role_colour_cog.get_protected_roles(ctx)
+    return_roles = role_colour_cog.get_protected_roles(guild)
     assert set(roles) == set(return_roles)
 
 
@@ -277,9 +276,7 @@ async def test_calculate_custom_colour_role_position(num_roles):
         expected = 1
     else:
         expected = lowest_protected - 1
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
-    ctx: commands.Context = utils_cog.get_last_ctx()
-    assert role_colour_cog.calculate_custom_colour_role_position(ctx) == expected
+    assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected
 
 
 @pytest.mark.asyncio
@@ -295,7 +292,7 @@ async def test_create_custom_colour_role():
         assert re.match("^KoalaBot\[0x([A-F0-9]{6})\]", role.name), role.name
         assert role.colour.value == colour.value
         assert role.position == 2
-        mock_calc.assert_called_once_with(ctx)
+        mock_calc.assert_called_once_with(guild)
 
 
 @pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
@@ -304,11 +301,34 @@ async def test_get_guild_protected_colours(num_roles):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    roles = make_list_of_colour_roles(guild, num_roles)
-    colours = make_list_of_colours(num_roles)
+    roles = await make_list_of_colour_roles(guild, num_roles)
+    colours = [role.colour for role in roles]
     with mock.patch('cogs.ColourRole.ColourRole.get_protected_roles', return_value=roles) as mock_roles:
         with mock.patch('cogs.ColourRole.ColourRole.get_protected_colours', return_value=colours) as mock_colours:
             result = role_colour_cog.get_guild_protected_colours(ctx)
-            mock_roles.assert_called_once_with(ctx)
+            mock_roles.assert_called_once_with(guild)
             mock_colours.assert_called_once_with(roles)
             assert result == colours
+
+
+@pytest.mark.parametrize("num_total, num_protected", [(0, 0), (1, 0), (2, 0), (1, 1), (2, 1), (5, 0), (5, 1), (5, 2)])
+@pytest.mark.asyncio
+async def test_list_protected_roles(num_total, num_protected):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = await make_list_of_roles(guild, num_total)
+    expected = "Roles whose colour is protected are:\r\n"
+    if num_total == 0 or num_protected == 0:
+        protected = []
+        expected = expected[:-1]
+    elif num_protected == num_total:
+        protected = roles.copy()
+    else:
+        protected = random.sample(set(roles), 2)
+    for r in protected:
+        DBManager.add_guild_protected_colour_role(guild.id, r.id)
+
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "list_protected_role_colours")
+    msg: discord.Message = await dpytest.sent_queue.get()
+    assert expected in msg.content
+    for r in protected:
+        assert r.mention in msg.content, r.mention + " " + msg.content
