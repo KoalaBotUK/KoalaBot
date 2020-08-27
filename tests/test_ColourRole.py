@@ -316,7 +316,7 @@ async def test_get_guild_protected_colours(num_roles):
 async def test_list_protected_roles(num_total, num_protected):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = await make_list_of_roles(guild, num_total)
-    expected = "Roles whose colour is protected are:\r\n"
+    expected = "Roles whose colour is protected are:\r"
     if num_total == 0 or num_protected == 0:
         protected = []
         expected = expected[:-1]
@@ -332,3 +332,15 @@ async def test_list_protected_roles(num_total, num_protected):
     assert expected in msg.content
     for r in protected:
         assert r.mention in msg.content, r.mention + " " + msg.content
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_db():
+    DBManager.get_parent_database_manager().clear_all_tables(DBManager.get_parent_database_manager().fetch_all_tables())
+    yield DBManager
+
+
+@pytest.fixture(scope='function', autouse=True)
+async def setup_clean_messages():
+    await dpytest.empty_queue()
+    yield dpytest
