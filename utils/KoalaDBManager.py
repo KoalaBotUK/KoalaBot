@@ -103,7 +103,10 @@ class KoalaDBManager:
         extension_id text NOT NULL,
         guild_id integer NOT NULL,
         PRIMARY KEY (extension_id,guild_id),
-        FOREIGN KEY (extension_id) REFERENCES KoalaExtensions (extension_id)
+        CONSTRAINT fk_extensions
+            FOREIGN KEY (extension_id) 
+            REFERENCES KoalaExtensions (extension_id)
+            ON DELETE CASCADE 
         );"""
 
         sql_create_guild_welcome_messages_table = """
