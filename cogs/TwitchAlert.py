@@ -67,7 +67,7 @@ class TwitchAlert(commands.Cog):
         leave empty for program default
         :return:
         """
-        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
@@ -103,7 +103,7 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
-        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
@@ -148,7 +148,7 @@ class TwitchAlert(commands.Cog):
         :param twitch_username: The username of the user to be removed
         :return:
         """
-        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -182,7 +182,7 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
-        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -226,7 +226,7 @@ class TwitchAlert(commands.Cog):
         :param team_name: The Twitch team being added (lowercase)
         :return:
         """
-        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)

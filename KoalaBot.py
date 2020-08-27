@@ -41,7 +41,8 @@ KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 DATABASE_PATH = "Koala.db"
-KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
+PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
+                                  "or use `k!help enableExt` to enable it"
 IS_DPYTEST = True
 # Variables
 started = False
@@ -100,6 +101,9 @@ async def dm_group_message(members: [discord.Member], message: str):
             pass
     return count
 
+def check_guild_has_ext(ctx, extension_id):
+    if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not IS_DPYTEST):
+        raise PermissionError(PERMISSION_ERROR_TEXT)
 
 @client.event
 async def on_command_error(ctx, error):

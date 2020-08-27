@@ -18,8 +18,6 @@ import sqlite3
 
 
 # Constants
-PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
-                                  "or use `k!help enableExt` to enable it"
 # Variables
 
 
@@ -145,10 +143,6 @@ class KoalaDBManager:
                                f"WHERE guild_id = {guild_id}"
         result = self.db_execute_select(sql_select_extension)
         return ("All",) in result or extension_id in result
-
-    def check_guild_has_ext(self, ctx, extension_id):
-        if not self.extension_enabled(ctx.message.guild.id, extension_id):
-            raise PermissionError(PERMISSION_ERROR_TEXT)
 
     def give_guild_extension(self, guild_id, extension_id):
         sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
