@@ -67,6 +67,7 @@ class TwitchAlert(commands.Cog):
         leave empty for program default
         :return:
         """
+        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
@@ -93,7 +94,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchAdd", aliases=['add_user_to_twitch_alert'])
     @commands.check(KoalaBot.is_admin)
-    async def add_user_to_twitch_alert(self, ctx, raw_channel_id, twitch_username, *custom_live_message):
+    async def add_user_to_twitch_alert(self, ctx, raw_channel_id, twitch_username=None, *custom_live_message):
         """
         Add a Twitch user to a Twitch Alert
         :param ctx: The discord context of the command
@@ -102,12 +103,15 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
+        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
             custom_live_message = (twitch_username,) + custom_live_message
             twitch_username = raw_channel_id
             channel_id = ctx.message.channel.id
+        if twitch_username is None:
+            raise commands.MissingRequiredArgument("twitch_username is a required argument that is missing.")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -136,7 +140,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchRemove", aliases=['remove_user_from_twitch_alert'])
     @commands.check(KoalaBot.is_admin)
-    async def remove_user_from_twitch_alert(self, ctx, raw_channel_id, twitch_username):
+    async def remove_user_from_twitch_alert(self, ctx, raw_channel_id, twitch_username=None):
         """
         Removes a user from a Twitch Alert
         :param ctx: the discord context
@@ -144,11 +148,15 @@ class TwitchAlert(commands.Cog):
         :param twitch_username: The username of the user to be removed
         :return:
         """
+        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
             twitch_username = raw_channel_id
             channel_id = ctx.message.channel.id
+        if twitch_username is None:
+            raise commands.MissingRequiredArgument("twitch_username is a required argument that is missing.")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -165,7 +173,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchAddTeam", aliases=["add_team_to_twitch_alert"])
     @commands.check(KoalaBot.is_admin)
-    async def add_team_to_twitch_alert(self, ctx, raw_channel_id, team_name, *custom_live_message):
+    async def add_team_to_twitch_alert(self, ctx, raw_channel_id, team_name=None, *custom_live_message):
         """
         Add a Twitch team to a Twitch Alert
         :param ctx: The discord context of the command
@@ -174,12 +182,16 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
+        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
             custom_live_message = (team_name,) + custom_live_message
             team_name = raw_channel_id
             channel_id = ctx.message.channel.id
+        if team_name is None:
+            raise commands.MissingRequiredArgument("team_name is a required argument that is missing.")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -206,7 +218,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchRemoveTeam", aliases=["remove_team_from_twitch_alert"])
     @commands.check(KoalaBot.is_admin)
-    async def remove_team_from_twitch_alert(self, ctx, raw_channel_id, team_name):
+    async def remove_team_from_twitch_alert(self, ctx, raw_channel_id, team_name=None):
         """
         Removes a team from a Twitch Alert
         :param ctx: the discord context
@@ -214,11 +226,15 @@ class TwitchAlert(commands.Cog):
         :param team_name: The Twitch team being added (lowercase)
         :return:
         """
+        self.ta_database_manager.database_manager.check_guild_has_ext(ctx, "TwitchAlert")
+
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
             team_name = raw_channel_id
             channel_id = ctx.message.channel.id
+        if team_name is None:
+            raise commands.MissingRequiredArgument("team_name is a required argument that is missing.")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):

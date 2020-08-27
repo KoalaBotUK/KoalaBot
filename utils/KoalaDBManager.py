@@ -18,7 +18,8 @@ import sqlite3
 
 
 # Constants
-
+PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
+                                  "or use `k!help enableExt` to enable it"
 # Variables
 
 
@@ -29,6 +30,7 @@ class KoalaDBManager:
 
     def create_connection(self):
         """ Create a database connection to the SQLite3 database specified in db_file_path
+
         :return: Connection object or None
         """
         conn = None
@@ -40,10 +42,13 @@ class KoalaDBManager:
 
         return conn
 
-    def db_execute_select(self, sql_str, args=None):
+    def db_execute_select(self, sql_str, args=None, pass_errors=False):
         """ Execute an SQL selection with the connection stored in this object
+
         :param sql_str: An SQL SELECT statement
-        :return: void
+        :param args: Additional args to pass with the sql statement
+        :param pass_errors: Raise errors that are raised by this query
+        :return:
         """
         try:
             conn = self.create_connection()
@@ -57,12 +62,17 @@ class KoalaDBManager:
             conn.close()
             return results
         except Exception as e:
-            print(e)
+            if pass_errors:
+                raise e
+            else:
+                print(e)
 
-    def db_execute_commit(self, sql_str, args=None):
+    def db_execute_commit(self, sql_str, args=None, pass_errors=False):
         """ Execute an SQL transaction with the connection stored in this object
+
         :param sql_str: An SQL transaction
-        :param args: Any arguments for the commit
+        :param args: Additional args to pass with the sql statement
+        :param pass_errors: Raise errors that are raised by this query
         :return: void
         """
         try:
@@ -76,7 +86,10 @@ class KoalaDBManager:
             c.close()
             conn.close()
         except Exception as e:
-            print(e)
+            if pass_errors:
+                raise e
+            else:
+                print(e)
 
     def create_base_tables(self):
         sql_create_koala_extensions_table = """
@@ -126,11 +139,41 @@ class KoalaDBManager:
 
             self.db_execute_commit(sql_insert_extension)
 
+    def extension_enabled(self, guild_id, extension_id):
+        sql_select_extension = f"SELECT extension_id " \
+                               f"FROM GuildExtensions " \
+                               f"WHERE guild_id = {guild_id}"
+        result = self.db_execute_select(sql_select_extension)
+        return ("All",) in result or extension_id in result
+
+    def check_guild_has_ext(self, ctx, extension_id):
+        if not self.extension_enabled(ctx.message.guild.id, extension_id):
+            raise PermissionError(PERMISSION_ERROR_TEXT)
+
     def give_guild_extension(self, guild_id, extension_id):
-        sql_insert_guild_extension = f"""
-        INSERT INTO GuildExtensions 
-        VALUES ('{extension_id}','{guild_id}')"""
-        self.db_execute_commit(sql_insert_guild_extension)
+        sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
+        if len(self.db_execute_select(sql_check_extension_exists)) > 0 or extension_id == "All":
+            sql_insert_guild_extension = f"""
+            INSERT INTO GuildExtensions 
+            VALUES ('{extension_id}','{guild_id}')"""
+            self.db_execute_commit(sql_insert_guild_extension)
+        else:
+            raise NotImplementedError(f"{extension_id} is not a valid extension")
+
+    def remove_guild_extension(self, guild_id, extension_id):
+        sql_remove_extension = f"DELETE FROM GuildExtensions " \
+                               f"WHERE extension_id = '{extension_id}' AND guild_id = {guild_id}"
+        self.db_execute_commit(sql_remove_extension, pass_errors=True)
+
+    def get_enabled_guild_extensions(self, guild_id):
+        sql_select_enabled = f"SELECT extension_id FROM GuildExtensions WHERE guild_id = {guild_id}"
+        return self.db_execute_select(sql_select_enabled, pass_errors=True)
+
+    def get_all_guild_extensions(self, guild_id):
+        sql_select_all = f"SELECT DISTINCT KoalaExtensions.extension_id " \
+                         f"FROM KoalaExtensions "
+        return self.db_execute_select(sql_select_all, pass_errors=True)
+
 
     def fetch_all_tables(self):
         return self.db_execute_select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
@@ -147,7 +190,7 @@ class KoalaDBManager:
 
     def update_guild_welcome_message(self, guild_id, new_message: str):
         self.db_execute_commit(
-            f"UPDATE GuildWelcomeMessages SET welcome_message = \"{new_message}\" WHERE guild_id = {guild_id};")
+            f"UPDATE GuildWelcomeMessages SET welcome_message = '{new_message}' WHERE guild_id = {guild_id};")
         return new_message
 
     def remove_guild_welcome_message(self, guild_id):
@@ -158,5 +201,5 @@ class KoalaDBManager:
     def new_guild_welcome_message(self, guild_id):
         from cogs import IntroCog
         self.db_execute_commit(
-            f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, \"{IntroCog.DEFAULT_WELCOME_MESSAGE}\");")
+            f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, '{IntroCog.DEFAULT_WELCOME_MESSAGE}');")
         return self.fetch_guild_welcome_message(guild_id)

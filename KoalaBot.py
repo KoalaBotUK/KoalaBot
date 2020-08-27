@@ -25,8 +25,10 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import logging
+
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
+from utils.KoalaUtils import error_embed
 
 # Constants
 load_dotenv()
@@ -66,7 +68,6 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-
     return ctx.author.guild_permissions.administrator or str(ctx.author) == TEST_USER  # For automated testing
 
 
@@ -100,10 +101,18 @@ async def dm_group_message(members: [discord.Member], message: str):
     return count
 
 
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(embed=error_embed(description=error))
+    elif isinstance(error, commands.CommandInvokeError):
+        await ctx.send(embed=error_embed(description=error.original))
+    else:
+        await ctx.send(embed=error_embed(description=error))
+
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
     load_all_cogs()
-    database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
