@@ -9,10 +9,12 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 from typing import List
-
+import re
+import mock
+import random
 # Libs
 import discord.ext.test as dpytest
-import mock
+
 import pytest
 from discord.ext import commands
 import discord
@@ -45,10 +47,11 @@ def setup_function():
     print("Tests starting")
 
 
-def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
-    arr = []
+async def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
+    arr: List[discord.Role] = []
     for i in range(length):
         arr.append(dpytest.back.make_role(f"TestRole{i}", guild))
+        await arr[i].edit(position=i + 1)
     return arr
 
 
@@ -57,10 +60,18 @@ def random_colour_str():
     return hex(random.randint(0, 16777216))
 
 
+def random_colour() -> discord.Colour:
+    import random
+    r = random.randint(0, 255)
+    g = random.randint(0, 255)
+    b = random.randint(0, 255)
+    return discord.Colour.from_rgb(r, g, b)
+
+
 def make_list_of_colour_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
     arr = []
     for i in range(length):
-        arr.append(dpytest.back.make_role(f"KoalaBot[{random_colour_str().upper()}]", guild))
+        arr.append(dpytest.back.make_role(f"KoalaBot[{random_colour_str().upper()}]", guild, colour=random_colour()))
     return arr
 
 
@@ -84,7 +95,7 @@ def independent_get_colour_change_roles(guild_id):
 @pytest.mark.asyncio
 async def test_cr_db_functions_protected_colour_roles(length):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    role_list = make_list_of_roles(guild, length)
+    role_list = await make_list_of_roles(guild, length)
     # Test dbmanager add protected role
     for role in role_list:
         DBManager.add_guild_protected_colour_role(guild.id, role.id)
@@ -104,7 +115,7 @@ async def test_cr_db_functions_protected_colour_roles(length):
 @pytest.mark.asyncio
 async def test_cr_db_functions_colour_change_roles(length):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    role_list = make_list_of_roles(guild, length)
+    role_list = await make_list_of_roles(guild, length)
     # Test dbmanager add colour change role
     for role in role_list:
         DBManager.add_colour_change_role_perms(guild.id, role.id)
@@ -132,7 +143,8 @@ async def test_is_allowed_to_change_colour_no_guild_roles():
 async def test_is_allowed_to_change_colour_false():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    role = make_list_of_roles(ctx.guild, 1)[0]
+    roles = await make_list_of_roles(ctx.guild, 1)
+    role = roles[0]
     DBManager.add_colour_change_role_perms(ctx.guild.id, role.id)
     assert not ColourRole.is_allowed_to_change_colour(ctx)
 
@@ -141,7 +153,8 @@ async def test_is_allowed_to_change_colour_false():
 async def test_is_allowed_to_change_colour_true():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    role = make_list_of_roles(ctx.guild, 1)[0]
+    roles = await make_list_of_roles(ctx.guild, 1)
+    role = roles[0]
     member: discord.Member = ctx.author
     DBManager.add_colour_change_role_perms(ctx.guild.id, role.id)
     await member.add_roles(role)
@@ -191,7 +204,7 @@ async def test_role_already_exists():
 @pytest.mark.asyncio
 async def test_get_protected_roles(num_roles):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    roles = make_list_of_roles(guild, num_roles)
+    roles = await make_list_of_roles(guild, num_roles)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     for role in roles:
@@ -204,7 +217,7 @@ async def test_get_protected_roles(num_roles):
 @pytest.mark.asyncio
 async def test_get_custom_colour_allowed_roles(num_roles):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    roles = make_list_of_roles(guild, num_roles)
+    roles = await make_list_of_roles(guild, num_roles)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     for role in roles:
@@ -238,31 +251,46 @@ async def test_prune_author_old_colour_roles(num_roles):
     assert not any(roles) in author.roles
 
 
+@pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
 @pytest.mark.asyncio
-async def test_calculate_custom_colour_role_position():
-    assert False
-
-
-@pytest.mark.asyncio
-async def test_command_missing_args():
-    assert False
-
-
-@pytest.mark.asyncio
-async def test_command_valid_args():
-    assert False
-
-
-@pytest.mark.asyncio
-async def test_command_invalid_args():
-    assert False
-
-
-@pytest.mark.asyncio
-async def test_colour_check_valid_colour():
-    assert False
+async def test_calculate_custom_colour_role_position(num_roles):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = await make_list_of_roles(guild, 5)
+    # add num_roles roles to the protected roles
+    chosen = random.choices(roles, k=2)
+    lowest_protected = 2000000000
+    for r in chosen:
+        DBManager.add_guild_protected_colour_role(guild.id, r.id)
+        if r.position < lowest_protected:
+            lowest_protected = r.position
+    if lowest_protected == 2000000000 or lowest_protected == 1:
+        expected = 1
+    else:
+        expected = lowest_protected - 1
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    assert role_colour_cog.calculate_custom_colour_role_position(ctx) == expected
 
 
 @pytest.mark.asyncio
-async def test_colour_check_invalid_colour():
-    assert False
+async def test_create_custom_colour_role():
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    colour: discord.Colour = discord.Colour.from_rgb(16, 16, 16)
+    colour_str = hex(colour.value)
+    with mock.patch('ColourRole.ColourRole.calculate_custom_colour_role_position', return_value=2):
+        role = await role_colour_cog.create_custom_colour_role(colour, colour_str, ctx)
+        assert role in guild.roles
+        assert re.match("^KoalaBot\[0x([A-F0-9]{6})\]", role.name)
+        assert role.colour.value == colour.value
+        assert role.position == 2
+
+
+@pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
+@pytest.mark.asyncio
+async def test_get_guild_protected_colours(num_roles):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    assert True
