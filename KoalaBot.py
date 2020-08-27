@@ -43,7 +43,7 @@ TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 DATABASE_PATH = "Koala.db"
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                                   "or use `k!help enableExt` to enable it"
-IS_DPYTEST = True
+IS_DPYTEST = False
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)

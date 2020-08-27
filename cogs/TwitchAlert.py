@@ -75,12 +75,12 @@ class TwitchAlert(commands.Cog):
             default_live_message = (raw_channel_id, )+default_live_message
 
         # Assigning default message if provided
-        if len(default_live_message) == 0:
-            default_message = None
-        else:
+        if default_live_message is not None and default_live_message != (None,):
             default_message = " ".join(default_live_message)
+        else:
+            default_message = None
 
-        # Creates a new Twitch Alert with the used guild ID and default message if provided
+# Creates a new Twitch Alert with the used guild ID and default message if provided
         default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id, default_message,
                                                           replace=True)
 
@@ -121,7 +121,7 @@ class TwitchAlert(commands.Cog):
         default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id)
 
         # Setting the custom message as required
-        if custom_live_message is not None:
+        if custom_live_message is not None and custom_live_message != (None,):
             custom_message = " ".join(custom_live_message)
             default_message = custom_message
         else:
@@ -201,7 +201,7 @@ class TwitchAlert(commands.Cog):
         self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id, ctx.message.guild.id)
 
         # Setting the custom message as required
-        if custom_live_message:
+        if custom_live_message is not None and custom_live_message != (None,):
             default_message = " ".join(custom_live_message)
         else:
             default_message = DEFAULT_MESSAGE

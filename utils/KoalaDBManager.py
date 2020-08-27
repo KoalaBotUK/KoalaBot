@@ -145,7 +145,7 @@ class KoalaDBManager:
                                f"FROM GuildExtensions " \
                                f"WHERE guild_id = {guild_id}"
         result = self.db_execute_select(sql_select_extension)
-        return ("All",) in result or extension_id in result
+        return ("All",) in result or (extension_id,) in result
 
     def give_guild_extension(self, guild_id, extension_id):
         sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
