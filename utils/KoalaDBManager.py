@@ -184,7 +184,7 @@ class KoalaDBManager:
 
     def update_guild_welcome_message(self, guild_id, new_message: str):
         self.db_execute_commit(
-            f"UPDATE GuildWelcomeMessages SET welcome_message = '{new_message}' WHERE guild_id = {guild_id};")
+            f"UPDATE GuildWelcomeMessages SET welcome_message = \"{new_message}\" WHERE guild_id = {guild_id};")
         return new_message
 
     def remove_guild_welcome_message(self, guild_id):
@@ -195,5 +195,5 @@ class KoalaDBManager:
     def new_guild_welcome_message(self, guild_id):
         from cogs import IntroCog
         self.db_execute_commit(
-            f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, '{IntroCog.DEFAULT_WELCOME_MESSAGE}');")
+            f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, \"{IntroCog.DEFAULT_WELCOME_MESSAGE}\");")
         return self.fetch_guild_welcome_message(guild_id)
