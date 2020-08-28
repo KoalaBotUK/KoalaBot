@@ -293,7 +293,11 @@ class TwitchAlert(commands.Cog):
         print("Twitch Alert Loop Starting")
         while not self.stop_loop:
 
-            sql_find_users = """SELECT twitch_username FROM UserInTwitchAlert"""
+            sql_find_users = "SELECT twitch_username " \
+                             "FROM UserInTwitchAlert " \
+                             "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+                             "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                             "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
             users = self.ta_database_manager.database_manager.db_execute_select(sql_find_users)
             usernames = []
             users_left = 100
@@ -316,11 +320,12 @@ class TwitchAlert(commands.Cog):
                             # print(current_username + " is live")
                             usernames.remove(current_username)
 
-                            sql_find_message_id = f"""
-                            SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message 
-                            FROM UserInTwitchAlert 
-                            JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id
-                            WHERE twitch_username = '{current_username}'"""
+                            sql_find_message_id = "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
+                                                  "FROM UserInTwitchAlert " \
+                                                  "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+                                                  "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                                                  "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
+                                                  f"WHERE twitch_username = '{current_username}';"
 
                             results = self.ta_database_manager.database_manager.db_execute_select(
                                 sql_find_message_id)
@@ -381,8 +386,11 @@ class TwitchAlert(commands.Cog):
                     run_in_executor(pool, self.ta_database_manager.update_all_teams_members)
 
             sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
-                                    "FROM UserInTwitchTeam JOIN TeamInTwitchAlert TITA " \
-                                    "on UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id"
+                                    "FROM UserInTwitchTeam " \
+                                    "JOIN TeamInTwitchAlert TITA ON UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id " \
+                                    "JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id " \
+                                    "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                                    "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
 
             users_and_teams = self.ta_database_manager.database_manager.db_execute_select(sql_select_team_users)
             usernames = []
@@ -408,6 +416,9 @@ class TwitchAlert(commands.Cog):
                     FROM UserInTwitchTeam
                     JOIN TeamInTwitchAlert TITA on UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id
                     JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id
+                    JOIN (SELECT extension_id, guild_id 
+                          FROM GuildExtensions 
+                          WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE ON TA.guild_id = GE.guild_id 
                     WHERE twitch_username = '{current_username}'"""
 
                     results = self.ta_database_manager.database_manager.db_execute_select(
