@@ -24,6 +24,12 @@ from utils.KoalaDBManager import KoalaDBManager
 # Constants
 
 def is_allowed_to_change_colour(ctx: commands.Context):
+    """
+    Command check to see if someone can use the custom_colour command
+
+    :param ctx:
+    :return:
+    """
     cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
     allowed_role_ids = cr_database_manager.get_colour_change_roles(ctx.guild.id)
     allowed_set = set(allowed_role_ids)
@@ -183,11 +189,11 @@ class ColourRole(commands.Cog):
 
     def calculate_custom_colour_role_position(self, guild: discord.Guild) -> int:
         protected_role_list: List[discord.Role] = self.get_protected_roles(guild)
-
+        if len(guild.roles) == 0:
+            return 1
         if protected_role_list is None or len(protected_role_list) == 0:
-            if len(guild.roles) == 0:
-                return 1
-            role_pos = sorted(guild.roles, key=lambda x: x.position)[0].position - 1
+            bot_member: discord.Member = guild.get_member(self.bot.user.id)
+            role_pos = sorted(bot_member.roles, key=lambda x: x.position)[0].position - 1
         else:
             sorted_protected_role_list: List[discord.Role] = sorted(protected_role_list, key=lambda x: x.position)
             role_pos = sorted_protected_role_list[0].position - 1
