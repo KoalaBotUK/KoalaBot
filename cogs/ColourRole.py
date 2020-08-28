@@ -27,8 +27,9 @@ def is_allowed_to_change_colour(ctx: commands.Context):
     """
     Command check to see if someone can use the custom_colour command
 
-    :param ctx:
-    :return:
+    :param ctx: Context of the command
+    :return: True if the command invoker has a role in the list of roles that are allowed to use the command, False
+    otherwise. Always False if there's no roles that have been granted permission to use the command
     """
     cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
     allowed_role_ids = cr_database_manager.get_colour_change_roles(ctx.guild.id)
@@ -41,7 +42,7 @@ def is_allowed_to_change_colour(ctx: commands.Context):
 
 class ColourRole(commands.Cog):
     """
-        A discord.py cog with general commands useful to managers of the bot and servers
+        A discord.py cog with commands to allow server members to change their display name colours to something of their choosing.
     """
 
     def __init__(self, bot):
@@ -57,6 +58,13 @@ class ColourRole(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
+        """
+        Listens for roles being deleted in a guild. On a role being deleted, it automatically removes the role from the
+        relevant database tables if it was protected or a permission role for using custom_colour, and reshuffles a
+        guild's custom colour roles to ensure people who are still allowed to may keep their custom colour.
+
+        :param role: Role that was deleted from the guild
+        """
         protected = self.cr_database_manager.get_protected_colour_roles(role.guild.id)
         if role.id in protected:
             self.cr_database_manager.remove_guild_protected_colour_role(role.guild.id, role.id)
@@ -66,6 +74,12 @@ class ColourRole(commands.Cog):
         await self.rearrange_custom_colour_role_positions(role.guild)
 
     def get_colour_from_hex_str(self, colour_str: str) -> discord.Colour:
+        """
+        Parses a length 6 hex string and returns a Discord.Colour made from that string.
+
+        :param colour_str: Hex string of colour
+        :return: Colour from colour_str
+        """
         r = int(colour_str[:2], 16)
         g = int(colour_str[2:4], 16)
         b = int(colour_str[-2:], 16)
@@ -75,11 +89,15 @@ class ColourRole(commands.Cog):
     @commands.command(name="custom_colour")
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
         """
-        Command for a user with the correct role to be able to change their
+        Command for a user with the correct role to be able to change their display colour in a guild.
+        Syntax is k!custom_colour ("no" / colour hex). Usage with no removes any custom colour held before.
+        Won't accept it if the colour chosen too closely resembles a role that was protected's colour or a discord
+        blocked colour. A role must be made and that role be added to the permissions by usage of
+        k!add_custom_colour_allowed_role <role>, and the command invoker must have that role before they can use this
+        command.
 
-        :param ctx:
-        :param colour_str:
-        :return:
+        :param ctx: Context of the command
+        :param colour_str: The colour hex string specified, or "no" in case of cancelling colour
         """
         colour_str = colour_str.upper()
         if colour_str == "NO":
@@ -119,10 +137,30 @@ class ColourRole(commands.Cog):
 
     @custom_colour.error
     async def custom_colour_error(self, ctx: commands.Context, error):
+        """
+        Catches any error from using the command custom_colour. Only has special case for CheckFailure. Others are
+        logged, and a contact support message sent.
+
+        :param ctx: Context of the command
+        :param error: Error that occurred
+        """
         if isinstance(error, commands.CheckFailure):
             await ctx.send("You don't have the required role to use this command.")
+        else:
+            import time
+            KoalaBot.logger.error(f"Unexpected error occurred in Guild {ctx.guild.id}, channel {ctx.channel.id}. "
+                                  f"Error was of type {str(type(error))}. Cause was {error.__cause__}.")
+            await ctx.send(
+                f"Unexpected error occurred. Please contact bot developers with the timestamp {time.time()}, "
+                f"guild ID {ctx.guild.id} and Error type {str(type(error))}")
 
     async def prune_author_old_colour_roles(self, ctx: commands.Context) -> bool:
+        """
+        Removes any old custom colour roles from the author/invoker of the command if they have any.
+
+        :param ctx: Context of the command
+        :return: True if a role was removed. False otherwise.
+        """
         author: discord.Member = ctx.author
         roles: List[discord.Role] = [role for role in author.roles if
                                      re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
@@ -141,20 +179,33 @@ class ColourRole(commands.Cog):
         return True
 
     async def prune_guild_empty_colour_roles(self, ctx: commands.Context):
+        """
+        Removes custom colour roles from the command context's guild if they've got no members with that role.
+
+        :param ctx: Context of the command
+        """
         guild: discord.Guild = ctx.guild
         roles: List[discord.Role] = [role for role in guild.roles if
                                      re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name) and len(role.members) == 0]
         if not roles:
             KoalaBot.logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
-            return
-        msg = "Role IDs were "
-        for role in roles:
-            msg += str(role.id) + ", "
-            await role.delete(reason="Pruned since empty colour role")
-        msg = msg[:-2]
-        KoalaBot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
+        else:
+            msg = "Role IDs were "
+            for role in roles:
+                msg += str(role.id) + ", "
+                await role.delete(reason="Pruned since empty colour role")
+            msg = msg[:-2]
+            KoalaBot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
 
-    async def prune_member_old_colour_roles(self, members: List[discord.Member]) -> bool:
+    async def prune_members_old_colour_roles(self, members: List[discord.Member]) -> bool:
+        """
+        Removes custom colour roles from a list of members, for example if they all lost permission to have a custom
+        colour if the list of roles allowed to have a custom colour changed.
+
+        :param members: List of members whose custom colour roles should be removed
+        :return: True if removed at least 1 member's role, or no members had that role in the first place. False
+        otherwise.
+        """
         if len(members) == 0:
             return True
         count = 0
@@ -179,6 +230,14 @@ class ColourRole(commands.Cog):
 
     async def create_custom_colour_role(self, colour: discord.Colour, colour_str: str,
                                         ctx: commands.Context) -> discord.Role:
+        """
+        Creates a custom colour role in the context's guild, with an auto-generated name.
+
+        :param colour: Colour of the role
+        :param colour_str: Hex string value of the role colour
+        :param ctx: Context of the command
+        :return: The role that was created
+        """
         colour_role: discord.Role = await ctx.guild.create_role(name=f"KoalaBot[0x{colour_str}]",
                                                                 colour=colour,
                                                                 mentionable=False, hoist=False)
@@ -188,6 +247,13 @@ class ColourRole(commands.Cog):
         return colour_role
 
     def calculate_custom_colour_role_position(self, guild: discord.Guild) -> int:
+        """
+        Calculates the position a custom role colour should be to ensure it's shown on people's display names correctly.
+        In most cases, it'll be 1 position lower than the lowest positioned protected role.
+
+        :param guild: Guild to calculate for
+        :return: Role position custom colour roles should be in.
+        """
         protected_role_list: List[discord.Role] = self.get_protected_roles(guild)
         if len(guild.roles) == 0:
             return 1
@@ -202,6 +268,12 @@ class ColourRole(commands.Cog):
         return role_pos
 
     async def rearrange_custom_colour_role_positions(self, guild: discord.Guild):
+        """
+        Rearranges custom colour roles in a guild to ensure that they're still correctly positioned after updates to
+        the guild's roles or the extension's protected roles and such.
+
+        :param guild: Guild to rearrange roles in
+        """
         role_pos = self.calculate_custom_colour_role_position(guild)
         roles: List[discord.Role] = [role for role in guild.roles if
                                      re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
@@ -209,16 +281,36 @@ class ColourRole(commands.Cog):
             await role.edit(position=role_pos)
 
     def get_guild_protected_colours(self, ctx: commands.Context) -> List[discord.Colour]:
-        return ColourRole.get_protected_colours(self.get_protected_roles(ctx.guild))
+        """
+        Gets the list of protected roles' colours in the context's guild.
+
+        :param discord.ext.commands.Context ctx: Context of the command
+        :return: The list of the protected roles' colours
+        :rtype: List[discord.Colour]
+        """
+        return ColourRole.get_role_colours(self.get_protected_roles(ctx.guild))
 
     @staticmethod
     def is_valid_colour_str(colour_str: str):
-        if re.match("^([A-F0-9]{6})$", colour_str):
+        """
+        Checks if a string is a valid colour hex string value.
+
+        :param colour_str: String to check
+        :return: True if a valid colour hex string, false otherwise
+        """
+        if re.match("^([A-Fa-f0-9]{6})$", colour_str):
             return True
         return False
 
     @staticmethod
-    def get_protected_colours(roles: List[discord.Role]) -> List[discord.Colour]:
+    def get_role_colours(roles: List[discord.Role]) -> List[discord.Colour]:
+        """
+        Gets the list of role colours from a list of roles.
+
+        :param roles: Roles whose colours to get
+        :return: The list of colours to return
+        :rtype: List[discord.Colour]
+        """
         role_colours = [role.colour for role in roles]
         role_colours.extend([discord.Colour.from_rgb(0, 0, 0), discord.Colour.from_rgb(54, 54, 54),
                              discord.Colour.from_rgb(255, 255, 255)])
@@ -226,18 +318,22 @@ class ColourRole(commands.Cog):
 
     @staticmethod
     def get_rgb_colour_distance(colour1: discord.Colour, colour2: discord.Colour) -> float:
+        """
+        Gets colour distance between two colours. Uses a low-cost algorithm sourced from
+        https://www.compuphase.com/cmetric.htm to determine the distance between colours in a way that mimics human
+        perception.
 
+        :param colour1: Colour 1 for distance calculation
+        :param colour2: Colour 2 for distance calculation
+        :return: Distance between colours. Ranges from 0 to ~768.
+        """
         r_diff = colour2.r - colour1.r
         r_sqr_diff = r_diff ** 2
         g_diff = colour2.g - colour1.g
         g_sqr_diff = g_diff ** 2
         b_diff = colour2.b - colour1.b
         b_sqr_diff = b_diff ** 2
-        '''
-        # SIMPLE ALGORITHM FOR IT
-        dist = math.sqrt(r_sqr_diff + g_sqr_diff + b_sqr_diff)
-        '''
-        # MORE ACCURATE
+        # Below from https://www.compuphase.com/cmetric.htm
         r_avg: float = (colour1.r + colour2.r) / 2
         b_fra = (255 - r_avg) / 256
         r_fra = r_avg / 256
@@ -248,6 +344,14 @@ class ColourRole(commands.Cog):
     @staticmethod
     def is_valid_custom_colour(custom_colour: discord.Colour, protected_colours: List[discord.Colour]) -> Tuple[
         bool, Any]:
+        """
+        Checks if a given custom colour is a valid custom colour and not too close to any protected colours.
+
+        :param custom_colour: Custom colour given
+        :param protected_colours: List of protected colours in a guild
+        :return: Tuple whose first element is True if valid, and False if invalid. If valid, the second element is None.
+        Otherwise, the second element is the colour it ended up being too close to.
+        """
         if not protected_colours:
             return True, None
         for protected_colour in protected_colours:
@@ -260,6 +364,13 @@ class ColourRole(commands.Cog):
 
     @staticmethod
     def role_already_exists(ctx: commands.Context, colour_str: str):
+        """
+        Checks if a custom colour role with a specific name already exists in the context's guild.
+
+        :param ctx: Context of the command
+        :param colour_str: Colour hex string to check
+        :return: True if the role already exists, False otherwise.
+        """
         role_name = f"KoalaBot[0x{colour_str}]"
         guild: discord.Guild = ctx.guild
         return role_name in [role.name for role in guild.roles]
@@ -267,6 +378,13 @@ class ColourRole(commands.Cog):
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="list_protected_role_colours")
     async def list_protected_role_colours(self, ctx: commands.Context):
+        """
+        Command to list the protected roles, whose colours are protected from being imitated by a custom colour, in a
+        guild. Requires admin permissions to use.
+
+        :param ctx: Context of the command
+        :return: Sends a message with the mentions of the roles that are protected in a guild
+        """
         roles = self.get_protected_roles(ctx.guild)
         print(roles)
         msg = "Roles whose colour is protected are:\r\n"
@@ -277,6 +395,13 @@ class ColourRole(commands.Cog):
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="list_custom_colour_allowed_roles")
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
+        """
+        Command to list the roles in a guild which are permitted to have their own custom colours. Requires admin
+        permissions to use.
+
+        :param ctx: Context of the command
+        :return: Sends a message with the mentions of the roles that are protected in a guild.
+        """
         roles = self.get_custom_colour_allowed_roles(ctx)
         print(roles)
         msg = "Roles allowed to have a custom colour are:\r\n"
@@ -285,6 +410,12 @@ class ColourRole(commands.Cog):
         await ctx.send(msg[:-1])
 
     def get_custom_colour_allowed_roles(self, ctx: commands.Context) -> List[discord.Role]:
+        """
+        Gets the list of roles in the context's guild that are allowed to have a custom colour.
+
+        :param ctx: Context of the command
+        :return: List of roles allowed to use the custom_colour command/have a custom colour
+        """
         role_ids = self.cr_database_manager.get_colour_change_roles(ctx.guild.id)
         print(role_ids)
         if not role_ids:
@@ -294,6 +425,12 @@ class ColourRole(commands.Cog):
         return roles
 
     def get_protected_roles(self, guild: discord.Guild) -> List[discord.Role]:
+        """
+        Gets the list of roles in the guild that are protected from custom colours.
+
+        :param guild: Guild to check/access
+        :return: List of roles which are protected
+        """
         role_ids = self.cr_database_manager.get_protected_colour_roles(guild.id)
         print(role_ids)
         if not role_ids:
@@ -304,6 +441,13 @@ class ColourRole(commands.Cog):
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="add_protected_role_colour")
     async def add_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
+        """
+        Command that adds a role, via ID, mention or name, to the list of protected roles. Needs admin permissions to
+        use.
+
+        :param ctx: Context of the command
+        :param role_str: The role to add (ID, name or mention)
+        """
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -315,6 +459,13 @@ class ColourRole(commands.Cog):
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="remove_protected_role_colour")
     async def remove_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
+        """
+        Command that removes a role, via ID, mention or name, from the list of protected roles. Needs admin permissions
+        to use.
+
+        :param ctx: Context of the command
+        :param role_str: The role to remove (ID, name or mention)
+        """
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -326,6 +477,13 @@ class ColourRole(commands.Cog):
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="add_custom_colour_allowed_role")
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
+        """
+        Command that adds a role, via ID, mention or name, to the list of roles allowed to have a custom colour. Needs
+        admin permissions to use.
+
+        :param ctx: Context of the command
+        :param role_str: The role to add (ID, name or mention)
+        """
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -336,12 +494,19 @@ class ColourRole(commands.Cog):
     @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
     @commands.command(name="remove_custom_colour_allowed_role")
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
+        """
+        Command that removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
+        Needs admin permissions to use.
+
+        :param ctx: Context of the command
+        :param role_str: The role to remove (ID, name or mention)
+        """
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
         else:
             members: List[discord.Member] = role.members
-            await self.prune_member_old_colour_roles(members)
+            await self.prune_members_old_colour_roles(members)
             self.cr_database_manager.remove_colour_change_role_perms(ctx.guild.id, role.id)
             await ctx.send(
                 f"Removed {role.mention} from the list of roles allowed to have a custom colour. Removed the role members' custom colours too, and pruned empty custom colour roles.")
