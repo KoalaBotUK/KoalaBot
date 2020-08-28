@@ -77,8 +77,8 @@ class ColourRole(commands.Cog):
         """
         colour_str = colour_str.upper()
         if colour_str == "NO":
-            await self.prune_author_old_colour_roles(ctx)
-            removed = await ctx.send("Okay, removing your old custom colour role then.")
+            removed = await self.prune_author_old_colour_roles(ctx)
+            await ctx.send("Okay, removing your old custom colour role then, if you have one.")
             if not removed:
                 await ctx.send(f"{ctx.author.mention} you don't have any colour roles to remove.")
             await self.prune_guild_empty_colour_roles(ctx)
@@ -107,7 +107,7 @@ class ColourRole(commands.Cog):
                     # add that role to the person
                     await ctx.author.add_roles(role)
                     await ctx.author.add_roles(role)
-                await ctx.send(f"Your new custom role colour is {colour_str}, with the role {role.mention}")
+                await ctx.send(f"Your new custom role colour is #{colour_str}, with the role {role.mention}")
                 # prune any empty guild colour roles then
                 await self.prune_guild_empty_colour_roles(ctx)
 
