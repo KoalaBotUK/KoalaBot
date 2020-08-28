@@ -419,7 +419,7 @@ async def test_prune_member_old_colour_roles(num_members):
         member: discord.Member = await dpytest.member_join(name=f"TestMemberWithRole{i}", discrim=i + 1)
         await member.add_roles(colour_role)
         test_members.append(member)
-    val = await role_colour_cog.prune_member_old_colour_roles(dpytest.get_config().members)
+    val = await role_colour_cog.prune_members_old_colour_roles(dpytest.get_config().members)
     assert val
     for member in dpytest.get_config().members:
         assert colour_role not in member.roles
