@@ -5,7 +5,7 @@ attrs==20.1.0
 certifi==2020.6.20
 chardet==3.0.4
 colorama==0.4.3
-discord.py==1.3.4
+discord.py==1.4.1
 dpytest==0.0.20
 idna==2.10
 iniconfig==1.0.1
@@ -27,4 +27,3 @@ urllib3==1.25.10
 wcwidth==0.2.5
 websockets==8.1
 yarl==1.4.2
-
