@@ -149,8 +149,11 @@ class ColourRole(commands.Cog):
         KoalaBot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
 
     async def prune_member_old_colour_roles(self, members: List[discord.Member]) -> bool:
+        if len(members) == 0:
+            return True
         count = 0
-        guild = members[0].guild
+        m: discord.Member = members[0]
+        guild: discord.Guild = m.guild
         msg = "Removed colour roles from members who had held this role previously. These were members "
         for member in members:
             roles: List[discord.Role] = [role for role in member.roles if
