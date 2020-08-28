@@ -22,6 +22,7 @@ from tests.utils.TestUtils import FakeAuthor
 from tests.utils.TestUtilsCog import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
 
+
 # Constants
 
 # Variables
