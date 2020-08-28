@@ -314,7 +314,7 @@ async def test_get_guild_protected_colours(num_roles):
     roles = await make_list_of_custom_colour_roles(guild, num_roles)
     colours = [role.colour for role in roles]
     with mock.patch('cogs.ColourRole.ColourRole.get_protected_roles', return_value=roles) as mock_roles:
-        with mock.patch('cogs.ColourRole.ColourRole.get_protected_colours', return_value=colours) as mock_colours:
+        with mock.patch('cogs.ColourRole.ColourRole.get_role_colours', return_value=colours) as mock_colours:
             result = role_colour_cog.get_guild_protected_colours(ctx)
             mock_roles.assert_called_once_with(guild)
             mock_colours.assert_called_once_with(roles)
