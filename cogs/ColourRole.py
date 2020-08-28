@@ -179,11 +179,14 @@ class ColourRole(commands.Cog):
         return colour_role
 
     def calculate_custom_colour_role_position(self, guild: discord.Guild) -> int:
-        protected_role_list = self.get_protected_roles(guild)
-        sorted_protected_role_list = sorted(protected_role_list, key=lambda x: x.position)
-        if sorted_protected_role_list is None:
+        protected_role_list: List[discord.Role] = self.get_protected_roles(guild)
+
+        if protected_role_list is None or len(protected_role_list) == 0:
+            if len(guild.roles) == 0:
+                return 1
             role_pos = sorted(guild.roles, key=lambda x: x.position)[0].position - 1
         else:
+            sorted_protected_role_list: List[discord.Role] = sorted(protected_role_list, key=lambda x: x.position)
             role_pos = sorted_protected_role_list[0].position - 1
         if role_pos < 1:
             role_pos = 1
