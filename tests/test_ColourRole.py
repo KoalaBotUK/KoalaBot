@@ -333,6 +333,28 @@ async def test_list_protected_roles(num_total, num_protected):
     for r in protected:
         assert r.mention in msg.content, r.mention + " " + msg.content
 
+@pytest.mark.asyncio
+async def test_on_guild_role_delete():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    role_list = await make_list_of_roles(guild, 2)
+    await role_list[0].delete()
+    assert role_list[0] not in guild.roles
+    role_list = await make_list_of_roles(guild, 2)
+    await role_colour_cog.add_protected_role_colour(ctx, role_str=str(role_list[0].id))
+    protected = role_colour_cog.get_protected_roles(guild)
+    assert role_list[0] in protected
+    await role_list[0].delete()
+    protected = role_colour_cog.get_protected_roles(guild)
+    assert role_list[0] not in protected
+    role_list = await make_list_of_roles(guild, 2)
+    await role_colour_cog.add_custom_colour_allowed_role(ctx, role_str=str(role_list[0].id))
+    custom_colour_allowed = role_colour_cog.get_custom_colour_allowed_roles(ctx)
+    assert role_list[0] in custom_colour_allowed
+    await role_list[0].delete()
+    custom_colour_allowed = role_colour_cog.get_custom_colour_allowed_roles(ctx)
+    assert role_list[0] not in custom_colour_allowed
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
