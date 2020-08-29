@@ -48,7 +48,7 @@ class TwitchAlert(commands.Cog):
             database_manager = KoalaBot.database_manager
         self.bot = bot
         database_manager.create_base_tables()
-        database_manager.insert_extension("TwitchAlert", 0, False, True)
+        database_manager.insert_extension("TwitchAlert", 0, True, True)
         self.ta_database_manager = TwitchAlertDBManager(database_manager, bot)
         self.ta_database_manager.create_tables()
         self.loop_thread = None

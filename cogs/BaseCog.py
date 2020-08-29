@@ -50,6 +50,35 @@ def new_discord_activity(activity, name):
     return discord.Activity(type=activity_type, name=name)
 
 
+def list_ext_embed(guild_id):
+    """
+    Creates a discord embed of enabled and disabled extensions
+    :param guild_id: The discord guild id of the server
+    :return: The finished discord embed
+    """
+    embed = discord.Embed()
+    embed.title = "Enabled extensions"
+    embed.colour = KOALA_GREEN
+    embed.set_footer(text=f"Guild ID: {guild_id}")
+    enabled_results = KoalaBot.database_manager.get_enabled_guild_extensions(guild_id)
+    all_results = KoalaBot.database_manager.get_all_available_guild_extensions(guild_id)
+    enabled = ""
+    disabled = ""
+    for result in enabled_results:
+        enabled += f"{result[0]}\n"
+        try:
+            all_results.remove((result[0],))
+        except ValueError:
+            pass
+    for result in all_results:
+        disabled += f"{result[0]}\n"
+    if enabled != "":
+        embed.add_field(name=":white_check_mark: Enabled", value=enabled)
+    if disabled != "":
+        embed.add_field(name=":negative_squared_cross_mark: Disabled", value=disabled)
+    return embed
+
+
 class BaseCog(commands.Cog):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
@@ -134,77 +163,61 @@ class BaseCog(commands.Cog):
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(KoalaBot.is_admin)
-    async def enable_koala_ext(self, ctx, koala_extension, guild=None):
+    async def enable_koala_ext(self, ctx, koala_extension):
         """
         Enables a koala extension onto a server, all grants all extensions
         :param ctx: Context of the command
         :param koala_extension: The name of the koala
-        :param guild: The guild to be updated
-        TODO: Allow admins to add available extensions and remove them
         """
-        if guild is None:
-            guild_id = ctx.message.guild.id
-        else:
-            guild_id = extract_id(guild)
+        guild_id = ctx.message.guild.id
 
-        if koala_extension.lower() in ["all", "alpha"]:
-            if KoalaBot.is_owner(ctx):
-                KoalaBot.database_manager.give_guild_extension(guild_id, "All")
-            else:
-                await ctx.send(embed=error_embed("Only developers can enable all extensions"))
+        if koala_extension.lower() in ["all"]:
+            available_extensions = KoalaBot.database_manager.get_all_available_guild_extensions(guild_id)
+            for extension in available_extensions:
+                KoalaBot.database_manager.give_guild_extension(guild_id, extension[0])
+            embed = list_ext_embed(guild_id)
+            embed.title = "All extensions enabled"
+
         else:
             KoalaBot.database_manager.give_guild_extension(guild_id, koala_extension)
+            embed = list_ext_embed(guild_id)
+            embed.title = koala_extension+" enabled"
+
+        await ctx.send(embed=embed)
 
     @commands.command(name="disableExt", aliases=["disable_koala_ext"])
     @commands.check(KoalaBot.is_admin)
-    async def disable_koala_ext(self, ctx, koala_extension, guild=None):
+    async def disable_koala_ext(self, ctx, koala_extension):
         """
         Disables a koala extension onto a server
         :param ctx: Context of the command
         :param koala_extension: The name of the koala
-        :param guild: The guild to be updated
-        TODO: Allow admins to add available extensions and remove them
         """
-        if guild is None:
-            guild_id = ctx.message.guild.id
-        else:
-            guild_id = extract_id(guild)
-
+        guild_id = ctx.message.guild.id
+        all_ext = KoalaBot.database_manager.get_enabled_guild_extensions(guild_id)
+        if koala_extension.lower() in ["all"]:
+            for ext in all_ext:
+                KoalaBot.database_manager.remove_guild_extension(guild_id, ext[0])
+        elif (koala_extension,) not in all_ext:
+            raise NotImplementedError(f"{koala_extension} is not an enabled extension")
         KoalaBot.database_manager.remove_guild_extension(guild_id, koala_extension)
+        embed = list_ext_embed(guild_id)
+        embed.title = koala_extension+" disabled"
+        await ctx.send(embed=embed)
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
     @commands.check(KoalaBot.is_admin)
-    async def list_koala_ext(self, ctx, guild=None):
+    async def list_koala_ext(self, ctx):
         """
         Lists the enabled koala extensions of a server
         :param ctx: Context of the command
-        :param guild: The guild to be updated
-        TODO: Allow admins to add available extensions and remove them
         """
-        if guild is None:
-            guild_id = ctx.message.guild.id
-        else:
-            guild_id = extract_id(guild)
-        embed = discord.Embed(title="Enabled extensions", colour=KOALA_GREEN)
-        embed.set_footer(text=f"Guild ID: {guild_id}")
-        enabled_results = KoalaBot.database_manager.get_enabled_guild_extensions(guild_id)
-        all_results = KoalaBot.database_manager.get_all_guild_extensions(guild_id)
-        enabled = ""
-        disabled = ""
-        for result in enabled_results:
-            enabled += f"{result[0]}\n"
-            try:
-                all_results.remove((result[0],))
-            except ValueError:
-                pass
-        for result in all_results:
-            disabled += f"{result[0]}\n"
-        if enabled != "":
-            embed.add_field(name=":white_check_mark: Enabled", value=enabled)
-        if disabled != "":
-            embed.add_field(name=":negative_squared_cross_mark: Disabled", value=disabled)
+        guild_id = ctx.message.guild.id
+        embed = list_ext_embed(guild_id)
 
         await ctx.send(embed=embed)
+
+
 
 
 def setup(bot: KoalaBot) -> None:
