@@ -166,9 +166,9 @@ class KoalaDBManager:
         sql_select_enabled = f"SELECT extension_id FROM GuildExtensions WHERE guild_id = {guild_id}"
         return self.db_execute_select(sql_select_enabled, pass_errors=True)
 
-    def get_all_guild_extensions(self, guild_id):
+    def get_all_available_guild_extensions(self, guild_id):
         sql_select_all = f"SELECT DISTINCT KoalaExtensions.extension_id " \
-                         f"FROM KoalaExtensions "
+                         f"FROM KoalaExtensions WHERE available = 'True'"
         return self.db_execute_select(sql_select_all, pass_errors=True)
 
 
