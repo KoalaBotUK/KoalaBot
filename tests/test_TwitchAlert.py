@@ -37,6 +37,7 @@ DB_PATH = "KoalaBotTwitchTest.db"
 def setup_module():
     try:
         os.remove(DB_PATH)
+        KoalaBot.IS_DPYTEST = True
     except FileNotFoundError:
         print("Database Doesn't Exist, Continuing")
     finally:

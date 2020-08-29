@@ -25,8 +25,10 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import logging
+
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
+from utils.KoalaUtils import error_embed
 
 # Constants
 load_dotenv()
@@ -39,8 +41,9 @@ KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 DATABASE_PATH = "Koala.db"
-KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
-IS_DPYTEST = True
+PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
+                                  "or use `k!help enableExt` to enable it"
+IS_DPYTEST = False
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
@@ -56,7 +59,7 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
-    return ctx.author.id == int(BOT_OWNER) or str(ctx.author) == TEST_USER  # For automated testing
+    return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and IS_DPYTEST)
 
 
 def is_admin(ctx):
@@ -66,8 +69,7 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-
-    return ctx.author.guild_permissions.administrator or str(ctx.author) == TEST_USER  # For automated testing
+    return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and IS_DPYTEST)
 
 
 def load_all_cogs():
@@ -99,11 +101,22 @@ async def dm_group_message(members: [discord.Member], message: str):
             pass
     return count
 
+def check_guild_has_ext(ctx, extension_id):
+    if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not IS_DPYTEST):
+        raise PermissionError(PERMISSION_ERROR_TEXT)
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(embed=error_embed(description=error))
+    elif isinstance(error, commands.CommandInvokeError):
+        await ctx.send(embed=error_embed(description=error.original))
+    else:
+        await ctx.send(embed=error_embed(description=error))
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
     load_all_cogs()
-    database_manager.give_guild_extension(718532674527952916, "TwitchAlert")  # DEBUG
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
