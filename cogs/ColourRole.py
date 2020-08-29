@@ -99,6 +99,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param colour_str: The colour hex string specified, or "no" in case of cancelling colour
         """
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         colour_str = colour_str.upper()
         if colour_str == "NO":
             removed = await self.prune_author_old_colour_roles(ctx)
@@ -387,6 +388,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: Sends a message with the mentions of the roles that are protected in a guild
         """
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         roles = self.get_protected_roles(ctx.guild)
         print(roles)
         msg = "Roles whose colour is protected are:\r\n"
@@ -405,6 +407,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: Sends a message with the mentions of the roles that are protected in a guild.
         """
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         roles = self.get_custom_colour_allowed_roles(ctx)
         print(roles)
         msg = "Roles allowed to have a custom colour are:\r\n"
@@ -453,7 +456,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
-
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -474,6 +477,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to remove (ID, name or mention)
         """
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -493,6 +497,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -511,6 +516,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to remove (ID, name or mention)
         """
+        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
