@@ -10,6 +10,8 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+import inspect
+
 import discord
 from discord.ext import commands
 
@@ -17,6 +19,7 @@ from discord.ext import commands
 import KoalaBot
 from utils.KoalaUtils import extract_id, error_embed
 from utils.KoalaColours import *
+
 
 # Constants
 
