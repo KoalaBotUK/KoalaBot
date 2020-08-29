@@ -133,36 +133,6 @@ class BaseCog(commands.Cog):
             self.bot.unload_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
             await ctx.send(f'{extension} Cog Unloaded')
 
-    @commands.check(KoalaBot.is_owner)
-    @commands.command(pass_context=True, hidden=True)
-    async def debug(self, ctx, *, code: str):
-        """Evaluates code."""
-
-        code = code.strip('` ')
-        python = '```py\n{}\n```'
-        result = None
-
-        env = {
-            'bot': self.bot,
-            'ctx': ctx,
-            'message': ctx.message,
-            'guild': ctx.message.guild,
-            'channel': ctx.message.channel,
-            'author': ctx.message.author
-        }
-        env.update(globals())
-        env.update(locals())
-
-        try:
-            result = eval(code, env)
-            if inspect.isawaitable(result):
-                result = await result
-        except Exception as e:
-            await ctx.send(python.format(type(e).__name__ + ': ' + str(e)))
-            return
-
-        await ctx.send(python.format(result))
-
 
 def setup(bot: KoalaBot) -> None:
     """
