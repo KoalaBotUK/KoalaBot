@@ -358,7 +358,7 @@ class ColourRole(commands.Cog):
             colour_distance = ColourRole.get_rgb_colour_distance(custom_colour, protected_colour)
             KoalaBot.logger.info(
                 f"Colour distance between {hex(custom_colour.value)} and {hex(protected_colour.value)} is {colour_distance}.")
-            if colour_distance < 30:
+            if colour_distance < 38.4:
                 return False, protected_colour
         return True, None
 
