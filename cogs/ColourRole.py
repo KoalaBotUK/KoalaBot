@@ -376,7 +376,9 @@ class ColourRole(commands.Cog):
         return role_name in [role.name for role in guild.roles]
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="listProtectedRoleColours", aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors", "listInvalidCustomColors"])
+    @commands.command(name="listProtectedRoleColours",
+                      aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors",
+                               "listInvalidCustomColors"])
     async def list_protected_role_colours(self, ctx: commands.Context):
         """
         Command to list the protected roles, whose colours are protected from being imitated by a custom colour, in a
@@ -393,7 +395,8 @@ class ColourRole(commands.Cog):
         await ctx.send(msg[:-1])
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="listCustomColourAllowedRoles", aliases=["list_custom_colour_allowed_roles", "listCustomColourAllowedRoles"])
+    @commands.command(name="listCustomColourAllowedRoles",
+                      aliases=["list_custom_colour_allowed_roles"])
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
         """
         Command to list the roles in a guild which are permitted to have their own custom colours. Requires admin
@@ -439,7 +442,9 @@ class ColourRole(commands.Cog):
         return roles
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="addProtectedRoleColour", aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole", "addProtectedRoleColor"])
+    @commands.command(name="addProtectedRoleColour",
+                      aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole",
+                               "addProtectedRoleColor"])
     async def add_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
         Command that adds a role, via ID, mention or name, to the list of protected roles. Needs admin permissions to
@@ -448,6 +453,7 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
+
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -457,7 +463,9 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="removeProtectedRoleColour", aliases=["remove_protected_role_colour", "removeProtectedRoleColor", "removeInvalidCustomColourRole", "removeInvalidCustomColorRole"])
+    @commands.command(name="removeProtectedRoleColour",
+                      aliases=["remove_protected_role_colour", "removeProtectedRoleColor",
+                               "removeInvalidCustomColourRole", "removeInvalidCustomColorRole"])
     async def remove_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
         Command that removes a role, via ID, mention or name, from the list of protected roles. Needs admin permissions
@@ -475,7 +483,8 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="addCustomColourAllowedRole", aliases=["add_custom_colour_allowed_role", "addCustomColourAllowedRole", "addCustomColorAllowedRole"])
+    @commands.command(name="addCustomColourAllowedRole",
+                      aliases=["add_custom_colour_allowed_role", "addCustomColorAllowedRole"])
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
         Command that adds a role, via ID, mention or name, to the list of roles allowed to have a custom colour. Needs
@@ -492,7 +501,8 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="removeCustomColourAllowedRole", aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
+    @commands.command(name="removeCustomColourAllowedRole",
+                      aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
         Command that removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
