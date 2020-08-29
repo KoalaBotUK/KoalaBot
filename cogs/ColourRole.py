@@ -375,7 +375,7 @@ class ColourRole(commands.Cog):
         guild: discord.Guild = ctx.guild
         return role_name in [role.name for role in guild.roles]
 
-    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="list_protected_role_colours")
     async def list_protected_role_colours(self, ctx: commands.Context):
         """
@@ -392,7 +392,7 @@ class ColourRole(commands.Cog):
             msg += f"{role.mention}\n"
         await ctx.send(msg[:-1])
 
-    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="list_custom_colour_allowed_roles")
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
         """
@@ -438,7 +438,7 @@ class ColourRole(commands.Cog):
         roles = [guild.get_role(role_id) for role_id in role_ids]
         return roles
 
-    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="add_protected_role_colour")
     async def add_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
@@ -456,7 +456,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles whose colours are protected.")
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
-    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="remove_protected_role_colour")
     async def remove_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
@@ -474,7 +474,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Removed {role.mention} from the list of roles whose colours are protected.")
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
-    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="add_custom_colour_allowed_role")
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
@@ -491,7 +491,7 @@ class ColourRole(commands.Cog):
             self.cr_database_manager.add_colour_change_role_perms(ctx.guild.id, role.id)
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
-    @commands.check(KoalaBot.is_owner)  # TODO Change to is_admin in production
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="remove_custom_colour_allowed_role")
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
