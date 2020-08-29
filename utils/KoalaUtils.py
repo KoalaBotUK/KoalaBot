@@ -33,15 +33,39 @@ def random_id():
     return random.randint(range_start, range_end)
 
 
-def error_embed(description, error_type="Error"):
+def error_embed(description, error_type=None):
     """
     Creates a discord embed for error messages
     :param description: The description of the error
     :param error_type: The error type (e.g. FileNotFoundError)
     :return: The completed embed
     """
-    return discord.Embed(title=f"{error_type}: {description}", colour=ERROR_RED)
+    if isinstance(description, BaseException) and error_type is None:
+        return discord.Embed(title=str(type(description).__name__), description=str(description), colour=ERROR_RED)
+    elif error_type is None:
+        return discord.Embed(title="Error", description=str(description), colour=ERROR_RED)
+    else:
+        return discord.Embed(title=error_type, description=str(description), colour=ERROR_RED)
 
 
 def is_channel_in_guild(bot: discord.client, guild_id, channel_id):
     return bot.get_channel(int(channel_id)) in bot.get_guild(guild_id).channels
+
+
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+
+def extract_id(raw_id):
+    if type(raw_id) is str and raw_id[0] == "<":
+        while not is_int(raw_id[0]):
+            raw_id = raw_id[1:]
+        return int(raw_id[:-1])
+    elif is_int(raw_id):
+        return raw_id
+    else:
+        raise TypeError("ID given is not a valid ID")

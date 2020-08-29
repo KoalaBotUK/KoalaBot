@@ -120,7 +120,7 @@ class IntroCog(commands.Cog):
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="send_welcome_message")
+    @commands.command(name="welcomeSendMsg", aliases=["send_welcome_message"])
     async def send_welcome_message(self, ctx):
         """
         Allows admins to send out their welcome message manually to all members of a guild.
@@ -143,7 +143,7 @@ class IntroCog(commands.Cog):
             return False
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="update_welcome_message")
+    @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
         Allows admins to change their customisable part of the welcome message of a guild.
