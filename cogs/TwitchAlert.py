@@ -480,4 +480,4 @@ def setup(bot: KoalaBot) -> None:
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(TwitchAlert(bot))
+#bot.add_cog(TwitchAlert(bot))
