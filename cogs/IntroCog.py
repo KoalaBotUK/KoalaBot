@@ -150,24 +150,27 @@ class IntroCog(commands.Cog):
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
         """
-        await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}
-            \n\n\rYour new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}
-            \n\rWould you like to update the message? Y/N?""")
-        try:
-            confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
-        except asyncio.TimeoutError:
-            await ctx.send('Timed out.')
-            confirmation_received = False
-        if confirmation_received:
-            try:
-                await ctx.send("Okay, updating the welcome message of the guild in the database now.")
-                new_message = new_message.lstrip()
-                updated_entry = DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
-                await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
-            except None:
-                await ctx.send("Something went wrong, please contact the bot developers for support.")
+        if len(new_message) > 1600:
+            await ctx.send("Your welcome message is too long to send, sorry. The maximum character limit is 1600.")
         else:
-            await ctx.send("Okay, I won't update the welcome message then.")
+            await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
+            await ctx.send(f"""Your new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}\n\rWould """ +
+                           """you like to update the message? Y/N?""")
+            try:
+                confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
+            except asyncio.TimeoutError:
+                await ctx.send('Timed out.')
+                confirmation_received = False
+            if confirmation_received:
+                try:
+                    await ctx.send("Okay, updating the welcome message of the guild in the database now.")
+                    new_message = new_message.lstrip()
+                    updated_entry = DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
+                    await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
+                except None:
+                    await ctx.send("Something went wrong, please contact the bot developers for support.")
+            else:
+                await ctx.send("Okay, I won't update the welcome message then.")
 
     @update_welcome_message.error
     async def on_update_error(self, ctx, error):
