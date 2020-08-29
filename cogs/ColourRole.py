@@ -86,7 +86,7 @@ class ColourRole(commands.Cog):
         return discord.Colour.from_rgb(r, g, b)
 
     @commands.check(is_allowed_to_change_colour)
-    @commands.command(name="custom_colour")
+    @commands.command(name="customColour", aliases=["custom_colour", "customColor", "custom_color"])
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
         """
         Command for a user with the correct role to be able to change their display colour in a guild.
@@ -376,7 +376,7 @@ class ColourRole(commands.Cog):
         return role_name in [role.name for role in guild.roles]
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="list_protected_role_colours")
+    @commands.command(name="listProtectedRoleColours", aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors", "listInvalidCustomColors"])
     async def list_protected_role_colours(self, ctx: commands.Context):
         """
         Command to list the protected roles, whose colours are protected from being imitated by a custom colour, in a
@@ -393,7 +393,7 @@ class ColourRole(commands.Cog):
         await ctx.send(msg[:-1])
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="list_custom_colour_allowed_roles")
+    @commands.command(name="listCustomColourAllowedRoles", aliases=["list_custom_colour_allowed_roles", "listCustomColourAllowedRoles"])
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
         """
         Command to list the roles in a guild which are permitted to have their own custom colours. Requires admin
@@ -439,7 +439,7 @@ class ColourRole(commands.Cog):
         return roles
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="add_protected_role_colour")
+    @commands.command(name="addProtectedRoleColour", aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole", "addProtectedRoleColor"])
     async def add_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
         Command that adds a role, via ID, mention or name, to the list of protected roles. Needs admin permissions to
@@ -457,7 +457,7 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="remove_protected_role_colour")
+    @commands.command(name="removeProtectedRoleColour", aliases=["remove_protected_role_colour", "removeProtectedRoleColor", "removeInvalidCustomColourRole", "removeInvalidCustomColorRole"])
     async def remove_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
         Command that removes a role, via ID, mention or name, from the list of protected roles. Needs admin permissions
@@ -475,7 +475,7 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="add_custom_colour_allowed_role")
+    @commands.command(name="addCustomColourAllowedRole", aliases=["add_custom_colour_allowed_role", "addCustomColourAllowedRole", "addCustomColorAllowedRole"])
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
         Command that adds a role, via ID, mention or name, to the list of roles allowed to have a custom colour. Needs
@@ -492,7 +492,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="remove_custom_colour_allowed_role")
+    @commands.command(name="removeCustomColourAllowedRole", aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
         Command that removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
