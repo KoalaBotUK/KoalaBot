@@ -90,7 +90,7 @@ class ColourRole(commands.Cog):
     @commands.command(name="customColour", aliases=["custom_colour", "customColor", "custom_color"])
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
         """
-        Command for a user with the correct role to be able to change their display colour in a guild.
+        For a user with the correct role to be able to change their display colour in a guild.
         Syntax is k!custom_colour ("no" / colour hex). Usage with no removes any custom colour held before.
         Won't accept it if the colour chosen too closely resembles a role that was protected's colour or a discord
         blocked colour. A role must be made and that role be added to the permissions by usage of
@@ -383,7 +383,7 @@ class ColourRole(commands.Cog):
                                "listInvalidCustomColors"])
     async def list_protected_role_colours(self, ctx: commands.Context):
         """
-        Command to list the protected roles, whose colours are protected from being imitated by a custom colour, in a
+        Lists the protected roles, whose colours are protected from being imitated by a custom colour, in a
         guild. Requires admin permissions to use.
 
         :param ctx: Context of the command
@@ -402,7 +402,7 @@ class ColourRole(commands.Cog):
                       aliases=["list_custom_colour_allowed_roles"])
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
         """
-        Command to list the roles in a guild which are permitted to have their own custom colours. Requires admin
+        Lists the roles in a guild which are permitted to have their own custom colours. Requires admin
         permissions to use.
 
         :param ctx: Context of the command
@@ -451,7 +451,7 @@ class ColourRole(commands.Cog):
                                "addProtectedRoleColor"])
     async def add_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
-        Command that adds a role, via ID, mention or name, to the list of protected roles. Needs admin permissions to
+        Adds a role, via ID, mention or name, to the list of protected roles. Needs admin permissions to
         use.
 
         :param ctx: Context of the command
@@ -472,7 +472,7 @@ class ColourRole(commands.Cog):
                                "removeInvalidCustomColourRole", "removeInvalidCustomColorRole"])
     async def remove_protected_role_colour(self, ctx: commands.Context, *, role_str: str):
         """
-        Command that removes a role, via ID, mention or name, from the list of protected roles. Needs admin permissions
+        Removes a role, via ID, mention or name, from the list of protected roles. Needs admin permissions
         to use.
 
         :param ctx: Context of the command
@@ -492,7 +492,7 @@ class ColourRole(commands.Cog):
                       aliases=["add_custom_colour_allowed_role", "addCustomColorAllowedRole"])
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
-        Command that adds a role, via ID, mention or name, to the list of roles allowed to have a custom colour. Needs
+        Adds a role, via ID, mention or name, to the list of roles allowed to have a custom colour. Needs
         admin permissions to use.
 
         :param ctx: Context of the command
@@ -511,7 +511,7 @@ class ColourRole(commands.Cog):
                       aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
         """
-        Command that removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
+        Removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
         Needs admin permissions to use.
 
         :param ctx: Context of the command
