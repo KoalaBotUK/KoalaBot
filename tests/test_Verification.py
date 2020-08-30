@@ -23,20 +23,27 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 cog = None
-DBManager = KoalaDBManager("../" + KoalaBot.DATABASE_PATH)
-DBManager.create_base_tables()
+db_manager = KoalaDBManager("verifyTest.db")
+db_manager.create_base_tables()
+
+
 
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    cog = Verification.Verification(bot)
+    cog = Verification.Verification(bot, db_manager)
     bot.add_cog(cog)
     dpytest.configure(bot)
-    DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS server_info (guild_id, role_id, domain)")
-    DBManager.db_execute_commit(
-            "CREATE TABLE IF NOT EXISTS verified_users (guild_id, user_id, domain, token, verified, role_assigned)")
+    db_manager.db_execute_commit("DROP TABLE verified_emails")
+    db_manager.db_execute_commit("DROP TABLE non_verified_emails")
+    db_manager.db_execute_commit("DROP TABLE to_re_verify")
+    db_manager.db_execute_commit("DROP TABLE roles")
+    db_manager.db_execute_commit("CREATE TABLE verified_emails (u_id, email)")
+    db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
+    db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
+    db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
     print("Tests starting")
 
 
@@ -47,135 +54,96 @@ async def test_member_join_no_verify():
 
 
 @pytest.mark.asyncio
-async def test_member_join_with_verify():
-    g_id = dpytest.get_config().guilds[0].id
-    DBManager.db_execute_commit(f"INSERT INTO server_info values ({g_id}, 1, 'test.com')")
-    await dpytest.member_join()
-    await asyncio.sleep(1)
-    dpytest.verify_message(f"Hi, I see you've logged in. Please verify with an allowed email address with `k!verify {g_id} <email>`")
-    DBManager.db_execute_commit(f"DELETE FROM server_info WHERE guild_id={g_id}")
-
-
-@pytest.mark.asyncio
-async def test_enable_no_role():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification domain.com")
-    await asyncio.sleep(1)
-    dpytest.verify_message(
-        f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
-
-
-@pytest.mark.asyncio
-async def test_enable_no_domain():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification <@&735446401919615037>")
-    await asyncio.sleep(1)
-    dpytest.verify_message(
-        f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
-
-
-@pytest.mark.asyncio
-async def test_enable_invalid_role_1():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification domain.com test")
-    await asyncio.sleep(1)
-    dpytest.verify_message("Please give a role by @mentioning it")
-
-
-@pytest.mark.asyncio
-async def test_enable_invalid_role_2():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification domain.com <@&100>")
-    await asyncio.sleep(1)
-    dpytest.verify_message("Please supply a valid role")
-
-
-@pytest.mark.asyncio
-async def test_enable_invalid_domain():
+async def test_member_join_verif_enabled():
     test_config = dpytest.get_config()
-    dpytest.back.make_role("test", test_config.guilds[0], id_num=735446401919615037)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification spaghetti <@&735446401919615037>")
-    await asyncio.sleep(1)
-    dpytest.verify_message("Please provide a valid domain")
+    guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
+    test_config.guilds.append(guild)
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    db_manager.db_execute_commit("INSERT INTO roles VALUES (1234, 555, 'test.com')")
+    welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
+Please verify one of the following emails to get the appropriate role.
+This email is stored so you don't need to verify it multiple times.
+test.com for @testRole"""
+    await dpytest.member_join(1)
+    await asyncio.sleep(0.25)
+    dpytest.verify_message(welcome_message)
+    db_manager.db_execute_commit("DELETE FROM roles WHERE s_id=1234")
 
 
 @pytest.mark.asyncio
-async def test_enable_already_enabled():
+async def test_member_join_already_verified():
     test_config = dpytest.get_config()
-    dpytest.back.make_role("test", test_config.guilds[0], id_num=735446401919615037)
-    guild_id = test_config.guilds[0].id
-    DBManager.db_execute_commit(f"INSERT INTO server_info values ({guild_id}, 735446401919615037, 'soton.ac.uk')")
-    await asyncio.sleep(1)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification soton.ac.uk <@&735446401919615037>")
-    await asyncio.sleep(1)
-    DBManager.db_execute_commit(f"DELETE FROM server_info WHERE guild_id={guild_id}")
-    dpytest.verify_message("Verification is already enabled for that role")
-
+    guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
+    test_config.guilds.append(guild)
+    test_user = dpytest.back.make_user("TestUser", 1234, id_num=999)
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    db_manager.db_execute_commit("INSERT INTO verified_emails VALUES (999, 'egg@test.com')")
+    db_manager.db_execute_commit("INSERT INTO roles VALUES (1234, 555, 'test.com')")
+    await dpytest.member_join(1, test_user)
+    await asyncio.sleep(0.25)
+    welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
+Please verify one of the following emails to get the appropriate role.
+This email is stored so you don't need to verify it multiple times.
+test.com for @testRole"""
+    dpytest.verify_message(welcome_message)
+    member = guild.get_member(test_user.id)
+    assert role in member.roles
+    db_manager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=999")
+    db_manager.db_execute_commit("DELETE FROM roles WHERE s_id=1234")
 
 @pytest.mark.asyncio
-async def test_enable_valid_input():
-    test_config = dpytest.get_config()
-    dpytest.back.make_role("test", test_config.guilds[0], id_num=735446401919615037)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enable_verification soton.ac.uk <@&735446401919615037>")
-    await asyncio.sleep(1)
-    dpytest.verify_message("Verification enabled for <@&735446401919615037> for emails with the domain soton.ac.uk")
-    entry = DBManager.db_execute_select(f"SELECT * FROM server_info WHERE guild_id={dpytest.get_config().guilds[0].id} AND role_id=735446401919615037 AND domain=?", args=("soton.ac.uk",))
+async def test_enable_verification():
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enableVerification test.com <@&555>")
+    dpytest.verify_message("Verification enabled for <@&555> for emails ending with `test.com`")
+    entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
+                                         (guild.id, role.id))
     assert entry
-    DBManager.db_execute_commit(f"DELETE FROM server_info WHERE guild_id={dpytest.get_config().guilds[0].id}")
-
-
-@pytest.mark.asyncio
-async def test_disable_no_role():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disable_verification domain.com")
-    await asyncio.sleep(1)
-    dpytest.verify_message(
-        f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
-
+    db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
 
 @pytest.mark.asyncio
-async def test_disable_no_domain():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disable_verification <@&735446401919615037>")
-    await asyncio.sleep(1)
-    dpytest.verify_message(
-        f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
-
-
-@pytest.mark.asyncio
-async def test_disable_invalid_role():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disable_verification domain.com test")
-    await asyncio.sleep(1)
-    dpytest.verify_message("Please give a role by @mentioning it")
-
-
-@pytest.mark.asyncio
-async def test_disable_valid_args():
-    test_config = dpytest.get_config()
-    dpytest.back.make_role("test", test_config.guilds[0], id_num=735446401919615037)
-    DBManager.db_execute_commit("INSERT INTO server_info VALUES (?, ?, ?)",
-                                (test_config.guilds[0].id, 735446401919615037, "domain.com"))
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disable_verification domain.com <@&735446401919615037>")
-    dpytest.verify_message("Emails with domain.com no longer give <@&735446401919615037>")
-    entry = DBManager.db_execute_select("SELECT * FROM server_info WHERE domain=? AND guild_id=? AND role_id=?",
-                                        ("domain.com", test_config.guilds[0].id, 735446401919615037))
+async def test_disable_verification():
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id, 555, 'egg.com'})")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disableVerification egg.com <@&555>")
+    dpytest.verify_message("Emails ending with egg.com no longer give <@&555>")
+    entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
+                                         (guild.id, role.id))
     assert not entry
-    DBManager.db_execute_commit("DELETE FROM server_info WHERE domain=? AND guild_id=? AND role_id=?",
-                                ("domain.com", test_config.guilds[0].id, 735446401919615037))
 
 
 @pytest.mark.asyncio
-async def test_verification_valid_args():
+async def test_verify():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
     member = guild.members[0]
-    dpytest.back.make_role("test", guild, id_num=735446401919615037)
-    DBManager.db_execute_commit("INSERT INTO server_info VALUES (?, ?, ?)",
-                                (guild.id, 735446401919615037, "domain.com"))
     dm = await member.create_dm()
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}verify {test_config.guilds[0].id} test@domain.com", dm)
-    entry = DBManager.db_execute_select("SELECT * FROM verified_users WHERE guild_id=? AND user_id=?",
-                                        (guild.id, member.id))
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "verify test@test.com", dm)
+    dpytest.verify_message("Please verify yourself using the command you have been emailed")
+    entry = db_manager.db_execute_select(f"SELECT * FROM non_verified_emails WHERE u_id={member.id} AND email='test@test.com'")
     assert entry
-    dpytest.verify_message("Please verify yourself by clicking the link in your email")
-    DBManager.db_execute_commit("DELETE FROM server_info WHERE guild_id=? AND role_id=?",
-                                (guild.id, 735446401919615037))
-    DBManager.db_execute_commit("DELETE FROM verified_users WHERE guild_id=? AND user_id=?",
-                                (guild.id, member.id))
 
 
-
+@pytest.mark.asyncio
+async def test_confirm():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id}, 555, 'egg.com')")
+    db_manager.db_execute_commit(f"INSERT INTO non_verified_emails VALUES ({member.id}, 'test@egg.com', 'testtoken')")
+    dm = await member.create_dm()
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "confirm testtoken", dm)
+    verified = db_manager.db_execute_select(f"SELECT * FROM verified_emails WHERE u_id={member.id} AND email='test@egg.com'")
+    exists = db_manager.db_execute_select(f"SELECT * FROM non_verified_emails WHERE u_id={member.id} and email='test@egg.com'")
+    assert verified
+    assert not exists
+    await asyncio.sleep(0.5)
+    assert role in member.roles
+    dpytest.verify_message("Your email has been verified, thank you")
+    db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
+    db_manager.db_execute_commit(f"DELETE FROM verified_emails WHERE u_id={member.id}")

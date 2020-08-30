@@ -2,18 +2,9 @@
 
 """
 TODO
-add proper admin checks - almost done
-add list emails for admins - done
-attempt to add all roles necessary on startup - done
 change that database diagram
-add thing to extension table - done
-add new gmail account details to config
 add re-verification functionality - probably done
 do tests oh no
-pull twitch thing so tests all work - done
-
-add better security for the emails needed
-confirm with user before adding roles?
 """
 
 """
@@ -52,15 +43,17 @@ def is_dm_channel(ctx):
 
 class Verification(commands.Cog):
 
-    def __init__(self, bot):
+    def __init__(self, bot, db_manager=None):
         self.bot = bot
-
-        self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
-        self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS verified_emails (u_id, email)")
-        self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS non_verified_emails (u_id, email, token)")
-        self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS to_re_verify (u_id, r_id)")
-        self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS roles (s_id, r_id, email_suffix)")
-        self.DBManager.insert_extension("Verification", 0, True, True)
+        if not db_manager:
+            self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
+            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS verified_emails (u_id, email)")
+            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS non_verified_emails (u_id, email, token)")
+            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS to_re_verify (u_id, r_id)")
+            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS roles (s_id, r_id, email_suffix)")
+            self.DBManager.insert_extension("Verification", 0, True, True)
+        else:
+            self.DBManager = db_manager
 
     @staticmethod
     def send_email(email, token):
@@ -88,7 +81,6 @@ class Verification(commands.Cog):
         potential_emails = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
                                                             (member.guild.id,))
         if potential_emails:
-            message = await member.send(f"Welcome to {member.guild.name}. This guild has verification enabled. Please verify one of the following emails to get the appropriate role")
             roles = {}
             for role_id, suffix in potential_emails:
                 role = discord.utils.get(member.guild.roles, id=role_id)
@@ -101,7 +93,10 @@ class Verification(commands.Cog):
                                                                (role_id, member.id))
                 if results and not blacklisted:
                     await member.add_roles(role)
-            await message.edit(content=message.content + "\n" + "\n".join([f"{x} for @{y}" for x, y in roles.items()]))
+            message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
+Please verify one of the following emails to get the appropriate role.
+This email is stored so you don't need to verify it multiple times."""
+            await member.send(content=message_string + "\n" + "\n".join([f"{x} for @{y}" for x, y in roles.items()]))
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="enableVerification")
