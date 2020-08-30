@@ -556,6 +556,13 @@ def setup_db():
     yield DBManager
 
 
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False
+
+
 @pytest.fixture(scope='function', autouse=True)
 async def setup_clean_messages():
     await dpytest.empty_queue()
