@@ -23,6 +23,7 @@ import facebook
 import tweepy
 from discord.ext import commands
 from dotenv import load_dotenv
+from tweepy import StreamListener
 import requests
 
 # Own modules
@@ -34,14 +35,73 @@ load_dotenv()
 
 # Variables
 
+class TwitterAPIHandler:
+    """
+    A wrapper to interact with the Twitter Streaming API
+    """
+
+    def __init__(self, client_id: str, client_secret: str, access_token: str, token_secret: str):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.access_token = access_token
+        self.token_secret = token_secret
+        self.api = self.authenticate()
+
+    def authenticate(self):
+        """
+        Authenticates with Twitter using the tweepy handler
+        :return: Twitter API object
+        """
+        auth = tweepy.OAuthHandler(self.client_id, self.client_secret)
+        auth.set_access_token(self.access_token, self.token_secret)
+        return tweepy.API(auth)
+
+
+class TweetStreamListener(tweepy.StreamListener):
+    def on_status(self, status):
+        return status.text
+
+    def on_error(self, status_code):
+        if status_code == 420:
+            # Stops the stream
+            return False
+
 
 class SocialAlert(commands.Cog):
     """
         A discord.py cog for providing social feed updates from Facebook, Instagram and Twitter
     """
 
+    def __init__(self, bot):
+        self.bot = bot
 
-pass
+    @commands.command(name="twitterAdd", aliases='add_user_to_twitter_alert')
+    @commands.check(KoalaBot.is_admin)
+    async def add_user_to_twitter_alert(self, ctx, raw_channel_id, twitter_username=None):
+        """
+
+        :param ctx:
+        :param raw_channel_id:
+        :param twitter_username:
+        :return:
+        """
+        pass
+    @commands.Cog.listener()
+    async def on_ready(self):
+        """
+
+        :return:
+        """
+        self.post_tweets()
+
+    def post_tweets(self):
+        my_stream_listener = TweetStreamListener()
+        auth = TwitterAPIHandler("yeet", "me", "from", "here").authenticate()
+        tweet_stream = tweepy.Stream(auth=auth, listener=my_stream_listener)
+        current_text = tweet_stream.filter(follow=["12345"], is_async=True)
+        tweet_embed = create_social_embed("twitter", "template_user", current_text)
+        channel = self.bot.get_channel("channel_id")
+        await channel.send(embed=tweet_embed)
 
 
 def create_social_embed(platform, user_info, post_info):
@@ -98,36 +158,6 @@ class FacebookGraphAPIHandler:
         """
         return self.graph.get_object(page_id)
 
-
-class TwitterAPIHandler:
-    """
-    A wrapper to interact with the Twitter Streaming API
-    """
-
-    def __init__(self, client_id: str, client_secret: str, access_token: str, token_secret: str):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.access_token = access_token
-        self.token_secret = token_secret
-        self.api = self.authenticate()
-
-    def authenticate(self):
-        """
-        Authenticates with Twitter using the tweepy handler
-        :return: Twitter API object
-        """
-        auth = tweepy.OAuthHandler(self.client_id, self.client_secret)
-        auth.set_access_token(self.access_token, self.token_secret)
-        return tweepy.API(auth)
-
-
-class StreamListener(tweepy.StreamListener):
-    def on_status(self, status):
-        return status.text
-
-    def on_error(self, status_code):
-        if status_code == 420:
-            return False
 
 def setup(bot: KoalaBot) -> None:
     """
