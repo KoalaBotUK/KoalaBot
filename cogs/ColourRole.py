@@ -85,6 +85,7 @@ class ColourRole(commands.Cog):
         b = int(colour_str[-2:], 16)
         return discord.Colour.from_rgb(r, g, b)
 
+    @commands.cooldown(1, 15, commands.BucketType.member)
     @commands.check(is_allowed_to_change_colour)
     @commands.command(name="customColour", aliases=["custom_colour", "customColor", "custom_color"])
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
@@ -94,7 +95,7 @@ class ColourRole(commands.Cog):
         Won't accept it if the colour chosen too closely resembles a role that was protected's colour or a discord
         blocked colour. A role must be made and that role be added to the permissions by usage of
         k!add_custom_colour_allowed_role <role>, and the command invoker must have that role before they can use this
-        command.
+        command. Has a 15 second cooldown.
 
         :param ctx: Context of the command
         :param colour_str: The colour hex string specified, or "no" in case of cancelling colour
