@@ -52,7 +52,7 @@ class ColourRole(commands.Cog):
         """
         self.bot = bot
         KoalaBot.database_manager.create_base_tables()
-        KoalaBot.database_manager.insert_extension("ColourRole", 1, False, True)
+        KoalaBot.database_manager.insert_extension("ColourRole", 0, True, True)
         self.cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
         self.cr_database_manager.create_tables()
 
@@ -391,7 +391,7 @@ class ColourRole(commands.Cog):
         """
         KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         roles = self.get_protected_roles(ctx.guild)
-        print(roles)
+        # print(roles)
         msg = "Roles whose colour is protected are:\r\n"
         for role in roles:
             msg += f"{role.mention}\n"
@@ -410,7 +410,7 @@ class ColourRole(commands.Cog):
         """
         KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         roles = self.get_custom_colour_allowed_roles(ctx)
-        print(roles)
+        # print(roles)
         msg = "Roles allowed to have a custom colour are:\r\n"
         for role in roles:
             msg += f"{role.mention}\n"
@@ -424,7 +424,7 @@ class ColourRole(commands.Cog):
         :return: List of roles allowed to use the custom_colour command/have a custom colour
         """
         role_ids = self.cr_database_manager.get_colour_change_roles(ctx.guild.id)
-        print(role_ids)
+        # print(role_ids)
         if not role_ids:
             return []
         guild: discord.Guild = ctx.guild
@@ -439,7 +439,7 @@ class ColourRole(commands.Cog):
         :return: List of roles which are protected
         """
         role_ids = self.cr_database_manager.get_protected_colour_roles(guild.id)
-        print(role_ids)
+        # print(role_ids)
         if not role_ids:
             return []
         roles = [guild.get_role(role_id) for role_id in role_ids]
