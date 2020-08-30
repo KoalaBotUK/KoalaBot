@@ -1,6 +1,8 @@
+requests
 mock
+pytest-ordering
 pytest
-dpytest
+dpytest==0.0.20
 python-dotenv
 discord.py
 facebook-sdk

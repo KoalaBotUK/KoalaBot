@@ -10,7 +10,7 @@ __author__ = "Jack Draper, Kieran Allinson, Viraj Shah"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
 __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah"]
 __license__ = "MIT License"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
@@ -21,10 +21,14 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 
 # Libs
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import logging
 
 # Own modules
+from utils.KoalaDBManager import KoalaDBManager as DBManager
+from utils.KoalaUtils import error_embed
 
 # Constants
 load_dotenv()
@@ -35,10 +39,17 @@ STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
-
+TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
+DATABASE_PATH = "Koala.db"
+PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
+                                  "or use `k!help enableExt` to enable it"
+IS_DPYTEST = False
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
+database_manager = DBManager(DATABASE_PATH)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
+logger = logging.getLogger('discord')
 
 
 def is_owner(ctx):
@@ -48,8 +59,7 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
-    return ctx.author.id == BOT_OWNER\
-        or str(ctx.author) == TEST_USER  # For automated testing
+    return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and IS_DPYTEST)
 
 
 def is_admin(ctx):
@@ -59,8 +69,7 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-    return ctx.author.guild_permissions.administrator\
-        or str(ctx.author) == TEST_USER  # For automated testing
+    return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and IS_DPYTEST)
 
 
 def load_all_cogs():
@@ -69,11 +78,45 @@ def load_all_cogs():
     """
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py'):
-            client.load_extension(COGS_DIR.replace("/", ".")+f'.{filename[:-3]}')
+            client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
+
+def get_channel_from_id(id):
+    return client.get_channel(id=id)
+
+
+async def dm_group_message(members: [discord.Member], message: str):
+    """
+    DMs members in a list of members
+    :param members: list of members to DM
+    :param message: The message to send to the group
+    :return: how many were dm'ed successfully.
+    """
+    count = 0
+    for member in members:
+        try:
+            await member.send(message)
+            count = count + 1
+        except Exception:  # In case of user dms being closed
+            pass
+    return count
+
+def check_guild_has_ext(ctx, extension_id):
+    if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not IS_DPYTEST):
+        raise PermissionError(PERMISSION_ERROR_TEXT)
+
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(embed=error_embed(description=error))
+    elif isinstance(error, commands.CommandInvokeError):
+        await ctx.send(embed=error_embed(description=error.original))
+    else:
+        await ctx.send(embed=error_embed(description=error))
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
+    database_manager.create_base_tables()
     load_all_cogs()
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
