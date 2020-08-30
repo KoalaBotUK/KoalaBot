@@ -32,7 +32,7 @@ DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
 def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
     try:
-        confirmation = bot.wait_for('message', timeout=5.0, check=lambda message: message.author == ctx.author)
+        confirmation = bot.wait_for('message', timeout=60.0, check=lambda message: message.author == ctx.author)
         return confirmation
     except Exception:
         confirmation = None
@@ -119,11 +119,14 @@ class IntroCog(commands.Cog):
         KoalaBot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeSendMsg", aliases=["send_welcome_message"])
     async def send_welcome_message(self, ctx):
         """
-        Allows admins to send out their welcome message manually to all members of a guild.
+        Allows admins to send out their welcome message manually to all members of a guild. Has a 60 second cooldown per
+        guild.
+
         :param ctx: Context of the command
         """
         non_bot_members = get_non_bot_members(ctx.guild)
@@ -142,11 +145,14 @@ class IntroCog(commands.Cog):
             await ctx.send("Okay, I won't send out the welcome message then.")
             return False
 
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
-        Allows admins to change their customisable part of the welcome message of a guild.
+        Allows admins to change their customisable part of the welcome message of a guild. Has a 60 second cooldown per
+        guild.
+
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
         """
