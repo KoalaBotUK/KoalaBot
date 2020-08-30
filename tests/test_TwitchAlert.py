@@ -11,7 +11,6 @@ Commented using reStructuredText (reST)
 import os
 import asyncio
 
-
 # Libs
 import discord.ext.test as dpytest
 import mock
@@ -26,7 +25,6 @@ from cogs import TwitchAlert
 from utils import KoalaDBManager
 from utils.KoalaColours import *
 
-
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
 
@@ -37,7 +35,7 @@ DB_PATH = "KoalaBotTwitchTest.db"
 def setup_module():
     try:
         os.remove(DB_PATH)
-        KoalaBot.IS_DPYTEST = True
+        KoalaBot.is_dpytest = True
     except FileNotFoundError:
         print("Database Doesn't Exist, Continuing")
     finally:
@@ -60,6 +58,7 @@ def test_create_live_embed():
     # Get response and assert equal
     result = TwitchAlert.create_live_embed(stream_info, user_info, game_info, "")
     assert dpytest.embed_eq(result, expected)
+
 
 def test_create_live_embed_with_message():
     # Create the expected embed with information required
@@ -389,11 +388,11 @@ async def test_loop_check_live(twitch_cog):
     await asyncio.sleep(10)
     dpytest.verify_embed(expected_embed)
 
-    
+
 def test_create_alert_embed(twitch_cog):
     stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-     "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
-     'title': 'Music 24/7'}
+                   "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
+                   'title': 'Music 24/7'}
 
     assert type(twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
 
@@ -489,7 +488,7 @@ def test_new_ta(twitch_alert_db_manager_tables):
     assert TwitchAlert.DEFAULT_MESSAGE == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=2345)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-        [(1234, TwitchAlert.DEFAULT_MESSAGE)]
+           [(1234, TwitchAlert.DEFAULT_MESSAGE)]
 
 
 def test_new_ta_message(twitch_alert_db_manager_tables):
@@ -498,7 +497,7 @@ def test_new_ta_message(twitch_alert_db_manager_tables):
                                                                  default_message=test_message)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 23456"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-        [(12345, test_message,)]
+           [(12345, test_message,)]
 
 
 def test_new_ta_replace(twitch_alert_db_manager_tables):
@@ -508,7 +507,7 @@ def test_new_ta_replace(twitch_alert_db_manager_tables):
                                                                  default_message=test_message, replace=True)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-        [(1234, test_message)]
+           [(1234, test_message)]
     pass
 
 
@@ -566,7 +565,7 @@ def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_i
     sql_select_team = "SELECT custom_message FROM TeamInTwitchAlert " \
                       f"WHERE channel_id = {channel_id} AND twitch_team_name = 'faze'"
     assert twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_team) == \
-        [("Message here",)]
+           [("Message here",)]
 
 
 def test_remove_team_from_ta(twitch_alert_db_manager_tables):
@@ -651,3 +650,10 @@ def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
     assert result[0][0] is None
     assert result[1][0] is None
     pass
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False
