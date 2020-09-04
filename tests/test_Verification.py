@@ -27,8 +27,6 @@ db_manager = KoalaDBManager("verifyTest.db")
 db_manager.create_base_tables()
 
 
-
-
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global cog
@@ -91,6 +89,7 @@ test.com for @testRole"""
     db_manager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=999")
     db_manager.db_execute_commit("DELETE FROM roles WHERE s_id=1234")
 
+
 @pytest.mark.asyncio
 async def test_enable_verification():
     config = dpytest.get_config()
@@ -102,6 +101,7 @@ async def test_enable_verification():
                                          (guild.id, role.id))
     assert entry
     db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
+
 
 @pytest.mark.asyncio
 async def test_disable_verification():
