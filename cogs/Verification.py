@@ -38,7 +38,7 @@ GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
 # Variables
 
 def is_dm_channel(ctx):
-    return ctx.channel.id == ctx.author.dm_channel.id
+    return isinstance(ctx.channel, discord.channel.DMChannel)
 
 
 class Verification(commands.Cog):
