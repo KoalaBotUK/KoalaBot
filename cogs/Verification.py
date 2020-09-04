@@ -47,13 +47,51 @@ class Verification(commands.Cog):
         self.bot = bot
         if not db_manager:
             self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
-            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS verified_emails (u_id, email)")
-            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS non_verified_emails (u_id, email, token)")
-            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS to_re_verify (u_id, r_id)")
-            self.DBManager.db_execute_commit("CREATE TABLE IF NOT EXISTS roles (s_id, r_id, email_suffix)")
+            self.set_up_tables()
             self.DBManager.insert_extension("Verification", 0, True, True)
         else:
             self.DBManager = db_manager
+
+    def set_up_tables(self):
+        verified_table = """
+        CREATE TABLE IF NOT EXISTS verified_emails (
+        u_id integer NOT NULL,
+        email text NOT NULL,
+        PRIMARY KEY (u_id, email)
+        );
+        """
+
+        non_verified_table = """
+        CREATE TABLE IF NOT EXISTS verified_emails (
+        u_id integer NOT NULL,
+        email text NOT NULL,
+        token text NOT NULL,
+        PRIMARY KEY (token)
+        );
+        """
+
+        role_table = """
+        CREATE TABLE IF NOT EXISTS roles (
+        s_id integer NOT NULL,
+        r_id text NOT NULL,
+        email_suffix text NOT NULL,
+        PRIMARY KEY (s_id, r_id, email_suffix),
+        FOREIGN KEY (s_id) REFERENCES GuildExtensions (guild_id)
+        );
+        """
+
+        re_verify_table = """
+        CREATE TABLE IF NOT EXISTS to_re_verify (
+        u_id integer NOT NULL,
+        r_id text NOT NULL,
+        PRIMARY KEY (u_id, r_id)
+        );
+        """
+
+        self.DBManager.db_execute_commit(verified_table)
+        self.DBManager.db_execute_commit(non_verified_table)
+        self.DBManager.db_execute_commit(role_table)
+        self.DBManager.db_execute_commit(re_verify_table)
 
     @staticmethod
     def send_email(email, token):
