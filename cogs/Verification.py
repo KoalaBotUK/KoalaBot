@@ -279,14 +279,14 @@ This email is stored so you don't need to verify it multiple times."""
         exists = self.DBManager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                                   (ctx.guild.id, role_id))
         if not exists:
-            raise self.VerifyError("Verification is not enabled for that role"
-                                   )
+            raise self.VerifyError("Verification is not enabled for that role")
         role = discord.utils.get(ctx.guild.roles, id=role_id)
         for member in ctx.guild.members:
             if role in member.roles:
                 await member.remove_roles(role)
                 self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
                                                  (member.id, role.id))
+        await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
 
     class InvalidArgumentError(Exception):
         pass
