@@ -37,6 +37,7 @@ GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
 
 # Variables
 
+
 def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
 
@@ -53,6 +54,10 @@ class Verification(commands.Cog):
             self.DBManager = db_manager
 
     def set_up_tables(self):
+        """
+        Creates tables necessary for verification cog to function
+        :return:
+        """
         verified_table = """
         CREATE TABLE IF NOT EXISTS verified_emails (
         u_id integer NOT NULL,
@@ -95,6 +100,12 @@ class Verification(commands.Cog):
 
     @staticmethod
     def send_email(email, token):
+        """
+        Sends an email through gmails smtp server from the email stored in the environment variables
+        :param email: target to send an email to
+        :param token: the token the recipient will need to verify with
+        :return:
+        """
         email_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
         email_server.ehlo()
         username = GMAIL_EMAIL
@@ -116,6 +127,11 @@ class Verification(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        """
+        Assigns necessary roles to users upon joining a server
+        :param member: the member object who just joined a server
+        :return:
+        """
         potential_emails = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
                                                             (member.guild.id,))
         if potential_emails:
@@ -139,6 +155,13 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="addVerification")
     async def enable_verification(self, ctx, suffix=None, role=None):
+        """
+        Set up a role and email pair for KoalaBot to verify users with
+        :param ctx: context of the discord message
+        :param suffix: end of the email (e.g. "example.com")
+        :param role: the role to give users with that email verified (e.g. @students)
+        :return:
+        """
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         if not role or not suffix:
             raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
@@ -168,6 +191,13 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="removeVerification")
     async def disable_verification(self, ctx, suffix=None, role=None):
+        """
+        Disable an existing verification listener
+        :param ctx: context of the discord message
+        :param suffix: end of the email (e.g. "example.com")
+        :param role: the role paired with the email (e.g. @students)
+        :return:
+        """
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         if not role or not suffix:
             raise self.InvalidArgumentError(
@@ -187,6 +217,12 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email):
+        """
+        Send to KoalaBot in dms to verify an email with our system
+        :param ctx: the context of the discord message
+        :param email: the email you want to verify
+        :return:
+        """
         already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE email=?",
                                                             (email,))
         in_blacklist = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE u_id=?",
@@ -203,6 +239,12 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(is_dm_channel)
     @commands.command(name="unVerify")
     async def un_verify(self, ctx, email):
+        """
+        Send to KoalaBot in dms to un-verify an email with our system
+        :param ctx: the context of the discord message
+        :param email: the email you want to un-verify
+        :return:
+        """
         entry = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
                                                  (ctx.author.id, email))
         if not entry:
@@ -216,6 +258,12 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(is_dm_channel)
     @commands.command(name="confirm")
     async def confirm(self, ctx, token):
+        """
+        Send to KoalaBot in dms to confirm the verification of an email
+        :param ctx: the context of the discord message
+        :param token: the token emailed to you to verify with
+        :return:
+        """
         entry = self.DBManager.db_execute_select("SELECT * FROM non_verified_emails WHERE token=?",
                                                  (token,))
         if not entry:
@@ -240,6 +288,12 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(KoalaBot.is_owner)
     @commands.command(name="getEmails")
     async def get_emails(self, ctx, user_id: int):
+        """
+        See the emails a user is verified with
+        :param ctx: the context of the discord message
+        :param user_id: the id of the user who's emails you want to find
+        :return:
+        """
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         results = self.DBManager.db_execute_select("SELECT email FROM verified_emails WHERE u_id=?", (user_id,))
         emails = '\n'.join([x[0] for x in results])
@@ -247,6 +301,11 @@ This email is stored so you don't need to verify it multiple times."""
 
     @commands.command(name="checkVerifications")
     async def check_verifications(self, ctx):
+        """
+        List the current verification setup for the server
+        :param ctx: the context of the discord message
+        :return:
+        """
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
         roles = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
@@ -267,7 +326,12 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="reVerify")
     async def re_verify(self, ctx, role):
-        """Removes all instances of a role"""
+        """
+        Removes a role from all users who have it and marks them as needing to re-verify before giving it back
+        :param ctx: the context of the discord message
+        :param role: the role to be removed and re-verified (e.g. @students)
+        :return:
+        """
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         try:
             role_id = int(role[3:-1])
