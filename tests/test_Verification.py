@@ -42,6 +42,7 @@ def setup_function():
     db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
     db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
     db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
+    db_manager.insert_extension("Verify", 0, True, True)
     print("Tests starting")
 
 
@@ -95,7 +96,7 @@ async def test_enable_verification():
     config = dpytest.get_config()
     guild = config.guilds[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enableVerification test.com <@&555>")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "addVerification test.com <@&555>")
     dpytest.verify_message("Verification enabled for <@&555> for emails ending with `test.com`")
     entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                          (guild.id, role.id))
@@ -109,7 +110,7 @@ async def test_disable_verification():
     guild = config.guilds[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id, 555, 'egg.com'})")
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disableVerification egg.com <@&555>")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeVerification egg.com <@&555>")
     dpytest.verify_message("Emails ending with egg.com no longer give <@&555>")
     entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                          (guild.id, role.id))
@@ -147,3 +148,27 @@ async def test_confirm():
     dpytest.verify_message("Your email has been verified, thank you")
     db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
     db_manager.db_execute_commit(f"DELETE FROM verified_emails WHERE u_id={member.id}")
+
+
+@pytest.mark.asyncio
+async def test_un_verify():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    member = test_config.members[0]
+    await dpytest.add_role(member, role)
+    db_manager.db_execute_commit(f"INSERT INTO verified_emails VALUES ({member.id}, 'test@egg.com')")
+    db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id}, {role.id}, 'egg.com')")
+    dm = await member.create_dm()
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "unVerify test@egg.com", dm)
+    dpytest.verify_message("test@egg.com has been un-verified and relevant roles have been removed")
+    entry = db_manager.db_execute_select(f"SELECT * FROM verified_emails WHERE u_id={member.id} AND email='test@egg.com'")
+    assert not entry
+    assert role not in member.roles
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False
