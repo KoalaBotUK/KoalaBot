@@ -141,29 +141,23 @@ This email is stored so you don't need to verify it multiple times."""
     async def enable_verification(self, ctx, suffix=None, role=None):
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         if not role or not suffix:
-            await ctx.send(
-                f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
-            return
+            raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
         try:
             role_id = int(role[3:-1])
         except ValueError:
-            await ctx.send(f"Please give a role by @mentioning it")
-            return
+            raise self.InvalidArgumentError("Please give a role by @mentioning it")
         except TypeError:
-            await ctx.send("Please give a role by @mentioning it")
-            return
+            raise self.InvalidArgumentError("Please give a role by @mentioning it")
 
         role_valid = discord.utils.get(ctx.guild.roles, id=role_id)
         if not role_valid:
-            await ctx.send("Please supply a valid role")
-            return
+            raise self.InvalidArgumentError("Please mention a role in this guild")
 
         exists = self.DBManager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
                                                   (ctx.guild.id, role_id, suffix))
         if exists:
-            await ctx.send("Verification is already enabled for that role")
-            return
+            raise self.VerifyError("Verification is already enabled for that role")
 
         self.DBManager.db_execute_commit("INSERT INTO roles VALUES (?, ?, ?)",
                                          (ctx.guild.id, role_id, suffix))
@@ -176,18 +170,15 @@ This email is stored so you don't need to verify it multiple times."""
     async def disable_verification(self, ctx, suffix=None, role=None):
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         if not role or not suffix:
-            await ctx.send(
-                f"Please provide the correct arguments (`{KoalaBot.COMMAND_PREFIX}disable_verification <domain> <@role>`")
-            return
+            raise self.InvalidArgumentError(
+                f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
         try:
             role_id = int(role[3:-1])
         except ValueError:
-            await ctx.send(f"Please give a role by @mentioning it")
-            return
+            raise self.InvalidArgumentError("Please give a role by @mentioning it")
         except TypeError:
-            await ctx.send("Please give a role by @mentioning it")
-            return
+            raise self.InvalidArgumentError("Please give a role by @mentioning it")
 
         self.DBManager.db_execute_commit("DELETE FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
                                          (ctx.guild.id, role_id, suffix))
@@ -196,13 +187,12 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email):
-        already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
-                                                            (ctx.author.id, email))
+        already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE email=?",
+                                                            (email,))
         in_blacklist = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE u_id=?",
                                                         (ctx.author.id,))
         if already_verified and not in_blacklist:
-            await ctx.send("That email is already verified")
-            return
+            raise self.VerifyError("That email is already verified")
 
         verification_code = ''.join(random.choice(string.ascii_letters) for _ in range(8))
         self.DBManager.db_execute_commit("INSERT INTO non_verified_emails VALUES (?, ?, ?)",
@@ -214,26 +204,22 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.command(name="unVerify")
     async def un_verify(self, ctx, email):
         entry = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
-                                                  (ctx.author.id, email))
+                                                 (ctx.author.id, email))
         if not entry:
-            await ctx.send("You have not verified that email")
-            return
+            raise self.VerifyError("You have not verified that email")
 
         self.DBManager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=? AND email=?",
                                          (ctx.author.id, email))
         await self.remove_roles_for_user(ctx.author.id, email)
         await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
 
-
     @commands.check(is_dm_channel)
     @commands.command(name="confirm")
     async def confirm(self, ctx, token):
-
         entry = self.DBManager.db_execute_select("SELECT * FROM non_verified_emails WHERE token=?",
                                                  (token,))
         if not entry:
-            await ctx.send("That is not a valid token")
-            return
+            raise self.InvalidArgumentError("That is not a valid token")
 
         already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
                                                             (ctx.author.id, entry[0][1]))
@@ -254,22 +240,6 @@ This email is stored so you don't need to verify it multiple times."""
     @commands.check(KoalaBot.is_owner)
     @commands.command(name="getEmails")
     async def get_emails(self, ctx, user_id: int):
-        """
-        Unused until theres an unabusable way to do it
-        # roles = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
-        #                                          (ctx.guild.id,))
-        # emails = []
-        # member = ctx.guild.get_member(user_id)
-        # for r_id, suffix in roles:
-        #     role = discord.utils.get(ctx.guild.roles, id=r_id)
-        #     if role not in member.roles:
-        #         continue
-        #     results = self.DBManager.db_execute_select("SELECT email FROM verified_emails WHERE u_id=? AND email LIKE ('%' || ?)",
-        #                                                 (user_id, suffix))
-        #     for result in results:
-        #         emails.append(result[0])
-        #
-        """
         KoalaBot.check_guild_has_ext(ctx, "Verify")
         results = self.DBManager.db_execute_select("SELECT email FROM verified_emails WHERE u_id=?", (user_id,))
         emails = '\n'.join([x[0] for x in results])
@@ -277,9 +247,7 @@ This email is stored so you don't need to verify it multiple times."""
 
     @commands.command(name="checkVerifications")
     async def check_verifications(self, ctx):
-
         KoalaBot.check_guild_has_ext(ctx, "Verify")
-
         embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
         roles = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
                                                  (ctx.guild.id,))
@@ -304,24 +272,27 @@ This email is stored so you don't need to verify it multiple times."""
         try:
             role_id = int(role[3:-1])
         except ValueError:
-            await ctx.send(f"Please give a role by @mentioning it")
-            return
+            raise self.InvalidArgumentError("Please give a role by @mentioning it")
         except TypeError:
-            await ctx.send("Please give a role by @mentioning it")
-            return
+            raise self.InvalidArgumentError("Please give a role by @mentioning it")
 
         exists = self.DBManager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                                   (ctx.guild.id, role_id))
         if not exists:
-            await ctx.send("Verification is not enabled for that role")
-            return
-
+            raise self.VerifyError("Verification is not enabled for that role"
+                                   )
         role = discord.utils.get(ctx.guild.roles, id=role_id)
         for member in ctx.guild.members:
             if role in member.roles:
                 await member.remove_roles(role)
                 self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
                                                  (member.id, role.id))
+
+    class InvalidArgumentError(Exception):
+        pass
+
+    class VerifyError(Exception):
+        pass
 
     async def assign_roles_on_startup(self):
         results = self.DBManager.db_execute_select("SELECT * FROM roles")
