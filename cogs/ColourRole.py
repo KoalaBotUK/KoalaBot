@@ -31,6 +31,8 @@ def is_allowed_to_change_colour(ctx: commands.Context):
     :return: True if the command invoker has a role in the list of roles that are allowed to use the command, False
     otherwise. Always False if there's no roles that have been granted permission to use the command
     """
+    if isinstance(ctx.channel, discord.DMChannel):
+        return False
     cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
     allowed_role_ids = cr_database_manager.get_colour_change_roles(ctx.guild.id)
     allowed_set = set(allowed_role_ids)
