@@ -19,7 +19,6 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Built-in/Generic Imports
 import os
-
 # Libs
 import discord
 from discord.ext import commands
@@ -104,7 +103,7 @@ async def dm_group_message(members: [discord.Member], message: str):
 def check_guild_has_ext(ctx, extension_id):
     if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
-
+'''
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -116,6 +115,8 @@ async def on_command_error(ctx, error):
                                                      f"{str(error.retry_after)}s."))
     else:
         await ctx.send(embed=error_embed(description=error))
+    logger.error("Error occurred. Stack Trace:\n", exc_info=True)
+'''
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
