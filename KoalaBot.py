@@ -55,6 +55,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(me
 logger = logging.getLogger('discord')
 is_dpytest = False
 
+
 def is_owner(ctx):
     """
     A command used to check if the user of a command is the owner, or the testing bot
@@ -80,8 +81,10 @@ def is_admin(ctx):
     else:
         return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
 
+
 def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
+
 
 def load_all_cogs():
     """
@@ -126,6 +129,7 @@ def check_guild_has_ext(ctx, extension_id):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 
+
 @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -137,6 +141,8 @@ async def on_command_error(ctx, error):
                                                      f"{str(error.retry_after)}s."))
     else:
         await ctx.send(embed=error_embed(description=error))
+    logger.error("Error occurred. Stack Trace:\n", exc_info=True)
+
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
