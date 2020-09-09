@@ -32,7 +32,7 @@ class TextFilterCog(commands.Cog):
         self.tf_database_manager.create_tables()
 
     @commands.command(name="filter", aliases=["filter_Word"])
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(KoalaBot.is_admin)
     async def filter_new_word(self, ctx, word):
         """
         Adds new word to the filtered text list
@@ -41,6 +41,17 @@ class TextFilterCog(commands.Cog):
         :return:
         """
         self.tf_database_manager.new_filtered_text(ctx.guild.id, word)
+
+    @commands.command(name="unfilter", aliases=["unfilter_Word"])
+    @commands.check(KoalaBot.is_admin)
+    async def unfilter_word(self, ctx, word):
+        """
+        Removes existing words from filter list
+        :param ctx: The discord context
+        :param word: The first argument and word to be filtered
+        :return:
+        """
+        self.tf_database_manager.unfilter_text(ctx.guild.id, word)
 
     @commands.Cog.listener()
     @commands.check(not KoalaBot.is_admin)
@@ -95,13 +106,25 @@ class TextFilterDBManager:
     def new_filtered_text(self, guild_id, filtered_text):
         """
         Adds new filtered word for a guild
-        :param guild_id: Guild ID to retrieve filtered words from:
+        :param guild_id: Guild ID to retrieve filtered words from
         :param filtered_text: The new word to be filtered
         :return:
         """
         ft_id = str(guild_id) + filtered_text
         self.database_manager.db_execute_commit(
             f"INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text) VALUES (\"{ft_id}\", {guild_id}, \"{filtered_text}\");")
+
+    
+    def unfilter_text(self, guild_id, filtered_text):
+        """
+        Adds new filtered word for a guild
+        :param guild_id: Guild ID to retrieve filtered words from
+        :param filtered_text: The new word to be filtered
+        :return:
+        """
+        ft_id = str(guild_id) + filtered_text
+        self.database_manager.db_execute_commit(
+            f"DELETE FROM TextFilter WHERE filtered_text_id = (\"{ft_id}\");")
 
     def get_filtered_text_for_guild(self, guild_id):
         """
