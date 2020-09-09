@@ -50,10 +50,11 @@ class TextFilterCog(commands.Cog):
         :param message: The newly received message
         :return:
         """
-        censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.guild.id)
-        if (any(map(message.content.__contains__, censor_list))):
-            await message.author.send("Watch your language! Your message: '*"+message.content+"*' in #"+message.channel.name+" has been deleted by KoalaBot.")
-            await message.delete()
+        if (message.guild is not None):
+            censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.guild.id)
+            if (any(map(message.content.__contains__, censor_list))):
+                await message.author.send("Watch your language! Your message: '*"+message.content+"*' in #"+message.channel.name+" has been deleted by KoalaBot.")
+                await message.delete()
 
 def setup(bot: KoalaBot) -> None:
     """
