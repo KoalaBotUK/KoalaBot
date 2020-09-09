@@ -136,8 +136,8 @@ class ReactForRole(commands.Cog):
             "Okay. Can I get the roles and emojis you want added to the message in a list with format: \n\"<emoji>, <role>\"\n\"<emoji>, <role>\"\n\"<emoji>, <role>\"\netc. You can get a new line by using SHIFT + ENTER.")
         await ctx.send(
             f"Please note however that you've only got {remaining_slots} emoji-role combinations you can enter. I'll therefore only take the first {remaining_slots} you do.")
-        input = (await self.wait_for_message(self.bot, ctx))[0].content
-        emoji_role_list = await self.parse_emoji_role_input_str(ctx, input, remaining_slots)
+        input_role_emojis = (await self.wait_for_message(self.bot, ctx))[0].content
+        emoji_role_list = await self.parse_emoji_role_input_str(ctx, input_role_emojis, remaining_slots)
         rfr_embed = self.get_embed_from_message(msg)
         for emoji_role in emoji_role_list:
             discord_emoji = emoji_role[0]
@@ -147,7 +147,7 @@ class ReactForRole(commands.Cog):
                                                                      role.id)
             else:
                 self.rfr_database_manager.add_rfr_message_emoji_role(rfr_msg_row[3], str(discord_emoji), role.id)
-            rfr_embed.add_field(name=str(discord_emoji), value=role.mention)
+            rfr_embed.add_field(name=str(discord_emoji), value=role.mention, inline=False)
             await msg.add_reaction(discord_emoji)
             if isinstance(discord_emoji, str):
                 KoalaBot.logger.info(
@@ -164,14 +164,41 @@ class ReactForRole(commands.Cog):
                                                                 payload.message_id)
         if not rfr_message:
             return
-        else:
-            emoji_roles = self.rfr_database_manager.get_rfr_message_emoji_roles(rfr_message[3])
-            if not emoji_roles:
-                return
-            else:
+        member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
+                                                payload.message_id, payload.user_id)
+        await member_role[0].add_roles(member_role[1])
 
-                pass
-        return
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                                                                payload.message_id)
+        if not rfr_message:
+            return
+        member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
+                                                payload.message_id, payload.user_id)
+        if not member_role:
+            return
+        await member_role[0].remove_roles(member_role[1])
+
+    def get_role_member_info(self, emoji_reacted: discord.PartialEmoji, emoji_role_id: int, guild_id: int,
+                             channel_id: int, message_id: int, user_id: int) -> Optional[
+        Tuple[discord.Member, discord.Role]]:
+        if emoji_reacted.is_unicode_emoji():
+            rep = emoji.demojize(emoji_reacted.name)
+            role_id = self.rfr_database_manager.get_rfr_reaction_role_by_emoji_str(emoji_role_id, rep)
+        elif emoji_reacted.is_custom_emoji():
+            rep = str(emoji_reacted)
+            role_id = self.rfr_database_manager.get_rfr_reaction_role_by_emoji_str(emoji_role_id, rep)
+        else:
+            KoalaBot.logger.error(
+                f"Database error, guild {guild_id} has no entry in rfr database for message_id {message_id} in channel_id {channel_id}. Please check this.")
+            return
+        guild: discord.Guild = self.bot.get_guild(guild_id)
+        member: discord.Member = guild.get_member(user_id)
+        if not member:
+            return
+        role: discord.Role = discord.utils.get(guild.roles, id=role_id)
+        return member, role
 
     async def parse_emoji_role_input_str(self, ctx: commands.Context, input_str: str, remaining_slots: int) -> List[
         Tuple[Union[discord.Emoji, str], discord.Role]]:
@@ -286,7 +313,7 @@ class ReactForRoleDBManager:
         emoji_raw text NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (emoji_role_id, emoji_raw, role_id),
-        FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages (ROWID) ON DELETE CASCADE,
+        FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages (emoji_role_id) ON DELETE CASCADE,
         UNIQUE (emoji_raw, role_id)
         );
         """
@@ -346,6 +373,13 @@ class ReactForRoleDBManager:
         if not rows:
             return
         return rows[0]
+
+    def get_rfr_reaction_role_by_emoji_str(self, emoji_role_id: int, emoji_raw: str) -> Optional[int]:
+        rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
+            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\" LIMIT 1;""")
+        if not rows:
+            return
+        return rows[0][2]
 
 
 def setup(bot: KoalaBot) -> None:
