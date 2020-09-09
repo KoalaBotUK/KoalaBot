@@ -18,6 +18,8 @@ from utils import KoalaDBManager
 
 # Constants
 load_dotenv()
+censor = ["fuck","shit"]
+
 # Variables
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
 
@@ -31,8 +33,9 @@ class TextFilterCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self,message):
-        print(message.content)
-
+        if (any(map(message.content.__contains__,censor))):
+            await message.author.send("Watch your language! Your message: '*"+message.content+"*' in #"+message.channel.name+" has been deleted by KoalaBot.")
+            await message.delete()
 
 def setup(bot: KoalaBot) -> None:
     """
