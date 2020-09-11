@@ -295,6 +295,14 @@ async def test_update_welcome_message_no_args():
 
 
 @pytest.mark.asyncio
+async def test_view_welcome_message():
+    guild = dpytest.get_config().guilds[0]
+    old_message = IntroCog.get_guild_welcome_message(guild.id)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "welcomeViewMsg ")
+    dpytest.verify_message(f"""Your current welcome message is:\n\r{old_message}""")
+
+
+@pytest.mark.asyncio
 async def test_update_welcome_message_timeout():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)

@@ -34,6 +34,21 @@ TWITCH_SECRET = os.environ['TWITCH_SECRET']
 
 # Variables
 
+def twitch_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled twitch alert
+    e.g. @commands.check(KoalaBot.is_admin)
+    :param ctx: The context of the message
+    :return: True if admin or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
+    except PermissionError:
+        result = False
+
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
+
 class TwitchAlert(commands.Cog):
     """
         A discord.py cog for alerting when someone goes live on twitch
@@ -57,6 +72,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchEditMsg", aliases=["edit_default_message"])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
     async def edit_default_message(self, ctx, raw_channel_id, *default_live_message):
         """
         Creates a twitch alert that can store twitch users and channels where
@@ -67,7 +83,6 @@ class TwitchAlert(commands.Cog):
         leave empty for program default
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
@@ -77,6 +92,10 @@ class TwitchAlert(commands.Cog):
         # Assigning default message if provided
         if default_live_message is not None and default_live_message != (None,):
             default_message = " ".join(default_live_message)
+            if len(default_message)>1000:
+                await ctx.send(embed=error_embed("custom_message is too long, try something with less than 1000 characters"))
+                return
+
         else:
             default_message = None
 
@@ -94,6 +113,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchAdd", aliases=['add_user_to_twitch_alert'])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
     async def add_user_to_twitch_alert(self, ctx, raw_channel_id, twitch_username=None, *custom_live_message):
         """
         Add a Twitch user to a Twitch Alert
@@ -103,7 +123,6 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
         try:
             channel_id = extract_id(raw_channel_id)
         except TypeError:
@@ -124,6 +143,9 @@ class TwitchAlert(commands.Cog):
         if custom_live_message is not None and custom_live_message != (None,):
             custom_message = " ".join(custom_live_message)
             default_message = custom_message
+            if len(default_message)>1000:
+                await ctx.send(embed=error_embed("custom_message is too long, try something with less than 1000 characters"))
+                return
         else:
             custom_message = None
 
@@ -140,6 +162,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchRemove", aliases=['remove_user_from_twitch_alert'])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
     async def remove_user_from_twitch_alert(self, ctx, raw_channel_id, twitch_username=None):
         """
         Removes a user from a Twitch Alert
@@ -148,7 +171,6 @@ class TwitchAlert(commands.Cog):
         :param twitch_username: The username of the user to be removed
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -173,6 +195,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchAddTeam", aliases=["add_team_to_twitch_alert"])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
     async def add_team_to_twitch_alert(self, ctx, raw_channel_id, team_name=None, *custom_live_message):
         """
         Add a Twitch team to a Twitch Alert
@@ -182,7 +205,6 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -203,6 +225,9 @@ class TwitchAlert(commands.Cog):
         # Setting the custom message as required
         if custom_live_message is not None and custom_live_message != (None,):
             default_message = " ".join(custom_live_message)
+            if len(default_message)>1000:
+                await ctx.send(embed=error_embed("custom_message is too long, try something with less than 1000 characters"))
+                return
         else:
             default_message = DEFAULT_MESSAGE
 
@@ -218,6 +243,7 @@ class TwitchAlert(commands.Cog):
 
     @commands.command(name="twitchRemoveTeam", aliases=["remove_team_from_twitch_alert"])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
     async def remove_team_from_twitch_alert(self, ctx, raw_channel_id, team_name=None):
         """
         Removes a team from a Twitch Alert
@@ -226,7 +252,6 @@ class TwitchAlert(commands.Cog):
         :param team_name: The Twitch team being added (lowercase)
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -248,6 +273,49 @@ class TwitchAlert(commands.Cog):
                                               f"Team: {team_name}")
 
         await ctx.send(embed=new_embed)
+
+    @commands.command(name="twitchList", aliases=["list_twitch_alert"])
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
+    async def list_twitch_alert(self, ctx, raw_channel_id=None):
+        """
+
+        :param ctx:
+        :param raw_channel_id:
+        :return:
+        """
+        if raw_channel_id == None:
+            channel_id = ctx.message.channel.id
+        else:
+            channel_id = extract_id(raw_channel_id)
+
+        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
+            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
+            return
+        embed = discord.Embed()
+        embed.title = "Twitch Alerts"
+        embed.colour = KOALA_GREEN
+        embed.set_footer(text=f"Channel ID: {channel_id}")
+
+        results = self.ta_database_manager.get_users_in_ta(channel_id)
+        if results:
+            users = ""
+            for result in results:
+                users += f"{result[0]}\n"
+            embed.add_field(name=":bust_in_silhouette: Users", value=users)
+        else:
+            embed.add_field(name=":bust_in_silhouette: Users", value="None")
+
+        results = self.ta_database_manager.get_teams_in_ta(channel_id)
+        if results:
+            teams = ""
+            for result in results:
+                teams += f"{result[0]}\n"
+            embed.add_field(name=":busts_in_silhouette: Teams", value=teams)
+        else:
+            embed.add_field(name=":busts_in_silhouette: Teams", value="None")
+
+        await ctx.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -734,6 +802,27 @@ class TwitchAlertDBManager:
         :return:
         """
         await (await self.bot.get_channel(int(channel_id)).fetch_message(message_id)).delete()
+
+    def get_users_in_ta(self, channel_id):
+        """
+        Returns all users in a given Twitch Alert
+        :param channel_id: The channel ID of the Twitch Alert
+        :return: The sql results of the users
+        """
+        sql_get_users = "SELECT twitch_username FROM UserInTwitchAlert WHERE channel_id = ?"
+        return self.database_manager.db_execute_select(sql_get_users, args=[channel_id])
+
+
+    def get_teams_in_ta(self, channel_id):
+        """
+        Returns all teams in a given Twitch Alert
+        :param channel_id: The channel ID of the Twitch Alert
+        :return: The sql results of the teams
+        """
+        sql_get_teams = "SELECT twitch_team_name FROM TeamInTwitchAlert WHERE channel_id = ?"
+        return self.database_manager.db_execute_select(sql_get_teams, args=[channel_id])
+
+
 
     def add_team_to_ta(self, channel_id, twitch_team, custom_message, guild_id=None):
         """

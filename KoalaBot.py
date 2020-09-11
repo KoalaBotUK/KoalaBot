@@ -101,9 +101,11 @@ async def dm_group_message(members: [discord.Member], message: str):
             pass
     return count
 
+
 def check_guild_has_ext(ctx, extension_id):
     if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
+    return True
 
 @client.event
 async def on_command_error(ctx, error):
