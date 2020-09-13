@@ -32,7 +32,7 @@ class TextFilterCog(commands.Cog):
         self.tf_database_manager.create_tables()
 
     @commands.command(name="filter", aliases=["filter_Word"])
-    @commands.check(KoalaBot.is_admin)
+  #  @commands.check(KoalaBot.is_admin)
     async def filter_new_word(self, ctx, word):
         """
         Adds new word to the filtered text list
@@ -41,9 +41,10 @@ class TextFilterCog(commands.Cog):
         :return:
         """
         self.tf_database_manager.new_filtered_text(ctx.guild.id, word)
+        await ctx.channel.send("*"+word+"* has been filtered.")
 
     @commands.command(name="unfilter", aliases=["unfilter_Word"])
-    @commands.check(KoalaBot.is_admin)
+   # @commands.check(KoalaBot.is_admin)
     async def unfilter_word(self, ctx, word):
         """
         Removes existing words from filter list
@@ -52,16 +53,16 @@ class TextFilterCog(commands.Cog):
         :return:
         """
         self.tf_database_manager.unfilter_text(ctx.guild.id, word)
+        await ctx.channel.send("*"+word+"* has been unfiltered.")
 
     @commands.Cog.listener()
-    @commands.check(not KoalaBot.is_admin)
     async def on_message(self,message):
         """
         Upon receiving a message, it is checked for filtered text and is deleted.
         :param message: The newly received message
         :return:
         """
-        if (message.guild is not None):
+        if (message.guild is not None):# and not KoalaBot.is_admin and not KoalaBot.is_owner):
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.guild.id)
             if (any(map(message.content.__contains__, censor_list))):
                 await message.author.send("Watch your language! Your message: '*"+message.content+"*' in #"+message.channel.name+" has been deleted by KoalaBot.")
