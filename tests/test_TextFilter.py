@@ -36,6 +36,7 @@ def setup_function():
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     base_cog = BaseCog.BaseCog(bot)
     tf_cog = TextFilter.TextFilterCog(bot)
+    tf_cog.tf_database_manager.create_tables()
     utils_cog = TestUtilsCog.TestUtilsCog(bot)
     bot.add_cog(base_cog)
     bot.add_cog(tf_cog)
