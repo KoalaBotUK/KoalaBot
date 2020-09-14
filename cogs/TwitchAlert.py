@@ -13,7 +13,7 @@ import asyncio
 import concurrent.futures
 
 # Libs
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import requests
 
@@ -89,6 +89,11 @@ class TwitchAlert(commands.Cog):
             channel_id = ctx.message.channel.id
             default_live_message = (raw_channel_id, )+default_live_message
 
+        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
+            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
+            return
+
+
         # Assigning default message if provided
         if default_live_message is not None and default_live_message != (None,):
             default_message = " ".join(default_live_message)
@@ -105,6 +110,38 @@ class TwitchAlert(commands.Cog):
 
         # Returns an embed with information altered
         new_embed = discord.Embed(title="Default Message Edited", colour=KOALA_GREEN,
+                                  description=f"Guild: {ctx.message.guild.id}\n"
+                                              f"Channel: {channel_id}\n"
+                                              f"Default Message: {default_message}")
+        # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
+        await ctx.send(embed=new_embed)
+
+    @commands.command(name="twitchViewMsg", aliases=["view_default_message"])
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(twitch_is_enabled)
+    async def view_default_message(self, ctx, raw_channel_id=None):
+        """
+        Creates a twitch alert that can store twitch users and channels where
+        if the user goes live, a notification will be put in the chosen channel
+        :param ctx: The discord context of the command
+        :param raw_channel_id: The channel ID where the twitch alert is being used
+        leave empty for program default
+        :return:
+        """
+        if raw_channel_id is None:
+            channel_id = ctx.message.channel.id
+        else:
+            channel_id = extract_id(raw_channel_id)
+
+        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
+            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
+            return
+
+        # Creates a new Twitch Alert with the used guild ID and default message if provided
+        default_message = self.ta_database_manager.get_default_message(channel_id)[0][0]
+
+        # Returns an embed with information altered
+        new_embed = discord.Embed(title="Default Message", colour=KOALA_GREEN,
                                   description=f"Guild: {ctx.message.guild.id}\n"
                                               f"Channel: {channel_id}\n"
                                               f"Default Message: {default_message}")
@@ -323,111 +360,83 @@ class TwitchAlert(commands.Cog):
         When the bot is started up, the loop begins
         :return:
         """
-        self.start_loop()
+        self.loop_update_teams.start()
+        self.loop_check_team_live.start()
+        self.loop_check_live.start()
 
-    def start_loop(self):
-        """
-        Starts the loop check live event loop
-        :return:
-        """
-        if self.loop_thread is None:
-            self.stop_loop = False
-            self.loop_thread = asyncio.get_event_loop().create_task(self.loop_check_live())
-            self.loop_team_thread = asyncio.get_event_loop().create_task(self.loop_check_team_live())
-        else:
-            raise Exception("Loop is already running!")
-        pass
-
-    def end_loop(self):
-        """
-        Stop the loop check live event loop
-        :return:
-        """
-        if self.loop_thread is not None:
-            self.stop_loop = True
-            self.loop_thread.cancel()
-            self.loop_team_thread.cancel()
-            self.loop_thread = None
-        else:
-            raise Exception("Loop is not running!")
-        pass
-
+    @tasks.loop(minutes=1)
     async def loop_check_live(self):
         """
         A loop that continually checks the live status of users and
         sends alerts when online, removing them when offline
         :return:
         """
-        print("Twitch Alert Loop Starting")
-        while not self.stop_loop:
+        sql_find_users = "SELECT twitch_username " \
+                         "FROM UserInTwitchAlert " \
+                         "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+                         "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                         "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
+        users = self.ta_database_manager.database_manager.db_execute_select(sql_find_users)
+        usernames = []
+        users_left = 100
+        for user in users:
+            usernames.append(user[0])
+            users_left -= 1
+            if users_left == 0 or users[-1] == user:
 
-            sql_find_users = "SELECT twitch_username " \
-                             "FROM UserInTwitchAlert " \
-                             "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
-                             "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-                             "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
-            users = self.ta_database_manager.database_manager.db_execute_select(sql_find_users)
-            usernames = []
-            users_left = 100
-            for user in users:
-                usernames.append(user[0])
-                users_left -= 1
-                if users_left == 0 or users[-1] == user:
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    user_streams = await asyncio.get_event_loop(). \
+                        run_in_executor(pool, self.ta_database_manager.twitch_handler.get_streams_data, usernames)
 
-                    with concurrent.futures.ThreadPoolExecutor() as pool:
-                        user_streams = await asyncio.get_event_loop(). \
-                            run_in_executor(pool, self.ta_database_manager.twitch_handler.get_streams_data, usernames)
+                # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
+                users_left = 100
 
-                    # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
-                    users_left = 100
+                # Deals with online streams
+                for streams_details in user_streams:
+                    if streams_details.get('type') == "live":
+                        current_username = str.lower(streams_details.get("user_name"))
+                        # print(current_username + " is live")
+                        usernames.remove(current_username)
 
-                    # Deals with online streams
-                    for streams_details in user_streams:
-                        if streams_details.get('type') == "live":
-                            current_username = str.lower(streams_details.get("user_name"))
-                            # print(current_username + " is live")
-                            usernames.remove(current_username)
+                        sql_find_message_id = "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
+                                              "FROM UserInTwitchAlert " \
+                                              "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+                                              "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                                              "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
+                                              f"WHERE twitch_username = '{current_username}';"
 
-                            sql_find_message_id = "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
-                                                  "FROM UserInTwitchAlert " \
-                                                  "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
-                                                  "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-                                                  "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
-                                                  f"WHERE twitch_username = '{current_username}';"
+                        results = self.ta_database_manager.database_manager.db_execute_select(
+                            sql_find_message_id)
 
-                            results = self.ta_database_manager.database_manager.db_execute_select(
-                                sql_find_message_id)
+                        new_message_embed = None
 
-                            new_message_embed = None
+                        for result in results:
+                            channel = self.bot.get_channel(id=result[0])
 
-                            for result in results:
-                                channel = self.bot.get_channel(id=result[0])
+                            # If no Alert is posted
+                            if result[1] is None:
+                                if new_message_embed is None:
+                                    if result[2] is not None:
+                                        message = result[2]
+                                    else:
+                                        message = result[3]
 
-                                # If no Alert is posted
-                                if result[1] is None:
-                                    if new_message_embed is None:
-                                        if result[2] is not None:
-                                            message = result[2]
-                                        else:
-                                            message = result[3]
+                                    new_message_embed = self.create_alert_embed(streams_details, message)
+                                    # with concurrent.futures.ThreadPoolExecutor() as pool3:
+                                    #    new_message = await asyncio.get_event_loop(). \
+                                    #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
+                                    #                        streams_details, message)
+                                new_message = await channel.send(embed=new_message_embed)
+                                sql_update_message_id = f"""
+                                UPDATE UserInTwitchAlert 
+                                SET message_id = {new_message.id} 
+                                WHERE channel_id = {result[0]} 
+                                    AND twitch_username = '{current_username}'"""
+                                self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
 
-                                        new_message_embed = self.create_alert_embed(streams_details, message)
-                                        # with concurrent.futures.ThreadPoolExecutor() as pool3:
-                                        #    new_message = await asyncio.get_event_loop(). \
-                                        #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
-                                        #                        streams_details, message)
-                                    new_message = await channel.send(embed=new_message_embed)
-                                    sql_update_message_id = f"""
-                                    UPDATE UserInTwitchAlert 
-                                    SET message_id = {new_message.id} 
-                                    WHERE channel_id = {result[0]} 
-                                        AND twitch_username = '{current_username}'"""
-                                    self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
+                # Deals with remaining offline streams
+                self.ta_database_manager.delete_all_offline_streams(False, usernames)
 
-                    # Deals with remaining offline streams
-                    self.ta_database_manager.delete_all_offline_streams(False, usernames)
-            await asyncio.sleep(60)
-        pass
 
     def create_alert_embed(self, stream_data, message):
         """
@@ -442,87 +451,81 @@ class TwitchAlert(commands.Cog):
             stream_data.get("game_id"))
         return create_live_embed(stream_data, user_details, game_details, message)
 
+
+    @tasks.loop(minutes=5)
+    async def loop_update_teams(self):
+        self.ta_database_manager.update_all_teams_members()
+
+    @tasks.loop(minutes=1)
     async def loop_check_team_live(self):
         """
         A loop to repeatedly send messages if a member of a team is live, and remove it when they are not
+
         :return:
         """
-        print("Twitch Alert Team Loop Starting")
-        while not self.stop_loop:
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                await asyncio.get_event_loop(). \
-                    run_in_executor(pool, self.ta_database_manager.update_all_teams_members)
+        sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
+                                "FROM UserInTwitchTeam " \
+                                "JOIN TeamInTwitchAlert TITA ON UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id " \
+                                "JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id " \
+                                "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                                "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
 
-            sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
-                                    "FROM UserInTwitchTeam " \
-                                    "JOIN TeamInTwitchAlert TITA ON UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id " \
-                                    "JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id " \
-                                    "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-                                    "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
+        users_and_teams = self.ta_database_manager.database_manager.db_execute_select(sql_select_team_users)
+        usernames = []
+        for user in users_and_teams:
+            usernames.append(user[0])
+        # (usernames)
+        streams_data = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
+        # print(streams_data)
 
-            users_and_teams = self.ta_database_manager.database_manager.db_execute_select(sql_select_team_users)
-            usernames = []
-            for user in users_and_teams:
-                usernames.append(user[0])
-            # (usernames)
-            with concurrent.futures.ThreadPoolExecutor() as pool2:
-                streams_data = await asyncio.get_event_loop(). \
-                    run_in_executor(pool2,
-                                    self.ta_database_manager.twitch_handler.get_streams_data,
-                                    usernames)
-            # print(streams_data)
+        # Deals with online streams
+        for stream_data in streams_data:
+            if stream_data.get('type') == "live":
+                current_username = str.lower(stream_data.get("user_name"))
+                # print(current_username + " is live")
+                usernames.remove(current_username)
 
-            # Deals with online streams
-            for stream_data in streams_data:
-                if stream_data.get('type') == "live":
-                    current_username = str.lower(stream_data.get("user_name"))
-                    # print(current_username + " is live")
-                    usernames.remove(current_username)
+                sql_find_message_id = f"""
+                SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message, default_message 
+                FROM UserInTwitchTeam
+                JOIN TeamInTwitchAlert TITA on UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id
+                JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id
+                JOIN (SELECT extension_id, guild_id 
+                      FROM GuildExtensions 
+                      WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE ON TA.guild_id = GE.guild_id 
+                WHERE twitch_username = '{current_username}'"""
 
-                    sql_find_message_id = f"""
-                    SELECT TITA.channel_id, message_id, TITA.team_twitch_alert_id, custom_message, default_message 
-                    FROM UserInTwitchTeam
-                    JOIN TeamInTwitchAlert TITA on UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id
-                    JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id
-                    JOIN (SELECT extension_id, guild_id 
-                          FROM GuildExtensions 
-                          WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE ON TA.guild_id = GE.guild_id 
-                    WHERE twitch_username = '{current_username}'"""
+                results = self.ta_database_manager.database_manager.db_execute_select(
+                    sql_find_message_id)
 
-                    results = self.ta_database_manager.database_manager.db_execute_select(
-                        sql_find_message_id)
+                new_message_embed = None
 
-                    new_message_embed = None
+                for result in results:
+                    channel = self.bot.get_channel(id=result[0])
 
-                    for result in results:
-                        channel = self.bot.get_channel(id=result[0])
+                    # If no Alert is posted
+                    if result[1] is None:
+                        if new_message_embed is None:
+                            if result[3] is not None:
+                                message = result[3]
+                            else:
+                                message = result[4]
+                            new_message_embed = self.create_alert_embed(stream_data, message)
 
-                        # If no Alert is posted
-                        if result[1] is None:
-                            if new_message_embed is None:
-                                if result[3] is not None:
-                                    message = result[3]
-                                else:
-                                    message = result[4]
-                                new_message_embed = self.create_alert_embed(stream_data, message)
+                            # with concurrent.futures.ThreadPoolExecutor() as pool3:
+                            #    new_message = await asyncio.get_event_loop(). \
+                            #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
+                            #                        stream_data, message)
+                        new_message = await channel.send(embed=new_message_embed)
+                        sql_update_message_id = f"""
+                        UPDATE UserInTwitchTeam 
+                        SET message_id = {new_message.id} 
+                        WHERE team_twitch_alert_id = {result[2]}
+                        AND twitch_username = '{current_username}'"""
+                        self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
 
-                                # with concurrent.futures.ThreadPoolExecutor() as pool3:
-                                #    new_message = await asyncio.get_event_loop(). \
-                                #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
-                                #                        stream_data, message)
-                            new_message = await channel.send(embed=new_message_embed)
-                            sql_update_message_id = f"""
-                            UPDATE UserInTwitchTeam 
-                            SET message_id = {new_message.id} 
-                            WHERE team_twitch_alert_id = {result[2]}
-                            AND twitch_username = '{current_username}'"""
-                            self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
-
-            # Deals with remaining offline streams
-            self.ta_database_manager.delete_all_offline_streams(True, usernames)
-
-        await asyncio.sleep(60)
-    pass
+        # Deals with remaining offline streams
+        self.ta_database_manager.delete_all_offline_streams(True, usernames)
 
 
 def create_live_embed(stream_info, user_info, game_info, message):
@@ -750,6 +753,16 @@ class TwitchAlertDBManager:
             """
         self.database_manager.db_execute_commit(sql_insert_twitch_alert)
         return default_message
+
+    def get_default_message(self, channel_id):
+        """
+        Get the set default message for the twitch alert
+        :param channel_id: The discord channel ID of the twitch Alert
+        :return: The current default_message
+        """
+        sql_find_ta = "SELECT default_message FROM TwitchAlerts WHERE channel_id= ?"
+        return self.database_manager.db_execute_select(sql_find_ta, args=[channel_id])
+
 
     def add_user_to_ta(self, channel_id, twitch_username, custom_message, guild_id=None):
         """

@@ -105,6 +105,12 @@ async def dm_group_message(members: [discord.Member], message: str):
 
 
 def check_guild_has_ext(ctx, extension_id):
+    """
+    A check for if a guild has a given koala extension
+    :param ctx: A discord context
+    :param extension_id: The koala extension ID
+    :return: True if has ext
+    """
     if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
