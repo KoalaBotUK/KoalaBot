@@ -46,27 +46,36 @@ def setup_function():
 
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_text():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_Word no")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no")
     dpytest.verify_message("*no* has been filtered.")
-    dpytest.verify_message("Watch your language! Your message: '*k!filter_Word no*' in #Channel_0 has been deleted by KoalaBot.")
+    dpytest.verify_message("Watch your language! Your message: '*k!filter_word no*' in "+dpytest.get_config().guilds[0].channels[0].mention +" has been deleted by KoalaBot.")
     
 @pytest.mark.asyncio()
 async def test_unfilter_word_correct_text():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_Word unfilterboi")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
     dpytest.verify_message("*unfilterboi* has been filtered.")
-    dpytest.verify_message("Watch your language! Your message: '*k!filter_Word unfilterboi*' in #Channel_0 has been deleted by KoalaBot.")
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_Word unfilterboi")
+    dpytest.verify_message("Watch your language! Your message: '*k!filter_word unfilterboi*' in "+dpytest.get_config().guilds[0].channels[0].mention +" has been deleted by KoalaBot.")
+    #dpytest.verify_message(dpytest.get_config().guilds[0].channels[0].mention)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
     dpytest.verify_message("*unfilterboi* has been unfiltered.")
 
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_database():
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select("SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no'"))
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_Word no")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no")
     assert len(tf_cog.tf_database_manager.database_manager.db_execute_select("SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no'")) == old + 1 
 
 @pytest.mark.asyncio()
 async def test_unfilter_word_correct_database():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_Word unfilterboi")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select("SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi'"))
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_Word unfilterboi")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
     assert len(tf_cog.tf_database_manager.database_manager.db_execute_select("SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1  
+
+# @pytest.mark.asyncio()
+# async def test_list_filtered_words():
+#     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word filterboi")
+#     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select("SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi'"))
+#     await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
+#     assert len(tf_cog.tf_database_manager.database_manager.db_execute_select("SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1  
+

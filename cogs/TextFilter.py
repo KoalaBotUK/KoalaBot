@@ -32,7 +32,7 @@ class TextFilterCog(commands.Cog):
         self.tf_database_manager = TextFilterDBManager(KoalaBot.database_manager, bot)
         self.tf_database_manager.create_tables()
 
-    @commands.command(name="filter", aliases=["filter_Word"])
+    @commands.command(name="filter", aliases=["filter_word"])
     #@commands.check(KoalaBot.is_admin)
     async def filter_new_word(self, ctx, word, filter_type="banned"):
         """
@@ -44,7 +44,7 @@ class TextFilterCog(commands.Cog):
         self.tf_database_manager.new_filtered_text(ctx.guild.id, word, filter_type)
         await ctx.channel.send("*"+word+"* has been filtered.")
 
-    @commands.command(name="unfilter", aliases=["unfilter_Word"])
+    @commands.command(name="unfilter", aliases=["unfilter_word"])
     #@commands.check(KoalaBot.is_admin)
     async def unfilter_word(self, ctx, word):
         """
@@ -152,6 +152,7 @@ class TextFilterCog(commands.Cog):
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.guild.id)
             if (any(map(message.content.__contains__, censor_list))):
                 await message.author.send("Watch your language! Your message: '*"+message.content+"*' in "+message.channel.mention+" has been deleted by KoalaBot.")
+                #await message.author.send(message.channel.mention)
                 channels = self.tf_database_manager.get_mod_channel(message.guild.id)
                 if (len(channels) > 0):
                     for each in channels:
