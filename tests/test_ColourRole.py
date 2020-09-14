@@ -285,8 +285,8 @@ async def test_calculate_custom_colour_role_position(num_roles):
     if lowest_protected == 2000000000 or lowest_protected == 1:
         expected = 1
     else:
-        expected = lowest_protected - 1
-    assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected
+        expected = lowest_protected
+    assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected, num_roles
 
 
 @pytest.mark.asyncio
