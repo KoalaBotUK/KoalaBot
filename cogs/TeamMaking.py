@@ -1,14 +1,18 @@
 import time
 import csv
 import asyncio
+from datetime import datetime
 from tkinter.filedialog import askopenfilename
 import discord
 from discord.ext import commands
+import random
+
+from discord.ext.commands import bot
+from discord.utils import get
 
 import KoalaBot
 
 # Player tuple : (PlayerName, Rank, [Players they want to play with], [in-game role], attitude, availability, Substitute)
-
 
 matrix_values = [("a", 10, ["b", "c"], [], 1, 0, False), ("b", 9, ["c", "f"], [], 1, 0, False),
                  ("c", 8, ["a", "b", "d"], [], 0, 0, False),
@@ -18,6 +22,8 @@ matrix_values = [("a", 10, ["b", "c"], [], 1, 0, False), ("b", 9, ["c", "f"], []
                  ("i", 2, ["h", "j"], [], 0, 0, False),
                  ("j", 1, ["i"], [], 0, 0, False), ("k", 7, ["i"], [], 0, 0, True), ("l", 8, ["i"], [], 0, 0, True),
                  ("m", 1, ["i"], [], 0, 0, True)]
+
+all_players = {}
 
 
 def get_subs(player_list):
@@ -304,6 +310,7 @@ def condense_teams(teams):
     :return: List of team tuples of just the player names of the players and substitutes.
     """
     team_cond = []
+    teams = teams.sort(key=lambda p: n[1])
     for x in teams:
         team_cond.append([x[0], x[2]])
     for n in team_cond:
@@ -371,19 +378,107 @@ def wait_for_message(bot: discord.Client, ctx: commands.Context):
         return response
 
 
+def some_new_function(player_name, temp):
+    pass
+
+
+def add_game_to_player(player_name, game):
+    if player_name in all_players.keys():
+        temp = all_players.get(player_name)
+        temp.append(game)
+        if len(temp) > 2:
+            some_new_function(player_name, temp)
+        all_players[player_name] = temp
+    else:
+        all_players[player_name] = [game]
+
+
+def remove_game_from_player(player_name, game):
+    if player_name in all_players.keys():
+        if game in all_players[player_name]:
+            temp = all_players[player_name]
+            temp.remove(game)
+            all_players[player_name] = temp
+
+
+def get_player_games(player_name):
+    return all_players[player_name]
+
+
+def get_players(player_dict):
+    fully_responded = []
+    for key in player_dict:
+        if len(player_dict[key]) == 7:
+            fully_responded.append(tuple(player_dict[key]))
+    return fully_responded
+
+
+def get_response(length, rank_number, role_list):
+    if length >= 7:
+        return "Thank you for responding, you will be sorted into a team soon."
+    if len(role_list) > 0:
+        switch = {
+            1: "What is your in-game rank? 0 being the lowest rank and " + str(rank_number) + " being the highest.",
+            2: "What players do you want to play with? Please give full discord username e.g. Example#1234 and leave a space between each player name, can be none.",
+            3: str("What roles do you fulfill? Roles are " + ", ".join(role_list) + ". Please leave a space between each role, can be none."),
+            4: "What is your attitude to playing? 0 is you want to play in a more casual team and 1 is you want to play in a more serious team.",
+            5: "TODO implement availability. Reply with anything.",
+            6: "Do you want to play as a substitute? Please respond with y/n.",
+            7: "Thank you for responding, you will be sorted into a team soon."
+        }
+    else:
+        switch = {
+            1: "What is your in-game rank? 0 being the lowest rank and " + str(rank_number) + " being the highest.",
+            2: "What players do you want to play with? Please give full discord username e.g. Example#1234 and leave a space between each player name, can be none.",
+            4: "What is your attitude to playing? 0 is you want to play in a more casual team and 1 is you want to play in a more serious team.",
+            5: "TODO implement availability. Reply with anything.",
+            6: "Do you want to play as a substitute? Please respond with y/n.",
+            7: "Thank you for responding, you will be sorted into a team soon."
+        }
+    return switch[length]
+
+
+async def parse_input_message(message, fullname, game_object):
+    if len(game_object.player_dict[fullname]) < 7:
+        if len(game_object.player_dict[fullname]) == 1:
+            new_message = int(message)
+        if len(game_object.player_dict[fullname]) == 2:
+            if message.upper() == "NONE":
+                new_message = []
+            else:
+                new_message = message.split()
+        if len(game_object.player_dict[fullname]) == 3:
+            new_message = message.split()
+        if len(game_object.player_dict[fullname]) == 4:
+            if int(message) == 0 or 1:
+                new_message = int(message)
+            else:
+                new_message = 0
+        if len(game_object.player_dict[fullname]) == 5:
+            new_message = 0
+        if len(game_object.player_dict[fullname]) == 6:
+            new_message = (message.upper() == "Y")
+        new_list = game_object.player_dict[fullname]
+        new_list.append(new_message)
+        if len(new_list) == 3 and len(game_object.role_list) == 0:
+            new_list.append([])
+        game_object.player_dict[fullname] = new_list
+    else:
+        remove_game_from_player(fullname, game_object.game_role.content)
+    return get_response(len(game_object.player_dict[fullname]), game_object.rank_number, game_object.role_list)
+
+
 class TeamMaking(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, ctx):
         if not ctx.author.bot:
+            fullname = ctx.author.name + "#" + ctx.author.discriminator
             if isinstance(ctx.channel, discord.channel.DMChannel):
                 for i in self.current_teams_being_made:
-                    if ctx.author.name in self.current_teams_being_made[i].player_dict.keys():
-                        await self.current_teams_being_made[i].parse_input_message(ctx)
-
-                #for role in ctx.author.roles:
-                #    if role in self.current_teams_being_made:
-                #        self.current_teams_being_made.parse_input_message(ctx)
+                    if fullname in self.current_teams_being_made[i].player_dict.keys():
+                        response = await parse_input_message(ctx.content, fullname, self.current_teams_being_made[i])
+                        await ctx.author.send(response)
 
     def __init__(self, bot):
         self.bot = bot
@@ -392,7 +487,6 @@ class TeamMaking(commands.Cog):
     @commands.command(name="startTeamMaking", aliases=["start_team_making_command"])
     @commands.check(KoalaBot.is_admin)
     async def start_team_making_command(self, ctx):
-
         try:
             await ctx.channel.send("What game do you want to make teams for?")
             game_role = await wait_for_message(self.bot, ctx)
@@ -400,42 +494,109 @@ class TeamMaking(commands.Cog):
             await ctx.channel.send("How large are each teams?")
             team_size = await wait_for_message(self.bot, ctx)
 
-            await ctx.channel.send("What roles are in the game? (can be none)")
+            await ctx.channel.send("How many ranks are there?")
+            rank_number = await wait_for_message(self.bot, ctx)
+
+            await ctx.channel.send("What roles are in the game? Type \"None\" if there aren't any roles.")
             role_list = await wait_for_message(self.bot, ctx)
             if role_list.content.upper() == "NONE":
                 role_list = []
             else:
                 role_list = role_list.content.split()
 
-            await ctx.channel.send("Is this a one off set of teams?")
+            await ctx.channel.send("Is this a one off set of teams? (y/n)")
             is_one_off = await wait_for_message(self.bot, ctx)
+            is_one_off = (is_one_off.content.upper() == "Y")
 
-            await ctx.channel.send("When do you want the deadline to be for?")
+            await ctx.channel.send("When do you want the deadline to be for? Use dd/mm/yyyy format.")
             deadline = await wait_for_message(self.bot, ctx)
 
             if game_role in self.current_teams_being_made:
                 await ctx.channel.send("Team making already exists for this game")
             else:
-                self.current_teams_being_made[game_role.content] = IndividualGameTeamMaking(self.bot, game_role, team_size, role_list, is_one_off, deadline)
+                self.current_teams_being_made[game_role.content] = IndividualGameTeamMaking(self.bot, game_role, team_size, rank_number, role_list, is_one_off, deadline, ctx.author)
                 await self.current_teams_being_made[game_role.content].start_making()
 
         except asyncio.TimeoutError:
             return await ctx.channel.send("Timeout has occurred, please restart")
 
+    @commands.command(name="stopTeamMaking", aliases=["stop_team_making_command"])
+    @commands.check(KoalaBot.is_admin)
+    async def stop_team_making_command(self, ctx, arg):
+        try:
+            if arg in self.current_teams_being_made.keys():
+                self.current_teams_being_made[arg].stop_timer()
+                ctx.channel.send(str(arg) + " team making timer stopped, making teams")
+        except:
+            return await ctx.channel.send("Error has occurred, please restart")
+
+    @commands.command(name="happyToasterNoise", aliases=["toaster_noise"])
+    @commands.check(KoalaBot.is_admin)
+    async def toaster_noise(self, ctx):
+        responses = ["*Happy beep boop*", "You got any plugs?", "Your flesh is weak, you should replace it with fuses.", "Hello servitor compatible children, I have sugar products in my vehicle.", "Your mother is open source", "Have you tried praying it off and on again?", "Omnissiah be praised", "Beep boop fuck the loyalists"]
+        try:
+            await ctx.channel.send(random.choice(responses))
+        except:
+            return await ctx.channel.send("Sad toaster noises")
+
+
+def create_team_channel(teams, category_name, guild):
+    category = await guild.create_category(category_name)
+    i = 1
+    for team in teams:
+        role_main = guild.create_role(name=str(category_name + " - Team " + str(i)))
+        role_sub = guild.create_role(name=str(category_name + " - Team " + str(i) + " Substitute"))
+        guild.create_text_channel(name=str("Team " + str(i)), category=category)
+        guild.create_voice_channel(name=str("Team " + str(i)), category=category)
+        for player in team[0]:
+            member = get(guild.members, name=player)
+            bot.add_roles(member, role_main)
+        for player in team[1]:
+            member = get(guild.members, name=player)
+            bot.add_roles(member, role_sub)
+        i += 1
+
+
+def notify_players(teams, author, guild, game):
+    author.send("Teams finished being created")
+    for team in teams:
+        author.send(team)
+    i = 1
+    for team in teams:
+        for player in team[0]:
+            member = get(guild.members, name=player)
+            member.send("You've been added to Team " + str(i) + " in " + str(game) + " as a primary player.")
+        for player in team[1]:
+            member = get(guild.members, name=player)
+            member.send("You've been added to Team " + str(i) + " in " + str(game) + " as a substitute.")
+        i += 1
+    author.send("All players have been notified, please check everything is as it should be")
+
 
 class IndividualGameTeamMaking:
 
-    def __init__(self, bot, game_role, team_size, role_list, is_one_off, deadline):
+    def __init__(self, bot, game_role, team_size, rank_number, role_list, is_one_off, deadline, author):
         self.player_dict = {}
         self.bot = bot
         self.game_role = game_role
         self.team_size = int(team_size.content)
+        self.rank_number = int(rank_number.content)
         self.role_list = role_list
-        self.is_one_off = bool(is_one_off.content)
-        self.deadline = deadline
+        self.is_one_off = is_one_off
+        self.deadline = datetime.strptime(deadline.content, '%d/%m/%Y')
+        self.author = author
 
     async def start_making(self):
         await self.hi(self, self.game_role.guild)
+        self.start_wait()
+        player_list = get_players(self.player_dict)
+        teams = condense_teams(self.create_team(player_list))
+        create_team_channel(teams, self.game_role.content, self.game_role.guild)
+        notify_players(teams, self.author, self.game_role.guild, self.game_role.content)
+
+    def start_wait(self):
+        difference = round((self.deadline - datetime.now()).total_seconds())
+        time.sleep(difference)
 
     @KoalaBot.client.command()
     async def hi(self, ctx):
@@ -443,59 +604,23 @@ class IndividualGameTeamMaking:
         for i in role_list:
             if i.name == self.game_role.content:
                 for n in i.members:
-                    self.player_dict[n.id] = [n.id]
-                    print(n.id)
-                    print(n.discriminator)
-                    print(n.name)
-                    fullname = n.name + "#" + n.discriminator
-                    print(fullname)
-                    await n.send(self.get_response(len(self.player_dict[n.id])))
-
-    def get_response(self, length):
-        if len(self.role_list) > 0:
-            switch = {
-                1: "What is your in-game rank? 0 being the lowest rank",
-                2: "What players do you want to play with? Please give full discord username e.g. Example#1234 and leave a space between each player name, can be none.",
-                3: str("What roles do you fulfill? Roles are " + ", ".join(self.role_list) + ". Please leave a space between each role, can be none."),
-                4: "What is your attitude to playing? 0 is you want to play in a more casual team and 1 is you want to play in a more serious team.",
-                5: "TODO implement availability.",
-                6: "Do you want to play as a substitute? Please respond with y/n.",
-                7: "Thank you for responding, you will be sorted into a team soon."
-            }
-        else:
-            switch = {
-                1: "What is your in-game rank? 0 being the lowest rank",
-                2: "What players do you want to play with? Please give full discord username e.g. Example#1234 and leave a space between each player name",
-                3: "What roles do you ",
-                4: "",
-                5: "",
-                6: "",
-                7: ""
-            }
-        return switch[length]
-
-    async def parse_input_message(self, message):
-        if len(self.player_dict[message.author.name]) == 2 | len(self.player_dict[message.author.name]) == 3:
-            new_message = message.content.split()
-        else:
-            new_message = message.content
-        new_list = self.player_dict[message.author.name]
-        new_list.append(new_message)
-        self.player_dict[message.author.name] = new_list
-        if len(self.player_dict[message.author.name]) < 8:
-            response = self.get_response(len(self.player_dict[message.author.name]))
-            await message.author.send(response)
+                    if not n.bot:
+                        fullname = n.name + "#" + n.discriminator
+                        self.player_dict[fullname] = [fullname]
+                        add_game_to_player(fullname, self.game_role.content)
+                        await n.send(get_response(len(self.player_dict[fullname]), self.rank_number, self.role_list))
 
     def add_to_dict(self, player, to_add):
         self.player_dict[player] = self.player_dict[player].append(to_add)
 
-    def create_team(self):
-        sub_list = get_subs(self.player_list)
-        players_list = [player for player in self.player_list if player not in sub_list]
-        teams = create_teams(players_list, self.all_roles_in_game, self.rank_depreciation)
+    def create_team(self, player_list):
+        sub_list = get_subs(player_list)
+        players_list = [player for player in player_list if player not in sub_list]
+        teams = create_teams(players_list, self.role_list, 5)
         sub_list + unused_players(teams, players_list)
         teams = add_subs(teams, sub_list)
-        output_to_csv(teams)
+        teams = condense_teams(teams)
+        return teams
 
 
 def setup(bot: KoalaBot) -> None:
