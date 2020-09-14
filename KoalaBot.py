@@ -6,9 +6,11 @@ Run this to start the Bot
 
 Commented using reStructuredText (reST)
 """
-__author__ = "Jack Draper, Kieran Allinson, Viraj Shah"
+__author__ = "Jack Draper, Kieran Allinson, Viraj Shah," \
+             " Anan Venkatesh, Harry Nelson, Robert Slawik, Rurda Malik, Stefan Cooper"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah"]
+__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah",
+               "Anan Venkatesh", "Harry Nelson", "Robert Slawik", "Rurda Malik", "Stefan Cooper"]
 __license__ = "MIT License"
 __version__ = "0.0.3"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah"
