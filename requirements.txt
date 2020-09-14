@@ -1,2 +1,6 @@
+requests
+mock
+pytest
+dpytest
 python-dotenv
 discord.py
