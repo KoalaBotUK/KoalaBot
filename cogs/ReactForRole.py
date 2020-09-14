@@ -99,9 +99,21 @@ class ReactForRole(commands.Cog):
                 f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
                 "k!rfr subcommands to change the message and add functionality as required.")
 
-    @react_for_role_group.command(name="removeFromChannel")
-    async def rfr_remove_from_channel(self, ctx: commands.Context, *, channel_raw):
-        pass
+    @react_for_role_group.command(name="removeMessage")
+    async def rfr_remove_from_channel(self, ctx: commands.Context):
+        await ctx.send(
+            "Okay, this will delete an existing react for role message. I'll need some details first though.")
+        msg, channel = await self.get_rfr_message_from_prompts(ctx)
+        await ctx.send("Please confirm that you would indeed like to delete the react for role message.")
+        if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+            await ctx.send("Ok")
+            rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg.id)
+            self.rfr_database_manager.remove_rfr_message_emoji_roles(rfr_msg_row[3])
+            self.rfr_database_manager.remove_rfr_message(ctx.guild.id, channel.id, msg.id)
+            await msg.delete()
+            await ctx.send("ReactForRole Message deleted")
+        else:
+            await ctx.send("Cancelled command.")
 
     @react_for_role_group.group(name="edit", pass_context=True)
     async def edit_group(self, ctx: commands.Context):
@@ -464,6 +476,10 @@ class ReactForRoleDBManager:
         else:
             self.database_manager.db_execute_commit(
                 f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\";""")
+
+    def remove_rfr_message_emoji_roles(self, emoji_role_id: int):
+        self.database_manager.db_execute_commit(
+            f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id};""")
 
     def remove_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
         self.database_manager.db_execute_commit(
