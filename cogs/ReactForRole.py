@@ -489,8 +489,8 @@ class ReactForRoleDBManager:
         emoji_role_id integer NOT NULL,
         emoji_raw text NOT NULL,
         role_id integer NOT NULL,
-        PRIMARY KEY (emoji_role_id, emoji_raw, role_id),
-        FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages (emoji_role_id) ON DELETE CASCADE,
+        PRIMARY KEY (emoji_role_id),
+        FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages (emoji_role_id) ON DELETE CASCADE ON UPDATE CASCADE,
         UNIQUE (emoji_raw, role_id)
         );
         """
@@ -523,7 +523,7 @@ class ReactForRoleDBManager:
 
     def get_rfr_message(self, guild_id: int, channel_id: int, message_id: int) -> Optional[Tuple[int, int, int, int]]:
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            f"""SELECT ROWID, * FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
+            f"""SELECT * FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
         if not rows:
             return
         return rows[0]
