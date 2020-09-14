@@ -39,12 +39,14 @@ class ReactForRole(commands.Cog):
     async def react_for_role_group(self, ctx: commands.Context):
         return
 
-    @react_for_role_group.command(name="createInChannel")
-    async def rfr_create_in_channel(self, ctx: commands.Context, *, channel_raw):
+    @react_for_role_group.command(name="createMessage")
+    async def rfr_create_message(self, ctx: commands.Context):
         await ctx.send(
-            "Note: The channel you specify will have its permissions edited to make it such that members are unable to"
-            " add new reactions to messages, they can only reaction with existing ones. Please keep this in mind, or"
+            "Okay, this will create a new react for role message in a channel of your choice."
+            "\nNote: The channel you specify will have its permissions edited to make it such that members are unable "
+            "to add new reactions to messages, they can only reaction with existing ones. Please keep this in mind, or"
             " setup another channel entirely for this.")
+        channel_raw = await self.prompt_for_input(ctx, "channel ID, name or mention")
         channel: discord.TextChannel = await commands.TextChannelConverter().convert(ctx, channel_raw)
         if not channel:
             await ctx.send("Sorry, you didn't specify a valid channel ID, mention or name. Please restart the command.")
@@ -99,8 +101,8 @@ class ReactForRole(commands.Cog):
                 f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
                 "k!rfr subcommands to change the message and add functionality as required.")
 
-    @react_for_role_group.command(name="removeMessage")
-    async def rfr_remove_from_channel(self, ctx: commands.Context):
+    @react_for_role_group.command(name="deleteMessage")
+    async def rfr_delete_message(self, ctx: commands.Context):
         await ctx.send(
             "Okay, this will delete an existing react for role message. I'll need some details first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -118,6 +120,21 @@ class ReactForRole(commands.Cog):
     @react_for_role_group.group(name="edit", pass_context=True)
     async def edit_group(self, ctx: commands.Context):
         return
+
+    @edit_group.command(name="description", aliases=["desc"])
+    async def rfr_edit_description(self, ctx: commands.Context):
+        await ctx.send("Okay, this will edit the description of an existing react for role message. I'll need some "
+                       "details first though.")
+        msg, channel = await self.get_rfr_message_from_prompts(ctx)
+        embed = self.get_embed_from_message(msg)
+        await ctx.send(f"Your current description is {embed.description}. Please enter your new description.")
+        desc = await self.prompt_for_input(ctx, "description")
+        await ctx.send(f"Your new description would be {desc}. Please confirm that you'd like this change.")
+        if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+            embed.description = desc
+            await msg.edit(embed=embed)
+        else:
+            await ctx.send("Okay, cancelling command.")
 
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
@@ -368,6 +385,10 @@ class ReactForRole(commands.Cog):
         overwrite.update(add_reactions=False)
         for role in roles:
             await channel.set_permissions(role, overwrite=overwrite)
+        bot_members: List[discord.Member] = [member for member in guild.members if member.bot]
+        for bot in bot_members:
+            for role in bot.roles:
+                await channel.set_permissions(role, overwrite=None)
 
     @staticmethod
     async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0) -> Tuple[
