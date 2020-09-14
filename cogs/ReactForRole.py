@@ -136,6 +136,21 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
+    @edit_group.command(name="title")
+    async def rfr_edit_title(self, ctx: commands.Context):
+        await ctx.send("Okay, this will edit the title of an existing react for role message. I'll need some details "
+                       "first though.")
+        msg, channel = await self.get_rfr_message_from_prompts(ctx)
+        embed = self.get_embed_from_message(msg)
+        await ctx.send(f"Your current title is {embed.title}. Please enter your new title.")
+        title = await self.prompt_for_input(ctx, "title")
+        await ctx.send(f"Your new description would be {title}. Please confirm that you'd like this change.")
+        if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+            embed.title = title
+            await msg.edit(embed=embed)
+        else:
+            await ctx.send("Okay, cancelling command.")
+
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
         await ctx.send(
