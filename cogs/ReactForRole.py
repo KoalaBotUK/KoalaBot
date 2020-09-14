@@ -210,7 +210,6 @@ class ReactForRole(commands.Cog):
             new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description)
             new_embed.set_footer(text="ReactForRole")
             removed_field_indexes = []
-            new_embed_fields = []
             reactions_to_remove: List[discord.Reaction] = []
             KoalaBot.logger.info(f"{[str(x) for x in msg.reactions]}")
             KoalaBot.logger.info(f"{msg.reactions}")
@@ -237,6 +236,14 @@ class ReactForRole(commands.Cog):
                                 rfr_embed_fields.index(field) not in removed_field_indexes]
             for field in new_embed_fields:
                 new_embed.add_field(name=field.name, value=field.value, inline=False)
+            if self.get_number_of_embed_fields(new_embed) == 0:
+                await ctx.send("I see you've removed all emoji-role combinations from this react for role message. "
+                               "Would you like to delete this message?")
+                if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+                    await ctx.send("Okay, I'll delete the message then.")
+                    self.rfr_database_manager.remove_rfr_message(ctx.guild.id, channel.id, msg.id)
+                    await msg.delete()
+                    return
             for reaction in reactions_to_remove:
                 await reaction.clear()
             await msg.edit(embed=new_embed)
