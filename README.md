@@ -16,7 +16,7 @@ to improve their server and society!
 * **Harry Nelson** - *Developer* - [largereptile](https://github.com/largereptile)
 * **Robert Slawik** - *Developer* - [RobertSlawik](https://github.com/RobertSlawik)
 * **Rurda Malik** - *Developer* - [BlahBlahRudra](https://github.com/BlahBlahRudra)
-* **Josh Jones** - *Developer* - 
+* **Stefan Cooper** - *Developer* - [3eak](https://github.com/3eak)
 
 See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) who participated in this project.
 
