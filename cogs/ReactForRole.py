@@ -489,9 +489,10 @@ class ReactForRoleDBManager:
         emoji_role_id integer NOT NULL,
         emoji_raw text NOT NULL,
         role_id integer NOT NULL,
-        PRIMARY KEY (emoji_role_id),
+        PRIMARY KEY (emoji_role_id, emoji_raw, role_id),
         FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages (emoji_role_id) ON DELETE CASCADE ON UPDATE CASCADE,
-        UNIQUE (emoji_raw, role_id)
+        UNIQUE (emoji_role_id, emoji_raw),
+        UNIQUE  (emoji_role_id, role_id)
         );
         """
         self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
@@ -558,14 +559,14 @@ class ReactForRoleDBManager:
 
     def get_rfr_reaction_role_by_emoji_str(self, emoji_role_id: int, emoji_raw: str) -> Optional[int]:
         rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\" LIMIT 1;""")
+            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\";""")
         if not rows:
             return
         return rows[0][2]
 
     def get_rfr_reaction_role_by_role_id(self, emoji_role_id: int, role_id: int) -> Optional[int]:
         rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id} LIMIT 1;""")
+            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
         if not rows:
             return
         return rows[0][2]
