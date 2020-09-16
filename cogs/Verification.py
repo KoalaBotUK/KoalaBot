@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
 """
-TODO
-change that database diagram
-add re-verification functionality - probably done
-do tests oh no
-"""
-
-"""
 Koala Bot Base Cog code and additional base cog functions
 Commented using reStructuredText (reST)
 """
@@ -42,7 +35,7 @@ def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
 
 
-class Verification(commands.Cog):
+class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot, db_manager=None):
         self.bot = bot
@@ -153,7 +146,7 @@ This email is stored so you don't need to verify it multiple times."""
             await member.send(content=message_string + "\n" + "\n".join([f"{x} for @{y}" for x, y in roles.items()]))
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="addVerification")
+    @commands.command(name="verifyAdd", aliases=["addVerification"])
     async def enable_verification(self, ctx, suffix=None, role=None):
         """
         Set up a role and email pair for KoalaBot to verify users with
@@ -189,7 +182,7 @@ This email is stored so you don't need to verify it multiple times."""
         await self.assign_role_to_guild(ctx.guild, role_valid, suffix)
 
     @commands.check(KoalaBot.is_admin)
-    @commands.command(name="removeVerification")
+    @commands.command(name="verifyRemove", aliases=["removeVerification"])
     async def disable_verification(self, ctx, suffix=None, role=None):
         """
         Disable an existing verification listener
@@ -299,7 +292,7 @@ This email is stored so you don't need to verify it multiple times."""
         emails = '\n'.join([x[0] for x in results])
         await ctx.send(f"This user has registered with:\n{emails}")
 
-    @commands.command(name="checkVerifications")
+    @commands.command(name="verifyCheck", aliases=["checkVerifications"])
     async def check_verifications(self, ctx):
         """
         List the current verification setup for the server
