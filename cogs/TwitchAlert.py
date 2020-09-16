@@ -403,10 +403,10 @@ class TwitchAlert(commands.Cog):
                                               "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
                                               "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
                                               "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
-                                              f"WHERE twitch_username = '{current_username}';"
+                                              "WHERE twitch_username = ?;"
 
                         results = self.ta_database_manager.database_manager.db_execute_select(
-                            sql_find_message_id)
+                            sql_find_message_id, args=[current_username])
 
                         new_message_embed = None
 
@@ -427,12 +427,12 @@ class TwitchAlert(commands.Cog):
                                     #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
                                     #                        streams_details, message)
                                 new_message = await channel.send(embed=new_message_embed)
-                                sql_update_message_id = f"""
+                                sql_update_message_id = """
                                 UPDATE UserInTwitchAlert 
-                                SET message_id = {new_message.id} 
-                                WHERE channel_id = {result[0]} 
-                                    AND twitch_username = '{current_username}'"""
-                                self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
+                                SET message_id = ? 
+                                WHERE channel_id = ? 
+                                    AND twitch_username = ?"""
+                                self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id, args=[new_message.id, result[0], current_username])
 
                 # Deals with remaining offline streams
                 self.ta_database_manager.delete_all_offline_streams(False, usernames)
@@ -480,12 +480,12 @@ class TwitchAlert(commands.Cog):
 
         # Deals with online streams
         for stream_data in streams_data:
-            if stream_data.get('type') == "live":
+            if stream_data.get('type') == "live" and str.lower(stream_data.get("user_name")) != "x":
                 current_username = str.lower(stream_data.get("user_name"))
                 # print(current_username + " is live")
                 usernames.remove(current_username)
 
-                sql_find_message_id = f"""
+                sql_find_message_id = """
                 SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message, default_message 
                 FROM UserInTwitchTeam
                 JOIN TeamInTwitchAlert TITA on UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id
@@ -493,10 +493,10 @@ class TwitchAlert(commands.Cog):
                 JOIN (SELECT extension_id, guild_id 
                       FROM GuildExtensions 
                       WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE ON TA.guild_id = GE.guild_id 
-                WHERE twitch_username = '{current_username}'"""
+                WHERE twitch_username = ?"""
 
                 results = self.ta_database_manager.database_manager.db_execute_select(
-                    sql_find_message_id)
+                    sql_find_message_id, args=[current_username])
 
                 new_message_embed = None
 
@@ -517,12 +517,14 @@ class TwitchAlert(commands.Cog):
                             #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
                             #                        stream_data, message)
                         new_message = await channel.send(embed=new_message_embed)
-                        sql_update_message_id = f"""
+                        sql_update_message_id = """
                         UPDATE UserInTwitchTeam 
-                        SET message_id = {new_message.id} 
-                        WHERE team_twitch_alert_id = {result[2]}
-                        AND twitch_username = '{current_username}'"""
-                        self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id)
+                        SET message_id = ?
+                        WHERE team_twitch_alert_id = ?
+                        AND twitch_username = ?"""
+                        self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id,
+                                                                                    args=[new_message.id, result[2],
+                                                                                          current_username])
 
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(True, usernames)
@@ -731,8 +733,8 @@ class TwitchAlertDBManager:
         :param replace: True if the new ta should replace the current if exists
         :return: The new default_message
         """
-        sql_find_ta = f"SELECT default_message FROM TwitchAlerts WHERE channel_id={channel_id}"
-        message = self.database_manager.db_execute_select(sql_find_ta)
+        sql_find_ta = "SELECT default_message FROM TwitchAlerts WHERE channel_id=?"
+        message = self.database_manager.db_execute_select(sql_find_ta, args=[channel_id])
         if message and not replace:
             return message[0][0]
 
@@ -742,16 +744,16 @@ class TwitchAlertDBManager:
 
         # Insert new Twitch Alert to database
         if replace:
-            sql_insert_twitch_alert = f"""
+            sql_insert_twitch_alert = """
             REPLACE INTO TwitchAlerts(guild_id, channel_id, default_message) 
-            VALUES({guild_id},{channel_id},'{default_message}')
+            VALUES(?,?,?)
             """
         else:
-            sql_insert_twitch_alert = f"""
+            sql_insert_twitch_alert = """
             INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) 
-            VALUES({guild_id},{channel_id},'{default_message}')
+            VALUES(?,?,?)
             """
-        self.database_manager.db_execute_commit(sql_insert_twitch_alert)
+        self.database_manager.db_execute_commit(sql_insert_twitch_alert, args=[guild_id, channel_id, default_message])
         return default_message
 
     def get_default_message(self, channel_id):
@@ -778,16 +780,17 @@ class TwitchAlertDBManager:
         self.new_ta(guild_id, channel_id)
 
         if custom_message:
-            sql_insert_user_twitch_alert = f"""
+            sql_insert_user_twitch_alert = """
             INSERT INTO UserInTwitchAlert(channel_id, twitch_username, custom_message) 
-            VALUES({channel_id},'{str.lower(twitch_username)}', '{custom_message}')
+            VALUES(?, ?, ?)
             """
+            self.database_manager.db_execute_commit(sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username), custom_message])
         else:
-            sql_insert_user_twitch_alert = f"""
+            sql_insert_user_twitch_alert = """
             INSERT INTO UserInTwitchAlert(channel_id, twitch_username) 
-            VALUES({channel_id},'{str.lower(twitch_username)}')
+            VALUES(?, ?)
             """
-        self.database_manager.db_execute_commit(sql_insert_user_twitch_alert)
+            self.database_manager.db_execute_commit(sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username)])
 
     def remove_user_from_ta(self, channel_id, twitch_username):
         """
@@ -796,16 +799,17 @@ class TwitchAlertDBManager:
         :param twitch_username: The Twitch username of the user to be added
         :return:
         """
-        sql_get_message_id = f"""SELECT message_id 
+        sql_get_message_id = """SELECT message_id 
                                  FROM UserInTwitchAlert 
-                                 WHERE twitch_username = '{twitch_username}'
-                                    AND channel_id = {channel_id}"""
-        message_id = self.database_manager.db_execute_select(sql_get_message_id)[0][0]
+                                 WHERE twitch_username = ?
+                                    AND channel_id = ?"""
+        message_id = self.database_manager.db_execute_select(sql_get_message_id,
+                                                             args=[twitch_username, channel_id])[0][0]
         if message_id is not None:
             asyncio.get_event_loop().create_task(self.delete_message(message_id, channel_id))
-        sql_remove_entry = f"""DELETE FROM UserInTwitchAlert 
-                               WHERE twitch_username = '{twitch_username}' AND channel_id = {channel_id}"""
-        self.database_manager.db_execute_commit(sql_remove_entry)
+        sql_remove_entry = """DELETE FROM UserInTwitchAlert 
+                               WHERE twitch_username = ? AND channel_id = ?"""
+        self.database_manager.db_execute_commit(sql_remove_entry, args=[twitch_username, channel_id])
 
     async def delete_message(self, message_id, channel_id):
         """
@@ -851,16 +855,17 @@ class TwitchAlertDBManager:
         self.new_ta(guild_id, channel_id)
 
         if custom_message:
-            sql_insert_team_twitch_alert = f"""
+            sql_insert_team_twitch_alert = """
             INSERT INTO TeamInTwitchAlert(channel_id, twitch_team_name, custom_message) 
-            VALUES({channel_id},'{str.lower(twitch_team)}', '{custom_message}')
+            VALUES(?, ?, ?)
             """
+            self.database_manager.db_execute_commit(sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team), custom_message])
         else:
-            sql_insert_team_twitch_alert = f"""
+            sql_insert_team_twitch_alert = """
             INSERT INTO TeamInTwitchAlert(channel_id, twitch_team_name) 
-            VALUES({channel_id},'{str.lower(twitch_team)}')
+            VALUES(?, ?)
             """
-        self.database_manager.db_execute_commit(sql_insert_team_twitch_alert)
+            self.database_manager.db_execute_commit(sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team)])
 
     def remove_team_from_ta(self, channel_id, team_name):
         """
@@ -869,26 +874,26 @@ class TwitchAlertDBManager:
         :param team_name: The team name of the team to be removed
         :return:
         """
-        sql_get_team_alert_id = f"SELECT team_twitch_alert_id " \
-                                f"FROM TeamInTwitchAlert " \
-                                f"WHERE twitch_team_name = '{team_name}' " \
-                                f" AND channel_id = {channel_id}"
-        result = self.database_manager.db_execute_select(sql_get_team_alert_id)
+        sql_get_team_alert_id = "SELECT team_twitch_alert_id " \
+                                "FROM TeamInTwitchAlert " \
+                                "WHERE twitch_team_name = ? " \
+                                " AND channel_id = ?"
+        result = self.database_manager.db_execute_select(sql_get_team_alert_id, args=[team_name, channel_id])
         if not result:
             raise AttributeError("Team name not found")
         team_alert_id = result[0][0]
-        sql_get_message_id = f"""SELECT UserInTwitchTeam.message_id
+        sql_get_message_id = """SELECT UserInTwitchTeam.message_id
                                  FROM UserInTwitchTeam
-                                 WHERE team_twitch_alert_id = {team_alert_id}"""
-        message_ids = self.database_manager.db_execute_select(sql_get_message_id)
+                                 WHERE team_twitch_alert_id = ?"""
+        message_ids = self.database_manager.db_execute_select(sql_get_message_id, args=[team_alert_id])
         if message_ids is not None:
             for message_id in message_ids:
                 if message_id[0] is not None:
                     asyncio.get_event_loop().create_task(self.delete_message(message_id[0], channel_id))
-        sql_remove_users = f"""DELETE FROM UserInTwitchTeam WHERE team_twitch_alert_id = {team_alert_id}"""
-        sql_remove_team = f"""DELETE FROM TeamInTwitchAlert WHERE team_twitch_alert_id = {team_alert_id}"""
-        self.database_manager.db_execute_commit(sql_remove_users)
-        self.database_manager.db_execute_commit(sql_remove_team)
+        sql_remove_users = """DELETE FROM UserInTwitchTeam WHERE team_twitch_alert_id = ?"""
+        sql_remove_team = """DELETE FROM TeamInTwitchAlert WHERE team_twitch_alert_id = ?"""
+        self.database_manager.db_execute_commit(sql_remove_users, args=[team_alert_id])
+        self.database_manager.db_execute_commit(sql_remove_team, args=[team_alert_id])
 
     def update_team_members(self, twitch_team_id, team_name):
         """
@@ -899,16 +904,20 @@ class TwitchAlertDBManager:
         """
         users = self.twitch_handler.get_team_users(team_name)
         for user in users:
-            sql_add_user = f"""INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
-                               VALUES({twitch_team_id}, '{user.get("name")}')"""
-            self.database_manager.db_execute_commit(sql_add_user)
+            sql_add_user = """INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
+                               VALUES(?, ?)"""
+            try:
+                self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
+                                                        pass_errors=True)
+            except:
+                pass
 
     def update_all_teams_members(self):
         """
         Updates all teams with the current team members
         :return:
         """
-        sql_get_teams = f"""SELECT team_twitch_alert_id, twitch_team_name FROM TeamInTwitchAlert"""
+        sql_get_teams = """SELECT team_twitch_alert_id, twitch_team_name FROM TeamInTwitchAlert"""
         teams_info = self.database_manager.db_execute_select(sql_get_teams)
         for team_info in teams_info:
             self.update_team_members(team_info[0], team_info[1])

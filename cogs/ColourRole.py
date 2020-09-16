@@ -584,30 +584,30 @@ class ColourRoleDBManager:
 
     def add_colour_change_role_perms(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES ({guild_id}, {role_id});""")
+            """INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES (?, ?);""", args=[guild_id, role_id])
 
     def remove_colour_change_role_perms(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""DELETE FROM GuildColourChangePermissions WHERE guild_id = {guild_id} AND role_id = {role_id};""")
+            """DELETE FROM GuildColourChangePermissions WHERE guild_id = ? AND role_id = ?;""", args=[guild_id, role_id])
 
     def add_guild_protected_colour_role(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES ({guild_id}, {role_id});""")
+            """INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES (?, ?);""", args=[guild_id, role_id])
 
     def remove_guild_protected_colour_role(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""DELETE FROM GuildInvalidCustomColourRoles WHERE guild_id = {guild_id} AND role_id = {role_id};""")
+            """DELETE FROM GuildInvalidCustomColourRoles WHERE guild_id = ? AND role_id = ?;""", args=[guild_id, role_id])
 
     def get_protected_colour_roles(self, guild_id) -> List[int]:
         rows = self.database_manager.db_execute_select(
-            f"""SELECT * from GuildInvalidCustomColourRoles WHERE guild_id = {guild_id};""")
+            """SELECT * from GuildInvalidCustomColourRoles WHERE guild_id = ?;""", args=[guild_id])
         if rows is None:
             return None
         return [row[1] for row in rows]
 
     def get_colour_change_roles(self, guild_id) -> List[int]:
         rows = self.database_manager.db_execute_select(
-            f"""SELECT * from GuildColourChangePermissions WHERE guild_id = {guild_id};""")
+            """SELECT * from GuildColourChangePermissions WHERE guild_id = ?;""", args=[guild_id])
         if rows is None:
             return None
         return [row[1] for row in rows]
