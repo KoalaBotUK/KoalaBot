@@ -9,27 +9,25 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 from typing import *
-import re
-import mock
-import asyncio
-import random
-from string import *
+
+import discord
 # Libs
 import discord.ext.test as dpytest
-from discord.ext.test import factories as dpyfactory
+import mock
 import pytest
 from discord.ext import commands
-import discord
-import emoji
+from discord.ext.test import factories as dpyfactory
+
 # Own modules
 import KoalaBot
 from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
-from utils.KoalaDBManager import KoalaDBManager
+from tests.utils import TestUtils as utils
 from tests.utils import TestUtilsCog
+from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
-unicode_emojis = list(emoji.UNICODE_EMOJI.values())
+
 # Variables
 rfr_cog: ReactForRole.ReactForRole = None
 utils_cog: TestUtilsCog.TestUtilsCog = None
@@ -90,26 +88,8 @@ def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, r
     return rows
 
 
-def fake_custom_emoji():
-    """
-    Creates a fake string representation of a discord custom emoji.
-    :return:
-    """
-    emoji_str = ""
-    emoji_str += random.choice(["<a:", "<:"])
-    emoji_str += ''.join(random.choice(ascii_letters) for i in range(random.randint(4, 12)))
-    emoji_str += f":{dpyfactory.make_id()}>"
-    return emoji_str
-
-
-def fake_unicode_emoji():
-    """
-    Creates a fake unicode emoji
-    :return:
-    """
-    return random.choice(unicode_emojis)
-
-
+# The below database tests are 2 of the ugliest pieces of code I have ever written. I only ask forgiveness for what you
+# see below
 @pytest.mark.asyncio
 async def test_rfr_db_functions_guild_rfr_messages():
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -175,7 +155,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     expected_full_list: List[Tuple[int, str, int]] = []
     assert independent_get_rfr_message_emoji_role() == expected_full_list
     # 1 unicode, 1 role
-    fake_emoji_1 = fake_unicode_emoji()
+    fake_emoji_1 = utils.fake_unicode_emoji()
     fake_role_id_1 = dpyfactory.make_id()
     expected_full_list.append((1, fake_emoji_1, fake_role_id_1))
     DBManager.add_rfr_message_emoji_role(guild_rfr_message[3], fake_emoji_1, fake_role_id_1)
@@ -185,7 +165,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
                                                   fake_role_id_1) == [DBManager.get_rfr_reaction_role(
         guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
     # 1 unicode, 1 custom, trying to get same role
-    fake_emoji_2 = fake_custom_emoji()
+    fake_emoji_2 = utils.fake_custom_emoji_str_rep()
     DBManager.add_rfr_message_emoji_role(guild_rfr_message[3], fake_emoji_2, fake_role_id_1)
     assert independent_get_rfr_message_emoji_role() == expected_full_list
     assert independent_get_rfr_message_emoji_role(guild_rfr_message[3]) == DBManager.get_rfr_message_emoji_roles(
@@ -200,7 +180,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     assert [DBManager.get_rfr_reaction_role(guild_rfr_message[3], fake_emoji_1, fake_role_id_2)] == [None]
 
     # 2 roles, 2 emojis, 1 message. split between them
-    fake_emoji_2 = fake_custom_emoji()
+    fake_emoji_2 = utils.fake_custom_emoji_str_rep()
     fake_role_id_2 = dpyfactory.make_id()
     expected_full_list.append((1, fake_emoji_2, fake_role_id_2))
     DBManager.add_rfr_message_emoji_role(*expected_full_list[1])
@@ -265,6 +245,56 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     DBManager.remove_rfr_message_emoji_role(1, role_id=rfr_message_emoji_roles[1][2])
     assert (rfr_message_emoji_roles[1][0], rfr_message_emoji_roles[1][1],
             rfr_message_emoji_roles[1][2]) not in independent_get_rfr_message_emoji_role()
+
+
+@pytest.mark.asyncio
+async def test_get_rfr_message_from_prompts():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.channels[0]
+    member: discord.Member = config.members[0]
+    msg: discord.Message = dpytest.back.make_message(".", member, channel)
+    channel_id = msg.channel.id
+    msg_id = msg.id
+
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+                    side_effect=[str(channel_id), str(546542131)]) as mock_input:
+        with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=None)):
+            with pytest.raises(commands.CommandError) as exc:
+                await rfr_cog.get_rfr_message_from_prompts(ctx)
+            assert str(exc.value) == "Invalid Message ID given."
+    with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+                    side_effect=[str(channel_id), str(msg_id)]) as mock_input:
+        with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=msg)):
+            with pytest.raises(commands.CommandError) as exc:
+                await rfr_cog.get_rfr_message_from_prompts(ctx)
+            assert str(exc.value) == "Message ID given is not that of a react for role message."
+    DBManager.add_rfr_message(msg.guild.id, channel_id, msg_id)
+    with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+                    side_effect=[str(channel_id), str(msg_id)]) as mock_input:
+        with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=msg)):
+            rfr_msg, rfr_msg_channel = await rfr_cog.get_rfr_message_from_prompts(ctx)
+            assert rfr_msg.id == msg.id
+            assert rfr_msg_channel.id == channel_id
+
+
+# TODO Actually implement the test.
+@pytest.mark.parametrize("num_rows", [1, 2, 20])
+@pytest.mark.asyncio
+async def test_parse_emoji_and_role_input_str(num_rows):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    fake_emoji = utils.fake_guild_emoji(guild)
+    fake_role = utils.fake_guild_role(guild)
+    assert fake_emoji, fake_emoji
+    fake_emoji = utils.fake_unicode_emoji()
+    assert fake_emoji, fake_emoji
+
+    pass
 
 
 @pytest.fixture(scope='session', autouse=True)
