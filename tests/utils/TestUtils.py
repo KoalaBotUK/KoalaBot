@@ -9,15 +9,20 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 
+import random
+from string import ascii_letters
+
 # Libs
 import discord
+import emoji
 from discord.ext.test import factories as dpyfactory
-from typing import List
-
 
 # Own modules
 
 # Constants
+unicode_emojis = list(emoji.UNICODE_EMOJI.values())
+emoji_unicodes = list(emoji.EMOJI_UNICODE.values())
+
 
 # Variables
 
@@ -57,6 +62,61 @@ def assert_activity(activity: discord.Activity, application_id=None, name=None, 
            and activity.small_image_url == small_image_url \
            and activity.large_image_text == large_image_text \
            and activity.small_image_text == small_image_text
+
+
+def fake_guild_emoji(guild: discord.Guild) -> discord.Emoji:
+    fake_emoji = discord.Emoji(guild=guild, state=None,
+                               data={'require_colons': True, 'managed': False, 'animated': False,
+                                     'name': fake_custom_emoji_name_str(), 'id': fake_id_str(), 'available': True})
+    return fake_emoji
+
+
+def fake_guild_role(guild: discord.Guild) -> discord.Role:
+    fake_role = discord.Role(guild=guild, state=None,
+                             data={'id': dpyfactory.make_id(), 'name': fake_custom_emoji_name_str(),
+                                   'mentionable': True, 'hoist': True, 'managed': False,
+                                   'colour': random.randint(0, 16777215), 'permissions': 8})
+    return fake_role
+
+
+def fake_custom_emoji_str_rep() -> str:
+    """
+    Creates a fake string representation of a discord custom emoji.
+    :return:
+    """
+    emoji_str = ""
+    emoji_str += random.choice(["<a:", "<:"])
+    emoji_str += ''.join(random.choice(ascii_letters) for i in range(random.randint(4, 12)))
+    emoji_str += f":{dpyfactory.make_id()}>"
+    return emoji_str
+
+
+def fake_custom_emoji_name_str() -> str:
+    return ''.join(random.choice(ascii_letters) for i in range(random.randint(4, 12)))
+
+
+def fake_unicode_emoji() -> str:
+    """
+    Creates a fake unicode emoji
+    :return:
+    """
+    return random.choice(unicode_emojis)
+
+
+def fake_role_mention() -> str:
+    """
+    Creates a fake role mention string.
+    :return:
+    """
+    return "<@&" + str(dpyfactory.make_id()) + ">"
+
+
+def fake_id_str() -> str:
+    """
+    Creates a fake id string, e.g. message ID, role ID, etc.
+    :return:
+    """
+    return str(dpyfactory.make_id())
 
 
 class FakeAuthor:
