@@ -480,7 +480,7 @@ class ReactForRoleDBManager:
         message_id integer NOT NULL,
         emoji_role_id integer,
         PRIMARY KEY (emoji_role_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
         UNIQUE (guild_id, channel_id, message_id)
         );
         """
@@ -490,7 +490,7 @@ class ReactForRoleDBManager:
         emoji_raw text NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (emoji_role_id, emoji_raw, role_id),
-        FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages (emoji_role_id) ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages(emoji_role_id),
         UNIQUE (emoji_role_id, emoji_raw),
         UNIQUE  (emoji_role_id, role_id)
         );
@@ -519,6 +519,11 @@ class ReactForRoleDBManager:
             f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id};""")
 
     def remove_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
+        emoji_role_id = self.get_rfr_message(guild_id, channel_id, message_id)
+        if not emoji_role_id:
+            return
+        else:
+            self.remove_rfr_message_emoji_roles(emoji_role_id[3])
         self.database_manager.db_execute_commit(
             f"""DELETE FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
 
