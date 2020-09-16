@@ -319,7 +319,7 @@ class ReactForRole(commands.Cog):
         channel_raw = await self.prompt_for_input(ctx, "Channel name, mention or ID")
         channel: discord.TextChannel = await commands.TextChannelConverter().convert(ctx, channel_raw)
         msg_id = int(await self.prompt_for_input(ctx, "react for role message ID"))
-        msg = await channel.fetch_message(msg_id)
+        msg = await ctx.fetch_message(msg_id)
         if not msg:
             raise commands.CommandError("Invalid Message ID given.")
         rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg_id)
@@ -339,7 +339,7 @@ class ReactForRole(commands.Cog):
         else:
             KoalaBot.logger.error(
                 f"Database error, guild {guild_id} has no entry in rfr database for message_id {message_id} in channel_"
-                "id {channel_id}. Please check this.")
+                f"id {channel_id}. Please check this.")
             return
         guild: discord.Guild = self.bot.get_guild(guild_id)
         member: discord.Member = guild.get_member(user_id)
