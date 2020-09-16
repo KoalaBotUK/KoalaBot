@@ -73,7 +73,7 @@ class Verification(commands.Cog, name="Verify"):
         """
 
         non_verified_table = """
-        CREATE TABLE IF NOT EXISTS verified_emails (
+        CREATE TABLE IF NOT EXISTS non_verified_emails (
         u_id integer NOT NULL,
         email text NOT NULL,
         token text NOT NULL,
@@ -84,7 +84,7 @@ class Verification(commands.Cog, name="Verify"):
         role_table = """
         CREATE TABLE IF NOT EXISTS roles (
         s_id integer NOT NULL,
-        r_id text NOT NULL,
+        r_id integer NOT NULL,
         email_suffix text NOT NULL,
         PRIMARY KEY (s_id, r_id, email_suffix),
         FOREIGN KEY (s_id) REFERENCES GuildExtensions (guild_id)
