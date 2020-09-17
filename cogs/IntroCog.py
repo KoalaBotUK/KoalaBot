@@ -11,8 +11,8 @@ Commented using reStructuredText (reST)
 
 # Libs
 import asyncio
-
 import discord
+import os
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -26,8 +26,9 @@ BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, y
 KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
 the following link: http://legal.koalabot.uk/"""
 DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
+DB_KEY = os.environ.get('SQLITE_KEY',"2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 # Variables
-DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
+DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, DB_KEY)
 
 
 def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
