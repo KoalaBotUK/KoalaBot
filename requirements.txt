@@ -1,6 +1,11 @@
-requests
-mock
-pytest
+requests~=2.24.0
+mock~=4.0.2
+pytest~=6.0.0
 dpytest
-python-dotenv
+python-dotenv~=0.14.0
 discord.py
+discord
+
+pip~=19.2.3
+py~=1.9.0
+setuptools~=41.2.0

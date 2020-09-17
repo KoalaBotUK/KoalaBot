@@ -1,0 +1,136 @@
+diff --git a/KoalaBot.py b/KoalaBot.py
+index 31a32c9..eae4cb0 100644
+--- a/KoalaBot.py
++++ b/KoalaBot.py
+@@ -36,6 +36,7 @@ from utils.KoalaUtils import error_embed
+ load_dotenv()
+ BOT_TOKEN = os.environ['DISCORD_TOKEN']
+ BOT_OWNER = os.environ['BOT_OWNER']
++DB_KEY = os.environ.get('SQLITE_KEY',"2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
+ COMMAND_PREFIX = "k!"
+ STREAMING_URL = "https://twitch.tv/jaydwee"
+ COGS_DIR = "cogs"
+@@ -49,7 +50,7 @@ PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to
+ # Variables
+ started = False
+ client = commands.Bot(command_prefix=COMMAND_PREFIX)
+-database_manager = DBManager(DATABASE_PATH)
++database_manager = DBManager(DATABASE_PATH, DB_KEY)
+ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
+ logger = logging.getLogger('discord')
+ is_dpytest = False
+diff --git a/cogs/IntroCog.py b/cogs/IntroCog.py
+index 3f8fe59..b368bee 100644
+--- a/cogs/IntroCog.py
++++ b/cogs/IntroCog.py
+@@ -11,8 +11,8 @@ Commented using reStructuredText (reST)
+ 
+ # Libs
+ import asyncio
+-
+ import discord
++import os
+ from discord.ext import commands
+ from dotenv import load_dotenv
+ 
+@@ -26,8 +26,9 @@ BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, y
+ KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
+ the following link: http://legal.koalabot.uk/"""
+ DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
++DB_KEY = os.environ.get('SQLITE_KEY',"2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
+ # Variables
+-DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
++DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, DB_KEY)
+ 
+ 
+ def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
+diff --git a/cogs/Verification.py b/cogs/Verification.py
+index a9788da..83755d1 100644
+--- a/cogs/Verification.py
++++ b/cogs/Verification.py
+@@ -27,7 +27,7 @@ from utils import KoalaDBManager
+ load_dotenv()
+ GMAIL_EMAIL = os.environ['GMAIL_EMAIL']
+ GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
+-
++DB_KEY = os.environ.get('SQLITE_KEY',"2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
+ # Variables
+ 
+ 
+@@ -53,7 +53,7 @@ class Verification(commands.Cog, name="Verify"):
+     def __init__(self, bot, db_manager=None):
+         self.bot = bot
+         if not db_manager:
+-            self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
++            self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, DB_KEY)
+             self.set_up_tables()
+             self.DBManager.insert_extension("Verify", 0, True, True)
+         else:
+diff --git a/requirements.txt b/requirements.txt
+index 5aec3eb..5df30d6 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -16,6 +16,7 @@ packaging==20.4
+ pluggy==0.13.1
+ py==1.9.0
+ pyparsing==2.4.7
++pysqlcipher3==1.0.3
+ pytest==6.0.1
+ pytest-asyncio==0.14.0
+ pytest-ordering==0.6
+diff --git a/utils/KoalaDBManager.py b/utils/KoalaDBManager.py
+index d67dc2c..b44dc32 100644
+--- a/utils/KoalaDBManager.py
++++ b/utils/KoalaDBManager.py
+@@ -8,7 +8,7 @@ Commented using reStructuredText (reST)
+ # Futures
+ 
+ # Built-in/Generic Imports
+-import sqlite3
++from pysqlcipher3 import dbapi2 as sqlite3
+ 
+ 
+ # Libs
+@@ -23,9 +23,9 @@ import sqlite3
+ 
+ class KoalaDBManager:
+ 
+-    def __init__(self, db_file_path):
++    def __init__(self, db_file_path, db_secret_key):
+         self.db_file_path = db_file_path
+-
++        self.db_secret_key = db_secret_key
+     def create_connection(self):
+         """ Create a database connection to the SQLite3 database specified in db_file_path
+ 
+@@ -34,7 +34,9 @@ class KoalaDBManager:
+         conn = None
+         try:
+             conn = sqlite3.connect(self.db_file_path)
+-            return conn
++            c = conn.cursor()
++            c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
++            return conn, c
+         except Exception as e:
+             print(e)
+ 
+@@ -49,8 +51,7 @@ class KoalaDBManager:
+         :return:
+         """
+         try:
+-            conn = self.create_connection()
+-            c = conn.cursor()
++            conn, c = self.create_connection()
+             if args:
+                 c.execute(sql_str, args)
+             else:
+@@ -74,8 +75,7 @@ class KoalaDBManager:
+         :return: void
+         """
+         try:
+-            conn = self.create_connection()
+-            c = conn.cursor()
++            conn, c = self.create_connection()
+             if args:
+                 c.execute(sql_str, args)
+             else:
