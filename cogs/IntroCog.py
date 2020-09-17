@@ -195,3 +195,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: The client of the KoalaBot
     """
     bot.add_cog(IntroCog(bot))
+    print("IntroCog is ready.")
