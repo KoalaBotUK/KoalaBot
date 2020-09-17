@@ -61,7 +61,7 @@ async def test_db_manager_fetch_welcome_message(guild_id, expected):
 
 @pytest.mark.parametrize("guild_id, new_message, expected", [(111, "non-default message", "non-default message"), (
         222, "you're here! you're gonna have fun", "you\'re here! you\'re gonna have fun"), (333, '', ''),
-                                                             (444, None, 'None')])
+                                                             (444, None, None)])
 @pytest.mark.asyncio
 async def test_db_manager_update_welcome_message(guild_id, new_message, expected):
     await add_fake_guild_to_db(guild_id)
