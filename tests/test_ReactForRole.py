@@ -8,6 +8,7 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
+import random
 from typing import *
 
 import discord
@@ -281,21 +282,39 @@ async def test_get_rfr_message_from_prompts():
 
 
 # TODO Actually implement the test.
-@pytest.mark.parametrize("num_rows", [1, 2, 20])
+@pytest.mark.parametrize("num_rows", [0, 1, 2, 20, 100, 250])
 @pytest.mark.asyncio
 async def test_parse_emoji_and_role_input_str(num_rows):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    fake_emoji = utils.fake_guild_emoji(guild)
-    fake_role = utils.fake_guild_role(guild)
-    assert fake_emoji, fake_emoji
-    fake_emoji = utils.fake_unicode_emoji()
-    assert fake_emoji, fake_emoji
+    for i in range(5):
+        input_str = ""
+        expected_emoji_list = []
+        expected_role_list = []
+        for j in range(num_rows):
+            fake_emoji = random.choice([utils.fake_guild_emoji(guild), utils.fake_unicode_emoji()])
+            expected_emoji_list.append(str(fake_emoji))
+            if isinstance(fake_emoji, discord.Emoji):
+                fake_emoji_str = random.choice([fake_emoji.id, fake_emoji.name])
+            else:
+                fake_emoji_str = fake_emoji
+            fake_role = utils.fake_guild_role(guild)
+            expected_role_list.append(fake_role)
+            fake_role_str = random.choice([fake_role.id, fake_role.name,
+                                           fake_role.mention])
+            input_str += f"{fake_emoji_str}, {fake_role_str}\n\r"
+        emoji_roles_list = await rfr_cog.parse_emoji_and_role_input_str(ctx, input_str, 20)
+        for emoji_role in emoji_roles_list:
+            assert str(emoji_role[0]) == str(expected_emoji_list[emoji_roles_list.index(emoji_role)])
+            assert emoji_role[1] == expected_role_list[emoji_roles_list.index(emoji_role)]
 
+
+@pytest.mark.parametrize("num_rows", [0, 1, 2, 20, 100, 250])
+@pytest.mark.asyncio
+async def test_parse_emoji_or_role_input_str(num_rows):
     pass
-
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
