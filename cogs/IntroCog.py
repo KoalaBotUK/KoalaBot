@@ -83,7 +83,7 @@ def get_non_bot_members(guild: discord.Guild):
         return [member for member in guild.members if not member.bot]
 
 
-class IntroCog(commands.Cog):
+class IntroCog(commands.Cog, name="KoalaBot"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
@@ -177,6 +177,11 @@ class IntroCog(commands.Cog):
                     await ctx.send("Something went wrong, please contact the bot developers for support.")
             else:
                 await ctx.send("Okay, I won't update the welcome message then.")
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.command(name="welcomeViewMsg")
+    async def view_welcome_message(self, ctx):
+        await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
 
     @update_welcome_message.error
     async def on_update_error(self, ctx, error):

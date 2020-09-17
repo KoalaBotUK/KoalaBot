@@ -6,9 +6,11 @@ Run this to start the Bot
 
 Commented using reStructuredText (reST)
 """
-__author__ = "Jack Draper, Kieran Allinson, Viraj Shah"
+__author__ = "Jack Draper, Kieran Allinson, Viraj Shah," \
+             " Anan Venkatesh, Harry Nelson, Robert Slawik, Rurda Malik, Stefan Cooper"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah"]
+__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah",
+               "Anan Venkatesh", "Harry Nelson", "Robert Slawik", "Rurda Malik", "Stefan Cooper"]
 __license__ = "MIT License"
 __version__ = "0.0.3"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah"
@@ -69,7 +71,7 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-    return (not isinstance(ctx.channel, discord.DMChannel)) and (ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest))
+    return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
 
 
 def load_all_cogs():
@@ -103,9 +105,15 @@ async def dm_group_message(members: [discord.Member], message: str):
 
 
 def check_guild_has_ext(ctx, extension_id):
+    """
+    A check for if a guild has a given koala extension
+    :param ctx: A discord context
+    :param extension_id: The koala extension ID
+    :return: True if has ext
+    """
     if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
-
+    return True
 
 @client.event
 async def on_command_error(ctx, error):

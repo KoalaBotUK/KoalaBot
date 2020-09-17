@@ -41,6 +41,19 @@ def is_allowed_to_change_colour(ctx: commands.Context):
     author_set = set(author_role_ids)
     return allowed_set & author_set
 
+def colour_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled twitch alert
+    e.g. @commands.check(KoalaBot.is_admin)
+    :param ctx: The context of the message
+    :return: True if admin or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "ColourRole")
+    except PermissionError:
+        result = False
+
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 class ColourRole(commands.Cog):
     """
@@ -89,6 +102,7 @@ class ColourRole(commands.Cog):
 
     @commands.cooldown(1, 15, commands.BucketType.member)
     @commands.check(is_allowed_to_change_colour)
+    @commands.check(colour_is_enabled)
     @commands.command(name="customColour", aliases=["custom_colour", "customColor", "custom_color"])
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
         """
@@ -102,7 +116,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param colour_str: The colour hex string specified, or "no" in case of cancelling colour
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         colour_str = colour_str.upper()
         if colour_str == "NO":
             removed = await self.prune_author_old_colour_roles(ctx)
@@ -380,6 +393,7 @@ class ColourRole(commands.Cog):
         return role_name in [role.name for role in guild.roles]
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(colour_is_enabled)
     @commands.command(name="listProtectedRoleColours",
                       aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors",
                                "listInvalidCustomColors"])
@@ -391,7 +405,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: Sends a message with the mentions of the roles that are protected in a guild
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         roles = self.get_protected_roles(ctx.guild)
         # print(roles)
         msg = "Roles whose colour is protected are:\r\n"
@@ -400,6 +413,7 @@ class ColourRole(commands.Cog):
         await ctx.send(msg[:-1])
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(colour_is_enabled)
     @commands.command(name="listCustomColourAllowedRoles",
                       aliases=["list_custom_colour_allowed_roles"])
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
@@ -410,7 +424,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: Sends a message with the mentions of the roles that are protected in a guild.
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         roles = self.get_custom_colour_allowed_roles(ctx)
         # print(roles)
         msg = "Roles allowed to have a custom colour are:\r\n"
@@ -448,6 +461,7 @@ class ColourRole(commands.Cog):
         return roles
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(colour_is_enabled)
     @commands.command(name="addProtectedRoleColour",
                       aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole",
                                "addProtectedRoleColor"])
@@ -459,7 +473,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -469,6 +482,7 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(colour_is_enabled)
     @commands.command(name="removeProtectedRoleColour",
                       aliases=["remove_protected_role_colour", "removeProtectedRoleColor",
                                "removeInvalidCustomColourRole", "removeInvalidCustomColorRole"])
@@ -480,7 +494,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to remove (ID, name or mention)
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -490,6 +503,7 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(colour_is_enabled)
     @commands.command(name="addCustomColourAllowedRole",
                       aliases=["add_custom_colour_allowed_role", "addCustomColorAllowedRole"])
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
@@ -500,7 +514,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -509,6 +522,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(colour_is_enabled)
     @commands.command(name="removeCustomColourAllowedRole",
                       aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
@@ -519,7 +533,6 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to remove (ID, name or mention)
         """
-        KoalaBot.check_guild_has_ext(ctx, "ColourRole")
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -571,30 +584,30 @@ class ColourRoleDBManager:
 
     def add_colour_change_role_perms(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES ({guild_id}, {role_id});""")
+            """INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES (?, ?);""", args=[guild_id, role_id])
 
     def remove_colour_change_role_perms(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""DELETE FROM GuildColourChangePermissions WHERE guild_id = {guild_id} AND role_id = {role_id};""")
+            """DELETE FROM GuildColourChangePermissions WHERE guild_id = ? AND role_id = ?;""", args=[guild_id, role_id])
 
     def add_guild_protected_colour_role(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES ({guild_id}, {role_id});""")
+            """INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES (?, ?);""", args=[guild_id, role_id])
 
     def remove_guild_protected_colour_role(self, guild_id, role_id):
         self.database_manager.db_execute_commit(
-            f"""DELETE FROM GuildInvalidCustomColourRoles WHERE guild_id = {guild_id} AND role_id = {role_id};""")
+            """DELETE FROM GuildInvalidCustomColourRoles WHERE guild_id = ? AND role_id = ?;""", args=[guild_id, role_id])
 
     def get_protected_colour_roles(self, guild_id) -> List[int]:
         rows = self.database_manager.db_execute_select(
-            f"""SELECT * from GuildInvalidCustomColourRoles WHERE guild_id = {guild_id};""")
+            """SELECT * from GuildInvalidCustomColourRoles WHERE guild_id = ?;""", args=[guild_id])
         if rows is None:
             return None
         return [row[1] for row in rows]
 
     def get_colour_change_roles(self, guild_id) -> List[int]:
         rows = self.database_manager.db_execute_select(
-            f"""SELECT * from GuildColourChangePermissions WHERE guild_id = {guild_id};""")
+            """SELECT * from GuildColourChangePermissions WHERE guild_id = ?;""", args=[guild_id])
         if rows is None:
             return None
         return [row[1] for row in rows]

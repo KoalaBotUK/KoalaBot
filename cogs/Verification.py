@@ -34,6 +34,19 @@ GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
 def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
 
+def verify_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled verify
+    e.g. @commands.check(verify_is_enabled)
+    :param ctx: The context of the message
+    :return: True if enabled or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "Verify")
+    except PermissionError:
+        result = False
+
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 class Verification(commands.Cog, name="Verify"):
 
@@ -147,6 +160,7 @@ This email is stored so you don't need to verify it multiple times."""
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
+    @commands.check(verify_is_enabled)
     async def enable_verification(self, ctx, suffix=None, role=None):
         """
         Set up a role and email pair for KoalaBot to verify users with
@@ -155,7 +169,6 @@ This email is stored so you don't need to verify it multiple times."""
         :param role: the role to give users with that email verified (e.g. @students)
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "Verify")
         if not role or not suffix:
             raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
@@ -183,6 +196,7 @@ This email is stored so you don't need to verify it multiple times."""
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
+    @commands.check(verify_is_enabled)
     async def disable_verification(self, ctx, suffix=None, role=None):
         """
         Disable an existing verification listener
@@ -191,7 +205,6 @@ This email is stored so you don't need to verify it multiple times."""
         :param role: the role paired with the email (e.g. @students)
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "Verify")
         if not role or not suffix:
             raise self.InvalidArgumentError(
                 f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
@@ -287,19 +300,18 @@ This email is stored so you don't need to verify it multiple times."""
         :param user_id: the id of the user who's emails you want to find
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "Verify")
         results = self.DBManager.db_execute_select("SELECT email FROM verified_emails WHERE u_id=?", (user_id,))
         emails = '\n'.join([x[0] for x in results])
         await ctx.send(f"This user has registered with:\n{emails}")
 
-    @commands.command(name="verifyCheck", aliases=["checkVerifications"])
+    @commands.command(name="verifyList", aliases=["checkVerifications"])
+    @commands.check(verify_is_enabled)
     async def check_verifications(self, ctx):
         """
         List the current verification setup for the server
         :param ctx: the context of the discord message
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "Verify")
         embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
         roles = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
                                                  (ctx.guild.id,))
@@ -318,6 +330,7 @@ This email is stored so you don't need to verify it multiple times."""
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="reVerify")
+    @commands.check(verify_is_enabled)
     async def re_verify(self, ctx, role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
@@ -325,7 +338,6 @@ This email is stored so you don't need to verify it multiple times."""
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "Verify")
         try:
             role_id = int(role[3:-1])
         except ValueError:

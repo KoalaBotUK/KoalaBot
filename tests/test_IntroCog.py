@@ -61,7 +61,7 @@ async def test_db_manager_fetch_welcome_message(guild_id, expected):
 
 @pytest.mark.parametrize("guild_id, new_message, expected", [(111, "non-default message", "non-default message"), (
         222, "you're here! you're gonna have fun", "you\'re here! you\'re gonna have fun"), (333, '', ''),
-                                                             (444, None, 'None')])
+                                                             (444, None, None)])
 @pytest.mark.asyncio
 async def test_db_manager_update_welcome_message(guild_id, new_message, expected):
     await add_fake_guild_to_db(guild_id)
@@ -292,6 +292,14 @@ async def test_update_welcome_message_no_args():
     with pytest.raises(commands.MissingRequiredArgument):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
     dpytest.verify_message("Please put in a welcome message to update to.")
+
+
+@pytest.mark.asyncio
+async def test_view_welcome_message():
+    guild = dpytest.get_config().guilds[0]
+    old_message = IntroCog.get_guild_welcome_message(guild.id)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "welcomeViewMsg ")
+    dpytest.verify_message(f"""Your current welcome message is:\n\r{old_message}""")
 
 
 @pytest.mark.asyncio

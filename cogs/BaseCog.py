@@ -82,7 +82,7 @@ def list_ext_embed(guild_id):
     return embed
 
 
-class BaseCog(commands.Cog):
+class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
