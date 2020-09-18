@@ -36,6 +36,7 @@ from utils.KoalaUtils import error_embed
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ['BOT_OWNER']
+DB_KEY = os.environ.get('SQLITE_KEY',"2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 COMMAND_PREFIX = "k!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
@@ -49,7 +50,7 @@ PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to 
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)
-database_manager = DBManager(DATABASE_PATH)
+database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False

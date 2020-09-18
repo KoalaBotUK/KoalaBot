@@ -30,7 +30,7 @@ non_existent_guild_id = 9999
 # Variables
 utils_cog = None
 intro_cog = None
-DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH)
+DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 DBManager.create_base_tables()
 
 

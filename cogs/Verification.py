@@ -27,7 +27,6 @@ from utils import KoalaDBManager
 load_dotenv()
 GMAIL_EMAIL = os.environ['GMAIL_EMAIL']
 GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
-
 # Variables
 
 
@@ -53,7 +52,7 @@ class Verification(commands.Cog, name="Verify"):
     def __init__(self, bot, db_manager=None):
         self.bot = bot
         if not db_manager:
-            self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
+            self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
             self.set_up_tables()
             self.DBManager.insert_extension("Verify", 0, True, True)
         else:

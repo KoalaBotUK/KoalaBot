@@ -8,7 +8,7 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import sqlite3
+from pysqlcipher3 import dbapi2 as sqlite3
 
 
 # Libs
@@ -23,9 +23,9 @@ import sqlite3
 
 class KoalaDBManager:
 
-    def __init__(self, db_file_path):
+    def __init__(self, db_file_path, db_secret_key):
         self.db_file_path = db_file_path
-
+        self.db_secret_key = db_secret_key
     def create_connection(self):
         """ Create a database connection to the SQLite3 database specified in db_file_path
 
@@ -34,7 +34,9 @@ class KoalaDBManager:
         conn = None
         try:
             conn = sqlite3.connect(self.db_file_path)
-            return conn
+            c = conn.cursor()
+            c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
+            return conn, c
         except Exception as e:
             print(e)
 
@@ -49,8 +51,7 @@ class KoalaDBManager:
         :return:
         """
         try:
-            conn = self.create_connection()
-            c = conn.cursor()
+            conn, c = self.create_connection()
             if args:
                 c.execute(sql_str, args)
             else:
@@ -74,8 +75,7 @@ class KoalaDBManager:
         :return: void
         """
         try:
-            conn = self.create_connection()
-            c = conn.cursor()
+            conn, c = self.create_connection()
             if args:
                 c.execute(sql_str, args)
             else:
