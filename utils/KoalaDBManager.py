@@ -167,7 +167,7 @@ class KoalaDBManager:
 
     def get_all_available_guild_extensions(self, guild_id):
         sql_select_all = "SELECT DISTINCT KoalaExtensions.extension_id " \
-                         "FROM KoalaExtensions WHERE available = 'True'"
+                         "FROM KoalaExtensions WHERE available = 1"
         return self.db_execute_select(sql_select_all, pass_errors=True)
 
 
