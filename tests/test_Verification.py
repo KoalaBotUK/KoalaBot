@@ -23,7 +23,7 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 cog = None
-db_manager = KoalaDBManager("verifyTest.db")
+db_manager = KoalaDBManager("verifyTest.db", KoalaBot.DB_KEY)
 db_manager.create_base_tables()
 
 

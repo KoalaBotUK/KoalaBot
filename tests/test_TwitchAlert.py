@@ -426,7 +426,7 @@ def test_get_team_users(twitch_api_handler):
 # Test TwitchAlertDBManager
 @pytest.fixture
 def twitch_alert_db_manager(twitch_cog):
-    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH), twitch_cog.bot)
+    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY), twitch_cog.bot)
 
 
 @pytest.fixture
