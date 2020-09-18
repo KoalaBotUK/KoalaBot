@@ -90,7 +90,7 @@ async def test_setup():
 async def twitch_cog():
     """ setup any state specific to the execution of the given module."""
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    database_manager = KoalaDBManager.KoalaDBManager(DB_PATH)
+    database_manager = KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY)
     twitch_cog = TwitchAlert.TwitchAlert(bot, database_manager=database_manager)
     bot.add_cog(twitch_cog)
     await dpytest.empty_queue()
