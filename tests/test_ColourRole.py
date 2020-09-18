@@ -7,24 +7,24 @@ Commented using reStructuredText (reST)
 """
 # Futures
 
+import random
+import re
 # Built-in/Generic Imports
 from typing import List
-import re
-import mock
-import asyncio
-import random
+
+import discord
 # Libs
 import discord.ext.test as dpytest
-
+import mock
 import pytest
 from discord.ext import commands
-import discord
+
 # Own modules
 import KoalaBot
 from cogs import ColourRole
 from cogs.ColourRole import ColourRoleDBManager
-from utils.KoalaDBManager import KoalaDBManager
 from tests.utils import TestUtilsCog
+from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 
@@ -404,9 +404,11 @@ async def test_is_valid_custom_colour(num_total, num_protected, test_colour):
     lowest_colour_dist = 1000
     for colour in protected_colours:
         d = role_colour_cog.get_rgb_colour_distance(colour, test_colour)
+        print(f"\r\ndist={str(d)}. lowest dist={str(lowest_colour_dist)}. {hex(colour.value)} is protected. "
+              f"{hex(test_colour.value)} is custom")
         if d < lowest_colour_dist:
             lowest_colour_dist = d
-    assert role_colour_cog.is_valid_custom_colour(test_colour, protected_colours)[0] != (lowest_colour_dist < 30)
+    assert role_colour_cog.is_valid_custom_colour(test_colour, protected_colours)[0] != (lowest_colour_dist < 38.4)
 
 
 @pytest.mark.parametrize("num_members", [0, 1, 2, 5])
