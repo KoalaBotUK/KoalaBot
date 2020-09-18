@@ -408,7 +408,7 @@ async def test_is_valid_custom_colour(num_total, num_protected, test_colour):
               f"{hex(test_colour.value)} is custom")
         if d < lowest_colour_dist:
             lowest_colour_dist = d
-    assert role_colour_cog.is_valid_custom_colour(test_colour, protected_colours)[0] != (lowest_colour_dist < 30)
+    assert role_colour_cog.is_valid_custom_colour(test_colour, protected_colours)[0] != (lowest_colour_dist < 38.4)
 
 
 @pytest.mark.parametrize("num_members", [0, 1, 2, 5])
