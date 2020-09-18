@@ -161,11 +161,11 @@ class KoalaDBManager:
                                "WHERE extension_id = ? AND guild_id = ?"
         self.db_execute_commit(sql_remove_extension, args=[extension_id, guild_id], pass_errors=True)
 
-    def get_enabled_guild_extensions(self, guild_id):
+    def get_enabled_guild_extensions(self, guild_id:int):
         sql_select_enabled = "SELECT extension_id FROM GuildExtensions WHERE guild_id = ?"
         return self.db_execute_select(sql_select_enabled, args=[guild_id], pass_errors=True)
 
-    def get_all_available_guild_extensions(self, guild_id):
+    def get_all_available_guild_extensions(self, guild_id:int):
         sql_select_all = "SELECT DISTINCT KoalaExtensions.extension_id " \
                          "FROM KoalaExtensions WHERE available = 1"
         return self.db_execute_select(sql_select_all, pass_errors=True)

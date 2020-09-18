@@ -474,15 +474,18 @@ class TwitchAlert(commands.Cog):
         usernames = []
         for user in users_and_teams:
             usernames.append(user[0])
+
+        if not usernames:
+            return
         # (usernames)
         streams_data = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
         # print(streams_data)
 
         # Deals with online streams
         for stream_data in streams_data:
-            if stream_data.get('type') == "live" and str.lower(stream_data.get("user_name")) != "x":
+            if stream_data.get('type') == "live":
                 current_username = str.lower(stream_data.get("user_name"))
-                # print(current_username + " is live")
+                # print(current_username + " is live: "+str(usernames))
                 usernames.remove(current_username)
 
                 sql_find_message_id = """
@@ -968,3 +971,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(TwitchAlert(bot))
+    print("TwitchAlert is ready.")

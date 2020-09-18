@@ -619,3 +619,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(ColourRole(bot))
+    print("ColourRole is ready.")
