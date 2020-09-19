@@ -4,6 +4,12 @@ A lot these commands will only be available to administrators
 
 ## [Unreleased]
 
+## [0.1.1] - 19-9-2020
+### Koala Extensions
+#### Twitch Alert *by [Jack Draper](https://github.com/jaydwee)*
+##### Changed
+- Fix an issue with not deleting old alerts
+
 ## [0.1.0] - 19-9-2020
 ### Base KoalaBot
 ##### Added
@@ -46,4 +52,5 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/KoalaBotUK/KoalaBot/releases/tag/v0.0.1
+[0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/KoalaBotUK/KoalaBot/releases/tag/v0.1.0
