@@ -75,8 +75,7 @@ class TwitchAlert(commands.Cog):
     @commands.check(twitch_is_enabled)
     async def edit_default_message(self, ctx, raw_channel_id, *default_live_message):
         """
-        Creates a twitch alert that can store twitch users and channels where
-        if the user goes live, a notification will be put in the chosen channel
+        Edit the default message put in a Twitch Alert Notification
         :param ctx: The discord context of the command
         :param raw_channel_id: The channel ID where the twitch alert is being used
         :param default_live_message: The default live message of users within this Twitch Alert,
@@ -121,8 +120,7 @@ class TwitchAlert(commands.Cog):
     @commands.check(twitch_is_enabled)
     async def view_default_message(self, ctx, raw_channel_id=None):
         """
-        Creates a twitch alert that can store twitch users and channels where
-        if the user goes live, a notification will be put in the chosen channel
+        Shows the current default message for Twitch Alerts
         :param ctx: The discord context of the command
         :param raw_channel_id: The channel ID where the twitch alert is being used
         leave empty for program default
@@ -316,7 +314,7 @@ class TwitchAlert(commands.Cog):
     @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx, raw_channel_id=None):
         """
-
+        Shows all current users and teams in a Twitch Alert
         :param ctx:
         :param raw_channel_id:
         :return:
