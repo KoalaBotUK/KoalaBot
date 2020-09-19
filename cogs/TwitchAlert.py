@@ -959,7 +959,7 @@ class TwitchAlertDBManager:
             sql_select_offline_streams_with_message_ids, usernames)
 
         for result in results:
-            asyncio.get_event_loop().create_task(self.delete_message(result[0], result[1]))
+            asyncio.get_event_loop().create_task(self.delete_message(result[1], result[0]))
         self.database_manager.db_execute_commit(sql_update_offline_streams, usernames)
 
 
