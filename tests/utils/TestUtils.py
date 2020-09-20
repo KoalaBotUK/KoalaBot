@@ -70,12 +70,20 @@ def fake_guild_emoji(guild: discord.Guild) -> discord.Emoji:
                                      'name': fake_custom_emoji_name_str(), 'id': fake_id_str(), 'available': True})
     return fake_emoji
 
+def fake_partial_emoji() -> discord.PartialEmoji:
+    if random.choice([True, False]):
+        fake_emoji = discord.PartialEmoji(name=fake_custom_emoji_name_str(), animated=random.choice([True, False]), id=dpyfactory.make_id)
+    else:
+        fake_emoji = discord.PartialEmoji(name=fake_unicode_emoji())
+    return fake_emoji
+
 
 def fake_guild_role(guild: discord.Guild) -> discord.Role:
     fake_role = discord.Role(guild=guild, state=None,
                              data={'id': dpyfactory.make_id(), 'name': fake_custom_emoji_name_str(),
                                    'mentionable': True, 'hoist': True, 'managed': False,
                                    'colour': random.randint(0, 16777215), 'permissions': 8})
+    guild._add_role(fake_role)
     return fake_role
 
 
@@ -97,11 +105,16 @@ def fake_custom_emoji_name_str() -> str:
 
 def fake_unicode_emoji() -> str:
     """
-    Creates a fake unicode emoji
+    Creates a fake unicode emoji (the string representation with colons)
     :return:
     """
     return random.choice(unicode_emojis)
 
+def fake_emoji_unicode() -> str:
+    """
+    Returns a random unicode emoji's unicode codepoint
+    """
+    return random.choice(emoji_unicodes)
 
 def fake_role_mention() -> str:
     """
