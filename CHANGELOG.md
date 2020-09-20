@@ -3,6 +3,10 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Base KoalaBot
+##### Changed
+- Fixed bug of k!help not working within a direct message
+
 
 ## [0.1.1] - 19-9-2020
 ### Koala Extensions

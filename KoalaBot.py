@@ -62,7 +62,10 @@ def is_owner(ctx):
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
-    return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and is_dpytest)
+    if is_dm_channel(ctx):
+        return False
+    else:
+        return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and is_dpytest)
 
 
 def is_admin(ctx):
@@ -72,8 +75,13 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
-    return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
+    if is_dm_channel(ctx):
+        return False
+    else:
+        return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
 
+def is_dm_channel(ctx):
+    return isinstance(ctx.channel, discord.channel.DMChannel)
 
 def load_all_cogs():
     """
@@ -112,11 +120,13 @@ def check_guild_has_ext(ctx, extension_id):
     :param extension_id: The koala extension ID
     :return: True if has ext
     """
+    if is_dm_channel(ctx):
+        return False
     if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 
-@client.event
+# @client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=error_embed(description=error))

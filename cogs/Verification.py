@@ -30,8 +30,7 @@ GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
 # Variables
 
 
-def is_dm_channel(ctx):
-    return isinstance(ctx.channel, discord.channel.DMChannel)
+
 
 def verify_is_enabled(ctx):
     """
@@ -219,7 +218,7 @@ This email is stored so you don't need to verify it multiple times."""
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
-    @commands.check(is_dm_channel)
+    @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email):
         """
@@ -241,7 +240,7 @@ This email is stored so you don't need to verify it multiple times."""
         self.send_email(email, verification_code)
         await ctx.send("Please verify yourself using the command you have been emailed")
 
-    @commands.check(is_dm_channel)
+    @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="unVerify")
     async def un_verify(self, ctx, email):
         """
@@ -260,7 +259,7 @@ This email is stored so you don't need to verify it multiple times."""
         await self.remove_roles_for_user(ctx.author.id, email)
         await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
 
-    @commands.check(is_dm_channel)
+    @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="confirm")
     async def confirm(self, ctx, token):
         """
