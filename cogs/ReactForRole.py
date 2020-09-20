@@ -387,11 +387,11 @@ class ReactForRole(commands.Cog):
 
     async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> str:
         await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
-        msg = await self.wait_for_message(self.bot, ctx)
+        msg, channel = await self.wait_for_message(self.bot, ctx)
         if not msg:
-            await ctx.send("Okay, I'll cancel the command.")
+            await channel.send("Okay, I'll cancel the command.")
         else:
-            return msg[0].content
+            return msg.content
 
     async def overwrite_channel_add_reaction_perms(self, ctx: commands.Context, channel: discord.TextChannel):
         guild: discord.Guild = ctx.guild
