@@ -151,10 +151,11 @@ class Verification(commands.Cog, name="Verify"):
                                                                (role_id, member.id))
                 if results and not blacklisted:
                     await member.add_roles(role)
-            message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role.
-This email is stored so you don't need to verify it multiple times."""
-            await member.send(content=message_string + "\n" + "\n".join([f"{x} for @{y}" for x, y in roles.items()]))
+                    message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
+You can verify a matching email to gain access to the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+These emails are stored so you don't need to verify multiple times across servers."""
+                    await member.send(
+                        content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
