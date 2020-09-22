@@ -382,13 +382,11 @@ class TwitchAlert(commands.Cog):
             users_left -= 1
             if users_left == 0 or users[-1] == user:
 
-                with concurrent.futures.ThreadPoolExecutor() as pool:
-                    user_streams = await asyncio.get_event_loop(). \
-                        run_in_executor(pool, self.ta_database_manager.twitch_handler.get_streams_data, usernames)
-
+                user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
                 # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
                 users_left = 100
-
+                if usernames == [] or user_streams is None:
+                    return
                 # Deals with online streams
                 for streams_details in user_streams:
                     if streams_details.get('type') == "live":
@@ -473,12 +471,12 @@ class TwitchAlert(commands.Cog):
         for user in users_and_teams:
             usernames.append(user[0])
 
-        if not usernames:
-            return
+
         # (usernames)
         streams_data = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
         # print(streams_data)
-
+        if usernames == [] or streams_data is None:
+            return
         # Deals with online streams
         for stream_data in streams_data:
             if stream_data.get('type') == "live":

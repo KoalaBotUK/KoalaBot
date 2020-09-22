@@ -6,6 +6,7 @@ A lot these commands will only be available to administrators
 ### Base KoalaBot
 ##### Changed
 - Fixed bug of k!help not working within a direct message
+- Fixed bug of TwitchAlert crashing
 ### Verification
 ##### Changed
 - Edited message sent upon joining a server with verification enabled
