@@ -60,9 +60,9 @@ async def test_member_join_verif_enabled():
     dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit("INSERT INTO roles VALUES (1234, 555, 'test.com')")
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role.
-This email is stored so you don't need to verify it multiple times.
-test.com for @testRole"""
+You can verify a matching email to gain access to the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+These emails are stored so you don't need to verify multiple times across servers."""
+
     await dpytest.member_join(1)
     await asyncio.sleep(0.25)
     dpytest.verify_message(welcome_message)
@@ -81,9 +81,8 @@ async def test_member_join_already_verified():
     await dpytest.member_join(1, test_user)
     await asyncio.sleep(0.25)
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role.
-This email is stored so you don't need to verify it multiple times.
-test.com for @testRole"""
+You can verify a matching email to gain access to the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+These emails are stored so you don't need to verify multiple times across servers."""
     dpytest.verify_message(welcome_message)
     member = guild.get_member(test_user.id)
     assert role in member.roles
