@@ -6,6 +6,9 @@ A lot these commands will only be available to administrators
 ### Base KoalaBot
 ##### Changed
 - Fixed bug of k!help not working within a direct message
+### Verification
+##### Changed
+- Edited message sent upon joining a server with verification enabled
 
 
 ## [0.1.1] - 19-9-2020
