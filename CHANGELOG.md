@@ -7,6 +7,7 @@ A lot these commands will only be available to administrators
 ##### Changed
 - Fixed bug of k!help not working within a direct message
 - Fixed bug of TwitchAlert crashing
+- Fixed bug of adding a team to a new channel sets message as the Guild ID
 ### Verification
 ##### Changed
 - Edited message sent upon joining a server with verification enabled

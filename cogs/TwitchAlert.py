@@ -255,7 +255,7 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
-        self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id, ctx.message.guild.id)
+        self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id)
 
         # Setting the custom message as required
         if custom_live_message is not None and custom_live_message != (None,):
