@@ -62,7 +62,7 @@ async def test_member_join_verif_enabled():
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
 You can verify a matching email to gain access to the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
 These emails are stored so you don't need to verify multiple times across servers.
-test.com for @testRole"""
+`test.com` for `@testRole`"""
 
     await dpytest.member_join(1)
     await asyncio.sleep(0.25)
