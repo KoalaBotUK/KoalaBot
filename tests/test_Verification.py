@@ -84,7 +84,7 @@ async def test_member_join_already_verified():
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
 You can verify a matching email to gain access to the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
 These emails are stored so you don't need to verify multiple times across servers.
-test.com for @testRole"""
+`test.com` for `@testRole`"""
     dpytest.verify_message(welcome_message)
     member = guild.get_member(test_user.id)
     assert role in member.roles
