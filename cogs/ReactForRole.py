@@ -10,16 +10,16 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import re
 from typing import *
-# Libs
-import asyncio
 
 import discord
-from discord.ext import commands
 import emoji
+from discord.ext import commands
 
 # Own modules
 import KoalaBot
 from utils import KoalaDBManager, KoalaColours
+
+# Libs
 
 # Constants
 UNICODE_DISCORD_EMOJI_REGEXP: re.Pattern = re.compile("^:(\w+):$")
@@ -96,7 +96,7 @@ class ReactForRole(commands.Cog):
             await ctx.send(f"Okay, I'll create the react for role message now.")
             rfr_msg: discord.Message = await channel.send(embed=embed)
             self.rfr_database_manager.add_rfr_message(ctx.guild.id, channel.id, rfr_msg.id)
-            await self.overwrite_channel_add_reaction_perms(ctx, channel)
+            await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
             await ctx.send(
                 f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
                 "k!rfr subcommands to change the message and add functionality as required.")
@@ -393,8 +393,7 @@ class ReactForRole(commands.Cog):
         else:
             return msg.content
 
-    async def overwrite_channel_add_reaction_perms(self, ctx: commands.Context, channel: discord.TextChannel):
-        guild: discord.Guild = ctx.guild
+    async def overwrite_channel_add_reaction_perms(self, guild: discord.Guild, channel: discord.TextChannel):
         roles: List[discord.Role] = guild.roles
         overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
         overwrite.update(add_reactions=False)
