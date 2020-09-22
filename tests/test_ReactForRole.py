@@ -50,7 +50,7 @@ def setup_function():
 
 
 def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id=None) -> List[
-        Tuple[int, int, int, int]]:
+    Tuple[int, int, int, int]]:
     sql_select_str = "SELECT * FROM GuildRFRMessages WHERE "
     if guild_id is not None:
         sql_select_str += f"guild_id = {guild_id} AND "
@@ -70,7 +70,7 @@ def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id
 
 
 def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, role_id=None) -> List[
-        Tuple[int, str, int]]:
+    Tuple[int, str, int]]:
     sql_select_str = "SELECT * FROM RFRMessageEmojiRoles WHERE "
     if emoji_role_id is not None:
         sql_select_str += f"emoji_role_id = {emoji_role_id} AND "
@@ -175,7 +175,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     assert independent_get_rfr_message_emoji_role(1) == expected_full_list
     assert independent_get_rfr_message_emoji_role(guild_rfr_message[3], fake_emoji_1,
                                                   fake_role_id_1) == [DBManager.get_rfr_reaction_role(
-                                                      guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
+        guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
     # 1 unicode, 1 custom, trying to get same role
     fake_emoji_2 = utils.fake_custom_emoji_str_rep()
     DBManager.add_rfr_message_emoji_role(
@@ -206,12 +206,12 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     assert independent_get_rfr_message_emoji_role(
         1, fake_emoji_2) == [(1, fake_emoji_2, fake_role_id_2)]
     assert independent_get_rfr_message_emoji_role(1, fake_emoji_1)[0][
-        2] == DBManager.get_rfr_reaction_role_by_emoji_str(1,
-                                                           fake_emoji_1)
+               2] == DBManager.get_rfr_reaction_role_by_emoji_str(1,
+                                                                  fake_emoji_1)
     assert independent_get_rfr_message_emoji_role(
         1) == DBManager.get_rfr_message_emoji_roles(1)
     assert independent_get_rfr_message_emoji_role(1, role_id=fake_role_id_2)[0][
-        2] == DBManager.get_rfr_reaction_role_by_role_id(1, fake_role_id_2)
+               2] == DBManager.get_rfr_reaction_role_by_role_id(1, fake_role_id_2)
 
     # 2 roles 2 emojis, 2 messages. duplicated messages
     msg2_id = dpyfactory.make_id()
@@ -345,6 +345,7 @@ async def test_parse_emoji_and_role_input_str(num_rows):
             assert emoji_role[1] == expected_role_list[emoji_roles_list.index(
                 emoji_role)]
 
+
 @pytest.mark.skip("dpytest has no in-built image support for emoji")
 @pytest.mark.parametrize("num_rows", [0, 1, 2, 20])
 @pytest.mark.asyncio
@@ -362,7 +363,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
             if random.choice([True, False]):
                 fake_emoji = utils.fake_emoji_unicode()
                 input_str += fake_emoji + "\n\r"
-                expected_list.append(fake_emoji)                
+                expected_list.append(fake_emoji)
                 print(f"Unicode emoji {j} in test {num_rows}: {emoji.emojize(fake_emoji)}")
             else:
                 fake_emoji_name = utils.fake_custom_emoji_name_str()
@@ -378,12 +379,13 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
             role_str = str(random.choice([fake_role.name, fake_role.id, fake_role.mention]))
             input_str += role_str + "\n\r"
             print(f"Role {j} in test {num_rows}: {fake_role}")
-            
+
     print(f"Test {num_rows} input_str")
     print(input_str)
     result_list = await rfr_cog.parse_emoji_or_roles_input_str(ctx, input_str)
     for k in range(len(expected_list)):
         assert str(expected_list[k]) == str(result_list[k])
+
 
 @pytest.mark.parametrize("msg_content", [None, "", "something", " "])
 @pytest.mark.asyncio
@@ -396,7 +398,8 @@ async def test_prompt_for_input(msg_content):
     ctx: commands.Context = utils_cog.get_last_ctx()
     await dpytest.empty_queue()
     if not msg_content:
-        with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', mock.AsyncMock(return_value=(None, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
+                        mock.AsyncMock(return_value=(None, channel))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
             dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             dpytest.verify_message("Okay, I'll cancel the command.")
@@ -409,26 +412,21 @@ async def test_prompt_for_input(msg_content):
             assert result == msg_content
     pass
 
+
 @pytest.mark.asyncio
 async def test_overwrite_channel_add_reaction_perms():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    bot_user: discord.Member = discord.utils.get(guild.members, display_name="FakeApp")
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx", member=bot_user)
-    ctx: commands.Context = utils_cog.get_last_ctx()
-    assert ctx, bot_user
-    await dpytest.empty_queue()
-    for i in range(5):
-        await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
-        await rfr_cog.overwrite_channel_add_reaction_perms(ctx, channel)
-        # check that perms have been overridden
-        for role in guild.roles:
-            perm_over: discord.PermissionOverwrite = channel.overwrites_for(role)
-            perm_over_allow, perm_over_deny = perm_over.pair()
-            print(perm_over_allow + "allowed\n\r" + perm_over_deny + "denied")
-            assert perm_over_deny.add_reactions == False
-    pass
+    member: discord.Member = config.members[0]
+    with mock.patch('discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
+        calls = []
+        for i in range(15):
+            role: discord.Role = await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
+            await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
+            calls.append(mock.call(channel.id, role.id, 0, 64, 'role', reason=None))
+            mock_edit_channel_perms.assert_has_calls(calls, True)
+
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
