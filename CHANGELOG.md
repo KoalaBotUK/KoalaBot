@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+
+## [0.1.2] - 22-9-2020
 ### Base KoalaBot
 ##### Changed
 - Fixed bug of k!help not working within a direct message
@@ -61,5 +63,6 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/KoalaBotUK/KoalaBot/releases/tag/v0.1.0
