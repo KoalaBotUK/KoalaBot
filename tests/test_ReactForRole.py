@@ -428,6 +428,34 @@ async def test_overwrite_channel_add_reaction_perms():
             mock_edit_channel_perms.assert_has_calls(calls, True)
 
 
+@pytest.mark.parametrize("msg_content", [" ", "something"])
+@pytest.mark.asyncio
+async def test_wait_for_message_not_none(msg_content):
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx = utils_cog.get_last_ctx()
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    bot: discord.Client = config.client
+    guild: discord.Guild = config.guilds[0]
+    import threading
+    t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
+    t2.start()
+    fut = rfr_cog.wait_for_message(bot, ctx)
+    t2.join()
+    assert fut, dpytest.sent_queue
+
+
+@pytest.mark.asyncio
+async def test_wait_for_message_none():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    bot: discord.Client = config.client
+    guild: discord.Guild = config.guilds[0]
+    msg, channel = await rfr_cog.wait_for_message(bot, ctx, 0.2)
+    assert not msg
+    assert channel == ctx.channel
+
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
     DBManager.get_parent_database_manager().clear_all_tables(
