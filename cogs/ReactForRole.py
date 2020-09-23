@@ -423,10 +423,13 @@ class ReactForRole(commands.Cog):
     def get_embed_from_message(self, msg: discord.Message) -> Optional[discord.Embed]:
         if not msg:
             return None
-        embed = msg.embeds[0]
-        if not embed:
+        try:
+            embed = msg.embeds[0]
+            if not embed:
+                return None
+            return embed
+        except IndexError:
             return None
-        return embed
 
     def get_number_of_embed_fields(self, embed: discord.Embed) -> int:
         return len(embed.fields)
