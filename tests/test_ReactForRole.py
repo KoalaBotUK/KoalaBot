@@ -418,7 +418,6 @@ async def test_overwrite_channel_add_reaction_perms():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    member: discord.Member = config.members[0]
     with mock.patch('discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
         calls = []
         for i in range(15):
@@ -435,7 +434,6 @@ async def test_wait_for_message_not_none(msg_content):
     ctx = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client
-    guild: discord.Guild = config.guilds[0]
     import threading
     t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
     t2.start()
@@ -450,10 +448,22 @@ async def test_wait_for_message_none():
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client
-    guild: discord.Guild = config.guilds[0]
     msg, channel = await rfr_cog.wait_for_message(bot, ctx, 0.2)
     assert not msg
     assert channel == ctx.channel
+
+
+@pytest.mark.asyncio
+async def test_is_user_alive():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
+                    mock.AsyncMock(return_value=(None, ctx.channel))):
+        alive: bool = await rfr_cog.is_user_alive(ctx)
+        assert not alive
+    with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', mock.AsyncMock(return_value=('a', None))):
+        alive: bool = await rfr_cog.is_user_alive(ctx)
+        assert alive
 
 
 @pytest.fixture(scope='session', autouse=True)
