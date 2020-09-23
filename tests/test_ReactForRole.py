@@ -476,7 +476,6 @@ async def test_get_embed_from_message():
     bot: discord.Client = config.client
     await bot.http.send_message(channel.id, '', embed=test_embed_dict)
     sent_msg: discord.Message = await dpytest.sent_queue.get()
-    print(sent_msg)
     msg_mock: discord.Message = dpytest.back.make_message('a', author, channel)
     result = rfr_cog.get_embed_from_message(None)
     assert result is None
@@ -484,6 +483,24 @@ async def test_get_embed_from_message():
     assert result is None
     result = rfr_cog.get_embed_from_message(sent_msg)
     assert dpytest.embed_eq(result, sent_msg.embeds[0])
+
+
+@pytest.mark.asyncio
+async def test_get_number_of_embed_fields():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
+    bot: discord.Client = config.client
+    await bot.http.send_message(channel.id, '', embed=test_embed_dict)
+    sent_msg: discord.Message = await dpytest.sent_queue.get()
+    test_embed: discord.Embed = sent_msg.embeds[0]
+    num_fields = 0
+    for i in range(20):
+        test_embed.add_field(name=f'field{i}', value=f'num{i}')
+        num_fields += 1
+        assert rfr_cog.get_number_of_embed_fields(test_embed) == num_fields
+    pass
 
 
 @pytest.fixture(scope='session', autouse=True)
