@@ -8,7 +8,6 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-
 import random
 from string import ascii_letters
 
