@@ -51,8 +51,7 @@ class ReactForRole(commands.Cog):
         if not channel:
             await ctx.send("Sorry, you didn't specify a valid channel ID, mention or name. Please restart the command.")
         else:
-            await ctx.send(f"DEBUG Your channel is {channel.mention}")
-            await channel.send(f"This should be a thing sent in the right channel.")
+            del_msg = await channel.send(f"This should be a thing sent in the right channel.")
             await ctx.send(
                 "Okay, what would you like the title of the react for role message to be? Please enter within 30"
                 " seconds.")
@@ -63,12 +62,13 @@ class ReactForRole(commands.Cog):
                     "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
                 if not await self.is_user_alive(ctx):
                     await ctx.send("Okay, didn't receive any confirmation. Cancelling command. Please restart.")
+                    await del_msg.delete()
                     return
                 else:
                     title: str = "React for Role"
                     await ctx.send(
                         "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit"
-                        " command.")
+                        " commands.")
             else:
                 title: str = msg.content
             await ctx.send(
@@ -77,9 +77,10 @@ class ReactForRole(commands.Cog):
             msg: discord.Message = y[0]
             if not y[0]:
                 await ctx.send(
-                    "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
+                    "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
                 if not await self.is_user_alive(ctx):
                     await ctx.send("Okay, didn't receive any confirmation. Cancelling command. Please restart.")
+                    await del_msg.delete()
                     return
                 else:
                     desc: str = "Roles below!"
@@ -100,6 +101,7 @@ class ReactForRole(commands.Cog):
             await ctx.send(
                 f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
                 "k!rfr subcommands to change the message and add functionality as required.")
+            await del_msg.delete()
 
     @react_for_role_group.command(name="deleteMessage")
     async def rfr_delete_message(self, ctx: commands.Context):
