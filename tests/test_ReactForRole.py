@@ -11,8 +11,8 @@ Commented using reStructuredText (reST)
 import random
 from typing import *
 
-import discord
 # Libs
+import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
@@ -346,7 +346,7 @@ async def test_parse_emoji_and_role_input_str(num_rows):
                 emoji_role)]
 
 
-@pytest.mark.skip("dpytest has no in-built image support for emoji")
+@pytest.mark.skip("dpytest has non-implemented functionality for construction of guild custom emojis")
 @pytest.mark.parametrize("num_rows", [0, 1, 2, 20])
 @pytest.mark.asyncio
 async def test_parse_emoji_or_roles_input_str(num_rows):
@@ -367,7 +367,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
                 print(f"Unicode emoji {j} in test {num_rows}: {emoji.emojize(fake_emoji)}")
             else:
                 fake_emoji_name = utils.fake_custom_emoji_name_str()
-                fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image="attachment://discord.png")
+                fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image=utils.random_image())
                 expected_list.append(fake_emoji)
                 input_str += str(fake_emoji) + "\n\r"
                 print(f"Custom emoji {j} in test {num_rows}: {str(fake_emoji)}")
@@ -500,7 +500,79 @@ async def test_get_number_of_embed_fields():
         test_embed.add_field(name=f'field{i}', value=f'num{i}')
         num_fields += 1
         assert rfr_cog.get_number_of_embed_fields(test_embed) == num_fields
-    pass
+
+
+@pytest.mark.skip('dpytest currently has non-implemented functionality for construction of guild custom emojis')
+@pytest.mark.asyncio
+async def test_get_first_emoji_from_str():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    guild_emoji = utils.fake_guild_emoji(guild)
+    guild_emoji = discord.Emoji(guild=guild, state=None,
+                                data={'name': "AAA", 'image': utils.random_image(), 'id': dpyfactory.make_id(),
+                                      'require_colons': True, 'managed': False})
+    guild._state.store_emoji(guild=guild,
+                             data={'name': "AAA", 'image': utils.random_image(), 'id': dpyfactory.make_id(),
+                                   'require_colons': True, 'managed': False})
+    assert guild_emoji in guild.emojis
+
+    author: discord.Member = config.members[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    msg: discord.Message = dpytest.back.make_message(str(guild_emoji), author, channel)
+    result = await rfr_cog.get_first_emoji_from_str(ctx, msg.content)
+    print(result)
+    assert isinstance(result, discord.Emoji), msg.content
+    assert guild_emoji == result
+
+
+@pytest.mark.asyncio
+async def test_rfr_create_message():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed_channel: discord.TextChannel = dpytest.back.make_text_channel('EmbedChannel', guild)
+    author: discord.Member = config.members[0]
+    title_desc_msg: discord.Message = dpytest.back.make_message('test', author, channel)
+    from utils import KoalaColours
+    test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KoalaColours.KOALA_GREEN)
+    test_embed.set_footer(text="ReactForRole")
+    test_embed.set_thumbnail(
+        url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
+    with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+                    mock.AsyncMock(return_value=embed_channel.mention)):
+        with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
+                        mock.AsyncMock(return_value=(None, channel))):
+            with mock.patch('cogs.ReactForRole.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
+                with mock.patch(
+                        'discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
+                    with mock.patch('discord.Message.delete') as mock_delete:
+                        await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr createMessage")
+                        mock_edit_channel_perms.assert_called_once()
+                        dpytest.verify_message(
+                            "Okay, this will create a new react for role message in a channel of your choice."
+                            "\nNote: The channel you specify will have its permissions edited to make it such that members are unable"
+                            " to add new reactions to messages, they can only reaction with existing ones. Please keep this in mind, or setup another channel entirely for this.")
+                        dpytest.verify_message("This should be a thing sent in the right channel.")
+                        dpytest.verify_message(
+                            "Okay, what would you like the title of the react for role message to be? Please enter within 30 seconds.")
+                        dpytest.verify_message(
+                            "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
+                        dpytest.verify_message(
+                            "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit commands.")
+                        dpytest.verify_message(
+                            "Okay, the title of the message will be \"React for Role\". What do you want the description to be?")
+                        dpytest.verify_message(
+                            "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
+                        dpytest.verify_message(
+                            "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit command.")
+                        dpytest.verify_message("Okay, the description of the message will be \"Roles below!\".")
+                        dpytest.verify_message("Okay, I'll create the react for role message now.")
+                        dpytest.verify_embed()
+                        msg = dpytest.sent_queue.get_nowait()
+                        assert "You can use the other k!rfr subcommands to change the message and add functionality as required." in msg.content
+                        mock_delete.assert_called_once()
 
 
 @pytest.fixture(scope='session', autouse=True)
