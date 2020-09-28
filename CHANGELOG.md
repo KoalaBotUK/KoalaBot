@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Verification
+##### Changed
+- Fixed a bug involving verification of an email matching a server you weren't in
 
 ## [0.1.2] - 22-9-2020
 ### Base KoalaBot
