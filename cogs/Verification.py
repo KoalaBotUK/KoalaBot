@@ -152,9 +152,9 @@ class Verification(commands.Cog, name="Verify"):
                 if results and not blacklisted:
                     await member.add_roles(role)
             message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
-This email is stored so you don't need to verify it multiple times across servers."""
-            await member.send(content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
+Please verify one of the following emails to get the appropriate role.
+This email is stored so you don't need to verify it multiple times."""
+            await member.send(content=message_string + "\n" + "\n".join([f"{x} for @{y}" for x, y in roles.items()]))
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
@@ -217,6 +217,7 @@ This email is stored so you don't need to verify it multiple times across server
         self.DBManager.db_execute_commit("DELETE FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
+
 
     @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
@@ -376,20 +377,27 @@ This email is stored so you don't need to verify it multiple times across server
                                                            (r_id, user_id))
             if blacklisted:
                 continue
-
-            guild = self.bot.get_guild(g_id)
-            role = discord.utils.get(guild.roles, id=r_id)
-            member = guild.get_member(user_id)
-            await member.add_roles(role)
+            try:
+                guild = self.bot.get_guild(g_id)
+                role = discord.utils.get(guild.roles, id=r_id)
+                member = guild.get_member(user_id)
+                await member.add_roles(role)
+            except AttributeError:
+                # user not in a guild
+                pass
 
     async def remove_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
                                                    (email,))
         for g_id, r_id, suffix in results:
-            guild = self.bot.get_guild(g_id)
-            role = discord.utils.get(guild.roles, id=r_id)
-            member = guild.get_member(user_id)
-            await member.remove_roles(role)
+            try:
+                guild = self.bot.get_guild(g_id)
+                role = discord.utils.get(guild.roles, id=r_id)
+                member = guild.get_member(user_id)
+                await member.remove_roles(role)
+            except AttributeError:
+                # user not in a guild
+                pass
 
     async def assign_role_to_guild(self, guild, role, suffix):
         results = self.DBManager.db_execute_select("SELECT u_id FROM verified_emails WHERE email LIKE ('%' || ?)",
