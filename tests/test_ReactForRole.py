@@ -410,7 +410,6 @@ async def test_prompt_for_input(msg_content):
             result = await rfr_cog.prompt_for_input(ctx, "test")
             dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert result == msg_content
-    pass
 
 
 @pytest.mark.asyncio
@@ -511,10 +510,10 @@ async def test_get_first_emoji_from_str():
     guild: discord.Guild = config.guilds[0]
     guild_emoji = utils.fake_guild_emoji(guild)
     guild_emoji = discord.Emoji(guild=guild, state=None,
-                                data={'name': "AAA", 'image': utils.random_image(), 'id': dpyfactory.make_id(),
+                                data={'name': "AAA", 'image': None, 'id': dpyfactory.make_id(),
                                       'require_colons': True, 'managed': False})
     guild._state.store_emoji(guild=guild,
-                             data={'name': "AAA", 'image': utils.random_image(), 'id': dpyfactory.make_id(),
+                             data={'name': "AAA", 'image': None, 'id': dpyfactory.make_id(),
                                    'require_colons': True, 'managed': False})
     assert guild_emoji in guild.emojis
 
@@ -534,7 +533,6 @@ async def test_rfr_create_message():
     channel: discord.TextChannel = guild.text_channels[0]
     embed_channel: discord.TextChannel = dpytest.back.make_text_channel('EmbedChannel', guild)
     author: discord.Member = config.members[0]
-    title_desc_msg: discord.Message = dpytest.back.make_message('test', author, channel)
     from utils import KoalaColours
     test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KoalaColours.KOALA_GREEN)
     test_embed.set_footer(text="ReactForRole")
@@ -573,6 +571,29 @@ async def test_rfr_create_message():
                         msg = dpytest.sent_queue.get_nowait()
                         assert "You can use the other k!rfr subcommands to change the message and add functionality as required." in msg.content
                         mock_delete.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_rfr_delete_message():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    await dpytest.empty_queue()
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', mock.AsyncMock(return_value="Y")):
+            with mock.patch('discord.Message.delete') as mock_msg_delete:
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr deleteMessage")
+                mock_msg_delete.assert_called_once()
+                dpytest.verify_message(
+                    "Okay, this will delete an existing react for role message. I'll need some details first though.")
+                dpytest.verify_message()
+                dpytest.verify_message()
+                dpytest.verify_message()
+                assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
 
 
 @pytest.fixture(scope='session', autouse=True)
