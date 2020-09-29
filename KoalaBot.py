@@ -127,8 +127,6 @@ def check_guild_has_ext(ctx, extension_id):
         return False
     if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
-    return True
-
 
 @client.event
 async def on_command_error(ctx, error):
@@ -141,9 +139,6 @@ async def on_command_error(ctx, error):
                                                      f"{str(error.retry_after)}s."))
     else:
         await ctx.send(embed=error_embed(description=error))
-    logger.error("Error occurred. Stack Trace:\n", exc_info=True)
-
-
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
