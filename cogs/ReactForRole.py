@@ -146,7 +146,7 @@ class ReactForRole(commands.Cog):
         embed = self.get_embed_from_message(msg)
         await ctx.send(f"Your current title is {embed.title}. Please enter your new title.")
         title = await self.prompt_for_input(ctx, "title")
-        await ctx.send(f"Your new description would be {title}. Please confirm that you'd like this change.")
+        await ctx.send(f"Your new title would be {title}. Please confirm that you'd like this change.")
         if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
             embed.title = title
             await msg.edit(embed=embed)
@@ -499,8 +499,18 @@ class ReactForRoleDBManager:
         UNIQUE  (emoji_role_id, role_id)
         );
         """
+        sql_create_rfr_required_roles_table = """
+        CREATE TABLE IF NOT EXISTS GuildRFRRequiredRoles (
+        guild_id integer NOT NULL,
+        role_id integer NOT NULL,
+        PRIMARY KEY (guild_id, role_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
+        UNIQUE (guild_id, role_id)
+        );
+        """
         self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
         self.database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
+        self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
 
     def add_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
         self.database_manager.db_execute_commit(
@@ -580,6 +590,16 @@ class ReactForRoleDBManager:
             return
         return rows[0][2]
 
+    def add_guild_rfr_required_role(self, guild_id: int, role_id: int):
+        self.database_manager.db_execute_commit("INSERT INTO GuildRFRRequiredRoles VALUES (?,?);", (guild_id, role_id))
+
+    def remove_guild_rfr_required_role(self, guild_id: int, role_id: int):
+        self.database_manager.db_execute_commit("DELETE FROM GuildRFRRequiredRoles WHERE guild_id = ? AND role_id = ?",
+                                                (guild_id, role_id))
+
+    def get_guild_rfr_required_roles(self, guild_id):
+        self.database_manager.db_execute_select("SELECT role_id FROM GuildRFRRequiredRoles WHERE guild_id = ?",
+                                                guild_id)
 
 def setup(bot: KoalaBot) -> None:
     """
