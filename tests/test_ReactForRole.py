@@ -595,6 +595,25 @@ async def test_rfr_delete_message():
                 dpytest.verify_message()
                 assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
 
+@pytest.mark.skip("Not implemented yet.")
+@pytest.mark.asyncio
+async def test_rfr_edit_description():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    client: discord.Client = config.client
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts', mock.AsyncMock(message, channel)):
+        with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+                        mock.AsyncMock(side_effect="new description", "Y")):
+            with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_msg'):
+                pass
+            pass
+
+    pass
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
