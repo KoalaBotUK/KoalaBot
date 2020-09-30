@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+
+## [0.1.3] - 30-9-2020
 ### Verification
 ##### Changed
 - Fixed a bug involving verification of an email matching a server you weren't in
@@ -66,6 +68,7 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.1...v0.1.2
+[0.1.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/KoalaBotUK/KoalaBot/releases/tag/v0.1.0
