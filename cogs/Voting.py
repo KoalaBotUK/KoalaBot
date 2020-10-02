@@ -40,12 +40,42 @@ def is_vote_caller():
     return commands.check(predicate)
 
 
+def test_is_admin(ctx):
+    return KoalaBot.is_admin(ctx) or ctx.author.id == 135496683009081345
+
+
 class Voting(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.vote_manager = VoteManager()
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        await self.update_vote_message(payload)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        await self.update_vote_message(payload)
+
+    async def update_vote_message(self, payload):
+        vote = self.vote_manager.get_sent_to(payload.message_id)
+        user = self.bot.get_user(payload.user_id)
+        if vote and not user.bot:
+            msg = await user.fetch_message(payload.message_id)
+            embed = msg.embeds[0]
+            choice = None
+            for reaction in msg.reactions:
+                if reaction.count > 1:
+                    choice = reaction
+                    break
+            if choice:
+                embed.set_footer(text=f"You have chosen {choice.emoji}")
+            else:
+                embed.set_footer(text="There are no valid choices selected")
+            await msg.edit(embed=embed)
+
     # @commands.check(KoalaBot.is_admin)
+    @commands.check(test_is_admin)
     @commands.command(name="startVote")
     async def startVote(self, ctx, *, title):
 
@@ -156,12 +186,14 @@ class Voting(commands.Cog):
             role_users = list(dict.fromkeys(role_users))
             users = list(set(role_users) & set(users))
         for user in users:
-            # if user is bot skip
-            msg = await user.send(
-                "You have been asked to participate in this vote. Please react to make your choice. If you react multiple times it will take the lowest number you have reacted with.",
-                embed=self.vote_manager.create_voting_embed(ctx.author.id))
-            self.vote_manager.register_send(ctx.author.id, msg.id, user.id)
-            await self.vote_manager.add_reactions(ctx.author.id, msg)
+            if not user.bot:
+                msg = await user.send(
+                    "You have been asked to participate in this vote. Please react to make your choice.\n"
+                    "You can change your mind until the vote is closed.\n"
+                    "If you react multiple times it will take the lowest number you have reacted with.",
+                    embed=self.vote_manager.create_voting_embed(ctx.author.id))
+                self.vote_manager.register_send(ctx.author.id, msg.id, user.id)
+                await self.vote_manager.add_reactions(ctx.author.id, msg)
         await ctx.send(f"This vote has been sent out to {len(users)} people")
 
     @is_vote_caller()
@@ -241,6 +273,12 @@ class VoteManager:
             opt["count"] = count
             results_list.append(opt)
         return results_list
+
+    def get_sent_to(self, message_id):
+        for vote in self.active_votes.values():
+            if message_id in vote.sent_to.values():
+                return vote
+        return None
 
     async def add_reactions(self, vote_id, msg):
         for option in self.active_votes[vote_id].options:
