@@ -11,6 +11,7 @@ Commented using reStructuredText (reST)
 import os
 import asyncio
 import concurrent.futures
+import time
 
 # Libs
 from discord.ext import commands, tasks
@@ -68,6 +69,7 @@ class TwitchAlert(commands.Cog):
         self.ta_database_manager.create_tables()
         self.loop_thread = None
         self.loop_team_thread = None
+        self.running = False
         self.stop_loop = False
 
     @commands.command(name="twitchEditMsg", aliases=["edit_default_message"])
@@ -358,9 +360,11 @@ class TwitchAlert(commands.Cog):
         When the bot is started up, the loop begins
         :return:
         """
-        self.loop_update_teams.start()
-        self.loop_check_team_live.start()
-        self.loop_check_live.start()
+        if not self.running:
+            self.loop_update_teams.start()
+            self.loop_check_team_live.start()
+            self.loop_check_live.start()
+            self.running = True
 
     @tasks.loop(minutes=1)
     async def loop_check_live(self):
@@ -576,7 +580,16 @@ class TwitchAPIHandler:
             ('client_secret', self.client_secret),
             ('grant_type', 'client_credentials'),
         )
-        response = requests.post('https://id.twitch.tv/oauth2/token', data=params)
+        complete = False
+        while not complete:
+            try:
+                response = requests.post('https://id.twitch.tv/oauth2/token', data=params)
+                complete = True
+            except Exception as err:
+                print("Twitch Oauth Post Failed")
+                print("error: {0}".format(err))
+                time.sleep(30)
+
         return response.json().get('access_token')
 
     def requests_get(self, url, headers=None, params=None):
@@ -594,6 +607,7 @@ class TwitchAPIHandler:
         if result.json().get("error"):
             self.get_new_twitch_oauth()
             result = requests.get(url, headers=headers, params=params)
+
 
         return result
 
