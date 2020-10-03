@@ -3,6 +3,11 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Koala Extensions
+#### Twitch Alert *by [Jack Draper](https://github.com/jaydwee)*
+##### Changed
+- Fix TwitchAlert loops crashing
+- Fix repeat on_ready
 
 ## [0.1.3] - 30-9-2020
 ### Verification
