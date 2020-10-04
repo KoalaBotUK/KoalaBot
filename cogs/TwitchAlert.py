@@ -592,6 +592,11 @@ class TwitchAPIHandler:
 
         return response
 
+    def update_oauth(self):
+        self.oauth_token = self.get_new_twitch_oauth()
+        self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer ' + self.oauth_token}
+
+
     def requests_get(self, url, headers=None, params=None):
         """
         Gets a response from a curl get request to the given url using headers of this object
@@ -605,7 +610,7 @@ class TwitchAPIHandler:
 
         result = requests.get(url, headers=headers, params=params)
         if result.json().get("error"):
-            self.oauth_token = self.get_new_twitch_oauth()
+            self.update_oauth()
             result = requests.get(url, headers=headers, params=params)
 
 
