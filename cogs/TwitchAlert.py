@@ -583,14 +583,14 @@ class TwitchAPIHandler:
         complete = False
         while not complete:
             try:
-                response = requests.post('https://id.twitch.tv/oauth2/token', data=params)
+                response = requests.post('https://id.twitch.tv/oauth2/token', data=params).json().get('access_token')
                 complete = True
             except Exception as err:
                 print("Twitch Oauth Post Failed")
                 print("error: {0}".format(err))
                 time.sleep(30)
 
-        return response.json().get('access_token')
+        return response
 
     def requests_get(self, url, headers=None, params=None):
         """
@@ -605,7 +605,7 @@ class TwitchAPIHandler:
 
         result = requests.get(url, headers=headers, params=params)
         if result.json().get("error"):
-            self.get_new_twitch_oauth()
+            self.oauth_token = self.get_new_twitch_oauth()
             result = requests.get(url, headers=headers, params=params)
 
 
