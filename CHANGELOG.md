@@ -8,6 +8,7 @@ A lot these commands will only be available to administrators
 ##### Changed
 - Fix TwitchAlert loops crashing
 - Fix repeat on_ready
+- Fix timout for requests
 
 ## [0.1.3] - 30-9-2020
 ### Verification
