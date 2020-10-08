@@ -613,6 +613,7 @@ class TwitchAPIHandler:
                 else:
                     used_headers = headers
                 result = requests.get(url, headers=used_headers, params=params, timeout=5)
+
                 if result.json().get("error"):
                     self.update_oauth()
                 elif result is not None:
@@ -631,7 +632,17 @@ class TwitchAPIHandler:
         :return: The JSON data of the request
         """
         url = 'https://api.twitch.tv/helix/streams?'
-        return self.requests_get(url, params={'user_login': usernames}).json().get("data")
+
+        next_hundred_users = usernames[:100]
+        usernames = usernames[100:]
+        result = self.requests_get(url, params={'user_login': usernames}).json().get("data")
+
+        while usernames:
+            next_hundred_users = usernames[:100]
+            usernames = usernames[100:]
+            result += self.requests_get(url, params={'user_login': usernames}).json().get("data")
+
+        return result
 
     def get_user_data(self, username):
         """
