@@ -91,7 +91,7 @@ def load_all_cogs():
     Loads all cogs in COGS_DIR into the client
     """
     for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py') and not filename.endswith('TwitchAlert.py'):
+        if filename.endswith('.py'):
             client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
 
