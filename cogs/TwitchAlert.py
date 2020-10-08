@@ -588,7 +588,7 @@ class TwitchAPIHandler:
             except Exception as err:
                 print("Twitch Oauth Post Failed")
                 print("error: {0}".format(err))
-                time.sleep(10)
+                time.sleep(30)
 
         return response
 
@@ -621,7 +621,7 @@ class TwitchAPIHandler:
             except requests.exceptions.Timeout or AttributeError as err:
                 print("Twitch Requests timout")
                 print(err)
-                time.sleep(10)
+                time.sleep(30)
 
         return result
 
