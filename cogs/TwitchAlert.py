@@ -584,11 +584,12 @@ class TwitchAPIHandler:
         while not complete:
             try:
                 response = requests.post('https://id.twitch.tv/oauth2/token', data=params, timeout=5).json().get('access_token')
-                complete = True
+                if response is not None:
+                    complete = True
             except Exception as err:
                 print("Twitch Oauth Post Failed")
                 print("error: {0}".format(err))
-                time.sleep(30)
+            time.sleep(10)
 
         return response
 
@@ -621,7 +622,7 @@ class TwitchAPIHandler:
             except requests.exceptions.Timeout or AttributeError as err:
                 print("Twitch Requests timout")
                 print(err)
-                time.sleep(30)
+            time.sleep(10)
 
         return result
 
