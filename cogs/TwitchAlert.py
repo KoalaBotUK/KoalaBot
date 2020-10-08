@@ -584,14 +584,16 @@ class TwitchAPIHandler:
         while not complete:
             try:
                 print("requesting oauth")
-                response = requests.post('https://id.twitch.tv/oauth2/token', data=params, timeout=0.001)
+                response = requests.post('https://id.twitch.tv/oauth2/token', data=params, timeout=20)
                 if response is not None:
                     response = response.json().get('access_token')
                     complete = True
             except requests.exceptions.Timeout or AttributeError as err:
                 print("Twitch Oauth Post Failed")
                 print("error: {0}".format(err))
-            time.sleep(10)
+                print(err)
+
+            time.sleep(5)
 
         return response
 
@@ -616,7 +618,7 @@ class TwitchAPIHandler:
                     used_headers = self.headers
                 else:
                     used_headers = headers
-                result = requests.get(url, headers=used_headers, params=params, timeout=0.001)
+                result = requests.get(url, headers=used_headers, params=params, timeout=20)
 
                 if result.json().get("error"):
                     self.update_oauth()
@@ -626,7 +628,7 @@ class TwitchAPIHandler:
                 print("Twitch Requests Failed")
                 print("error: {0}".format(err))
                 print(err)
-            time.sleep(10)
+            time.sleep(5)
 
         return result
 
