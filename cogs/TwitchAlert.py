@@ -583,6 +583,7 @@ class TwitchAPIHandler:
         complete = False
         while not complete:
             try:
+                print("requesting oauth")
                 response = requests.post('https://id.twitch.tv/oauth2/token', data=params, timeout=0.001)
                 if response is not None:
                     response = response.json().get('access_token')
@@ -610,6 +611,7 @@ class TwitchAPIHandler:
         complete = False
         while not complete:
             try:
+                print("Requesting from: "+url)
                 if headers is None:
                     used_headers = self.headers
                 else:
