@@ -635,12 +635,12 @@ class TwitchAPIHandler:
 
         next_hundred_users = usernames[:100]
         usernames = usernames[100:]
-        result = self.requests_get(url, params={'user_login': usernames}).json().get("data")
+        result = self.requests_get(url, params={'user_login': next_hundred_users}).json().get("data")
 
         while usernames:
             next_hundred_users = usernames[:100]
             usernames = usernames[100:]
-            result += self.requests_get(url, params={'user_login': usernames}).json().get("data")
+            result += self.requests_get(url, params={'user_login': next_hundred_users}).json().get("data")
 
         return result
 
