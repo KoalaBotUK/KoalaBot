@@ -16,7 +16,7 @@ import time
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-import requests
+import aiohttp
 
 # Own modules
 import KoalaBot
@@ -386,7 +386,7 @@ class TwitchAlert(commands.Cog):
             users_left -= 1
             if users_left == 0 or users[-1] == user:
 
-                user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
+                user_streams = await self.ta_database_manager.twitch_handler.get_streams_data(usernames)
                 # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
                 users_left = 100
                 if usernames == [] or user_streams is None:
@@ -421,7 +421,7 @@ class TwitchAlert(commands.Cog):
                                     else:
                                         message = result[3]
 
-                                    new_message_embed = self.create_alert_embed(streams_details, message)
+                                    new_message_embed = await self.create_alert_embed(streams_details, message)
                                     # with concurrent.futures.ThreadPoolExecutor() as pool3:
                                     #    new_message = await asyncio.get_event_loop(). \
                                     #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
@@ -438,23 +438,23 @@ class TwitchAlert(commands.Cog):
                 self.ta_database_manager.delete_all_offline_streams(False, usernames)
 
 
-    def create_alert_embed(self, stream_data, message):
+    async def create_alert_embed(self, stream_data, message):
         """
         Creates and sends an alert message
         :param stream_data: The twitch stream data to have in the message
         :param message: The custom message to be added as a description
         :return: The discord message id of the sent message
         """
-        user_details = self.ta_database_manager.twitch_handler.get_user_data(
+        user_details = await self.ta_database_manager.twitch_handler.get_user_data(
             stream_data.get("user_name"))
-        game_details = self.ta_database_manager.twitch_handler.get_game_data(
+        game_details = await self.ta_database_manager.twitch_handler.get_game_data(
             stream_data.get("game_id"))
         return create_live_embed(stream_data, user_details, game_details, message)
 
 
     @tasks.loop(minutes=5)
     async def loop_update_teams(self):
-        self.ta_database_manager.update_all_teams_members()
+        await self.ta_database_manager.update_all_teams_members()
 
     @tasks.loop(minutes=1)
     async def loop_check_team_live(self):
@@ -477,7 +477,7 @@ class TwitchAlert(commands.Cog):
 
 
         # (usernames)
-        streams_data = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
+        streams_data = await self.ta_database_manager.twitch_handler.get_streams_data(usernames)
         # print(streams_data)
         if usernames == [] or streams_data is None:
             return
@@ -513,7 +513,7 @@ class TwitchAlert(commands.Cog):
                                 message = result[3]
                             else:
                                 message = result[4]
-                            new_message_embed = self.create_alert_embed(stream_data, message)
+                            new_message_embed = await self.create_alert_embed(stream_data, message)
 
                             # with concurrent.futures.ThreadPoolExecutor() as pool3:
                             #    new_message = await asyncio.get_event_loop(). \
@@ -567,42 +567,48 @@ class TwitchAPIHandler:
     def __init__(self, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
-        self.oauth_token = self.get_new_twitch_oauth()
-        self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer ' + self.oauth_token}
+        self.params = {'client_id': self.client_id,
+                       'client_secret': self.client_secret,
+                       'grant_type': 'client_credentials'}
+        timeout = aiohttp.ClientTimeout(total=60)
+        self.aiohttp = aiohttp.ClientSession(timeout=timeout)
+        self.token = {}
 
-    def get_new_twitch_oauth(self):
+    @property
+    def base_headers(self):
+        return {
+            'Authorization': f'Bearer {self.token.get("access_token")}',
+            'Client-ID': self.client_id
+        }
+
+    async def get_new_twitch_oauth(self):
         """
         Get a new OAuth2 token from twitch using client_id and client_secret
         :return: The new OAuth2 token
         """
-        params = (
-            ('client_id', self.client_id),
-            ('client_secret', self.client_secret),
-            ('grant_type', 'client_credentials'),
-        )
-        complete = False
-        while not complete:
+        async with self.aiohttp.post('https://id.twitch.tv/oauth2/token', params=self.params) as response:
+            if response.status > 399:
+                print(f'Twitch Error {response.status} while getting Oauth token')
+                self.token = {}
+
+            response_json = await response.json()
+
             try:
-                print("requesting oauth")
-                response = requests.post('https://id.twitch.tv/oauth2/token', data=params, timeout=20)
-                if response is not None:
-                    response = response.json().get('access_token')
-                    complete = True
-            except requests.exceptions.Timeout or AttributeError as err:
-                print("Twitch Oauth Post Failed")
-                print("error: {0}".format(err))
-                print(err)
+                response_json['expires_in'] += time.time()
+            except KeyError:
+                # probably shouldn't need this, but catch just in case
+                print('Twitch Failed to set token expiration time')
 
-            time.sleep(5)
+            self.token = response_json
 
-        return response
+            return self.token
 
-    def update_oauth(self):
-        self.oauth_token = self.get_new_twitch_oauth()
+    async def update_oauth(self):
+        self.oauth_token = await self.get_new_twitch_oauth()
         self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer ' + self.oauth_token}
 
 
-    def requests_get(self, url, headers=None, params=None):
+    async def requests_get(self, url, headers=None, params=None):
         """
         Gets a response from a curl get request to the given url using headers of this object
         :param headers: the Headers required for the request, will use self.headers by default
@@ -610,29 +616,18 @@ class TwitchAPIHandler:
         :param params: The parameters of the request
         :return: The response of the request
         """
-        complete = False
-        while not complete:
-            try:
-                print("Requesting from: "+url)
-                if headers is None:
-                    used_headers = self.headers
-                else:
-                    used_headers = headers
-                result = requests.get(url, headers=used_headers, params=params, timeout=20)
+        if self.token.get('expires_in', 0) <= time.time() + 1 or not self.token:
+            await self.get_new_twitch_oauth()
 
-                if result.json().get("error"):
-                    self.update_oauth()
-                elif result is not None:
-                    complete = True
-            except requests.exceptions.Timeout or AttributeError as err:
-                print("Twitch Requests Failed")
-                print("error: {0}".format(err))
-                print(err)
-            time.sleep(5)
+        ctime = time.time()
+        async with self.aiohttp.get(url=url, headers=headers if headers else self.base_headers, params=params) as response:
 
-        return result
+            if response.status > 399:
+                print(f'Twitch Error {response.status} while getting requesting URL:{url}')
 
-    def get_streams_data(self, usernames):
+            return await response.json()
+
+    async def get_streams_data(self, usernames):
         """
         Gets all stream information from a list of given usernames
         :param usernames: The list of usernames
@@ -642,43 +637,44 @@ class TwitchAPIHandler:
 
         next_hundred_users = usernames[:100]
         usernames = usernames[100:]
-        result = self.requests_get(url, params={'user_login': next_hundred_users}).json().get("data")
+        result = (await self.requests_get(url+"user_login="+"&user_login=".join(next_hundred_users))).get("data")
 
         while usernames:
             next_hundred_users = usernames[:100]
             usernames = usernames[100:]
-            result += self.requests_get(url, params={'user_login': next_hundred_users}).json().get("data")
+            result += (await self.requests_get(url + "user_login=" + "&user_login=".join(next_hundred_users))).get(
+                "data")
 
         return result
 
-    def get_user_data(self, username):
+    async def get_user_data(self, username):
         """
         Gets the user information of a given user
         :param username: The display twitch username of the user
         :return: The JSON information of the user's data
         """
         url = 'https://api.twitch.tv/helix/users?login=' + username
-        return self.requests_get(url).json().get("data")[0]
+        return (await self.requests_get(url)).get("data")[0]
 
-    def get_game_data(self, game_id):
+    async def get_game_data(self, game_id):
         """
         Gets the game information of a given game
         :param game_id: The twitch game ID of a game
         :return: The JSON information of the game's data
         """
         url = 'https://api.twitch.tv/helix/games?id=' + game_id
-        return self.requests_get(url).json().get("data")[0]
+        return (await self.requests_get(url)).get("data")[0]
 
-    def get_team_users(self, team_id):
+    async def get_team_users(self, team_id):
         """
         Gets the users data about a given team
         :param team_id: The team name of the twitch team
         :return: the JSON information of the users
         """
         url = 'https://api.twitch.tv/kraken/teams/' + team_id
-        return self.requests_get(url,
+        return (await self.requests_get(url,
                                  headers={'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-                                 ).json().get("users")
+                                 )).get("users")
 
 
 class TwitchAlertDBManager:
@@ -939,14 +935,14 @@ class TwitchAlertDBManager:
         self.database_manager.db_execute_commit(sql_remove_users, args=[team_alert_id])
         self.database_manager.db_execute_commit(sql_remove_team, args=[team_alert_id])
 
-    def update_team_members(self, twitch_team_id, team_name):
+    async def update_team_members(self, twitch_team_id, team_name):
         """
         Users in a team are updated to ensure they are assigned to the correct team
         :param twitch_team_id: the team twitch alert id
         :param team_name: the name of the team
         :return:
         """
-        users = self.twitch_handler.get_team_users(team_name)
+        users = await self.twitch_handler.get_team_users(team_name)
         for user in users:
             sql_add_user = """INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
                                VALUES(?, ?)"""
@@ -956,7 +952,7 @@ class TwitchAlertDBManager:
             except:
                 pass
 
-    def update_all_teams_members(self):
+    async def update_all_teams_members(self):
         """
         Updates all teams with the current team members
         :return:
@@ -964,7 +960,7 @@ class TwitchAlertDBManager:
         sql_get_teams = """SELECT team_twitch_alert_id, twitch_team_name FROM TeamInTwitchAlert"""
         teams_info = self.database_manager.db_execute_select(sql_get_teams)
         for team_info in teams_info:
-            self.update_team_members(team_info[0], team_info[1])
+            await self.update_team_members(team_info[0], team_info[1])
 
     def delete_all_offline_streams(self, team: bool, usernames):
         """

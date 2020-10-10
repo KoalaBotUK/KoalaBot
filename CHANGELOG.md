@@ -10,6 +10,7 @@ A lot these commands will only be available to administrators
 - Fix repeat on_ready
 - Fix timout for requests
 - Fix Twitch API Limits followed
+- Update TwitchAlert to use aiohttp rather than requests
 
 ## [0.1.3] - 30-9-2020
 ### Verification
