@@ -366,9 +366,13 @@ This email is stored so you don't need to verify it multiple times across server
     async def assign_roles_on_startup(self):
         results = self.DBManager.db_execute_select("SELECT * FROM roles")
         for g_id, r_id, suffix in results:
-            guild = self.bot.get_guild(g_id)
-            role = discord.utils.get(guild.roles, id=r_id)
-            await self.assign_role_to_guild(guild, role, suffix)
+            try:
+                guild = self.bot.get_guild(g_id)
+                role = discord.utils.get(guild.roles, id=r_id)
+                await self.assign_role_to_guild(guild, role, suffix)
+            except AttributeError:
+                # bot not in guild
+                pass
 
     async def assign_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
@@ -384,7 +388,7 @@ This email is stored so you don't need to verify it multiple times across server
                 member = guild.get_member(user_id)
                 await member.add_roles(role)
             except AttributeError:
-                # user not in a guild
+                # user not in a guild/bot no longer in guild
                 pass
 
     async def remove_roles_for_user(self, user_id, email):
@@ -397,7 +401,7 @@ This email is stored so you don't need to verify it multiple times across server
                 member = guild.get_member(user_id)
                 await member.remove_roles(role)
             except AttributeError:
-                # user not in a guild
+                # user not in a guild/bot no longer in guild
                 pass
 
     async def assign_role_to_guild(self, guild, role, suffix):
