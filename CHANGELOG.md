@@ -3,7 +3,9 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
-
+### Verification
+##### Changed
+- Fix bot erroring on startup if it had left any guilds with verification enabled
 
 ## [0.1.4] - 10-10-2020
 ### Koala Extensions
