@@ -129,7 +129,8 @@ def check_guild_has_ext(ctx, extension_id):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 
-#@client.event
+
+@client.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=error_embed(description=error))
