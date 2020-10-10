@@ -625,44 +625,6 @@ class TwitchAPIHandler:
             if response.status > 399:
                 print(f'Twitch Error {response.status} while getting requesting URL:{url}')
 
-            """
-            if int(response.headers.get('RateLimit-Remaining', 99)) <= 5 and response.status == 200:
-                bucket_reset = float(response.headers.get('RateLimit-Reset', time.time()))
-                wait_time = ceil(bucket_reset - time.time() + 0.5)
-                self.logger.warning('Ratelimit bucket exhausted, waiting %is', wait_time)
-                await asyncio.sleep(wait_time)
-
-
-            await functions.dogstatsd.increment(
-                'bot.twapi_calls',
-                tags=[bucket, f'status:{re.status}', f'endpoint:{re.url.path}'])
-            """
-
-
-
-            """
-            complete = False
-            while not complete:
-                try:
-                    print("Requesting from: "+url)
-                    if headers is None:
-                        used_headers = self.base_headers
-                    else:
-                        used_headers = headers
-                    result = requests.get(url, headers=used_headers, params=params, timeout=20)
-    
-                    if result.json().get("error"):
-                        await self.update_oauth()
-                    elif result is not None:
-                        complete = True
-                except requests.exceptions.Timeout or AttributeError as err:
-                    print("Twitch Requests Failed")
-                    print("error: {0}".format(err))
-                    print(err)
-                time.sleep(5)
-    
-            return result
-            """
             return await response.json()
 
     async def get_streams_data(self, usernames):
