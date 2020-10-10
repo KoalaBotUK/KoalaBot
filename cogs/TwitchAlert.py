@@ -858,7 +858,12 @@ class TwitchAlertDBManager:
         :param channel_id: discord channel ID which has the message
         :return:
         """
-        await (await self.bot.get_channel(int(channel_id)).fetch_message(message_id)).delete()
+        try:
+            message = await self.bot.get_channel(int(channel_id)).fetch_message(message_id)
+            await message.delete()
+        except discord.errors.NotFound as err:
+            print(f"Message ID {message_id} does not exist, skipping \nError: {err}")
+
 
     def get_users_in_ta(self, channel_id):
         """
