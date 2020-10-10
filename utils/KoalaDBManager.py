@@ -14,8 +14,10 @@ import os
 
 # Libs
 if os.name == 'nt':
+    print("Windows Detected: Database Encryption Disabled")
     import sqlite3
 else:
+    print("Linux Detected: Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
 
 
