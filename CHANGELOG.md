@@ -6,10 +6,13 @@ A lot these commands will only be available to administrators
 ### Verification
 ##### Changed
 - Fix bot erroring on startup if it had left any guilds with verification enabled
+#### Twitch Alert 
+##### Changed
+- Fix use of full URLs in twitch alerts
+- Fix oauth not updating
 
 ## [0.1.4] - 10-10-2020
-### Koala Extensions
-#### Twitch Alert *by [Jack Draper](https://github.com/jaydwee)*
+#### Twitch Alert 
 ##### Changed
 - Fix TwitchAlert loops crashing
 - Fix repeat on_ready
