@@ -10,13 +10,13 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import os
 import asyncio
-import concurrent.futures
 import time
+import re
+import aiohttp
 
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-import aiohttp
 
 # Own modules
 import KoalaBot
@@ -31,6 +31,7 @@ TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-
               "/128/social-twitch-circle-512.png"
 TWITCH_CLIENT_ID = os.environ['TWITCH_TOKEN']
 TWITCH_SECRET = os.environ['TWITCH_SECRET']
+TWITCH_USERNAME_REGEX = "^[a-zA-Z0-9_]{4,25}$"
 
 
 # Variables
@@ -94,12 +95,12 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
-
         # Assigning default message if provided
         if default_live_message is not None and default_live_message != (None,):
             default_message = " ".join(default_live_message)
-            if len(default_message)>1000:
-                await ctx.send(embed=error_embed("custom_message is too long, try something with less than 1000 characters"))
+            if len(default_message) > 1000:
+                await ctx.send(embed=error_embed(
+                    "custom_message is too long, try something with less than 1000 characters"))
                 return
 
         else:
@@ -168,6 +169,8 @@ class TwitchAlert(commands.Cog):
             channel_id = ctx.message.channel.id
         if twitch_username is None:
             raise commands.MissingRequiredArgument("twitch_username is a required argument that is missing.")
+        elif not re.search(TWITCH_USERNAME_REGEX, twitch_username):
+            raise commands.MissingRequiredArgument("The given twitch_username is not a valid username (you do not need the full url)")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -222,6 +225,7 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
+
         self.ta_database_manager.remove_user_from_ta(channel_id, twitch_username)
         # Response Message
         new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
@@ -251,6 +255,8 @@ class TwitchAlert(commands.Cog):
             channel_id = ctx.message.channel.id
         if team_name is None:
             raise commands.MissingRequiredArgument("team_name is a required argument that is missing.")
+        elif not re.search(TWITCH_USERNAME_REGEX, team_name):
+            raise commands.MissingRequiredArgument("The given team_name is not a valid twitch team name (you do not need the full url)")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -382,6 +388,9 @@ class TwitchAlert(commands.Cog):
         usernames = []
         users_left = 100
         for user in users:
+            if "/" in user[0]:
+                user[0] = user[0].split("/")[-1]
+
             usernames.append(user[0])
             users_left -= 1
             if users_left == 0 or users[-1] == user:
@@ -473,6 +482,9 @@ class TwitchAlert(commands.Cog):
         users_and_teams = self.ta_database_manager.database_manager.db_execute_select(sql_select_team_users)
         usernames = []
         for user in users_and_teams:
+            if "/" in user[0]:
+                user[0] = user[0].split("/")[-1]
+
             usernames.append(user[0])
 
 
@@ -622,7 +634,11 @@ class TwitchAPIHandler:
         ctime = time.time()
         async with self.aiohttp.get(url=url, headers=headers if headers else self.base_headers, params=params) as response:
 
-            if response.status > 399:
+            if response.status == 401:
+                print(f"Twitch Error {response.status}, getting new oauth and retrying")
+                await self.get_new_twitch_oauth()
+                response = await self.requests_get(url, headers, params)
+            elif response.status > 399:
                 print(f'Twitch Error {response.status} while getting requesting URL:{url}')
 
             return await response.json()
@@ -805,7 +821,6 @@ class TwitchAlertDBManager:
         sql_find_ta = "SELECT default_message FROM TwitchAlerts WHERE channel_id= ?"
         return self.database_manager.db_execute_select(sql_find_ta, args=[channel_id])
 
-
     def add_user_to_ta(self, channel_id, twitch_username, custom_message, guild_id=None):
         """
         Add a twitch user to a given Twitch Alert
@@ -947,15 +962,16 @@ class TwitchAlertDBManager:
         :param team_name: the name of the team
         :return:
         """
-        users = await self.twitch_handler.get_team_users(team_name)
-        for user in users:
-            sql_add_user = """INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
-                               VALUES(?, ?)"""
-            try:
-                self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
-                                                        pass_errors=True)
-            except:
-                pass
+        if re.search(TWITCH_USERNAME_REGEX, team_name):
+            users = await self.twitch_handler.get_team_users(team_name)
+            for user in users:
+                sql_add_user = """INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
+                                   VALUES(?, ?)"""
+                try:
+                    self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
+                                                            pass_errors=True)
+                except:
+                    pass
 
     async def update_all_teams_members(self):
         """
