@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Twitch Alert
+- Minor Bug Fixes
 
 ## [0.1.5] - 11-10-2020
 ### Verification
