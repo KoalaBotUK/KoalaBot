@@ -170,7 +170,8 @@ class TwitchAlert(commands.Cog):
         if twitch_username is None:
             raise commands.MissingRequiredArgument("twitch_username is a required argument that is missing.")
         elif not re.search(TWITCH_USERNAME_REGEX, twitch_username):
-            raise commands.MissingRequiredArgument("The given twitch_username is not a valid username (you do not need the full url)")
+            pass
+            #raise commands.MissingRequiredArgument("The given twitch_username is not a valid username (you do not need the full url)")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -372,7 +373,7 @@ class TwitchAlert(commands.Cog):
             self.loop_check_live.start()
             self.running = True
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=0.1)
     async def loop_check_live(self):
         """
         A loop that continually checks the live status of users and
@@ -389,7 +390,7 @@ class TwitchAlert(commands.Cog):
         users_left = 100
         for user in users:
             if "/" in user[0]:
-                user[0] = user[0].split("/")[-1]
+                user = (user[0].split("/")[-1],)
 
             usernames.append(user[0])
             users_left -= 1
@@ -483,7 +484,7 @@ class TwitchAlert(commands.Cog):
         usernames = []
         for user in users_and_teams:
             if "/" in user[0]:
-                user[0] = user[0].split("/")[-1]
+                user = (user[0].split("/")[-1],)
 
             usernames.append(user[0])
 
@@ -637,7 +638,7 @@ class TwitchAPIHandler:
             if response.status == 401:
                 print(f"Twitch Error {response.status}, getting new oauth and retrying")
                 await self.get_new_twitch_oauth()
-                response = await self.requests_get(url, headers, params)
+                return await self.requests_get(url, headers, params)
             elif response.status > 399:
                 print(f'Twitch Error {response.status} while getting requesting URL:{url}')
 
