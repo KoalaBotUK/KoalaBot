@@ -13,11 +13,16 @@ import asyncio
 import time
 import re
 import aiohttp
-from sqlite3 import IntegrityError
 
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
+if os.name == 'nt':
+    print("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    print("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
 
 # Own modules
 import KoalaBot
@@ -972,7 +977,7 @@ class TwitchAlertDBManager:
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
-                except IntegrityError:
+                except sqlite3.IntegrityError:
                     pass
 
     async def update_all_teams_members(self):
