@@ -3,9 +3,14 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Twitch Alert
+##### Changed
+- Fix InvalidArgument errors from not showing
+- Add logging
 
 ## [0.1.6] - 12-10-2020
 ### Twitch Alert
+##### Changed
 - Minor Bug Fixes
 
 ## [0.1.5] - 11-10-2020
