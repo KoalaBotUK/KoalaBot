@@ -13,6 +13,7 @@ import asyncio
 import time
 import re
 import aiohttp
+from sqlite3 import IntegrityError
 
 # Libs
 from discord.ext import commands, tasks
@@ -170,8 +171,8 @@ class TwitchAlert(commands.Cog):
         if twitch_username is None:
             raise commands.MissingRequiredArgument("twitch_username is a required argument that is missing.")
         elif not re.search(TWITCH_USERNAME_REGEX, twitch_username):
-            pass
-            #raise commands.MissingRequiredArgument("The given twitch_username is not a valid username (you do not need the full url)")
+            raise commands.MissingRequiredArgument(
+                "The given twitch_username is not a valid username (you do not need the full url)")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -184,8 +185,9 @@ class TwitchAlert(commands.Cog):
         if custom_live_message is not None and custom_live_message != (None,):
             custom_message = " ".join(custom_live_message)
             default_message = custom_message
-            if len(default_message)>1000:
-                await ctx.send(embed=error_embed("custom_message is too long, try something with less than 1000 characters"))
+            if len(default_message) > 1000:
+                await ctx.send(embed=error_embed(
+                    "custom_message is too long, try something with less than 1000 characters"))
                 return
         else:
             custom_message = None
@@ -226,7 +228,6 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
-
         self.ta_database_manager.remove_user_from_ta(channel_id, twitch_username)
         # Response Message
         new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
@@ -257,7 +258,8 @@ class TwitchAlert(commands.Cog):
         if team_name is None:
             raise commands.MissingRequiredArgument("team_name is a required argument that is missing.")
         elif not re.search(TWITCH_USERNAME_REGEX, team_name):
-            raise commands.MissingRequiredArgument("The given team_name is not a valid twitch team name (you do not need the full url)")
+            raise commands.MissingRequiredArgument(
+                "The given team_name is not a valid twitch team name (you do not need the full url)")
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -269,8 +271,9 @@ class TwitchAlert(commands.Cog):
         # Setting the custom message as required
         if custom_live_message is not None and custom_live_message != (None,):
             default_message = " ".join(custom_live_message)
-            if len(default_message)>1000:
-                await ctx.send(embed=error_embed("custom_message is too long, try something with less than 1000 characters"))
+            if len(default_message) > 1000:
+                await ctx.send(embed=error_embed(
+                    "custom_message is too long, try something with less than 1000 characters"))
                 return
         else:
             default_message = DEFAULT_MESSAGE
@@ -328,7 +331,7 @@ class TwitchAlert(commands.Cog):
         :param raw_channel_id:
         :return:
         """
-        if raw_channel_id == None:
+        if raw_channel_id is None:
             channel_id = ctx.message.channel.id
         else:
             channel_id = extract_id(raw_channel_id)
@@ -373,7 +376,7 @@ class TwitchAlert(commands.Cog):
             self.loop_check_live.start()
             self.running = True
 
-    @tasks.loop(minutes=0.1)
+    @tasks.loop(minutes=1)
     async def loop_check_live(self):
         """
         A loop that continually checks the live status of users and
@@ -408,12 +411,14 @@ class TwitchAlert(commands.Cog):
                         # print(current_username + " is live")
                         usernames.remove(current_username)
 
-                        sql_find_message_id = "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
-                                              "FROM UserInTwitchAlert " \
-                                              "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
-                                              "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-                                              "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
-                                              "WHERE twitch_username = ?;"
+                        sql_find_message_id = \
+                            "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
+                            "FROM UserInTwitchAlert " \
+                            "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+                            "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                            "WHERE extension_id = 'TwitchAlert' " \
+                            "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
+                            "WHERE twitch_username = ?;"
 
                         results = self.ta_database_manager.database_manager.db_execute_select(
                             sql_find_message_id, args=[current_username])
@@ -442,11 +447,11 @@ class TwitchAlert(commands.Cog):
                                 SET message_id = ? 
                                 WHERE channel_id = ? 
                                     AND twitch_username = ?"""
-                                self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id, args=[new_message.id, result[0], current_username])
+                                self.ta_database_manager.database_manager.db_execute_commit(
+                                    sql_update_message_id, args=[new_message.id, result[0], current_username])
 
                 # Deals with remaining offline streams
                 self.ta_database_manager.delete_all_offline_streams(False, usernames)
-
 
     async def create_alert_embed(self, stream_data, message):
         """
@@ -461,7 +466,6 @@ class TwitchAlert(commands.Cog):
             stream_data.get("game_id"))
         return create_live_embed(stream_data, user_details, game_details, message)
 
-
     @tasks.loop(minutes=5)
     async def loop_update_teams(self):
         await self.ta_database_manager.update_all_teams_members()
@@ -475,10 +479,12 @@ class TwitchAlert(commands.Cog):
         """
         sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
                                 "FROM UserInTwitchTeam " \
-                                "JOIN TeamInTwitchAlert TITA ON UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id " \
+                                "JOIN TeamInTwitchAlert TITA " \
+                                "  ON UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id " \
                                 "JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id " \
                                 "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-                                "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
+                                "WHERE extension_id = 'TwitchAlert' " \
+                                "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
 
         users_and_teams = self.ta_database_manager.database_manager.db_execute_select(sql_select_team_users)
         usernames = []
@@ -487,7 +493,6 @@ class TwitchAlert(commands.Cog):
                 user = (user[0].split("/")[-1],)
 
             usernames.append(user[0])
-
 
         # (usernames)
         streams_data = await self.ta_database_manager.twitch_handler.get_streams_data(usernames)
@@ -502,7 +507,8 @@ class TwitchAlert(commands.Cog):
                 usernames.remove(current_username)
 
                 sql_find_message_id = """
-                SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message, default_message 
+                SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message, 
+                  default_message 
                 FROM UserInTwitchTeam
                 JOIN TeamInTwitchAlert TITA on UserInTwitchTeam.team_twitch_alert_id = TITA.team_twitch_alert_id
                 JOIN TwitchAlerts TA on TITA.channel_id = TA.channel_id
@@ -563,7 +569,6 @@ def create_live_embed(stream_info, user_info, game_info, message):
                      icon_url=TWITCH_ICON)
     embed.title = "https://twitch.tv/" + str.lower(stream_info.get("user_name"))
 
-
     embed.add_field(name="Stream Title", value=stream_info.get("title"))
 
     embed.add_field(name="Playing", value=game_info.get("name"))
@@ -616,11 +621,6 @@ class TwitchAPIHandler:
 
             return self.token
 
-    async def update_oauth(self):
-        self.oauth_token = await self.get_new_twitch_oauth()
-        self.headers = {'Client-ID': self.client_id, 'Authorization': 'Bearer ' + self.oauth_token}
-
-
     async def requests_get(self, url, headers=None, params=None):
         """
         Gets a response from a curl get request to the given url using headers of this object
@@ -632,8 +632,8 @@ class TwitchAPIHandler:
         if self.token.get('expires_in', 0) <= time.time() + 1 or not self.token:
             await self.get_new_twitch_oauth()
 
-        ctime = time.time()
-        async with self.aiohttp.get(url=url, headers=headers if headers else self.base_headers, params=params) as response:
+        async with self.aiohttp.get(url=url, headers=headers if headers else self.base_headers, params=params) as \
+                response:
 
             if response.status == 401:
                 print(f"Twitch Error {response.status}, getting new oauth and retrying")
@@ -689,9 +689,10 @@ class TwitchAPIHandler:
         :return: the JSON information of the users
         """
         url = 'https://api.twitch.tv/kraken/teams/' + team_id
-        return (await self.requests_get(url,
-                                 headers={'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-                                 )).get("users")
+        return (
+            await self.requests_get(url,
+                                    headers={'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+                                    )).get("users")
 
 
 class TwitchAlertDBManager:
@@ -840,13 +841,15 @@ class TwitchAlertDBManager:
             INSERT INTO UserInTwitchAlert(channel_id, twitch_username, custom_message) 
             VALUES(?, ?, ?)
             """
-            self.database_manager.db_execute_commit(sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username), custom_message])
+            self.database_manager.db_execute_commit(
+                sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username), custom_message])
         else:
             sql_insert_user_twitch_alert = """
             INSERT INTO UserInTwitchAlert(channel_id, twitch_username) 
             VALUES(?, ?)
             """
-            self.database_manager.db_execute_commit(sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username)])
+            self.database_manager.db_execute_commit(
+                sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username)])
 
     def remove_user_from_ta(self, channel_id, twitch_username):
         """
@@ -880,7 +883,6 @@ class TwitchAlertDBManager:
         except discord.errors.NotFound as err:
             print(f"Message ID {message_id} does not exist, skipping \nError: {err}")
 
-
     def get_users_in_ta(self, channel_id):
         """
         Returns all users in a given Twitch Alert
@@ -890,7 +892,6 @@ class TwitchAlertDBManager:
         sql_get_users = "SELECT twitch_username FROM UserInTwitchAlert WHERE channel_id = ?"
         return self.database_manager.db_execute_select(sql_get_users, args=[channel_id])
 
-
     def get_teams_in_ta(self, channel_id):
         """
         Returns all teams in a given Twitch Alert
@@ -899,8 +900,6 @@ class TwitchAlertDBManager:
         """
         sql_get_teams = "SELECT twitch_team_name FROM TeamInTwitchAlert WHERE channel_id = ?"
         return self.database_manager.db_execute_select(sql_get_teams, args=[channel_id])
-
-
 
     def add_team_to_ta(self, channel_id, twitch_team, custom_message, guild_id=None):
         """
@@ -920,13 +919,15 @@ class TwitchAlertDBManager:
             INSERT INTO TeamInTwitchAlert(channel_id, twitch_team_name, custom_message) 
             VALUES(?, ?, ?)
             """
-            self.database_manager.db_execute_commit(sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team), custom_message])
+            self.database_manager.db_execute_commit(
+                sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team), custom_message])
         else:
             sql_insert_team_twitch_alert = """
             INSERT INTO TeamInTwitchAlert(channel_id, twitch_team_name) 
             VALUES(?, ?)
             """
-            self.database_manager.db_execute_commit(sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team)])
+            self.database_manager.db_execute_commit(
+                sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team)])
 
     def remove_team_from_ta(self, channel_id, team_name):
         """
@@ -971,7 +972,7 @@ class TwitchAlertDBManager:
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
-                except:
+                except IntegrityError:
                     pass
 
     async def update_all_teams_members(self):
