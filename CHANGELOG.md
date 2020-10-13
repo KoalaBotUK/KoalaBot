@@ -7,6 +7,7 @@ A lot these commands will only be available to administrators
 ##### Changed
 - Fix InvalidArgument errors from not showing
 - Add logging
+- Add removal of chats that are no longer accessible
 
 ## [0.1.6] - 12-10-2020
 ### Twitch Alert
