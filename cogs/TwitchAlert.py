@@ -432,29 +432,33 @@ class TwitchAlert(commands.Cog):
 
                 for result in results:
                     channel = self.bot.get_channel(id=result[0])
+                    try:
+                        # If no Alert is posted
+                        if result[1] is None:
+                            if new_message_embed is None:
+                                if result[2] is not None:
+                                    message = result[2]
+                                else:
+                                    message = result[3]
 
-                    # If no Alert is posted
-                    if result[1] is None:
-                        if new_message_embed is None:
-                            if result[2] is not None:
-                                message = result[2]
-                            else:
-                                message = result[3]
-
-                            new_message_embed = await self.create_alert_embed(streams_details, message)
-                            # with concurrent.futures.ThreadPoolExecutor() as pool3:
-                            #    new_message = await asyncio.get_event_loop(). \
-                            #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
-                            #                        streams_details, message)
-                        new_message = await channel.send(embed=new_message_embed)
-                        sql_update_message_id = """
-                        UPDATE UserInTwitchAlert 
-                        SET message_id = ? 
-                        WHERE channel_id = ? 
-                            AND twitch_username = ?"""
-                        self.ta_database_manager.database_manager.db_execute_commit(
-                            sql_update_message_id, args=[new_message.id, result[0], current_username])
-
+                                new_message_embed = await self.create_alert_embed(streams_details, message)
+                                # with concurrent.futures.ThreadPoolExecutor() as pool3:
+                                #    new_message = await asyncio.get_event_loop(). \
+                                #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
+                                #                        streams_details, message)
+                            new_message = await channel.send(embed=new_message_embed)
+                            sql_update_message_id = """
+                            UPDATE UserInTwitchAlert 
+                            SET message_id = ? 
+                            WHERE channel_id = ? 
+                                AND twitch_username = ?"""
+                            self.ta_database_manager.database_manager.db_execute_commit(
+                                sql_update_message_id, args=[new_message.id, result[0], current_username])
+                    except discord.errors.Forbidden as err:
+                        logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
+                        sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
+                        self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel,
+                                                                                    args=[channel.id])
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(False, usernames)
         logging.info(f"TwitchAlert: User Loop Finished in {time.time()-start}s")
@@ -506,8 +510,6 @@ class TwitchAlert(commands.Cog):
             else:
                 usernames.append(user[0])
 
-
-        # (usernames)
         streams_data = await self.ta_database_manager.twitch_handler.get_streams_data(usernames)
         # print(streams_data)
         if usernames == [] or streams_data is None:
@@ -564,7 +566,8 @@ class TwitchAlert(commands.Cog):
                     except discord.errors.Forbidden as err:
                         logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                         sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
-                        self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel.id])
+                        self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel,
+                                                                                    args=[channel.id])
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(True, usernames)
         logging.info(f"TwitchAlert: Teams Loop Finished in {time.time()-start}s")
@@ -876,10 +879,10 @@ class TwitchAlertDBManager:
         :param twitch_username: The Twitch username of the user to be added
         :return:
         """
-        sql_get_message_id = """SELECT message_id 
-                                 FROM UserInTwitchAlert 
-                                 WHERE twitch_username = ?
-                                    AND channel_id = ?"""
+        sql_get_message_id = "SELECT message_id" \
+                             "FROM UserInTwitchAlert" \
+                             "WHERE twitch_username = ?" \
+                             "AND channel_id = ?"
         message_id = self.database_manager.db_execute_select(sql_get_message_id,
                                                              args=[twitch_username, channel_id])[0][0]
         if message_id is not None:
