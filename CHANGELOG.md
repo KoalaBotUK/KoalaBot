@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+
+## [0.1.7] - 13-10-2020
 ### Twitch Alert
 ##### Changed
 - Fix InvalidArgument errors from not showing
@@ -96,6 +98,7 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.3...v0.1.4
