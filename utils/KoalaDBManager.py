@@ -8,10 +8,18 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import sqlite3
+import os
+
 
 
 # Libs
+if os.name == 'nt':
+    print("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    print("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
+
 
 
 # Own modules
@@ -23,9 +31,11 @@ import sqlite3
 
 class KoalaDBManager:
 
-    def __init__(self, db_file_path):
+    def __init__(self, db_file_path, db_secret_key):
         self.db_file_path = db_file_path
-
+        if os.name == 'nt':
+            self.db_file_path = "windows_"+self.db_file_path
+        self.db_secret_key = db_secret_key
     def create_connection(self):
         """ Create a database connection to the SQLite3 database specified in db_file_path
 
@@ -34,7 +44,11 @@ class KoalaDBManager:
         conn = None
         try:
             conn = sqlite3.connect(self.db_file_path)
-            return conn
+            c = conn.cursor()
+            if os.name != 'nt':
+                c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
+
+            return conn, c
         except Exception as e:
             print(e)
 
@@ -49,8 +63,7 @@ class KoalaDBManager:
         :return:
         """
         try:
-            conn = self.create_connection()
-            c = conn.cursor()
+            conn, c = self.create_connection()
             if args:
                 c.execute(sql_str, args)
             else:
@@ -74,8 +87,7 @@ class KoalaDBManager:
         :return: void
         """
         try:
-            conn = self.create_connection()
-            c = conn.cursor()
+            conn, c = self.create_connection()
             if args:
                 c.execute(sql_str, args)
             else:
@@ -118,57 +130,56 @@ class KoalaDBManager:
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
-
         pass
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
-        sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
+        sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
 
-        if len(self.db_execute_select(sql_check_extension_exists)) > 0:
-            sql_update_extension = f"""
+        if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0:
+            sql_update_extension = """
             UPDATE KoalaExtensions
-            SET subscription_required = '{subscription_required}',
-                available = '{available}',
-                enabled = '{enabled}'
-            WHERE extension_id = '{extension_id}'"""
-            self.db_execute_commit(sql_update_extension)
+            SET subscription_required = ?,
+                available = ?,
+                enabled = ?
+            WHERE extension_id = ?"""
+            self.db_execute_commit(sql_update_extension, args=[subscription_required, available, enabled, extension_id])
 
         else:
-            sql_insert_extension = f"""
+            sql_insert_extension = """
             INSERT INTO KoalaExtensions 
-            VALUES ('{extension_id}','{subscription_required}','{available}','{enabled}')"""
+            VALUES (?,?,?,?)"""
 
-            self.db_execute_commit(sql_insert_extension)
+            self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
 
     def extension_enabled(self, guild_id, extension_id):
-        sql_select_extension = f"SELECT extension_id " \
-                               f"FROM GuildExtensions " \
-                               f"WHERE guild_id = {guild_id}"
-        result = self.db_execute_select(sql_select_extension)
+        sql_select_extension = "SELECT extension_id " \
+                               "FROM GuildExtensions " \
+                               "WHERE guild_id = ?"
+        result = self.db_execute_select(sql_select_extension, args=[guild_id])
         return ("All",) in result or (extension_id,) in result
 
     def give_guild_extension(self, guild_id, extension_id):
-        sql_check_extension_exists = f"""SELECT * FROM KoalaExtensions WHERE extension_id = '{extension_id}'"""
-        if len(self.db_execute_select(sql_check_extension_exists)) > 0 or extension_id == "All":
-            sql_insert_guild_extension = f"""
+        sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
+        if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0 or extension_id == "All":
+            sql_insert_guild_extension = """
             INSERT INTO GuildExtensions 
-            VALUES ('{extension_id}','{guild_id}')"""
-            self.db_execute_commit(sql_insert_guild_extension)
+            VALUES (?,?)"""
+            self.db_execute_commit(sql_insert_guild_extension, args=[extension_id, guild_id])
         else:
             raise NotImplementedError(f"{extension_id} is not a valid extension")
 
     def remove_guild_extension(self, guild_id, extension_id):
-        sql_remove_extension = f"DELETE FROM GuildExtensions " \
-                               f"WHERE extension_id = '{extension_id}' AND guild_id = {guild_id}"
-        self.db_execute_commit(sql_remove_extension, pass_errors=True)
+        sql_remove_extension = "DELETE FROM GuildExtensions " \
+                               "WHERE extension_id = ? AND guild_id = ?"
+        self.db_execute_commit(sql_remove_extension, args=[extension_id, guild_id], pass_errors=True)
 
-    def get_enabled_guild_extensions(self, guild_id):
-        sql_select_enabled = f"SELECT extension_id FROM GuildExtensions WHERE guild_id = {guild_id}"
-        return self.db_execute_select(sql_select_enabled, pass_errors=True)
+    def get_enabled_guild_extensions(self, guild_id:int):
+        sql_select_enabled = "SELECT extension_id FROM GuildExtensions WHERE guild_id = ?"
+        return self.db_execute_select(sql_select_enabled, args=[guild_id], pass_errors=True)
 
-    def get_all_available_guild_extensions(self, guild_id):
-        sql_select_all = f"SELECT DISTINCT KoalaExtensions.extension_id " \
-                         f"FROM KoalaExtensions WHERE available = 'True'"
+    def get_all_available_guild_extensions(self, guild_id:int):
+        sql_select_all = "SELECT DISTINCT KoalaExtensions.extension_id " \
+                         "FROM KoalaExtensions WHERE available = 1"
         return self.db_execute_select(sql_select_all, pass_errors=True)
 
 
@@ -180,23 +191,23 @@ class KoalaDBManager:
             self.db_execute_commit('DELETE FROM ' + table[0] + ';')
 
     def fetch_guild_welcome_message(self, guild_id):
-        msg = self.db_execute_select(f"SELECT * FROM GuildWelcomeMessages WHERE guild_id = {guild_id};")
+        msg = self.db_execute_select("SELECT * FROM GuildWelcomeMessages WHERE guild_id = ?", args=[guild_id])
         if len(msg) == 0:
             return None
         return msg[0][1]
 
     def update_guild_welcome_message(self, guild_id, new_message: str):
         self.db_execute_commit(
-            f"UPDATE GuildWelcomeMessages SET welcome_message = \"{new_message}\" WHERE guild_id = {guild_id};")
+            "UPDATE GuildWelcomeMessages SET welcome_message = ? WHERE guild_id = ?;", args=[new_message, guild_id])
         return new_message
 
     def remove_guild_welcome_message(self, guild_id):
-        rows = self.db_execute_select(f"SELECT * FROM GuildWelcomeMessages WHERE guild_id = {guild_id};")
-        self.db_execute_commit(f"DELETE FROM GuildWelcomeMessages WHERE guild_id = {guild_id};")
+        rows = self.db_execute_select("SELECT * FROM GuildWelcomeMessages WHERE guild_id = ?;", args=[guild_id])
+        self.db_execute_commit("DELETE FROM GuildWelcomeMessages WHERE guild_id = ?;", args=[guild_id])
         return len(rows)
 
     def new_guild_welcome_message(self, guild_id):
         from cogs import IntroCog
         self.db_execute_commit(
-            f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({guild_id}, \"{IntroCog.DEFAULT_WELCOME_MESSAGE}\");")
+            "INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);", args=[guild_id, IntroCog.DEFAULT_WELCOME_MESSAGE])
         return self.fetch_guild_welcome_message(guild_id)

@@ -16,7 +16,7 @@ to improve their server and society!
 * **Harry Nelson** - *Developer* - [largereptile](https://github.com/largereptile)
 * **Robert Slawik** - *Developer* - [RobertSlawik](https://github.com/RobertSlawik)
 * **Rurda Malik** - *Developer* - [BlahBlahRudra](https://github.com/BlahBlahRudra)
-* **Josh Jones** - *Developer* - 
+* **Stefan Cooper** - *Developer* - [3eak](https://github.com/3eak)
 
 See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) who participated in this project.
 
@@ -53,6 +53,10 @@ BOT_OWNER = 123456789 # A discord ID for the person who should have access to ow
 # Twitch Alert
 TWITCH_TOKEN = tw1tch70k3n # Twitch Token taken from the twitch developers portal
 TWITCH_SECRET = tw1tch53cr3t # Twitch Secret taken from the twitch developers portal
+
+# Verification
+GMAIL_EMAIL = example@gmail.com # email for a gmail account
+GMAIL_PASSWORD = example_password123 # password for the same gmail account
 ```
 
 ## Running the tests

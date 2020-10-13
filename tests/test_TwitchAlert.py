@@ -11,7 +11,6 @@ Commented using reStructuredText (reST)
 import os
 import asyncio
 
-
 # Libs
 import discord.ext.test as dpytest
 import mock
@@ -26,7 +25,6 @@ from cogs import TwitchAlert
 from utils import KoalaDBManager
 from utils.KoalaColours import *
 
-
 # Constants
 DB_PATH = "KoalaBotTwitchTest.db"
 
@@ -36,8 +34,13 @@ DB_PATH = "KoalaBotTwitchTest.db"
 
 def setup_module():
     try:
-        os.remove(DB_PATH)
-        KoalaBot.IS_DPYTEST = True
+        if os.name == 'nt':
+            print("Windows Detected: Deleting windows_"+DB_PATH)
+            os.remove("windows_"+DB_PATH)
+        else:
+            print("Windows Not Detected: Deleting "+DB_PATH)
+            os.remove(DB_PATH)
+        KoalaBot.is_dpytest = True
     except FileNotFoundError:
         print("Database Doesn't Exist, Continuing")
     finally:
@@ -60,6 +63,7 @@ def test_create_live_embed():
     # Get response and assert equal
     result = TwitchAlert.create_live_embed(stream_info, user_info, game_info, "")
     assert dpytest.embed_eq(result, expected)
+
 
 def test_create_live_embed_with_message():
     # Create the expected embed with information required
@@ -91,7 +95,7 @@ async def test_setup():
 async def twitch_cog():
     """ setup any state specific to the execution of the given module."""
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    database_manager = KoalaDBManager.KoalaDBManager(DB_PATH)
+    database_manager = KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY)
     twitch_cog = TwitchAlert.TwitchAlert(bot, database_manager=database_manager)
     bot.add_cog(twitch_cog)
     await dpytest.empty_queue()
@@ -331,37 +335,9 @@ async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
 
 @pytest.mark.asyncio()
 async def test_on_ready(twitch_cog):
-    with mock.patch.object(TwitchAlert.TwitchAlert, 'start_loop') as mock1:
+    with mock.patch.object(TwitchAlert.TwitchAlert.loop_check_live, 'start') as mock1:
         await twitch_cog.on_ready()
     mock1.assert_called_with()
-
-
-def test_start_loop(twitch_cog):
-    with mock.patch.object(TwitchAlert.TwitchAlert, 'loop_check_live') as mock1:
-        twitch_cog.start_loop()
-    mock1.assert_called_with()
-    assert twitch_cog.loop_thread is not None
-
-
-def test_start_loop_repeated(twitch_cog):
-    twitch_cog.start_loop()
-    with pytest.raises(Exception,
-                       match="Loop is already running!"):
-        twitch_cog.start_loop()
-
-
-def test_end_loop(twitch_cog):
-    twitch_cog.start_loop()
-    assert twitch_cog.loop_thread is not None
-
-    twitch_cog.end_loop()
-    assert twitch_cog.loop_thread is None
-
-
-def test_end_empty_loop(twitch_cog):
-    with pytest.raises(Exception,
-                       match="Loop is not running!"):
-        twitch_cog.end_loop()
 
 
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7363))
@@ -389,13 +365,14 @@ async def test_loop_check_live(twitch_cog):
     await asyncio.sleep(10)
     dpytest.verify_embed(expected_embed)
 
-    
-def test_create_alert_embed(twitch_cog):
-    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-     "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
-     'title': 'Music 24/7'}
 
-    assert type(twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
+@pytest.mark.asyncio
+async def test_create_alert_embed(twitch_cog):
+    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
+                   "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
+                   'title': 'Music 24/7'}
+
+    assert type(await twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
 
 
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
@@ -415,17 +392,19 @@ def test_get_new_twitch_oauth(twitch_api_handler):
     assert twitch_api_handler.get_new_twitch_oauth()
 
 
-def test_requests_get(twitch_api_handler):
-    assert twitch_api_handler.requests_get("https://api.twitch.tv/helix/streams?",
-                                           params=(('user_login', 'monstercat'),)).json().get("data") is not None
+@pytest.mark.asyncio
+async def test_requests_get(twitch_api_handler):
+    assert (await twitch_api_handler.requests_get("https://api.twitch.tv/helix/streams?",
+                                           params=(('user_login', 'monstercat'),))).get("data") is not None
 
 
-def test_requests_get_kraken(twitch_api_handler):
+@pytest.mark.asyncio
+async def test_requests_get_kraken(twitch_api_handler):
     # When Twitch API v5 becomes depreciated this will no longer function
-    assert twitch_api_handler.requests_get("https://api.twitch.tv/kraken/teams/uosvge",
+    assert (await twitch_api_handler.requests_get("https://api.twitch.tv/kraken/teams/uosvge",
                                            headers={'Client-ID': TwitchAlert.TWITCH_CLIENT_ID,
                                                     'Accept': 'application/vnd.twitchtv.v5+json'}
-                                           ).json().get("users") is not None
+                                                  )).get("users") is not None
 
 
 def test_get_streams_data(twitch_api_handler):
@@ -438,13 +417,15 @@ def test_get_user_data(twitch_api_handler):
     assert twitch_api_handler.get_user_data('monstercat') is not None
 
 
-def test_get_game_data(twitch_api_handler):
-    assert 'music' in twitch_api_handler.get_game_data('26936').get('name').lower()
+@pytest.mark.asyncio
+async def test_get_game_data(twitch_api_handler):
+    assert 'music' in (await twitch_api_handler.get_game_data('26936')).get('name').lower()
 
 
-def test_get_team_users(twitch_api_handler):
+@pytest.mark.asyncio
+async def test_get_team_users(twitch_api_handler):
     # assumes uosvge is in the team called uosvge
-    members = twitch_api_handler.get_team_users('uosvge')
+    members = await twitch_api_handler.get_team_users('uosvge')
     for member in members:
         if member.get('name') == 'uosvge':
             assert True
@@ -455,7 +436,7 @@ def test_get_team_users(twitch_api_handler):
 # Test TwitchAlertDBManager
 @pytest.fixture
 def twitch_alert_db_manager(twitch_cog):
-    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH), twitch_cog.bot)
+    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY), twitch_cog.bot)
 
 
 @pytest.fixture
@@ -489,7 +470,7 @@ def test_new_ta(twitch_alert_db_manager_tables):
     assert TwitchAlert.DEFAULT_MESSAGE == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=2345)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-        [(1234, TwitchAlert.DEFAULT_MESSAGE)]
+           [(1234, TwitchAlert.DEFAULT_MESSAGE)]
 
 
 def test_new_ta_message(twitch_alert_db_manager_tables):
@@ -498,7 +479,7 @@ def test_new_ta_message(twitch_alert_db_manager_tables):
                                                                  default_message=test_message)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 23456"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-        [(12345, test_message,)]
+           [(12345, test_message,)]
 
 
 def test_new_ta_replace(twitch_alert_db_manager_tables):
@@ -508,7 +489,7 @@ def test_new_ta_replace(twitch_alert_db_manager_tables):
                                                                  default_message=test_message, replace=True)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-        [(1234, test_message)]
+           [(1234, test_message)]
     pass
 
 
@@ -566,7 +547,7 @@ def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_i
     sql_select_team = "SELECT custom_message FROM TeamInTwitchAlert " \
                       f"WHERE channel_id = {channel_id} AND twitch_team_name = 'faze'"
     assert twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_team) == \
-        [("Message here",)]
+           [("Message here",)]
 
 
 def test_remove_team_from_ta(twitch_alert_db_manager_tables):
@@ -583,8 +564,9 @@ def test_remove_team_from_ta_invalid(twitch_alert_db_manager_tables):
         twitch_alert_db_manager_tables.remove_team_from_ta(590, 590)
 
 
-def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
-    test_update_team_members(twitch_alert_db_manager_tables)
+@pytest.mark.asyncio()
+async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
+    await test_update_team_members(twitch_alert_db_manager_tables)
     sql_add_message = "UPDATE UserInTwitchTeam SET message_id = 1 " \
                       "WHERE team_twitch_alert_id = 604 AND twitch_username = 'monstercat'"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)
@@ -593,11 +575,12 @@ def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
     mock1.assert_called_with(1, 605)
 
 
-def test_update_team_members(twitch_alert_db_manager_tables):
+@pytest.mark.asyncio()
+async def test_update_team_members(twitch_alert_db_manager_tables):
     sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
                                  "VALUES(604,605,'monstercat')"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
-    twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
+    await twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
     sql_select_monstercat_team = "SELECT twitch_username " \
                                  "FROM UserInTwitchTeam " \
                                  "WHERE team_twitch_alert_id = 604 AND twitch_username='monstercat'"
@@ -606,14 +589,15 @@ def test_update_team_members(twitch_alert_db_manager_tables):
     pass
 
 
-def test_update_all_teams_members(twitch_alert_db_manager_tables):
+@pytest.mark.asyncio()
+async def test_update_all_teams_members(twitch_alert_db_manager_tables):
     sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
                                  "VALUES(614,615,'monstercat')"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
     sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
                                  "VALUES(616,617,'monstercat')"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
-    twitch_alert_db_manager_tables.update_all_teams_members()
+    await twitch_alert_db_manager_tables.update_all_teams_members()
     sql_select_monstercats_team = "SELECT twitch_username " \
                                   "FROM UserInTwitchTeam " \
                                   "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
@@ -636,8 +620,9 @@ def test_delete_all_offline_streams(twitch_alert_db_manager_tables):
     pass
 
 
-def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
-    test_update_all_teams_members(twitch_alert_db_manager_tables)
+@pytest.mark.asyncio()
+async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
+    await test_update_all_teams_members(twitch_alert_db_manager_tables)
     sql_add_message = "UPDATE UserInTwitchTeam SET message_id = 1 " \
                       "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
                       "AND twitch_username = 'monstercat'"
@@ -651,3 +636,10 @@ def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
     assert result[0][0] is None
     assert result[1][0] is None
     pass
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False

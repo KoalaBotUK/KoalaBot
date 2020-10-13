@@ -11,8 +11,8 @@ Commented using reStructuredText (reST)
 
 # Libs
 import asyncio
-
 import discord
+import os
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -27,12 +27,12 @@ KoalaBot and confirm you have read and understand our Privacy Policy. For legal 
 the following link: http://legal.koalabot.uk/"""
 DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
 # Variables
-DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
+DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
 
 def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
     try:
-        confirmation = bot.wait_for('message', timeout=5.0, check=lambda message: message.author == ctx.author)
+        confirmation = bot.wait_for('message', timeout=60.0, check=lambda message: message.author == ctx.author)
         return confirmation
     except Exception:
         confirmation = None
@@ -77,13 +77,13 @@ def get_guild_welcome_message(guild_id: int):
 
 
 def get_non_bot_members(guild: discord.Guild):
-    if KoalaBot.IS_DPYTEST:
+    if KoalaBot.is_dpytest:
         return [member for member in guild.members if not member.bot and str(member) != KoalaBot.TEST_BOT_USER]
     else:
         return [member for member in guild.members if not member.bot]
 
 
-class IntroCog(commands.Cog):
+class IntroCog(commands.Cog, name="KoalaBot"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
@@ -119,11 +119,14 @@ class IntroCog(commands.Cog):
         KoalaBot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeSendMsg", aliases=["send_welcome_message"])
     async def send_welcome_message(self, ctx):
         """
-        Allows admins to send out their welcome message manually to all members of a guild.
+        Allows admins to send out their welcome message manually to all members of a guild. Has a 60 second cooldown per
+        guild.
+
         :param ctx: Context of the command
         """
         non_bot_members = get_non_bot_members(ctx.guild)
@@ -142,32 +145,43 @@ class IntroCog(commands.Cog):
             await ctx.send("Okay, I won't send out the welcome message then.")
             return False
 
+    @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
-        Allows admins to change their customisable part of the welcome message of a guild.
+        Allows admins to change their customisable part of the welcome message of a guild. Has a 60 second cooldown per
+        guild.
+
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
         """
-        await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}
-            \n\n\rYour new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}
-            \n\rWould you like to update the message? Y/N?""")
-        try:
-            confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
-        except asyncio.TimeoutError:
-            await ctx.send('Timed out.')
-            confirmation_received = False
-        if confirmation_received:
-            try:
-                await ctx.send("Okay, updating the welcome message of the guild in the database now.")
-                new_message = new_message.lstrip()
-                updated_entry = DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
-                await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
-            except None:
-                await ctx.send("Something went wrong, please contact the bot developers for support.")
+        if len(new_message) > 1600:
+            await ctx.send("Your welcome message is too long to send, sorry. The maximum character limit is 1600.")
         else:
-            await ctx.send("Okay, I won't update the welcome message then.")
+            await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
+            await ctx.send(f"""Your new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}\n\rWould """ +
+                           """you like to update the message? Y/N?""")
+            try:
+                confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
+            except asyncio.TimeoutError:
+                await ctx.send('Timed out.')
+                confirmation_received = False
+            if confirmation_received:
+                try:
+                    await ctx.send("Okay, updating the welcome message of the guild in the database now.")
+                    new_message = new_message.lstrip()
+                    updated_entry = DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
+                    await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
+                except None:
+                    await ctx.send("Something went wrong, please contact the bot developers for support.")
+            else:
+                await ctx.send("Okay, I won't update the welcome message then.")
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.command(name="welcomeViewMsg")
+    async def view_welcome_message(self, ctx):
+        await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
 
     @update_welcome_message.error
     async def on_update_error(self, ctx, error):
@@ -181,3 +195,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: The client of the KoalaBot
     """
     bot.add_cog(IntroCog(bot))
+    print("IntroCog is ready.")

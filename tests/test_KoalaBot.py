@@ -26,7 +26,7 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 utils_cog = None
-DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH)
+DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 DBManager.create_base_tables()
 
 
@@ -126,3 +126,10 @@ async def test_dm_empty_group_message():
     x = await KoalaBot.dm_group_message([], test_message)
     dpytest.verify_message(assert_nothing=True)
     assert x == 0
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False
