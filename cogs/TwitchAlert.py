@@ -879,10 +879,10 @@ class TwitchAlertDBManager:
         :param twitch_username: The Twitch username of the user to be added
         :return:
         """
-        sql_get_message_id = "SELECT message_id" \
-                             "FROM UserInTwitchAlert" \
-                             "WHERE twitch_username = ?" \
-                             "AND channel_id = ?"
+        sql_get_message_id = "SELECT message_id " \
+                             "FROM UserInTwitchAlert " \
+                             "WHERE twitch_username = ? " \
+                             "AND channel_id = ? "
         message_id = self.database_manager.db_execute_select(sql_get_message_id,
                                                              args=[twitch_username, channel_id])[0][0]
         if message_id is not None:
