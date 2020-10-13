@@ -904,7 +904,7 @@ class TwitchAlertDBManager:
         except discord.errors.NotFound as err:
             logging.warning(f"TwitchAlert: Message ID {message_id} does not exist, skipping \nError: {err}")
         except discord.errors.Forbidden as err:
-            logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
+            logging.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
             self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel.id])
 
