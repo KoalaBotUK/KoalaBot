@@ -38,7 +38,7 @@ TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-
               "/128/social-twitch-circle-512.png"
 TWITCH_CLIENT_ID = os.environ['TWITCH_TOKEN']
 TWITCH_SECRET = os.environ['TWITCH_SECRET']
-TWITCH_USERNAME_REGEX = "^[a-zA-Z0-9_]{4,25}$"
+TWITCH_USERNAME_REGEX = "^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$"
 
 
 # Variables
@@ -390,7 +390,7 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         start = time.time()
-        logging.info("TwitchAlert: User Loop Started")
+        # logging.info("TwitchAlert: User Loop Started")
         sql_find_users = "SELECT twitch_username " \
                          "FROM UserInTwitchAlert " \
                          "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
@@ -461,7 +461,9 @@ class TwitchAlert(commands.Cog):
                                                                                     args=[channel.id])
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(False, usernames)
-        logging.info(f"TwitchAlert: User Loop Finished in {time.time()-start}s")
+        time_diff = time.time()-start
+        if time_diff > 5:
+            logging.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")
 
     async def create_alert_embed(self, stream_data, message):
         """
@@ -479,9 +481,13 @@ class TwitchAlert(commands.Cog):
     @tasks.loop(minutes=5)
     async def loop_update_teams(self):
         start = time.time()
-        logging.info("TwitchAlert: Started Update Teams")
+        # logging.info("TwitchAlert: Started Update Teams")
         await self.ta_database_manager.update_all_teams_members()
-        logging.info(f"TwitchAlert: Teams updated in {time.time()-start}s")
+        time_diff = time.time()-start
+        if time_diff > 5:
+            logging.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
+
+
 
     @tasks.loop(minutes=1)
     async def loop_check_team_live(self):
@@ -491,7 +497,7 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         start = time.time()
-        logging.info("TwitchAlert: Team Loop Started")
+        # logging.info("TwitchAlert: Team Loop Started")
         sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
                                 "FROM UserInTwitchTeam " \
                                 "JOIN TeamInTwitchAlert TITA " \
@@ -570,7 +576,9 @@ class TwitchAlert(commands.Cog):
                                                                                     args=[channel.id])
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(True, usernames)
-        logging.info(f"TwitchAlert: Teams Loop Finished in {time.time()-start}s")
+        time_diff = time.time()-start
+        if time_diff > 5:
+            logging.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
 
 
 def create_live_embed(stream_info, user_info, game_info, message):
@@ -591,8 +599,10 @@ def create_live_embed(stream_info, user_info, game_info, message):
     embed.title = "https://twitch.tv/" + str.lower(stream_info.get("user_name"))
 
     embed.add_field(name="Stream Title", value=stream_info.get("title"))
-
-    embed.add_field(name="Playing", value=game_info.get("name"))
+    if game_info is None:
+        embed.add_field(name="Playing", value="No Category")
+    else:
+        embed.add_field(name="Playing", value=game_info.get("name"))
     embed.set_thumbnail(url=user_info.get("profile_image_url"))
 
     return embed
@@ -700,8 +710,12 @@ class TwitchAPIHandler:
         :param game_id: The twitch game ID of a game
         :return: The JSON information of the game's data
         """
-        url = 'https://api.twitch.tv/helix/games?id=' + game_id
-        return (await self.requests_get(url)).get("data")[0]
+        if game_id != "":
+            url = 'https://api.twitch.tv/helix/games?id=' + game_id
+            game_data = await self.requests_get(url)
+            return game_data.get("data")[0]
+        else:
+            return None
 
     async def get_team_users(self, team_id):
         """
