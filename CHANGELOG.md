@@ -3,6 +3,11 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Twitch Alert
+##### Changed
+- Add 'No Category' option
+- Reduced Logging
+- Fix regex allowing underscore at start of name
 
 ## [0.1.7] - 13-10-2020
 ### Twitch Alert
