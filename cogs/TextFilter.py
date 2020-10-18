@@ -20,15 +20,14 @@ from utils.KoalaColours import *
 # Constants
 load_dotenv()
 
-# Variables
-DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH)
-
 class TextFilterCog(commands.Cog):
     """
     A discord.py cog with commands pertaining to the a Text Filter for admins to monitor their server
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot, database_manager=None):
+        if not database_manager:
+            database_manager = KoalaBot.database_manager
         self.bot = bot
         self.tf_database_manager = TextFilterDBManager(KoalaBot.database_manager, bot)
         self.tf_database_manager.create_tables()
