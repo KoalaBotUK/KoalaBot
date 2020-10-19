@@ -78,6 +78,15 @@ def listModChannelEmbed(channels):
         embed.add_field(name="Name & Channel ID", value=channel.mention + " " + str(channel.id))
     return embed
 
+def listIgnoredEmbed(ignored):
+    embed = discord.Embed()
+    embed.title = "Koala Moderation - Ignored Users/Channels"
+    embed.colour = KOALA_GREEN
+    embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
+    for ig in ignored:
+        embed.add_field(name="Name & ID", value=ig.mention + " " + str(ig.id))
+    return embed
+
 def removeModChannelEmbed(channel):
     embed = discord.Embed()
     embed.title = "Koala Moderation - Mod Channel Removed"
@@ -310,7 +319,7 @@ async def test_ignore_channel():
     assertFilteredConfirmation("ignoreme","banned")
     assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word ignoreme")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignore " + channel1.mention + " channel")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + channel1.mention)
     assertNewIgnore(channel1.mention)
 
     # Should be ignored
@@ -332,7 +341,7 @@ async def test_ignore_user():
     await dpytest.message("ignoreuser")
     assertBannedWarning("ignoreuser")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignore " + message.author.mention + " user")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser " + message.author.mention)
     assertNewIgnore(message.author.mention)
 
     # Should be ignored
@@ -343,12 +352,7 @@ async def test_ignore_user():
 @pytest.mark.asyncio()
 async def test_ignore_empty_user():
     with pytest.raises(Exception):
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignore")
-
-@pytest.mark.asyncio()
-async def test_ignore_unknown_type():
-    with pytest.raises(Exception):
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignore " + dpytest.get_config().guilds[0].channels[0].mention + " unknown")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser")
 
 @pytest.mark.asyncio()
 async def test_unignore_channel():
@@ -356,7 +360,7 @@ async def test_unignore_channel():
     assertFilteredConfirmation("ignoreuser","banned")
     assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word ignoreuser")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignore " + dpytest.get_config().guilds[0].channels[0].mention + " channel")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + dpytest.get_config().guilds[0].channels[0].mention)
     assertNewIgnore(dpytest.get_config().guilds[0].channels[0].mention)
 
     # Should be ignored
@@ -368,6 +372,17 @@ async def test_unignore_channel():
     # Should be deleted and warned
     await dpytest.message("ignoreuser")
     assertBannedWarning("ignoreuser")
+
+@pytest.mark.asyncio()
+async def test_list_ignored():
+    mes = await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + dpytest.get_config().guilds[0].channels[0].mention)
+    assertNewIgnore(dpytest.get_config().guilds[0].channels[0].mention)
+
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser " + mes.author.mention)
+    assertNewIgnore(mes.author.mention)
+
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "listIgnored")
+    assert listIgnoredEmbed([dpytest.get_config().guilds[0].channels[0], mes.author])
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
