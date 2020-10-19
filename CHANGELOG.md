@@ -4,6 +4,21 @@ A lot these commands will only be available to administrators
 
 ## [Unreleased]
 
+### Text Filter
+##### Added
+- `filter <text> [type]`  Filter a word or string of text. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
+- `filter <regex> [type]` Filter a regex string. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
+- `unfilter <text>` Unfilter a word/string/regex of text that was previously filtered.
+- `checkFilteredWords` Get a list of filtered words in the server
+
+- `setupModChannel <channelId>` Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to.
+- `removeModChannel <channelId>` Remove a mod channel from the server.
+- `listModChannels` See a list of mod channels in the server.
+
+- `ignoreUser <userMention>` Add a new ignored user for the server. This users' messages will be ignored by the Text Filter.
+- `ignoreChannel <channelMention>` Add a new ignored channel for the server. Messages in this channel will be ignored by the Text Filter.
+
+
 ## [0.1.8] - 18-10-2020
 ### Twitch Alert
 ##### Changed

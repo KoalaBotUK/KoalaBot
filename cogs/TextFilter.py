@@ -110,27 +110,70 @@ class TextFilterCog(commands.Cog):
             await ctx.channel.send(embed=buildModerationChannelEmbed(ctx,channel,"Added"))
             return
         raise(Exception(error))
+    
+    @commands.command(name="removeModChannel", aliases=["remove_mod_channel"])
+    @commands.check(KoalaBot.is_admin)
+    async def removeModChannel(self, ctx, channelId, too_many_arguments=None):
+        """
+        Remove a mod channel from the guild
+        :param ctx: The discord context
+        :param channelId: The designated channel id to be removed
+        :return:
+        """
+        error = "Missing Channel ID or too many arguments remove a mod channel. If you don't know your Channel ID, use `k!listModChannels` to get information on your mod channels."
+        channel = self.bot.get_channel(int(channelId))
+        if (channel != None and too_many_arguments == None):
+            self.tf_database_manager.remove_mod_channel(ctx.guild.id, channelId)
+            await ctx.channel.send(embed=buildModerationChannelEmbed(ctx,channel,"Removed"))
+            return
+        raise Exception(error)
+
+    @commands.command(name="listModChannels", aliases=["list_mod_channels"])
+    @commands.check(KoalaBot.is_admin)
+    async def listModChannels(self, ctx):
+        """
+        Get a list of filtered mod channels in the guild
+        :param ctx: The discord context
+        :return:
+        """
+        channels = self.tf_database_manager.get_mod_channel(ctx.guild.id)
+        await ctx.channel.send(embed=buildChannelListEmbed(self, ctx, channels))
 
     @commands.command(name="ignore")
     @commands.check(KoalaBot.is_admin)
-    async def ignore(self, ctx, ignore, ignore_type, too_many_arguments=None):
+    async def ignoreUser(self, ctx, user, too_many_arguments=None):
         """
-        Add a new ignore to the database
+        Add a new ignored user to the database
         :param ctx: The discord context
-        :param ignore: The discord mention of the Channel/User
+        :param user: The discord mention of the User
         :param ignore_type: 'user' or 'channel'
         :return:
         """
         error = "Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID, use `k!listModChannels` to get information on your mod channels."  
-        if (ignore_type == "channel"):
-            ignore_id = ctx.message.channel_mentions[0].id
-            ignore_exists = self.bot.get_channel(int(ignore_id))
-        elif (ignore_type == "user"):
-            ignore_id = ctx.message.mentions[0].id
-            ignore_exists = self.bot.get_user(int(ignore_id))
+        ignore_id = ctx.message.mentions[0].id
+        ignore_exists = self.bot.get_user(int(ignore_id))
         if (ignore_exists != None):
             self.tf_database_manager.new_ignore(ctx.guild.id, ignore_type, ignore_id)
-            await ctx.channel.send("New ignore added: " + ignore)
+            await ctx.channel.send("New ignore added: " + user)
+            return
+        raise(Exception(error))
+
+    @commands.command(name="ignore")
+    @commands.check(KoalaBot.is_admin)
+    async def ignoreChannel(self, ctx, channel, too_many_arguments=None):
+        """
+        Add a new ignored channel to the database
+        :param ctx: The discord context
+        :param channel: The discord mention of the Channel
+        :param ignore_type: 'user' or 'channel'
+        :return:
+        """
+        error = "Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID, use `k!listModChannels` to get information on your mod channels."  
+        ignore_id = ctx.message.channel_mentions[0].id
+        ignore_exists = self.bot.get_channel(int(ignore_id))
+        if (ignore_exists != None):
+            self.tf_database_manager.new_ignore(ctx.guild.id, ignore_type, ignore_id)
+            await ctx.channel.send("New ignore added: " + channel)
             return
         raise(Exception(error))
 
@@ -152,34 +195,8 @@ class TextFilterCog(commands.Cog):
         self.tf_database_manager.remove_ignore(ctx.guild.id, ignore_id)
         await ctx.channel.send("Ignore removed: " + str(ignore))
         return
-
-    @commands.command(name="removeModChannel", aliases=["remove_mod_channel"])
-    @commands.check(KoalaBot.is_admin)
-    async def removeModChannel(self, ctx, channelId, too_many_arguments=None):
-        """
-        Get a list of filtered words on the current guild.
-        :param ctx: The discord context
-        :param channelId: The designated channel id to be removed
-        :return:
-        """
-        error = "Missing Channel ID or too many arguments remove a mod channel. If you don't know your Channel ID, use `k!listModChannels` to get information on your mod channels."
-        channel = self.bot.get_channel(int(channelId))
-        if (channel != None and too_many_arguments == None):
-            self.tf_database_manager.remove_mod_channel(ctx.guild.id, channelId)
-            await ctx.channel.send(embed=buildModerationChannelEmbed(ctx,channel,"Removed"))
-            return
-        raise Exception(error)
-
-    @commands.command(name="listModChannels", aliases=["list_mod_channels"])
-    @commands.check(KoalaBot.is_admin)
-    async def listModChannels(self, ctx):
-        """
-        Get a list of filtered words on the current guild.
-        :param ctx: The discord context
-        :return:
-        """
-        channels = self.tf_database_manager.get_mod_channel(ctx.guild.id)
-        await ctx.channel.send(embed=buildChannelListEmbed(self, ctx, channels))
+    
+    #todo command for seeing list of ignores
 
     @commands.Cog.listener()
     async def on_message(self,message):
