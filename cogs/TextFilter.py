@@ -139,40 +139,38 @@ class TextFilterCog(commands.Cog):
         channels = self.tf_database_manager.get_mod_channel(ctx.guild.id)
         await ctx.channel.send(embed=buildChannelListEmbed(self, ctx, channels))
 
-    @commands.command(name="ignore")
+    @commands.command(name="ignoreUser")
     @commands.check(KoalaBot.is_admin)
     async def ignoreUser(self, ctx, user, too_many_arguments=None):
         """
         Add a new ignored user to the database
         :param ctx: The discord context
         :param user: The discord mention of the User
-        :param ignore_type: 'user' or 'channel'
         :return:
         """
         error = "Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID, use `k!listModChannels` to get information on your mod channels."  
         ignore_id = ctx.message.mentions[0].id
         ignore_exists = self.bot.get_user(int(ignore_id))
         if (ignore_exists != None):
-            self.tf_database_manager.new_ignore(ctx.guild.id, ignore_type, ignore_id)
+            self.tf_database_manager.new_ignore(ctx.guild.id, 'user', ignore_id)
             await ctx.channel.send("New ignore added: " + user)
             return
         raise(Exception(error))
 
-    @commands.command(name="ignore")
+    @commands.command(name="ignoreChannel")
     @commands.check(KoalaBot.is_admin)
     async def ignoreChannel(self, ctx, channel, too_many_arguments=None):
         """
         Add a new ignored channel to the database
         :param ctx: The discord context
         :param channel: The discord mention of the Channel
-        :param ignore_type: 'user' or 'channel'
         :return:
         """
         error = "Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID, use `k!listModChannels` to get information on your mod channels."  
         ignore_id = ctx.message.channel_mentions[0].id
         ignore_exists = self.bot.get_channel(int(ignore_id))
         if (ignore_exists != None):
-            self.tf_database_manager.new_ignore(ctx.guild.id, ignore_type, ignore_id)
+            self.tf_database_manager.new_ignore(ctx.guild.id, 'channel', ignore_id)
             await ctx.channel.send("New ignore added: " + channel)
             return
         raise(Exception(error))
@@ -197,6 +195,16 @@ class TextFilterCog(commands.Cog):
         return
     
     #todo command for seeing list of ignores
+    @commands.command(name="listIgnored", aliases=["list_ignored"])
+    @commands.check(KoalaBot.is_admin)
+    async def listIgnored(self, ctx):
+        """
+        Get a list all ignored users/channels
+        :param ctx: The discord context
+        :return:
+        """
+        ignored= self.tf_database_manager.get_all_ignored(ctx.guild.id)
+        await ctx.channel.send(embed=buildIgnoreListEmbed(self, ctx, ignored))
 
     @commands.Cog.listener()
     async def on_message(self,message):
@@ -297,6 +305,24 @@ def buildChannelList(self, channels, embed):
             embed.add_field(name="Channel ID", value=channel[0], inline=False)
     return embed
 
+def buildIgnoreList(self, ignored, embed):
+    """
+    Builds a formatted list of ignored users/channels
+    :param ignored: list of ignored users/channels
+    :param embed: The pre-existing embed to add the channel list fields to
+    :return embed: the updated embed with the list of channels appended to
+    """
+    for ig in ignored:
+        if ig[2] == 'channel':
+            details = self.bot.get_channel(int(ig[3]))
+        else:
+            details = self.bot.get_user(int(ig[3]))
+        if (details != None):
+            embed.add_field(name="Name & ID", value=details.mention + " " + str(details.id), inline=False)
+        else:
+            embed.add_field(name="ID", value=ig[3], inline=False)
+    return embed
+
 async def sendToModerationChannels(self, message):
     """
     Send details about deleted message to mod channels
@@ -360,6 +386,20 @@ def buildChannelListEmbed(self, ctx, channels):
     embed.set_footer(text=f"Guild ID: {ctx.guild.id}")
     embed.title = "Koala Moderation - Mod Channels"
     embed = buildChannelList(self, channels, embed)
+    return embed
+
+def buildIgnoreListEmbed(self, ctx, channels):
+    """
+    Builds the embed to list all ignored
+    :param ctx: The discord context
+    :param ignored: List of ignored users/channels
+    :return embed with list of mod channels:
+    """
+    embed = createDefaultEmbed(ctx)
+    embed.colour = KOALA_GREEN
+    embed.set_footer(text=f"Guild ID: {ctx.guild.id}")
+    embed.title = "Koala Moderation - Ignored Users/Channels"
+    embed = buildIgnoreList(self, channels, embed)
     return embed
 
 def buildModerationDeletedEmbed(message):
@@ -545,6 +585,16 @@ class TextFilterDBManager:
         for row in rows:
             ilist.append((row[3]))
         return ilist
+    
+    def get_all_ignored(self,guild_id):
+        ignored = []
+        users = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = {guild_id} AND ignore_type = \"user\" ")
+        for row in users:
+            ignored.append((row))
+        channels = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = {guild_id} AND ignore_type = \"channel\" ")
+        for row in channels:
+            ignored.append((row))
+        return ignored
 
     def get_mod_channel(self, guild_id):
         """
