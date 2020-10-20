@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """
 Testing KoalaBot TextFilter
-
-Commented using reStructuredText (reST)
 """
 
 import asyncio
