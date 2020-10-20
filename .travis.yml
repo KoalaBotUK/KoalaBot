@@ -1,0 +1,17 @@
+language: generic
+dist: trusty
+sudo: required
+
+matrix:
+  include:
+
+  - language: python3
+    env:
+    - JOBNAME=UNIT_TESTS
+
+    install:
+    - sudo apt-get install -y libsqlcipher-dev
+    - pip3 install -r requirements.txt
+
+    script:
+    - python3 -m pytest tests
