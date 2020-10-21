@@ -40,6 +40,7 @@ def setup_function():
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
+    return dpytest.get_config()
 
 def assertBannedWarning(word):
     dpytest.verify_message("Watch your language! Your message: '*" + word + "*' in " + dpytest.get_config().guilds[0].channels[0].mention + " has been deleted by KoalaBot.")
@@ -122,9 +123,8 @@ def cleanup(guildId):
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_database():
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';"))
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no", channel=dpytest.get_config().guilds[0].channels[0])
     assertFilteredConfirmation("no","banned")
-    time.sleep(2)
     assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word no")
     assert len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';")) == old + 1
     cleanup(dpytest.get_config().guilds[0].id)
@@ -142,12 +142,10 @@ async def test_filter_too_many_arguments():
 @pytest.mark.asyncio()
 async def test_filter_risky_word():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
-    time.sleep(2)
     assertFilteredConfirmation("yup","risky")
     assertRiskyWarning(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
 
     await dpytest.message("yup test")
-    time.sleep(2)
     assertRiskyWarning("yup test")
 
     cleanup(dpytest.get_config().guilds[0].id)
@@ -167,18 +165,15 @@ async def test_filter_email_regex():
 @pytest.mark.asyncio()
 async def test_filter_various_emails_with_regex():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
-    time.sleep(2)
     assertFilteredConfirmation("[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
     assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
 
     # Should delete and warn
     await dpytest.message("hey stefan@herts.ac.uk")
-    time.sleep(2)
     assertBannedWarning("hey stefan@herts.ac.uk")
 
     # Should delete and warn
     await dpytest.message("hey stefan.c.27.abc@herts.ac.uk")
-    time.sleep(2)
     assertBannedWarning("hey stefan.c.27.abc@herts.ac.uk")
 
     # Should not warn
@@ -191,13 +186,13 @@ async def test_filter_various_emails_with_regex():
 @pytest.mark.asyncio()
 async def test_unfilter_word_correct_database():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
-    time.sleep(2)
+    
     assertFilteredConfirmation("unfilterboi","banned")
     assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word unfilterboi")
     
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
-    time.sleep(2)
+    
     assert len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1  
     dpytest.verify_message("*unfilterboi* has been unfiltered.")
     cleanup(dpytest.get_config().guilds[0].id)
@@ -359,7 +354,6 @@ async def test_ignore_user():
 
     # Should be ignored
     await dpytest.message("ignoreuser")
-
     cleanup(dpytest.get_config().guilds[0].id)
 
 @pytest.mark.asyncio()
@@ -400,6 +394,7 @@ async def test_list_ignored():
 @pytest.fixture(autouse=True)
 async def clear_queue():
     await dpytest.empty_queue()
+    yield dpytest
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():

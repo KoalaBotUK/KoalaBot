@@ -4,18 +4,36 @@
 Koala Bot Text Filter Code
 """
 
-# Libs
+# Built-in/Generic Imports
+import os
 import asyncio
-
-import discord
-from discord.ext import commands
-from dotenv import load_dotenv
+import time
 import re
+import aiohttp
+import logging
+
+# Libs
+from discord.ext import commands, tasks
+from dotenv import load_dotenv
+if os.name == 'nt':
+    logging.info("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    logging.info("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
 
 # Own modules
 import KoalaBot
-from utils import KoalaDBManager
 from utils.KoalaColours import *
+from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
+from utils.KoalaDBManager import KoalaDBManager
+
+if os.name == 'nt':
+    logging.info("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    logging.info("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
 
 # Constants
 load_dotenv()
@@ -29,7 +47,9 @@ class TextFilterCog(commands.Cog):
         if not database_manager:
             database_manager = KoalaBot.database_manager
         self.bot = bot
-        self.tf_database_manager = TextFilterDBManager(KoalaBot.database_manager, bot)
+        database_manager.create_base_tables()
+        database_manager.insert_extension("TextFilter", 0, True, True)
+        self.tf_database_manager = TextFilterDBManager(database_manager, bot)
         self.tf_database_manager.create_tables()
 
     @commands.command(name="filter", aliases=["filter_word"])
@@ -213,8 +233,10 @@ class TextFilterCog(commands.Cog):
         :param message: The newly received message
         :return:
         """
-        if (message.guild != None): # and not KoalaBot.is_admin and not KoalaBot.is_owner):
-            censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.guild.id)
+        if (str(message.channel.type) == 'private'):
+            raise Exception(f"DM Messages are ignored {message}")
+        elif (str(message.channel.type) == 'text' and message.channel.guild != None): # and not KoalaBot.is_admin and not KoalaBot.is_owner):
+            censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
             for word,filter_type,is_regex in censor_list:
                 if ((word in message.content or re.search(word,message.content)) and not isIgnored(self, message)):
                     if (filter_type == "risky"):
@@ -225,6 +247,8 @@ class TextFilterCog(commands.Cog):
                         await sendToModerationChannels(self, message)
                         await message.delete()
                         return
+        
+        raise Exception(f"No Guild found! {message}")
 
 def isIgnored(self, message):
     """
@@ -490,7 +514,7 @@ class TextFilterDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            f"INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (\"{channel_id}\", {guild_id});")
+            f"INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?,?)",args=[channel_id,guild_id])# (\"{channel_id}\", {guild_id});")
 
     def new_filtered_text(self, guild_id, filtered_text, filter_type, is_regex):
         """
@@ -503,7 +527,7 @@ class TextFilterDBManager:
         ft_id = str(guild_id) + filtered_text
         if not doesWordExist(self, ft_id):
             self.database_manager.db_execute_commit(
-                f"INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (\"{ft_id}\", {guild_id}, \"{filtered_text}\", \"{filter_type}\", {is_regex});")
+                f"INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (?,?,?,?,?)", args=[ft_id,guild_id,filtered_text,filter_type,is_regex]) #(\"{ft_id}\", {guild_id}, \"{filtered_text}\", \"{filter_type}\", {is_regex});")
             return 
         raise Exception("Filtered word already exists")
             
@@ -556,7 +580,7 @@ class TextFilterDBManager:
         :param guild_id: Guild ID to retrieve filtered words from:
         :return: list of filtered words
         """
-        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilter WHERE guild_id = {guild_id};")
+        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilter WHERE guild_id = ?",args=[guild_id])# {guild_id};")
         censor_list = []
         for row in rows:
             censor_list.append((row[2], row[3], str(row[4])))
@@ -613,3 +637,6 @@ class TextFilterDBManager:
         """
         self.database_manager.db_execute_commit(
             f"DELETE FROM TextFilterModeration WHERE guild_id = ({guild_id}) AND channel_id = (\"{channel_id}\");")
+    
+    def fetch_all(self):
+        return self.database_manager.db_execute_select(f"SELECT * FROM TextFilter")
