@@ -122,7 +122,6 @@ class TwitchAlert(commands.Cog):
                                   description=f"Guild: {ctx.message.guild.id}\n"
                                               f"Channel: {channel_id}\n"
                                               f"Default Message: {default_message}")
-        # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchViewMsg", aliases=["view_default_message"])
@@ -205,7 +204,6 @@ class TwitchAlert(commands.Cog):
                                   description=f"Channel: {channel_id}\n"
                                               f"User: {twitch_username}\n"
                                               f"Message: {default_message}")
-        # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
 
         await ctx.send(embed=new_embed)
 
@@ -414,7 +412,6 @@ class TwitchAlert(commands.Cog):
             try:
                 if streams_details.get('type') == "live":
                     current_username = str.lower(streams_details.get("user_name"))
-                    # print(current_username + " is live")
                     usernames.remove(current_username)
 
                     sql_find_message_id = \
@@ -432,21 +429,22 @@ class TwitchAlert(commands.Cog):
                     new_message_embed = None
 
                     for result in results:
-                        channel = self.bot.get_channel(id=result[0])
+                        channel_id = result[0]
+                        message_id = result[1]
+                        custom_message = result[2]
+                        channel_default_message = result[3]
+
+                        channel = self.bot.get_channel(id=channel_id)
                         try:
                             # If no Alert is posted
-                            if result[1] is None:
+                            if message_id is None:
                                 if new_message_embed is None:
-                                    if result[2] is not None:
-                                        message = result[2]
+                                    if custom_message is not None:
+                                        message = custom_message
                                     else:
-                                        message = result[3]
+                                        message = channel_default_message
 
                                     new_message_embed = await self.create_alert_embed(streams_details, message)
-                                    # with concurrent.futures.ThreadPoolExecutor() as pool3:
-                                    #    new_message = await asyncio.get_event_loop(). \
-                                    #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
-                                    #                        streams_details, message)
 
                                 if new_message_embed is not None:
                                     new_message = await channel.send(embed=new_message_embed)
@@ -493,8 +491,6 @@ class TwitchAlert(commands.Cog):
         if time_diff > 5:
             logging.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
 
-
-
     @tasks.loop(minutes=1)
     async def loop_check_team_live(self):
         """
@@ -523,7 +519,7 @@ class TwitchAlert(commands.Cog):
                 usernames.append(user[0])
 
         streams_data = await self.ta_database_manager.twitch_handler.get_streams_data(usernames)
-        # print(streams_data)
+
         if usernames == [] or streams_data is None:
             return
         # Deals with online streams
@@ -531,7 +527,6 @@ class TwitchAlert(commands.Cog):
             try:
                 if stream_data.get('type') == "live":
                     current_username = str.lower(stream_data.get("user_name"))
-                    # print(current_username + " is live: "+str(usernames))
                     usernames.remove(current_username)
 
                     sql_find_message_id = """
@@ -551,31 +546,34 @@ class TwitchAlert(commands.Cog):
                     new_message_embed = None
 
                     for result in results:
-                        channel = self.bot.get_channel(id=result[0])
+                        channel_id = result[0]
+                        message_id = result[1]
+                        team_twitch_alert_id = result[2]
+                        custom_message = result[3]
+                        channel_default_message = result[4]
+                        channel = self.bot.get_channel(id=channel_id)
                         try:
                             # If no Alert is posted
-                            if result[1] is None:
+                            if message_id is None:
                                 if new_message_embed is None:
-                                    if result[3] is not None:
-                                        message = result[3]
+                                    if custom_message is not None:
+                                        message = custom_message
                                     else:
-                                        message = result[4]
+                                        message = channel_default_message
+
                                     new_message_embed = await self.create_alert_embed(stream_data, message)
 
-                                    # with concurrent.futures.ThreadPoolExecutor() as pool3:
-                                    #    new_message = await asyncio.get_event_loop(). \
-                                    #        run_in_executor(pool3, self.create_alert_message, int(result[0]),
-                                    #                        stream_data, message)
-                                new_message = await channel.send(embed=new_message_embed)
+                                if new_message_embed is not None:
+                                    new_message = await channel.send(embed=new_message_embed)
 
-                                sql_update_message_id = """
-                                UPDATE UserInTwitchTeam 
-                                SET message_id = ?
-                                WHERE team_twitch_alert_id = ?
-                                AND twitch_username = ?"""
-                                self.ta_database_manager.database_manager.db_execute_commit(sql_update_message_id,
-                                                                                            args=[new_message.id, result[2],
-                                                                                                  current_username])
+                                    sql_update_message_id = """
+                                    UPDATE UserInTwitchTeam 
+                                    SET message_id = ?
+                                    WHERE team_twitch_alert_id = ?
+                                    AND twitch_username = ?"""
+                                    self.ta_database_manager.database_manager.db_execute_commit(
+                                        sql_update_message_id,
+                                        args=[new_message.id, team_twitch_alert_id, current_username])
                         except discord.errors.Forbidden as err:
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
