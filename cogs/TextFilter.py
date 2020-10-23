@@ -447,7 +447,7 @@ def doesWordExist(self, ft_id):
     :param ft_id: filtered text id of word to be removed
     :return boolean of whether the word exists or not:
     """
-    return len(self.database_manager.db_execute_select(f"SELECT * FROM TextFilter WHERE filtered_text_id = (\"{ft_id}\");")) > 0
+    return len(self.database_manager.db_execute_select(f"SELECT * FROM TextFilter WHERE filtered_text_id = ?", args=[ft_id])) > 0
 
 def doesIgnoreExist(self, ignore_id):
     """
@@ -455,7 +455,7 @@ def doesIgnoreExist(self, ignore_id):
     :param ignore_id: ignore id of ignore to be removed
     :return boolean of whether the ignore exists or not:
     """
-    return len(self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE ignore_id = (\"{ignore_id}\");")) > 0
+    return len(self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE ignore_id = ?", args=[ignore_id])) > 0
 
 class TextFilterDBManager:
     """
@@ -514,7 +514,7 @@ class TextFilterDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            f"INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?,?)",args=[channel_id,guild_id])# (\"{channel_id}\", {guild_id});")
+            f"INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?,?)", args=[channel_id,guild_id])
 
     def new_filtered_text(self, guild_id, filtered_text, filter_type, is_regex):
         """
@@ -527,7 +527,7 @@ class TextFilterDBManager:
         ft_id = str(guild_id) + filtered_text
         if not doesWordExist(self, ft_id):
             self.database_manager.db_execute_commit(
-                f"INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (?,?,?,?,?)", args=[ft_id,guild_id,filtered_text,filter_type,is_regex]) #(\"{ft_id}\", {guild_id}, \"{filtered_text}\", \"{filter_type}\", {is_regex});")
+                f"INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (?,?,?,?,?)", args=[ft_id,guild_id,filtered_text,filter_type,is_regex])
             return 
         raise Exception("Filtered word already exists")
             
@@ -541,7 +541,7 @@ class TextFilterDBManager:
         ft_id = str(guild_id) + filtered_text
         if doesWordExist(self, ft_id):
             self.database_manager.db_execute_commit(
-                f"DELETE FROM TextFilter WHERE filtered_text_id = (\"{ft_id}\");")
+                f"DELETE FROM TextFilter WHERE filtered_text_id = ?", args=[ft_id])
             return
         raise Exception("Filtered word does not exist")
 
@@ -555,8 +555,7 @@ class TextFilterDBManager:
         ignore_id = str(guild_id) + str(ignore)
         if not doesIgnoreExist(self, ignore_id):
             self.database_manager.db_execute_commit(
-                f"INSERT INTO TextFilterIgnoreList (ignore_id, guild_id, ignore_type, ignore) VALUES (\"{ignore_id}\", {guild_id}, \"{ignore_type}\", {ignore});"
-            )
+                f"INSERT INTO TextFilterIgnoreList (ignore_id, guild_id, ignore_type, ignore) VALUES (?,?,?,?)", args=[ignore_id, guild_id, ignore_type,ignore])
             return
         raise Exception("Ignore already exists")
 
@@ -569,8 +568,7 @@ class TextFilterDBManager:
         ignore_id = str(guild_id) + str(ignore)
         if doesIgnoreExist(self, ignore_id):
             self.database_manager.db_execute_commit(
-                f"DELETE FROM TextFilterIgnoreList WHERE ignore_id=(\"{ignore_id}\");"
-            )
+                f"DELETE FROM TextFilterIgnoreList WHERE ignore_id=?", args=[ignore_id])
             return
         raise Exception("Ignore does not exist")
 
@@ -580,7 +578,7 @@ class TextFilterDBManager:
         :param guild_id: Guild ID to retrieve filtered words from:
         :return: list of filtered words
         """
-        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilter WHERE guild_id = ?",args=[guild_id])# {guild_id};")
+        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilter WHERE guild_id = ?", args=[guild_id])
         censor_list = []
         for row in rows:
             censor_list.append((row[2], row[3], str(row[4])))
@@ -592,7 +590,7 @@ class TextFilterDBManager:
         :param guild_id: The guild id to get the list from
         :return: list of ignored channels
         """
-        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = {guild_id} AND ignore_type = \"channel\" ")
+        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"])
         ilist = []
         for row in rows:
             ilist.append((row[3]))
@@ -604,7 +602,7 @@ class TextFilterDBManager:
         :param guild_id: The guild id to get the list from
         :return: list of ignored users
         """
-        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = {guild_id} AND ignore_type = \"user\" ")
+        rows = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "user"])
         ilist = []
         for row in rows:
             ilist.append((row[3]))
@@ -612,10 +610,10 @@ class TextFilterDBManager:
     
     def get_all_ignored(self,guild_id):
         ignored = []
-        users = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = {guild_id} AND ignore_type = \"user\" ")
+        users = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "user"])
         for row in users:
             ignored.append((row))
-        channels = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = {guild_id} AND ignore_type = \"channel\" ")
+        channels = self.database_manager.db_execute_select(f"SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"])
         for row in channels:
             ignored.append((row))
         return ignored
@@ -626,7 +624,7 @@ class TextFilterDBManager:
         :param guild_id: Guild ID to retrieve mod channel from
         :return: list of mod channels
         """
-        return self.database_manager.db_execute_select(f"SELECT channel_id FROM TextFilterModeration WHERE guild_id = {guild_id};")
+        return self.database_manager.db_execute_select(f"SELECT channel_id FROM TextFilterModeration WHERE guild_id = ?;", args=[guild_id])
 
     def remove_mod_channel(self, guild_id, channel_id):
         """
@@ -636,7 +634,7 @@ class TextFilterDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            f"DELETE FROM TextFilterModeration WHERE guild_id = ({guild_id}) AND channel_id = (\"{channel_id}\");")
+            f"DELETE FROM TextFilterModeration WHERE guild_id = ? AND channel_id = (?);", args=[guild_id,channel_id])
     
     def fetch_all(self):
         return self.database_manager.db_execute_select(f"SELECT * FROM TextFilter")
