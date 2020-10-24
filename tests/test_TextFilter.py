@@ -27,12 +27,13 @@ base_cog = None
 tf_cog = None
 utils_cog =  None
 
+
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global base_cog, tf_cog, utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     base_cog = BaseCog.BaseCog(bot)
-    tf_cog = TextFilter.TextFilterCog(bot)
+    tf_cog = TextFilter.TextFilter(bot)
     tf_cog.tf_database_manager.create_tables()
     utils_cog = TestUtilsCog.TestUtilsCog(bot)
     bot.add_cog(base_cog)
@@ -42,20 +43,26 @@ def setup_function():
     print("Tests starting")
     return dpytest.get_config()
 
+
 def assertBannedWarning(word):
     dpytest.verify_message("Watch your language! Your message: '*" + word + "*' in " + dpytest.get_config().guilds[0].channels[0].mention + " has been deleted by KoalaBot.")
+
 
 def assertRiskyWarning(word):
     dpytest.verify_message("Watch your language! Your message: '*" + word + "*' in " + dpytest.get_config().guilds[0].channels[0].mention + " contains a 'risky' word. This is a warning.")
 
+
 def assertEmailWarning(word):
     dpytest.verify_message("Be careful! Your message: '*"+word+"*' in "+dpytest.get_config().guilds[0].channels[0].mention+" includes personal information and has been deleted by KoalaBot.")
+
 
 def assertFilteredConfirmation(word, type):
     dpytest.verify_message("*"+word+"* has been filtered as **"+type+"**.")
 
+
 def assertNewIgnore(id):
     dpytest.verify_message("New ignore added: "+id)
+
 
 def assertRemoveIgnore(id):
     dpytest.verify_message("Ignore removed: "+id)
@@ -118,14 +125,11 @@ def filteredWordsEmbed(words,filter,regex):
 def cleanup(guildId):
      tf_cog.tf_database_manager.database_manager.db_execute_commit(f"DELETE FROM TextFilter WHERE guild_id=(\"{guildId}\");")
 
-
-
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_database():
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';"))
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no", channel=dpytest.get_config().guilds[0].channels[0])
     assertFilteredConfirmation("no","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word no")
     assert len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';")) == old + 1
     cleanup(dpytest.get_config().guilds[0].id)
 
@@ -143,7 +147,6 @@ async def test_filter_too_many_arguments():
 async def test_filter_risky_word():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
     assertFilteredConfirmation("yup","risky")
-    assertRiskyWarning(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
 
     await dpytest.message("yup test")
     assertRiskyWarning("yup test")
@@ -159,14 +162,12 @@ async def test_unrecognised_filter_type():
 async def test_filter_email_regex():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
     assertFilteredConfirmation("[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
     cleanup(dpytest.get_config().guilds[0].id)
 
 @pytest.mark.asyncio()
 async def test_filter_various_emails_with_regex():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
     assertFilteredConfirmation("[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
 
     # Should delete and warn
     await dpytest.message("hey stefan@herts.ac.uk")
@@ -186,9 +187,7 @@ async def test_filter_various_emails_with_regex():
 @pytest.mark.asyncio()
 async def test_unfilter_word_correct_database():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
-    
     assertFilteredConfirmation("unfilterboi","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word unfilterboi")
     
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
@@ -211,10 +210,8 @@ async def test_unfilter_too_many_arguments():
 async def test_list_filtered_words():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing1")
     assertFilteredConfirmation("listing1","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word listing1")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing2 risky")
     assertFilteredConfirmation("listing2","risky")
-    assertRiskyWarning(KoalaBot.COMMAND_PREFIX +"filter_word listing2 risky")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "check_filtered_words")
     assert_embed = filteredWordsEmbed(['listing1','listing2'],['banned','risky'], ['0','0'])
@@ -325,7 +322,6 @@ async def test_ignore_channel():
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreme")
     assertFilteredConfirmation("ignoreme","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word ignoreme")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + channel1.mention)
     assertNewIgnore(channel1.mention)
@@ -343,7 +339,6 @@ async def test_ignore_channel():
 async def test_ignore_user():
     message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
     assertFilteredConfirmation("ignoreuser","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word ignoreuser")
 
     # Should be deleted and warned
     await dpytest.message("ignoreuser")
@@ -365,7 +360,6 @@ async def test_ignore_empty_user():
 async def test_unignore_channel():
     message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
     assertFilteredConfirmation("ignoreuser","banned")
-    assertBannedWarning(KoalaBot.COMMAND_PREFIX +"filter_word ignoreuser")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + dpytest.get_config().guilds[0].channels[0].mention)
     assertNewIgnore(dpytest.get_config().guilds[0].channels[0].mention)

@@ -8,15 +8,18 @@ A lot these commands will only be available to administrators
 ##### Added
 - `filter <text> [type]`  Filter a word or string of text. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
 - `filter <regex> [type]` Filter a regex string. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
-- `unfilter <text>` Unfilter a word/string/regex of text that was previously filtered.
-- `checkFilteredWords` Get a list of filtered words in the server
+- `filterList` Get a list of filtered words in the server
 
-- `setupModChannel <channelId>` Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to.
-- `removeModChannel <channelId>` Remove a mod channel from the server.
-- `listModChannels` See a list of mod channels in the server.
+- `modChannelAdd <channelId>` Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to.
+- `modChannelRemove <channelId>` Remove a mod channel from the server.
+- `modChannelList` See a list of mod channels in the server.
 
 - `ignoreUser <userMention>` Add a new ignored user for the server. This users' messages will be ignored by the Text Filter.
 - `ignoreChannel <channelMention>` Add a new ignored channel for the server. Messages in this channel will be ignored by the Text Filter.
+- `ignoreList` See a list of ignored users/channels in the server.
+
+- `unfilter <text>` Unfilter a word/string/regex of text that was previously filtered.
+- `unignore <mention>` Unignore a user/channel that was previously set as ingored
 
 
 ## [0.1.8] - 18-10-2020
