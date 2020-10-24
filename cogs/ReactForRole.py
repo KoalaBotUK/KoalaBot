@@ -303,7 +303,60 @@ class ReactForRole(commands.Cog):
             return
         member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
                                                 payload.message_id, payload.user_id)
-        await member_role[0].add_roles(member_role[1])
+        if self.can_have_rfr_role(member_role[0]):
+            await member_role[0].add_roles(member_role[1])
+        else:
+            # Remove all rfr roles from member
+            role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
+            roles: List[discord.Role] = []
+            for role_id in role_ids:
+                role = discord.utils.get(member_role[0].guild.roles, id=role_id)
+                if not role:
+                    continue
+                roles.append(role)
+            await member_role[0].remove_roles(roles)
+            # Remove members' reaction from all rfr messages in guild
+            guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
+            for guild_rfr_message in guild_rfr_messages:
+                guild: discord.Guild = member_role[0].guild
+                channel: discord.TextChannel = await guild.get_channel(guild_rfr_message[1])
+                msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
+                for x in msg.reactions:
+                    await x.remove(payload.member)
+
+    @react_for_role_group.command("addRequiredRole")
+    async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
+        try:
+            role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
+            await ctx.send(f"Okay, I'll add {role.name} to the list of roles required for RFR usage on the server.")
+            self.rfr_database_manager.add_guild_rfr_required_role(ctx.guild.id, role.id)
+        except (commands.CommandError, commands.BadArgument):
+            await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
+
+    @react_for_role_group.command("removeRequiredRole")
+    async def rfr_remove_guild_required_role(self, ctx: commands.Context, role_str: str):
+        try:
+            role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
+            await ctx.send(
+                f"Okay, I'll remove {role.name} from the list of roles required for RFR usage on the server.")
+            self.rfr_database_manager.remove_guild_rfr_required_role(ctx.guild.id, role.id)
+        except (commands.CommandError, commands.BadArgument):
+            await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
+
+    @react_for_role_group.command("listRequiredRoles")
+    async def rfr_list_guild_required_roles(self, ctx: commands.Context):
+        role_ids = self.rfr_database_manager.get_guild_rfr_required_roles(ctx.guild.id)
+        msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
+        for role_id in role_ids:
+            try:
+                role: discord.Role = await commands.RoleConverter().convert(ctx, str(role_id))
+                msg_str += f"{role.mention}\n"
+            except (commands.CommandError, commands.BadArgument):
+                continue
+        await ctx.send(msg_str)
+
+    async def prune_rfr_roles(self, guild: discord.Guild):
+        pass
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
@@ -316,6 +369,15 @@ class ReactForRole(commands.Cog):
         if not member_role:
             return
         await member_role[0].remove_roles(member_role[1])
+
+    async def can_have_rfr_role(self, member: discord.Member) -> bool:
+        required_roles: List[int] = self.rfr_database_manager.get_guild_rfr_required_roles(member.guild.id)
+        if not required_roles or len(required_roles) == 0:
+            return True
+        for role in member.roles:
+            if role.id in required_roles:
+                return True
+        return False
 
     async def get_rfr_message_from_prompts(self, ctx: commands.Context) -> Tuple[discord.Message, discord.TextChannel]:
         channel_raw = await self.prompt_for_input(ctx, "Channel name, mention or ID")
@@ -548,6 +610,33 @@ class ReactForRoleDBManager:
             return
         return rows[0]
 
+    def get_guild_rfr_messages(self, guild_id: int):
+        rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
+            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", guild_id)
+        return rows
+
+    def get_guild_rfr_roles(self, guild_id: int) -> List[int]:
+        """
+        Returns all role IDs of roles given by RFR messages in a guild
+
+        :param guild_id: Guild ID to check in.
+        :return: Role IDs of RFR roles in a specific guild
+        :rtype List[int]:
+        """
+        rfr_messages: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
+            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", guild_id)
+        if not rfr_messages:
+            return []
+        role_ids: List[int] = []
+        for rfr_message in rfr_messages:
+            emoji_role_id = rfr_message[3]
+            roles: List[Tuple[int, str, int]] = self.get_rfr_message_emoji_roles(emoji_role_id)
+            if not roles:
+                continue
+            ids: List[int] = [x[2] for x in roles]
+            role_ids.extend(ids)
+        return role_ids
+
     def get_rfr_message_emoji_roles(self, emoji_role_id: int):
         """
         Returns all the emoji-role combinations on an rfr message
@@ -591,15 +680,20 @@ class ReactForRoleDBManager:
         return rows[0][2]
 
     def add_guild_rfr_required_role(self, guild_id: int, role_id: int):
-        self.database_manager.db_execute_commit("INSERT INTO GuildRFRRequiredRoles VALUES (?,?);", (guild_id, role_id))
+        self.database_manager.db_execute_commit("INSERT INTO GuildRFRRequiredRoles VALUES (?,?);",
+                                                args=[guild_id, role_id])
 
     def remove_guild_rfr_required_role(self, guild_id: int, role_id: int):
         self.database_manager.db_execute_commit("DELETE FROM GuildRFRRequiredRoles WHERE guild_id = ? AND role_id = ?",
-                                                (guild_id, role_id))
+                                                args=[guild_id, role_id])
 
-    def get_guild_rfr_required_roles(self, guild_id):
-        self.database_manager.db_execute_select("SELECT role_id FROM GuildRFRRequiredRoles WHERE guild_id = ?",
-                                                guild_id)
+    def get_guild_rfr_required_roles(self, guild_id) -> List[int]:
+        rows = self.database_manager.db_execute_select("SELECT role_id FROM GuildRFRRequiredRoles WHERE guild_id = ?",
+                                                       args=[guild_id])
+        if not rows:
+            return []
+        return rows
+
 
 def setup(bot: KoalaBot) -> None:
     """
