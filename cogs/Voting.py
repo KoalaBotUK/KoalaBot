@@ -62,6 +62,15 @@ class Voting(commands.Cog):
     async def on_raw_reaction_remove(self, payload):
         await self.update_vote_message(payload)
 
+    @staticmethod
+    async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0, check=lambda message: message.author == ctx.author):
+        try:
+            msg = await bot.wait_for('message', timeout=timeout, check=check)
+            return msg
+        except Exception:
+            msg = None
+        return msg
+
     @commands.group(name="vote")
     async def vote(self, ctx):
         """
@@ -72,7 +81,6 @@ class Voting(commands.Cog):
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
     # @commands.check(KoalaBot.is_admin)
-    @commands.check(test_is_admin)
     @vote.command(name="create", brief="Start the creation of a vote.")
     async def startVote(self, ctx, *, title):
         """
@@ -109,7 +117,10 @@ class Voting(commands.Cog):
         msg = await ctx.send(content=f"```{msg_content[0]}\n{msg_content[1]}```")
         vote.setup_message = msg
         try:
-            role_msg = await self.bot.wait_for('message', check=response_check, timeout=60.0)
+            # role_msg = await self.bot.wait_for('message', check=response_check, timeout=60.0)
+            role_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
+            if not role_msg:
+                raise self.TimeoutError("Vote creation timed out")
             if role_msg.role_mentions:
                 vote.add_roles(role_msg.role_mentions)
                 roles_used = msg_content[2] + "\n" + (', '.join(role.name for role in role_msg.role_mentions))
@@ -125,7 +136,9 @@ class Voting(commands.Cog):
                 await role_msg.delete()
             except discord.errors.Forbidden:
                 pass
-            vc_msg = await self.bot.wait_for('message', check=response_check, timeout=60.0)
+            vc_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
+            if not vc_msg:
+                raise self.TimeoutError("Vote creation timed out")
             if vc_msg.content != "no":
                 channel = server_vcs[int(vc_msg.content)]
                 vote.add_channel(channel.id)
@@ -140,7 +153,9 @@ class Voting(commands.Cog):
             except discord.errors.Forbidden:
                 pass
 
-            chair_msg = await self.bot.wait_for('message', check=response_check, timeout=60.0)
+            chair_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
+            if not chair_msg:
+                raise self.TimeoutError("Vote creation timed out")
             if chair_msg.content != "no" and chair_msg.mentions:
                 vote.add_chair(chair_msg.mentions[0].id)
                 chair_used = msg_content[8] + chair_msg.mentions[0].name
@@ -290,6 +305,9 @@ class Voting(commands.Cog):
             await msg.edit(embed=embed)
 
     class OptionsError(Exception):
+        pass
+
+    class TimeoutError(Exception):
         pass
 
 
