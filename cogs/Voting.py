@@ -63,11 +63,6 @@ def vote_is_enabled(ctx):
 
 class Voting(commands.Cog):
     def __init__(self, bot, db_manager=None):
-        """
-
-        :param bot:
-        :param db_manager:
-        """
         self.bot = bot
         self.vote_manager = VoteManager()
         if not db_manager:
@@ -116,7 +111,7 @@ class Voting(commands.Cog):
         :return:
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
+            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}vote create <title>` to start a vote, or`{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
     @commands.check(vote_is_enabled)
     @vote.command(name="create", brief="Start the creation of a vote.")
