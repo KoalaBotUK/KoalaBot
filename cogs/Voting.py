@@ -46,7 +46,7 @@ def test_is_admin(ctx):
     return KoalaBot.is_admin(ctx) or ctx.author.id == 135496683009081345
 
 
-class Voting(commands.Cog):
+class Voting(commands.Cog, name="Vote"):
     def __init__(self, bot, db_manager=None):
         self.bot = bot
         self.vote_manager = VoteManager()
