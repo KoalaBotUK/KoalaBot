@@ -303,7 +303,7 @@ class ReactForRole(commands.Cog):
             return
         member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
                                                 payload.message_id, payload.user_id)
-        if self.can_have_rfr_role(member_role[0]):
+        if await self.can_have_rfr_role(member_role[0]):
             await member_role[0].add_roles(member_role[1])
         else:
             # Remove all rfr roles from member
@@ -314,15 +314,20 @@ class ReactForRole(commands.Cog):
                 if not role:
                     continue
                 roles.append(role)
-            await member_role[0].remove_roles(roles)
+            for role_to_remove in roles:
+                await member_role[0].remove_roles(role_to_remove)
             # Remove members' reaction from all rfr messages in guild
             guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
-            for guild_rfr_message in guild_rfr_messages:
-                guild: discord.Guild = member_role[0].guild
-                channel: discord.TextChannel = await guild.get_channel(guild_rfr_message[1])
-                msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
-                for x in msg.reactions:
-                    await x.remove(payload.member)
+            if not guild_rfr_messages:
+                KoalaBot.logger.error("Guild RFR messages is empty on raw reaction add. Please check")
+                print(self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id))
+            else:
+                for guild_rfr_message in guild_rfr_messages:
+                    guild: discord.Guild = member_role[0].guild
+                    channel: discord.TextChannel = await guild.get_channel(guild_rfr_message[1])
+                    msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
+                    for x in msg.reactions:
+                        await x.remove(payload.member)
 
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
@@ -374,10 +379,7 @@ class ReactForRole(commands.Cog):
         required_roles: List[int] = self.rfr_database_manager.get_guild_rfr_required_roles(member.guild.id)
         if not required_roles or len(required_roles) == 0:
             return True
-        for role in member.roles:
-            if role.id in required_roles:
-                return True
-        return False
+        return any(x in required_roles for x in [y.id for y in member.roles])
 
     async def get_rfr_message_from_prompts(self, ctx: commands.Context) -> Tuple[discord.Message, discord.TextChannel]:
         channel_raw = await self.prompt_for_input(ctx, "Channel name, mention or ID")
