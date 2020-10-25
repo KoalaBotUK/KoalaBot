@@ -39,6 +39,7 @@ class ReactForRole(commands.Cog):
     async def react_for_role_group(self, ctx: commands.Context):
         return
 
+    @commands.check(KoalaBot.is_admin)
     @react_for_role_group.command(name="createMessage")
     async def rfr_create_message(self, ctx: commands.Context):
         await ctx.send(
@@ -89,7 +90,8 @@ class ReactForRole(commands.Cog):
                         "edit command.")
             else:
                 desc: str = msg.content
-            await ctx.send(f"Okay, the description of the message will be \"{desc}\".")
+            await ctx.send(f"Okay, the description of the message will be \"{desc}\".\n Okay, "
+                           f"I'll create the react for role message now.")
             embed: discord.Embed = discord.Embed(title=title, description=desc, colour=KoalaColours.KOALA_GREEN)
             embed.set_footer(text="ReactForRole")
             embed.set_thumbnail(
@@ -103,6 +105,7 @@ class ReactForRole(commands.Cog):
                 "k!rfr subcommands to change the message and add functionality as required.")
             await del_msg.delete()
 
+    @commands.check(KoalaBot.is_admin)
     @react_for_role_group.command(name="deleteMessage")
     async def rfr_delete_message(self, ctx: commands.Context):
         await ctx.send(
@@ -123,6 +126,7 @@ class ReactForRole(commands.Cog):
     async def edit_group(self, ctx: commands.Context):
         return
 
+    @commands.check(KoalaBot.is_admin)
     @edit_group.command(name="description", aliases=["desc"])
     async def rfr_edit_description(self, ctx: commands.Context):
         await ctx.send("Okay, this will edit the description of an existing react for role message. I'll need some "
@@ -138,6 +142,7 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
+    @commands.check(KoalaBot.is_admin)
     @edit_group.command(name="title")
     async def rfr_edit_title(self, ctx: commands.Context):
         await ctx.send("Okay, this will edit the title of an existing react for role message. I'll need some details "
@@ -153,6 +158,7 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
+    @commands.check(KoalaBot.is_admin)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
         await ctx.send(
@@ -220,6 +226,7 @@ class ReactForRole(commands.Cog):
         await msg.edit(embed=rfr_embed)
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
+    @commands.check(KoalaBot.is_admin)
     @edit_group.command(name="removeRoles")
     async def rfr_remove_roles_from_msg(self, ctx: commands.Context):
         await ctx.send(
@@ -329,6 +336,7 @@ class ReactForRole(commands.Cog):
                     for x in msg.reactions:
                         await x.remove(payload.member)
 
+    @commands.check(KoalaBot.is_admin)
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
         try:
@@ -338,6 +346,7 @@ class ReactForRole(commands.Cog):
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
+    @commands.check(KoalaBot.is_admin)
     @react_for_role_group.command("removeRequiredRole")
     async def rfr_remove_guild_required_role(self, ctx: commands.Context, role_str: str):
         try:
@@ -446,7 +455,7 @@ class ReactForRole(commands.Cog):
             if not raw_emoji:
                 role = await commands.RoleConverter().convert(ctx, row.strip())
                 if not role:
-                    await ctx.send(f"DEBUG Couldn't find role {role} from input str {row}")
+                    raise commands.BadArgument("Couldn't convert to a role or emoji.")
                 else:
                     arr.append(role)
             else:
@@ -505,7 +514,6 @@ class ReactForRole(commands.Cog):
     async def get_first_emoji_from_str(self, ctx: commands.Context, content: str) -> Optional[
         Union[discord.Emoji, str]]:
         # First check for a custom discord emoji in the string
-        await ctx.send(f"DEBUG \\{content}")
         KoalaBot.logger.info(msg=content)
         search_result = CUSTOM_EMOJI_REGEXP.search(content)
         if not search_result:
