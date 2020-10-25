@@ -52,7 +52,7 @@ class Voting(commands.Cog, name="Vote"):
         self.vote_manager = VoteManager()
         if not db_manager:
             self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
-            self.DBManager.insert_extension("Voting", 0, True, True)
+            self.DBManager.insert_extension("Vote", 0, True, True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
