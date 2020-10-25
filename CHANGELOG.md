@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Twitch Alert
+##### Changed
+- Add catch so errors don't stop the alert loop
 
 ### Text Filter
 ##### Added
