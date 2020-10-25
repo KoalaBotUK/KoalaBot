@@ -3,6 +3,51 @@ All notable changes to KoalaBot will be documented in this file.
 A lot these commands will only be available to administrators
 
 ## [Unreleased]
+### Twitch Alert
+##### Changed
+- Add catch so errors don't stop the alert loop
+
+## [0.1.8] - 18-10-2020
+### Twitch Alert
+##### Changed
+- Add 'No Category' option
+- Reduced Logging
+- Fix regex allowing underscore at start of name
+
+## [0.1.7] - 13-10-2020
+### Twitch Alert
+##### Changed
+- Fix InvalidArgument errors from not showing
+- Add logging
+- Add removal of chats that are no longer accessible
+
+## [0.1.6] - 12-10-2020
+### Twitch Alert
+##### Changed
+- Minor Bug Fixes
+
+## [0.1.5] - 11-10-2020
+### Verification
+##### Changed
+- Fix bot erroring on startup if it had left any guilds with verification enabled
+#### Twitch Alert 
+##### Changed
+- Fix use of full URLs in twitch alerts
+- Fix oauth not updating
+
+## [0.1.4] - 10-10-2020
+#### Twitch Alert 
+##### Changed
+- Fix TwitchAlert loops crashing
+- Fix repeat on_ready
+- Fix timout for requests
+- Fix Twitch API Limits followed
+- Update TwitchAlert to use aiohttp rather than requests
+
+## [0.1.3] - 30-9-2020
+### Verification
+##### Changed
+- Fixed a bug involving verification of an email matching a server you weren't in
 
 ## [0.1.2] - 22-9-2020
 ### Base KoalaBot
@@ -63,6 +108,12 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.1...v0.1.2
+[0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
+[0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7
+[0.1.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/KoalaBotUK/KoalaBot/releases/tag/v0.1.0

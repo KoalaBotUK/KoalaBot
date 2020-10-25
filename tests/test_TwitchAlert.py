@@ -34,7 +34,12 @@ DB_PATH = "KoalaBotTwitchTest.db"
 
 def setup_module():
     try:
-        os.remove(DB_PATH)
+        if os.name == 'nt':
+            print("Windows Detected: Deleting windows_"+DB_PATH)
+            os.remove("windows_"+DB_PATH)
+        else:
+            print("Windows Not Detected: Deleting "+DB_PATH)
+            os.remove(DB_PATH)
         KoalaBot.is_dpytest = True
     except FileNotFoundError:
         print("Database Doesn't Exist, Continuing")
@@ -361,12 +366,13 @@ async def test_loop_check_live(twitch_cog):
     dpytest.verify_embed(expected_embed)
 
 
-def test_create_alert_embed(twitch_cog):
+@pytest.mark.asyncio
+async def test_create_alert_embed(twitch_cog):
     stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
                    "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
                    'title': 'Music 24/7'}
 
-    assert type(twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
+    assert type(await twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
 
 
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
@@ -386,17 +392,19 @@ def test_get_new_twitch_oauth(twitch_api_handler):
     assert twitch_api_handler.get_new_twitch_oauth()
 
 
-def test_requests_get(twitch_api_handler):
-    assert twitch_api_handler.requests_get("https://api.twitch.tv/helix/streams?",
-                                           params=(('user_login', 'monstercat'),)).json().get("data") is not None
+@pytest.mark.asyncio
+async def test_requests_get(twitch_api_handler):
+    assert (await twitch_api_handler.requests_get("https://api.twitch.tv/helix/streams?",
+                                           params=(('user_login', 'monstercat'),))).get("data") is not None
 
 
-def test_requests_get_kraken(twitch_api_handler):
+@pytest.mark.asyncio
+async def test_requests_get_kraken(twitch_api_handler):
     # When Twitch API v5 becomes depreciated this will no longer function
-    assert twitch_api_handler.requests_get("https://api.twitch.tv/kraken/teams/uosvge",
+    assert (await twitch_api_handler.requests_get("https://api.twitch.tv/kraken/teams/uosvge",
                                            headers={'Client-ID': TwitchAlert.TWITCH_CLIENT_ID,
                                                     'Accept': 'application/vnd.twitchtv.v5+json'}
-                                           ).json().get("users") is not None
+                                                  )).get("users") is not None
 
 
 def test_get_streams_data(twitch_api_handler):
@@ -409,13 +417,15 @@ def test_get_user_data(twitch_api_handler):
     assert twitch_api_handler.get_user_data('monstercat') is not None
 
 
-def test_get_game_data(twitch_api_handler):
-    assert 'music' in twitch_api_handler.get_game_data('26936').get('name').lower()
+@pytest.mark.asyncio
+async def test_get_game_data(twitch_api_handler):
+    assert 'music' in (await twitch_api_handler.get_game_data('26936')).get('name').lower()
 
 
-def test_get_team_users(twitch_api_handler):
+@pytest.mark.asyncio
+async def test_get_team_users(twitch_api_handler):
     # assumes uosvge is in the team called uosvge
-    members = twitch_api_handler.get_team_users('uosvge')
+    members = await twitch_api_handler.get_team_users('uosvge')
     for member in members:
         if member.get('name') == 'uosvge':
             assert True
@@ -554,8 +564,9 @@ def test_remove_team_from_ta_invalid(twitch_alert_db_manager_tables):
         twitch_alert_db_manager_tables.remove_team_from_ta(590, 590)
 
 
-def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
-    test_update_team_members(twitch_alert_db_manager_tables)
+@pytest.mark.asyncio()
+async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
+    await test_update_team_members(twitch_alert_db_manager_tables)
     sql_add_message = "UPDATE UserInTwitchTeam SET message_id = 1 " \
                       "WHERE team_twitch_alert_id = 604 AND twitch_username = 'monstercat'"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)
@@ -564,11 +575,12 @@ def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tables):
     mock1.assert_called_with(1, 605)
 
 
-def test_update_team_members(twitch_alert_db_manager_tables):
+@pytest.mark.asyncio()
+async def test_update_team_members(twitch_alert_db_manager_tables):
     sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
                                  "VALUES(604,605,'monstercat')"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
-    twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
+    await twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
     sql_select_monstercat_team = "SELECT twitch_username " \
                                  "FROM UserInTwitchTeam " \
                                  "WHERE team_twitch_alert_id = 604 AND twitch_username='monstercat'"
@@ -577,14 +589,15 @@ def test_update_team_members(twitch_alert_db_manager_tables):
     pass
 
 
-def test_update_all_teams_members(twitch_alert_db_manager_tables):
+@pytest.mark.asyncio()
+async def test_update_all_teams_members(twitch_alert_db_manager_tables):
     sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
                                  "VALUES(614,615,'monstercat')"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
     sql_insert_monstercat_team = "INSERT INTO TeamInTwitchAlert(team_twitch_alert_id,channel_id,twitch_team_name) " \
                                  "VALUES(616,617,'monstercat')"
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_insert_monstercat_team)
-    twitch_alert_db_manager_tables.update_all_teams_members()
+    await twitch_alert_db_manager_tables.update_all_teams_members()
     sql_select_monstercats_team = "SELECT twitch_username " \
                                   "FROM UserInTwitchTeam " \
                                   "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
@@ -607,8 +620,9 @@ def test_delete_all_offline_streams(twitch_alert_db_manager_tables):
     pass
 
 
-def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
-    test_update_all_teams_members(twitch_alert_db_manager_tables)
+@pytest.mark.asyncio()
+async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables):
+    await test_update_all_teams_members(twitch_alert_db_manager_tables)
     sql_add_message = "UPDATE UserInTwitchTeam SET message_id = 1 " \
                       "WHERE (team_twitch_alert_id = 614 OR team_twitch_alert_id = 616) " \
                       "AND twitch_username = 'monstercat'"
