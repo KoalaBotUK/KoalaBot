@@ -27,6 +27,21 @@ CUSTOM_EMOJI_REGEXP: re.Pattern = re.compile("^<a?:(\w+):(\d+)>$")
 UNICODE_EMOJI_REGEXP: re.Pattern = re.compile(emoji.get_emoji_regexp())
 
 
+def rfr_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled rfr
+    e.g. @commands.check(rfr_is_enabled)
+    :param ctx: The context of the message
+    :return: True if enabled or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "ReactForRole")
+    except PermissionError:
+        result = False
+
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
+
 class ReactForRole(commands.Cog):
     def __init__(self, bot: discord.Client):
         self.bot = bot
@@ -40,6 +55,7 @@ class ReactForRole(commands.Cog):
         return
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="createMessage")
     async def rfr_create_message(self, ctx: commands.Context):
         await ctx.send(
@@ -106,6 +122,7 @@ class ReactForRole(commands.Cog):
             await del_msg.delete()
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="deleteMessage")
     async def rfr_delete_message(self, ctx: commands.Context):
         await ctx.send(
@@ -127,6 +144,7 @@ class ReactForRole(commands.Cog):
         return
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @edit_group.command(name="description", aliases=["desc"])
     async def rfr_edit_description(self, ctx: commands.Context):
         await ctx.send("Okay, this will edit the description of an existing react for role message. I'll need some "
@@ -143,6 +161,7 @@ class ReactForRole(commands.Cog):
             await ctx.send("Okay, cancelling command.")
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @edit_group.command(name="title")
     async def rfr_edit_title(self, ctx: commands.Context):
         await ctx.send("Okay, this will edit the title of an existing react for role message. I'll need some details "
@@ -159,6 +178,7 @@ class ReactForRole(commands.Cog):
             await ctx.send("Okay, cancelling command.")
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
         await ctx.send(
@@ -227,6 +247,7 @@ class ReactForRole(commands.Cog):
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @edit_group.command(name="removeRoles")
     async def rfr_remove_roles_from_msg(self, ctx: commands.Context):
         await ctx.send(
@@ -337,6 +358,7 @@ class ReactForRole(commands.Cog):
                         await x.remove(payload.member)
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
         try:
@@ -347,6 +369,7 @@ class ReactForRole(commands.Cog):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @react_for_role_group.command("removeRequiredRole")
     async def rfr_remove_guild_required_role(self, ctx: commands.Context, role_str: str):
         try:
@@ -357,6 +380,7 @@ class ReactForRole(commands.Cog):
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
+    @commands.check(rfr_is_enabled)
     @react_for_role_group.command("listRequiredRoles")
     async def rfr_list_guild_required_roles(self, ctx: commands.Context):
         role_ids = self.rfr_database_manager.get_guild_rfr_required_roles(ctx.guild.id)
