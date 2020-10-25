@@ -152,9 +152,10 @@ class Verification(commands.Cog, name="Verify"):
                 if results and not blacklisted:
                     await member.add_roles(role)
             message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role.
-This email is stored so you don't need to verify it multiple times."""
-            await member.send(content=message_string + "\n" + "\n".join([f"{x} for @{y}" for x, y in roles.items()]))
+Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+This email is stored so you don't need to verify it multiple times across servers."""
+            await member.send(
+                content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
@@ -162,6 +163,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def enable_verification(self, ctx, suffix=None, role=None):
         """
         Set up a role and email pair for KoalaBot to verify users with
+        :param ctx: context of the discord message
         :param suffix: end of the email (e.g. "example.com")
         :param role: the role to give users with that email verified (e.g. @students)
         :return:
@@ -197,6 +199,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def disable_verification(self, ctx, suffix=None, role=None):
         """
         Disable an existing verification listener
+        :param ctx: context of the discord message
         :param suffix: end of the email (e.g. "example.com")
         :param role: the role paired with the email (e.g. @students)
         :return:
@@ -216,11 +219,13 @@ This email is stored so you don't need to verify it multiple times."""
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
+
     @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email):
         """
         Send to KoalaBot in dms to verify an email with our system
+        :param ctx: the context of the discord message
         :param email: the email you want to verify
         :return:
         """
@@ -242,6 +247,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def un_verify(self, ctx, email):
         """
         Send to KoalaBot in dms to un-verify an email with our system
+        :param ctx: the context of the discord message
         :param email: the email you want to un-verify
         :return:
         """
@@ -260,6 +266,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def confirm(self, ctx, token):
         """
         Send to KoalaBot in dms to confirm the verification of an email
+        :param ctx: the context of the discord message
         :param token: the token emailed to you to verify with
         :return:
         """
@@ -289,6 +296,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def get_emails(self, ctx, user_id: int):
         """
         See the emails a user is verified with
+        :param ctx: the context of the discord message
         :param user_id: the id of the user who's emails you want to find
         :return:
         """
@@ -301,6 +309,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def check_verifications(self, ctx):
         """
         List the current verification setup for the server
+        :param ctx: the context of the discord message
         :return:
         """
         embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
@@ -325,6 +334,7 @@ This email is stored so you don't need to verify it multiple times."""
     async def re_verify(self, ctx, role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
+        :param ctx: the context of the discord message
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
@@ -361,6 +371,7 @@ This email is stored so you don't need to verify it multiple times."""
                 role = discord.utils.get(guild.roles, id=r_id)
                 await self.assign_role_to_guild(guild, role, suffix)
             except AttributeError:
+                # bot not in guild
                 pass
 
     async def assign_roles_for_user(self, user_id, email):
@@ -371,20 +382,27 @@ This email is stored so you don't need to verify it multiple times."""
                                                            (r_id, user_id))
             if blacklisted:
                 continue
-
-            guild = self.bot.get_guild(g_id)
-            role = discord.utils.get(guild.roles, id=r_id)
-            member = guild.get_member(user_id)
-            await member.add_roles(role)
+            try:
+                guild = self.bot.get_guild(g_id)
+                role = discord.utils.get(guild.roles, id=r_id)
+                member = guild.get_member(user_id)
+                await member.add_roles(role)
+            except AttributeError:
+                # user not in a guild/bot no longer in guild
+                pass
 
     async def remove_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
                                                    (email,))
         for g_id, r_id, suffix in results:
-            guild = self.bot.get_guild(g_id)
-            role = discord.utils.get(guild.roles, id=r_id)
-            member = guild.get_member(user_id)
-            await member.remove_roles(role)
+            try:
+                guild = self.bot.get_guild(g_id)
+                role = discord.utils.get(guild.roles, id=r_id)
+                member = guild.get_member(user_id)
+                await member.remove_roles(role)
+            except AttributeError:
+                # user not in a guild/bot no longer in guild
+                pass
 
     async def assign_role_to_guild(self, guild, role, suffix):
         results = self.DBManager.db_execute_select("SELECT u_id FROM verified_emails WHERE email LIKE ('%' || ?)",
