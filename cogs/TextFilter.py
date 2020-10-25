@@ -261,7 +261,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param ctx: The discord context
         :return:
         """
-        ignored= self.tf_database_manager.get_all_ignored(ctx.guild.id)
+        ignored = self.tf_database_manager.get_all_ignored(ctx.guild.id)
         await ctx.channel.send(embed=self.build_ignore_list_embed(ctx, ignored))
 
     @commands.Cog.listener()
@@ -280,14 +280,14 @@ class TextFilter(commands.Cog, name="TextFilter"):
             for word, filter_type, is_regex in censor_list:
                 if (word in message.content or re.search(word, message.content)) and not self.is_ignored(message):
                     if filter_type == "risky":
-                        await message.author.send("Watch your language! Your message: '*"+message.content+"*' in "+
+                        await message.author.send("Watch your language! Your message: '*"+message.content+"*' in " +
                                                   message.channel.mention+" contains a 'risky' word. "
                                                   "This is a warning.")
                         return
                     elif filter_type == "banned":
-                        await message.author.send("Watch your language! Your message: '*"+message.content+"*' in "+
+                        await message.author.send("Watch your language! Your message: '*"+message.content+"*' in " +
                                                   message.channel.mention+" has been deleted by KoalaBot.")
-                        await send_to_moderation_channels(self, message)
+                        await self.send_to_moderation_channels(message)
                         await message.delete()
                         return
 
@@ -321,7 +321,6 @@ class TextFilter(commands.Cog, name="TextFilter"):
         embed.title = "Koala Moderation - Mod Channels"
         embed = self.build_channel_list(channels, embed)
         return embed
-
 
     def is_ignored(self, message):
         """
@@ -372,8 +371,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         """
         if self.is_moderation_channel_available(message.guild.id):
             channels = self.tf_database_manager.get_mod_channel(message.guild.id)
-            for each_chan in channels:
-                channel = self.bot.get_channel(id=int(each_chan[0]))
+            for each_channel in channels:
+                channel = self.bot.get_channel(id=int(each_channel[0]))
                 await channel.send(embed=build_moderation_deleted_embed(message))
 
     def get_list_of_words(self, ctx):
@@ -494,11 +493,11 @@ def build_moderation_deleted_embed(message):
     """
     embed = create_default_embed(message)
     embed.title = "Koala Moderation - Message Deleted"
-    embed.add_field(name="Reason",value="Contained banned word")
-    embed.add_field(name="User",value=message.author.mention)
-    embed.add_field(name="Channel",value=message.channel.mention)
-    embed.add_field(name="Message",value=message.content)
-    embed.add_field(name="Timestamp",value=message.created_at)
+    embed.add_field(name="Reason", value="Contained banned word")
+    embed.add_field(name="User", value=message.author.mention)
+    embed.add_field(name="Channel", value=message.channel.mention)
+    embed.add_field(name="Message", value=message.content)
+    embed.add_field(name="Timestamp", value=message.created_at)
     return embed
 
 
@@ -570,7 +569,8 @@ class TextFilterDBManager:
 
         :param guild_id: Guild ID to retrieve filtered words from
         :param filtered_text: The new word to be filtered
-        :param filtered_type: The filter type (banned or risky)
+        :param filter_type: The filter type (banned or risky)
+        :param is_regex: Boolean if filtered text is regex
         :return:
         """
         ft_id = str(guild_id) + filtered_text
