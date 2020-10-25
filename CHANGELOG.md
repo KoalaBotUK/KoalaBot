@@ -7,7 +7,7 @@ A lot these commands will only be available to administrators
 ### Text Filter
 ##### Added
 - `filter <text> [type]`  Filter a word or string of text. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
-- `filter <regex> [type]` Filter a regex string. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
+- `filterRegex <regex> [type]` Filter a regex string. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
 - `filterList` Get a list of filtered words in the server
 
 - `modChannelAdd <channelId>` Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to.
