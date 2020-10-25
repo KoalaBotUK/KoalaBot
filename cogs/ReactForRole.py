@@ -324,7 +324,7 @@ class ReactForRole(commands.Cog):
             else:
                 for guild_rfr_message in guild_rfr_messages:
                     guild: discord.Guild = member_role[0].guild
-                    channel: discord.TextChannel = await guild.get_channel(guild_rfr_message[1])
+                    channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
                     msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
                     for x in msg.reactions:
                         await x.remove(payload.member)
@@ -352,12 +352,14 @@ class ReactForRole(commands.Cog):
     async def rfr_list_guild_required_roles(self, ctx: commands.Context):
         role_ids = self.rfr_database_manager.get_guild_rfr_required_roles(ctx.guild.id)
         msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
+        KoalaBot.logger.info(role_ids)
         for role_id in role_ids:
-            try:
-                role: discord.Role = await commands.RoleConverter().convert(ctx, str(role_id))
+
+            role: discord.Role = discord.utils.get(ctx.guild.roles, id=role_id)
+            if not role:
+                KoalaBot.logger.error(f"couldn't find role {role_id} in guild {ctx.guild.id}. Please check.")
+            else:
                 msg_str += f"{role.mention}\n"
-            except (commands.CommandError, commands.BadArgument):
-                continue
         await ctx.send(msg_str)
 
     async def prune_rfr_roles(self, guild: discord.Guild):
@@ -614,7 +616,7 @@ class ReactForRoleDBManager:
 
     def get_guild_rfr_messages(self, guild_id: int):
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", guild_id)
+            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
         return rows
 
     def get_guild_rfr_roles(self, guild_id: int) -> List[int]:
@@ -690,11 +692,12 @@ class ReactForRoleDBManager:
                                                 args=[guild_id, role_id])
 
     def get_guild_rfr_required_roles(self, guild_id) -> List[int]:
-        rows = self.database_manager.db_execute_select("SELECT role_id FROM GuildRFRRequiredRoles WHERE guild_id = ?",
+        rows = self.database_manager.db_execute_select("SELECT * FROM GuildRFRRequiredRoles WHERE guild_id = ?",
                                                        args=[guild_id])
-        if not rows:
+        role_ids = [x[1] for x in rows]
+        if not role_ids:
             return []
-        return rows
+        return role_ids
 
 
 def setup(bot: KoalaBot) -> None:
