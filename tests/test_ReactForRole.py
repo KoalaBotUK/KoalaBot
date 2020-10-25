@@ -40,7 +40,7 @@ def setup_function():
     """ setup any state specific to the execution of the given module."""
     global rfr_cog
     global utils_cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+    bot: commands.Bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     rfr_cog = ReactForRole.ReactForRole(bot)
     utils_cog = TestUtilsCog.TestUtilsCog(bot)
     bot.add_cog(rfr_cog)
@@ -88,6 +88,21 @@ def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, r
         return []
     return rows
 
+
+def independent_get_guild_rfr_required_role(guild_id=None, role_id=None) -> List[Tuple[int, int]]:
+    sql_select_str = "SELECT * FROM GuildRFRRequiredRoles WHERE "
+    if guild_id is not None:
+        sql_select_str += f"guild_id = {guild_id} AND "
+    if role_id is not None:
+        sql_select_str += f"role_id = {role_id} AND "
+    if not guild_id and not role_id:
+        sql_select_str = sql_select_str[:-7] + ";"
+    else:
+        sql_select_str = sql_select_str[:-5] + ";"
+    rows = DBManager.get_parent_database_manager().db_execute_select(sql_select_str)
+    if not rows:
+        return []
+    return rows
 
 # The below database tests are 2 of the ugliest pieces of code I have ever written. I only ask forgiveness for what you
 # see below
@@ -595,7 +610,8 @@ async def test_rfr_delete_message():
                 dpytest.verify_message()
                 assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
 
-@pytest.mark.skip("Not implemented yet.")
+
+# @pytest.mark.skip("Not implemented yet.")
 @pytest.mark.asyncio
 async def test_rfr_edit_description():
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -606,14 +622,150 @@ async def test_rfr_edit_description():
     message: discord.Message = await dpytest.message("rfr")
     msg_id = message.id
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
-    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts', mock.AsyncMock(message, channel)):
+    assert embed.description == 'description'
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
-                        mock.AsyncMock(side_effect="new description", "Y")):
-            with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_msg'):
-                pass
-            pass
+                        mock.AsyncMock(side_effect=["new description", "Y"])):
+            with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit description")
+                assert embed.description == 'new description'
+                dpytest.verify_message()
+                dpytest.verify_message()
+                dpytest.verify_message()
 
+
+@pytest.mark.asyncio
+async def test_rfr_edit_title():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    client: discord.Client = config.client
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.title == 'title'
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+                        mock.AsyncMock(side_effect=["new title", "Y"])):
+            with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit title")
+                assert embed.title == 'new title'
+                dpytest.verify_message()
+                dpytest.verify_message()
+                dpytest.verify_message()
+
+
+@pytest.mark.asyncio
+async def test_rfr_add_roles_to_msg():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    client: discord.Client = config.client
+    author: discord.Member = config.members[0]
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id: int = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    input_em_ro_content = ""
+    em_list = []
+    ro_list = []
+    for i in range(5):
+        em = utils.fake_unicode_emoji()
+        ro = utils.fake_guild_role(guild)
+        input_em_ro_content += f"{str(em)}, {ro.id}\n\r"
+        em_list.append(em)
+        ro_list.append(ro.mention)
+    input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
+
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', return_value=(input_em_ro_msg, None)):
+                with mock.patch('discord.Embed.add_field') as add_field:
+                    await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr addRoles")
+                    calls = []
+                    for i in range(5):
+                        calls.append(mock.call(name=str(em_list[i]), value=ro_list[i], inline=False))
+                    add_field.has_calls(calls)
+
+
+@pytest.mark.asyncio
+async def test_rfr_remove_roles_from_msg():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    client: discord.Client = config.client
+    author: discord.Member = config.members[0]
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id: int = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    input_em_ro_content = ""
+    em_ro_list = []
+    for i in range(5):
+        em = utils.fake_unicode_emoji()
+        ro = utils.fake_guild_role(guild)
+        x = random.choice([str(em), str(ro.id)])
+        input_em_ro_content += f"{x}\n\r"
+        em_ro_list.append(x)
+        embed.add_field(name=str(em), value=ro.mention, inline=False)
+        DBManager.add_rfr_message_emoji_role(1, str(em), ro.id)
+
+    input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', return_value=(input_em_ro_msg, None)):
+                with mock.patch('discord.Embed.add_field') as add_field:
+                    with mock.patch(
+                            'cogs.ReactForRole.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
+                        add_field.reset_mock()
+                        await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr removeRoles")
+                        add_field.assert_not_called()
+                        calls = []
+                        for i in range(5):
+                            calls.append((1, em_ro_list[i]))
+                        remove_emoji_role.has_calls(calls)
+
+
+# role-check tests
+@pytest.mark.parametrize("num_roles, num_required",
+                         [(0, 0), (1, 0), (1, 1), (2, 0), (2, 1), (2, 2), (5, 1), (5, 2), (20, 5)])
+@pytest.mark.asyncio
+async def test_can_have_rfr_role(num_roles, num_required):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    r_list = []
+    for i in range(num_roles):
+        role = utils.fake_guild_role(guild)
+        r_list.append(role)
+    required = random.sample(set(r_list), num_required)
+    for r in required:
+        DBManager.add_guild_rfr_required_role(guild.id, r.id)
+        assert independent_get_guild_rfr_required_role(guild.id, r.id) is not None
+    for i in range(num_roles):
+        mem_roles = []
+        member: discord.Member = await dpytest.member_join()
+        for j in range(i):
+            mem_roles.append(r_list[j])
+            await member.add_roles(r_list[j])
+
+        assert len(mem_roles) == i
+        if len(required) == 0:
+            assert await rfr_cog.can_have_rfr_role(member)
+        else:
+            assert await rfr_cog.can_have_rfr_role(member) == any(
+                x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
+        # assert await rfr_cog.can_have_rfr_role(member) == any(required) in member.roles, f"\n\r{member.roles}\n\r{required}"
     pass
+
+
+async def test_rfr_without_req_role():
+    pass
+
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
