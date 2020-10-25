@@ -41,7 +41,8 @@ def is_vote_caller():
         if KoalaBot.is_dm_channel(ctx):
             return False
         return ctx.author.id in cog.vote_manager.active_votes.keys() and cog.vote_manager.active_votes[
-            ctx.author.id].target_server == ctx.guild.id
+            ctx.author.id].target_server == ctx.guild.id and cog.vote_manager.active_votes[
+            ctx.author.id].setup
 
     return commands.check(predicate)
 
