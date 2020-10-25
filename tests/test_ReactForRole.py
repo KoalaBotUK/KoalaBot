@@ -104,6 +104,7 @@ def independent_get_guild_rfr_required_role(guild_id=None, role_id=None) -> List
         return []
     return rows
 
+
 # The below database tests are 2 of the ugliest pieces of code I have ever written. I only ask forgiveness for what you
 # see below
 @pytest.mark.asyncio
@@ -759,13 +760,38 @@ async def test_can_have_rfr_role(num_roles, num_required):
         else:
             assert await rfr_cog.can_have_rfr_role(member) == any(
                 x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
-        # assert await rfr_cog.can_have_rfr_role(member) == any(required) in member.roles, f"\n\r{member.roles}\n\r{required}"
-    pass
 
 
+@pytest.mark.skip("No support for reactions")
+@pytest.mark.asyncio
 async def test_rfr_without_req_role():
-    pass
+    assert False
 
+
+@pytest.mark.skip("No support for reactions")
+@pytest.mark.asyncio
+async def test_rfr_with_req_role():
+    assert False
+
+
+@pytest.mark.asyncio
+async def test_rfr_db_functions_guild_rfr_required_roles():
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    roles = []
+    for i in range(50):
+        role: discord.Role = utils.fake_guild_role(guild)
+        roles.append(role)
+        DBManager.add_guild_rfr_required_role(guild.id, role.id)
+        assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], i
+        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
+            guild.id), i
+
+    while len(roles) > 0:
+        role: discord.Role = roles.pop()
+        DBManager.remove_guild_rfr_required_role(guild.id, role.id)
+        assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], len(roles)
+        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
+            guild.id), len(roles)
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
