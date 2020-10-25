@@ -32,6 +32,10 @@ reverse_reference = {v: k for k, v in emote_reference.items()}
 
 
 def is_vote_caller():
+    """
+    Decorator that returns true if the command invoker has an active vote in the server theyre calling it in
+    :return:
+    """
     async def predicate(ctx):
         cog = ctx.command.cog
         if KoalaBot.is_dm_channel(ctx):
@@ -42,12 +46,27 @@ def is_vote_caller():
     return commands.check(predicate)
 
 
-def test_is_admin(ctx):
-    return KoalaBot.is_admin(ctx) or ctx.author.id == 135496683009081345
+def vote_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled vote
+    e.g. @commands.check(KoalaBot.is_admin)
+    :param ctx: The context of the message
+    :return: True if admin or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "Vote")
+    except PermissionError:
+        result = False
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest) or ctx.author.id == 135496683009081345
 
 
 class Voting(commands.Cog):
     def __init__(self, bot, db_manager=None):
+        """
+
+        :param bot:
+        :param db_manager:
+        """
         self.bot = bot
         self.vote_manager = VoteManager()
         if not db_manager:
@@ -56,31 +75,49 @@ class Voting(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
+        """
+        Update the message of the vote on react to let the voter know which way they've voted.
+        :param payload:
+        :return:
+        """
         await self.update_vote_message(payload)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
+        """
+        Update the message of the vote when a reaction is removed
+        :param payload:
+        :return:
+        """
         await self.update_vote_message(payload)
 
     @staticmethod
     async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0, check=lambda message: message.author == ctx.author):
+        """
+        Wrapper for wait_for_message for testing purposes with mock.patch
+        :param bot: the bot object
+        :param ctx: the context of the message
+        :param timeout: the time to wait before timing out
+        :param check: conditions for the message it's waiting for
+        :return: the message found
+        """
         try:
             msg = await bot.wait_for('message', timeout=timeout, check=check)
             return msg
         except Exception:
-            msg = None
-        return msg
+            raise asyncio.TimeoutError
 
     @commands.group(name="vote")
     async def vote(self, ctx):
         """
         A group of commands to create a poll to send out to specific members of a discord server.
+        Do k!help vote to see related subcommands, or do k!vote create <title> to start a vote.
         :return:
         """
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
-    # @commands.check(KoalaBot.is_admin)
+    @commands.check(vote_is_enabled)
     @vote.command(name="create", brief="Start the creation of a vote.")
     async def startVote(self, ctx, *, title):
         """
@@ -119,7 +156,7 @@ class Voting(commands.Cog):
         try:
             # role_msg = await self.bot.wait_for('message', check=response_check, timeout=60.0)
             role_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
-            if not role_msg:
+            if not role_msg.content:
                 raise self.TimeoutError("Vote creation timed out")
             if role_msg.role_mentions:
                 vote.add_roles(role_msg.role_mentions)
@@ -173,10 +210,10 @@ class Voting(commands.Cog):
             vote.setup = True
 
         except (KeyError, ValueError):
-            await msg.edit("```Vote was cancelled due to invalid response.```")
+            await msg.edit(content="```Vote was cancelled due to invalid response.```")
             self.vote_manager.remove_vote(ctx.author.id)
         except asyncio.TimeoutError:
-            await msg.edit("```Vote was cancelled due to timeout.```")
+            await msg.edit(content="```Vote was cancelled due to timeout.```")
             self.vote_manager.remove_vote(ctx.author.id)
 
     @is_vote_caller()
