@@ -649,10 +649,10 @@ class TextFilterDBManager:
         """
         rows = self.database_manager.db_execute_select(
             "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"])
-        ilist = []
+        channels = []
         for row in rows:
-            ilist.append((row[3]))
-        return ilist
+            channels.append((row[3]))
+        return channels
     
     def get_ignore_list_users(self, guild_id):
         """
@@ -663,12 +663,12 @@ class TextFilterDBManager:
         """
         rows = self.database_manager.db_execute_select(
             "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "user"])
-        ilist = []
+        channels = []
         for row in rows:
-            ilist.append((row[3]))
-        return ilist
+            channels.append((row[3]))
+        return channels
     
-    def get_all_ignored(self,guild_id):
+    def get_all_ignored(self, guild_id):
         ignored = []
         users = self.database_manager.db_execute_select(
             "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "user"])
