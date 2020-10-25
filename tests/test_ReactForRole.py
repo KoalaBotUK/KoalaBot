@@ -293,6 +293,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     assert (rfr_message_emoji_roles[1][0], rfr_message_emoji_roles[1][1],
             rfr_message_emoji_roles[1][2]) not in independent_get_rfr_message_emoji_role()
 
+
 @pytest.mark.asyncio
 async def test_rfr_db_functions_guild_rfr_required_roles():
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -311,6 +312,7 @@ async def test_rfr_db_functions_guild_rfr_required_roles():
         assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], len(roles)
         assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
             guild.id), len(roles)
+
 
 @pytest.mark.asyncio
 async def test_get_rfr_message_from_prompts():
@@ -790,8 +792,6 @@ async def test_rfr_without_req_role():
 @pytest.mark.asyncio
 async def test_rfr_with_req_role():
     assert False
-
-
 
 
 @pytest.fixture(scope='session', autouse=True)
