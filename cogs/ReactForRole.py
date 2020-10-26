@@ -124,7 +124,6 @@ class ReactForRole(commands.Cog):
             embed.set_footer(text="ReactForRole")
             embed.set_thumbnail(
                 url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
-            await ctx.send(f"Okay, I'll create the react for role message now.")
             rfr_msg: discord.Message = await channel.send(embed=embed)
             self.rfr_database_manager.add_rfr_message(ctx.guild.id, channel.id, rfr_msg.id)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
@@ -584,10 +583,11 @@ class ReactForRole(commands.Cog):
         Optional[discord.Message], Optional[discord.TextChannel]]:
         try:
             msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
-            return msg, None
         except Exception:
             msg = None
-        return msg, ctx.channel
+        if not msg:
+            return msg, ctx.channel
+        return msg, None
 
     async def is_user_alive(self, ctx: commands.Context):
         msg = await self.wait_for_message(self.bot, ctx, 10)
