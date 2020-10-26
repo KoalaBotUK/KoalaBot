@@ -26,8 +26,8 @@ A lot of these commands will only be available to administrators
 
 ### React For Role (RFR)
 ##### Added
-- `rfr createMsg` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`. 
-- `rfr deleteMsg` Delete an existing rfr message. 
+- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`. 
+- `rfr delete` Delete an existing rfr message. 
 - `rfr addRequiredRole` Add a role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality.
 - `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality 
 
