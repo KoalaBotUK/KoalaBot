@@ -337,7 +337,9 @@ class ReactForRole(commands.Cog):
             wanted_removals = await self.parse_emoji_or_roles_input_str(ctx, input_emoji_roles)
             rfr_embed: discord.Embed = self.get_embed_from_message(msg)
             rfr_embed_fields = rfr_embed.fields
-            new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description)
+            new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description, colour=KoalaColours.KOALA_GREEN)
+            embed.set_thumbnail(
+                url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
             new_embed.set_footer(text="ReactForRole")
             removed_field_indexes = []
             reactions_to_remove: List[discord.Reaction] = []
