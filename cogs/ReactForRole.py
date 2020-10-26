@@ -800,7 +800,7 @@ class ReactForRoleDBManager:
 
     def add_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str, role_id: int):
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES ({emoji_role_id}, \"{emoji_raw}\", {role_id});""")
+            f"""REPLACE INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES ({emoji_role_id}, \"{emoji_raw}\", {role_id});""")
 
     def remove_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str = None, role_id: int = None):
         if not emoji_raw:
