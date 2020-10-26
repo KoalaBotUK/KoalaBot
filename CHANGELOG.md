@@ -1,6 +1,6 @@
 # Changelog
 All notable changes to KoalaBot will be documented in this file.
-A lot these commands will only be available to administrators
+A lot of these commands will only be available to administrators
 
 ## [Unreleased]
 ### Twitch Alert
@@ -22,7 +22,7 @@ A lot these commands will only be available to administrators
 - `ignoreList` See a list of ignored users/channels in the server.
 
 - `unfilter <text>` Unfilter a word/string/regex of text that was previously filtered.
-- `unignore <mention>` Unignore a user/channel that was previously set as ingored
+- `unignore <mention>` Unignore a user/channel that was previously set as ignored
 
 ### React For Role (RFR)
 ##### Added
@@ -36,9 +36,9 @@ A lot these commands will only be available to administrators
 - `rfr edit description` Edit the description of an existing rfr message  
 - `rfr edit title` Edit the title of an existing rfr message.
 
-### Twitch Alert
+### Colour Role
 ##### Changed
-- Add catch so errors don't stop the alert loop
+- Fixed error that occasionally made custom colour roles be created in the wrong position, thus not showing correctly
 
 ## [0.1.8] - 18-10-2020
 ### Twitch Alert
