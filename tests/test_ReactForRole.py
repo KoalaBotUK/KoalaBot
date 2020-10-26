@@ -601,8 +601,8 @@ async def test_rfr_create_message():
                             "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
                         dpytest.verify_message(
                             "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit command.")
-                        dpytest.verify_message("Okay, the description of the message will be \"Roles below!\".")
-                        dpytest.verify_message("Okay, I'll create the react for role message now.")
+                        dpytest.verify_message(
+                            "Okay, the description of the message will be \"Roles below!\".\n Okay, I'll create the react for role message now.")
                         dpytest.verify_embed()
                         msg = dpytest.sent_queue.get_nowait()
                         assert "You can use the other k!rfr subcommands to change the message and add functionality as required." in msg.content
