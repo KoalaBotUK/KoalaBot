@@ -375,13 +375,19 @@ class ReactForRole(commands.Cog):
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        """
+        Event listener for adding a reaction. Doesn't need message to be in loaded cache.
+        Gives the user a role if they can get it, if not strips all their roles and removes their reacts.
+        :param payload: RawReactionActionEvent that happened
+        :return:
+        """
         rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
                                                                 payload.message_id)
         if not rfr_message:
             return
         member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
                                                 payload.message_id, payload.user_id)
-        if await self.can_have_rfr_role(member_role[0]):
+        if self.can_have_rfr_role(member_role[0]):
             await member_role[0].add_roles(member_role[1])
         else:
             # Remove all rfr roles from member
@@ -468,11 +474,14 @@ class ReactForRole(commands.Cog):
                 msg_str += f"{role.mention}\n"
         await ctx.send(msg_str)
 
-    async def prune_rfr_roles(self, guild: discord.Guild):
-        pass
-
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
+        """
+        Event listener for removing a reaction. Doesn't need message to be in loaded cache. Removes the role from the
+        user if they have it, else does nothing.
+        :param payload: RawReactionActionEvent that happened.
+        :return:
+        """
         rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
                                                                 payload.message_id)
         if not rfr_message:
@@ -483,13 +492,24 @@ class ReactForRole(commands.Cog):
             return
         await member_role[0].remove_roles(member_role[1])
 
-    async def can_have_rfr_role(self, member: discord.Member) -> bool:
+    def can_have_rfr_role(self, member: discord.Member) -> bool:
+        """
+        check for rfr required roles, taking a member as argument
+        :param member: Member to check rfr perms for
+        :return: True if member has one of the required roles, or if there are no required roles. False otherwise
+        """
         required_roles: List[int] = self.rfr_database_manager.get_guild_rfr_required_roles(member.guild.id)
         if not required_roles or len(required_roles) == 0:
             return True
         return any(x in required_roles for x in [y.id for y in member.roles])
 
     async def get_rfr_message_from_prompts(self, ctx: commands.Context) -> Tuple[discord.Message, discord.TextChannel]:
+        """
+        Gets an rfr message from prompting user, basically just calls prompt_for_input multiple times and gets value from
+        database based on input.
+        :param ctx: Context of the command this function is called in
+        :return: 2-Tuple of the message (if there is one, else None), and channel (if there is no message, else None).
+        """
         channel_raw = await self.prompt_for_input(ctx, "Channel name, mention or ID")
         channel: discord.TextChannel = await commands.TextChannelConverter().convert(ctx, channel_raw)
         msg_id = int(await self.prompt_for_input(ctx, "react for role message ID"))
@@ -504,6 +524,18 @@ class ReactForRole(commands.Cog):
     def get_role_member_info(self, emoji_reacted: discord.PartialEmoji, emoji_role_id: int, guild_id: int,
                              channel_id: int, message_id: int, user_id: int) -> Optional[
         Tuple[discord.Member, discord.Role]]:
+        """
+        Gets the role that should be added/removed to/from a Member on reacting to a known RFR message, and works out
+        which Member reacted.
+        :param emoji_reacted: Emoji of the raw reaction payload
+        :param emoji_role_id: DB key identifying specific RFR message in a Guild
+        :param guild_id: ID of the guild this event occurred in
+        :param channel_id: ID of the channel that the message was in
+        :param message_id: ID of the message that was reacted to
+        :param user_id: ID of the user who reacted
+        :return: Optional 2-Tuple (member, role) where member is the Member that reacted, and Role is the role that
+        should be given/taken away. If a role or member couldn't be found, returns None instead.
+        """
         if emoji_reacted.is_unicode_emoji():
             rep = emoji.demojize(emoji_reacted.name)
             role_id = self.rfr_database_manager.get_rfr_reaction_role_by_emoji_str(emoji_role_id, rep)
@@ -526,6 +558,16 @@ class ReactForRole(commands.Cog):
 
     async def parse_emoji_and_role_input_str(self, ctx: commands.Context, input_str: str, remaining_slots: int) -> List[
         Tuple[Union[discord.Emoji, str], discord.Role]]:
+        """
+        Parses input for the "k!rfr edit addRoles" commmand, in the
+        \\\n"`<emoji>`, `<role>`\\\n
+        `<emoji>`, `<role>`\"
+        format.
+        :param ctx: context of the command that called this
+        :param input_str: input message content
+        :param remaining_slots: remaining slots left on the rfr embed referred to
+        :return: List of Emoji-Role pairs parsed from the input message.
+        """
         rows = input_str.splitlines()
         arr = []
         for row in rows:
@@ -544,6 +586,17 @@ class ReactForRole(commands.Cog):
 
     async def parse_emoji_or_roles_input_str(self, ctx: commands.Context, input_str: str) -> List[
         Union[discord.Emoji, str, discord.Role]]:
+        """
+        Parses input prompt for the "k!rfr edit removeRoles" command, to get a list of roles and emoji as the output.
+        Input format is
+        \\\n\"`<emoji>/<role>`\"
+        \\\n\"`<emoji>/<role>`\"
+        `<role>` can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
+        unicode emoji.
+        :param ctx: Context of the command that called this
+        :param input_str: Input message content
+        :return: List of roles & emojis given in the input string.
+        """
         rows = input_str.splitlines()
         arr = []
         for row in rows:
@@ -560,6 +613,13 @@ class ReactForRole(commands.Cog):
         return arr
 
     async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> str:
+        """
+        Prompts a user for input in the form of a message. Has a forced timer of 60 seconds, because it basically just
+        deals with the rfr specific stuff. Returns whatever was input, or cancels the calling command
+        :param ctx: Context of the command that calls this
+        :param input_type: Name of whatever info is needed from a user, just so that the message looks nice/clear
+        :return: User's response's content
+        """
         await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
         msg, channel = await self.wait_for_message(self.bot, ctx)
         if not msg:
@@ -568,6 +628,14 @@ class ReactForRole(commands.Cog):
             return msg.content
 
     async def overwrite_channel_add_reaction_perms(self, guild: discord.Guild, channel: discord.TextChannel):
+        """
+        Overwrites a text channel's reaction perms so that nobody can add new reactions to any message sent in the
+        channel, only the bot, to make sure people don't mess with the system. Relies on roles tending not to be added/
+        removed constantly to keep performance satisfactory.
+        :param guild: Guild that the rfr message is in
+        :param channel: Channel that the rfr message is in
+        :return:
+        """
         roles: List[discord.Role] = guild.roles
         overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
         overwrite.update(add_reactions=False)
@@ -581,6 +649,14 @@ class ReactForRole(commands.Cog):
     @staticmethod
     async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0) -> Tuple[
         Optional[discord.Message], Optional[discord.TextChannel]]:
+        """
+        Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
+        timeout of 60 seconds.
+        :param bot: Koala Bot client
+        :param ctx: Context of the original command
+        :param timeout: Time to wait before raising TimeoutError
+        :return: If a message (msg) was received, returns a tuple (msg, None). Else returns (None, ctx.channel)
+        """
         try:
             msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
         except Exception:
@@ -590,12 +666,22 @@ class ReactForRole(commands.Cog):
         return msg, None
 
     async def is_user_alive(self, ctx: commands.Context):
+        """
+        Prompts user for message to check if they're alive. Any message will do. We hope they're alive anyways.
+        :param ctx: Context of the command that calls this
+        :return: True if message received, False otherwise.
+        """
         msg = await self.wait_for_message(self.bot, ctx, 10)
         if not msg[0]:
             return False
         return True
 
     def get_embed_from_message(self, msg: discord.Message) -> Optional[discord.Embed]:
+        """
+        Gets the embed from a given message. Yup. That's it.
+        :param msg: Message to check
+        :return: Returns the embed if there is one. If there isn't returns None
+        """
         if not msg:
             return None
         try:
@@ -607,10 +693,22 @@ class ReactForRole(commands.Cog):
             return None
 
     def get_number_of_embed_fields(self, embed: discord.Embed) -> int:
+        """
+        Gets the number of fields in an embed.
+        :param embed: Embed to check
+        :return: Number of embed fields.
+        """
         return len(embed.fields)
 
     async def get_first_emoji_from_str(self, ctx: commands.Context, content: str) -> Optional[
         Union[discord.Emoji, str]]:
+        """
+        Gets the first emoji in a string input, custom or not. Doesn't work with custom emojis the bot doesn't have
+        access to.
+        :param ctx: Context of the original command
+        :param content: Message content
+        :return: Emoji if there is a valid one. Otherwise None.
+        """
         # First check for a custom discord emoji in the string
         KoalaBot.logger.info(msg=content)
         search_result = CUSTOM_EMOJI_REGEXP.search(content)

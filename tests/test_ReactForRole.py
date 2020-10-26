@@ -776,9 +776,9 @@ async def test_can_have_rfr_role(num_roles, num_required):
 
         assert len(mem_roles) == i
         if len(required) == 0:
-            assert await rfr_cog.can_have_rfr_role(member)
+            assert rfr_cog.can_have_rfr_role(member)
         else:
-            assert await rfr_cog.can_have_rfr_role(member) == any(
+            assert rfr_cog.can_have_rfr_role(member) == any(
                 x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
 
 
