@@ -55,7 +55,7 @@ class ReactForRole(commands.Cog):
         self.rfr_database_manager = ReactForRoleDBManager(KoalaBot.database_manager)
         self.rfr_database_manager.create_tables()
 
-    @commands.group(name="reactForRole", aliases=["rfr", "react_for_role", "ReactForRole"])
+    @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
         return
 
