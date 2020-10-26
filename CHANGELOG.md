@@ -36,8 +36,6 @@ A lot these commands will only be available to administrators
 - `rfr edit description` Edit the description of an existing rfr message  
 - `rfr edit title` Edit the title of an existing rfr message.
 
-
-## [0.1.8] - 18-10-2020
 ### Twitch Alert
 ##### Changed
 - Add catch so errors don't stop the alert loop
