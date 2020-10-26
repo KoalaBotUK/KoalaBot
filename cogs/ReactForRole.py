@@ -3,6 +3,7 @@
 """
 KoalaBot Reaction Roles Code
 
+Author: Anan Venkatesh
 Commented using reStructuredText (reST)
 """
 # Futures
@@ -43,6 +44,10 @@ def rfr_is_enabled(ctx):
 
 
 class ReactForRole(commands.Cog):
+    """
+    A discord.py cog pertaining to a React for Role system to allow for automation in getting roles.
+    """
+
     def __init__(self, bot: discord.Client):
         self.bot = bot
         KoalaBot.database_manager.create_base_tables()
@@ -58,6 +63,13 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="createMessage")
     async def rfr_create_message(self, ctx: commands.Context):
+        """
+        Creates a new rfr message in a channel of user's choice. User is prompted for (in this order)
+        channel ID/name/mention, message title, message description. Default title and description exist, which are
+        \"React for Role\" and \"Roles below!\" respectively. User requires admin perms to use.
+        :param ctx: Context of the command
+        :return:
+        """
         await ctx.send(
             "Okay, this will create a new react for role message in a channel of your choice."
             "\nNote: The channel you specify will have its permissions edited to make it such that members are unable "
@@ -125,6 +137,12 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="deleteMessage")
     async def rfr_delete_message(self, ctx: commands.Context):
+        """
+        Deletes an existing rfr message. User is prompted for (in this order) channel ID/name/mention, message ID/URL,
+        Y/N confirmation. User needs admin perms to use.
+        :param ctx: Context of the command
+        :return:
+        """
         await ctx.send(
             "Okay, this will delete an existing react for role message. I'll need some details first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -147,6 +165,12 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="description", aliases=["desc"])
     async def rfr_edit_description(self, ctx: commands.Context):
+        """
+        Edit the description of an existing rfr message. User is prompted for rfr message channel ID/name/mention,
+        rfr message ID/URL, new description, Y/N confirmation. User needs admin perms to use.
+        :param ctx: Context of the command
+        :return:
+        """
         await ctx.send("Okay, this will edit the description of an existing react for role message. I'll need some "
                        "details first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -164,6 +188,12 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="title")
     async def rfr_edit_title(self, ctx: commands.Context):
+        """
+        Edit the title of an existing rfr message. User is prompted for rfr message channel ID/name/mention,
+        rfr message ID/URL, new title, Y/N confirmation. User needs admin perms to use.
+        :param ctx: Context of the command
+        :return:
+        """
         await ctx.send("Okay, this will edit the title of an existing react for role message. I'll need some details "
                        "first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -181,6 +211,16 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
+        """
+        Adds roles to an existing rfr message. User is prompted for rfr message channel ID/name/mention, rfr message ID/
+        URL, emoji-role combos. Emoji-role combinations are to be given in
+        \\\n\"`<emoji>`, `<role>`\"
+        \\\n\"`<emoji>`, `<role>`\"
+        format. `<role>` can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
+        unicode emoji. \\\nUser needs admin perms to use.
+        :param ctx: Context of the command.
+        :return:
+        """
         await ctx.send(
             "Okay. This will add roles to an already created react for role message. I'll need some details first "
             "though.")
@@ -216,7 +256,7 @@ class ReactForRole(commands.Cog):
             " <role>\"\n\"<emoji>, <role>\"\n\"<emoji>, <role>\"\netc. You can get a new line by using SHIFT + ENTER.")
         await ctx.send(
             f"Please note however that you've only got {remaining_slots} emoji-role combinations you can enter. I'll "
-            "therefore only take the first {remaining_slots} you do.")
+            f"therefore only take the first {remaining_slots} you do.")
         input_role_emojis = (await self.wait_for_message(self.bot, ctx))[0].content
         emoji_role_list = await self.parse_emoji_and_role_input_str(ctx, input_role_emojis, remaining_slots)
         rfr_embed = self.get_embed_from_message(msg)
@@ -250,6 +290,17 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="removeRoles")
     async def rfr_remove_roles_from_msg(self, ctx: commands.Context):
+        """
+        Removes roles from an existing rfr message. User is prompted for rfr message channel ID/name/mention, rfr message
+        ID/URL, emojis/roles to remove. User can specify either the emoji or the role for any emoji-role combination to
+        remove it, but it needs to be specified in the format below.
+        \\\n\"`<emoji>/<role>`\"
+        \\\n\"`<emoji>/<role>`\"
+        `<role>` can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
+        unicode emoji. \\\nUser needs admin perms to use.
+        :param ctx: Context of the command.
+        :return:
+        """
         await ctx.send(
             "Okay, this will remove roles from an already existing react for role message. I'll need some details first"
             " though.")
@@ -361,6 +412,14 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
+        """
+        Adds a role to perms to use rfr functionality in a server, so you can specify that you need, e.g. "@Student" to
+        be able to use rfr functionality in the server. It's server-wide permissions handling however. By default anyone
+        can use rfr functionality in the server. User needs to have admin perms to use.
+        :param ctx: Context of the command
+        :param role_str: Role ID/name/mention
+        :return:
+        """
         try:
             role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
             await ctx.send(f"Okay, I'll add {role.name} to the list of roles required for RFR usage on the server.")
@@ -372,6 +431,14 @@ class ReactForRole(commands.Cog):
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("removeRequiredRole")
     async def rfr_remove_guild_required_role(self, ctx: commands.Context, role_str: str):
+        """
+        Removes a role from perms for use of rfr functionality in a server, so you can specify that you need, e.g.
+        "@Student" to be able to use rfr functionality in the server. It's server-wide permissions handling however. By
+        default anyone can use rfr functionality in the server. User needs to have admin perms to use.
+        :param ctx: Context of the command
+        :param role_str: Role ID/name/mention
+        :return:
+        """
         try:
             role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
             await ctx.send(
@@ -380,9 +447,16 @@ class ReactForRole(commands.Cog):
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
+    @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("listRequiredRoles")
     async def rfr_list_guild_required_roles(self, ctx: commands.Context):
+        """
+        Lists the server-specific role permissions for using rfr functionality. If list is empty, any role can use rfr
+        functionality.
+        :param ctx: Context of the command.
+        :return:
+        """
         role_ids = self.rfr_database_manager.get_guild_rfr_required_roles(ctx.guild.id)
         msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
         KoalaBot.logger.info(role_ids)
