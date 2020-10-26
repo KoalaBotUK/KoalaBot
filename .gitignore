@@ -1,5 +1,6 @@
 # Databases (avoid saving private info to git)
 *.db
+*.db-journal
 
 # Editors
 .vscode/
@@ -134,3 +135,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Databases
+.db
