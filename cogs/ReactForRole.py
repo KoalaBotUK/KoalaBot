@@ -76,7 +76,7 @@ class ReactForRole(commands.Cog):
             "to add new reactions to messages, they can only reaction with existing ones. Please keep this in mind, or"
             " setup another channel entirely for this.")
         channel_raw = await self.prompt_for_input(ctx, "channel ID, name or mention")
-        channel: discord.TextChannel = await commands.TextChannelConverter().convert(ctx, channel_raw)
+        channel = None if (channel_raw == "") else await commands.TextChannelConverter().convert(ctx, channel_raw)
         if not channel:
             await ctx.send("Sorry, you didn't specify a valid channel ID, mention or name. Please restart the command.")
         else:
@@ -176,10 +176,13 @@ class ReactForRole(commands.Cog):
         embed = self.get_embed_from_message(msg)
         await ctx.send(f"Your current description is {embed.description}. Please enter your new description.")
         desc = await self.prompt_for_input(ctx, "description")
-        await ctx.send(f"Your new description would be {desc}. Please confirm that you'd like this change.")
-        if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
-            embed.description = desc
-            await msg.edit(embed=embed)
+        if desc != "":
+            await ctx.send(f"Your new description would be {desc}. Please confirm that you'd like this change.")
+            if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+                embed.description = desc
+                await msg.edit(embed=embed)
+            else:
+                await ctx.send("Okay, cancelling command.")
         else:
             await ctx.send("Okay, cancelling command.")
 
@@ -199,10 +202,13 @@ class ReactForRole(commands.Cog):
         embed = self.get_embed_from_message(msg)
         await ctx.send(f"Your current title is {embed.title}. Please enter your new title.")
         title = await self.prompt_for_input(ctx, "title")
-        await ctx.send(f"Your new title would be {title}. Please confirm that you'd like this change.")
-        if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
-            embed.title = title
-            await msg.edit(embed=embed)
+        if title != "":
+            await ctx.send(f"Your new title would be {title}. Please confirm that you'd like this change.")
+            if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+                embed.title = title
+                await msg.edit(embed=embed)
+            else:
+                await ctx.send("Okay, cancelling command.")
         else:
             await ctx.send("Okay, cancelling command.")
 
@@ -511,8 +517,13 @@ class ReactForRole(commands.Cog):
         :return: 2-Tuple of the message (if there is one, else None), and channel (if there is no message, else None).
         """
         channel_raw = await self.prompt_for_input(ctx, "Channel name, mention or ID")
-        channel: discord.TextChannel = await commands.TextChannelConverter().convert(ctx, channel_raw)
-        msg_id = int(await self.prompt_for_input(ctx, "react for role message ID"))
+        channel = None if (channel_raw == "") else await commands.TextChannelConverter().convert(ctx, channel_raw)
+        if not channel:
+            raise commands.CommandError("Invalid channel given.")
+        msg_id_raw = await self.prompt_for_input(ctx, "react for role message ID")
+        msg_id = None if (msg_id_raw == "") else int(msg_id_raw)
+        if not msg_id:
+            raise commands.CommandError("Invalid Message ID given.")
         msg = await ctx.fetch_message(msg_id)
         if not msg:
             raise commands.CommandError("Invalid Message ID given.")
@@ -624,6 +635,7 @@ class ReactForRole(commands.Cog):
         msg, channel = await self.wait_for_message(self.bot, ctx)
         if not msg:
             await channel.send("Okay, I'll cancel the command.")
+            return ""
         else:
             return msg.content
 
@@ -659,8 +671,8 @@ class ReactForRole(commands.Cog):
         """
         try:
             msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
-        except Exception:
-            msg = None
+        except (Exception, TypeError):
+            return None, ctx.channel
         if not msg:
             return msg, ctx.channel
         return msg, None
