@@ -454,12 +454,11 @@ async def test_overwrite_channel_add_reaction_perms():
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
     with mock.patch('discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
-        calls = []
         for i in range(15):
-            role: discord.Role = await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
-            await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
-            calls.append(mock.call(channel.id, role.id, 0, 64, 'role', reason=None))
-            mock_edit_channel_perms.assert_has_calls(calls, True)
+            await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
+        role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
+        await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
+        mock_edit_channel_perms.assert_called_once_with(channel.id, role.id, 0, 64, 'role', reason=None)
 
 
 @pytest.mark.parametrize("msg_content", [" ", "something"])
