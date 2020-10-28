@@ -585,8 +585,9 @@ async def test_rfr_create_message():
                         mock_edit_channel_perms.assert_called_once()
                         dpytest.verify_message(
                             "Okay, this will create a new react for role message in a channel of your choice."
-                            "\nNote: The channel you specify will have its permissions edited to make it such that members are unable"
-                            " to add new reactions to messages, they can only reaction with existing ones. Please keep this in mind, or setup another channel entirely for this.")
+                            "\nNote: The channel you specify will have its permissions edited to make it such that the "
+                            "@ everyone role is unable to add new reactions to messages, they can only reaction with "
+                            "existing ones. Please keep this in mind, or setup another channel entirely for this.")
                         dpytest.verify_message("This should be a thing sent in the right channel.")
                         dpytest.verify_message(
                             "Okay, what would you like the title of the react for role message to be? Please enter within 30 seconds.")
