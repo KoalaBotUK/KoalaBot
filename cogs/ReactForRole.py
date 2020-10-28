@@ -72,9 +72,9 @@ class ReactForRole(commands.Cog):
         """
         await ctx.send(
             "Okay, this will create a new react for role message in a channel of your choice."
-            "\nNote: The channel you specify will have its permissions edited to make it such that members are unable "
-            "to add new reactions to messages, they can only reaction with existing ones. Please keep this in mind, or"
-            " setup another channel entirely for this.")
+            "\nNote: The channel you specify will have its permissions edited to make it such that the @ everyone role "
+            "is unable to add new reactions to messages, they can only reaction with existing ones. Please keep this in"
+            " mind, or setup another channel entirely for this.")
         channel_raw = await self.prompt_for_input(ctx, "channel ID, name or mention")
         channel = None if (channel_raw == "") else await commands.TextChannelConverter().convert(ctx, channel_raw)
         if not channel:
@@ -261,8 +261,8 @@ class ReactForRole(commands.Cog):
             " <role>\"\n\"<emoji>, <role>\"\n\"<emoji>, <role>\"\netc. You can get a new line by using SHIFT + ENTER.")
         await ctx.send(
             f"Please note however that you've only got {remaining_slots} emoji-role combinations you can enter. I'll "
-            f"therefore only take the first {remaining_slots} you do.")
-        input_role_emojis = (await self.wait_for_message(self.bot, ctx))[0].content
+            f"therefore only take the first {remaining_slots} you do. I'll wait for 3 minutes.")
+        input_role_emojis = (await self.wait_for_message(self.bot, ctx, 180))[0].content
         emoji_role_list = await self.parse_emoji_and_role_input_str(ctx, input_role_emojis, remaining_slots)
         rfr_embed = self.get_embed_from_message(msg)
         for emoji_role in emoji_role_list:
@@ -389,37 +389,38 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened
         :return:
         """
-        rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                payload.message_id)
-        if not rfr_message:
-            return
-        member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
-                                                payload.message_id, payload.user_id)
-        if self.can_have_rfr_role(member_role[0]):
-            await member_role[0].add_roles(member_role[1])
-        else:
-            # Remove all rfr roles from member
-            role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
-            roles: List[discord.Role] = []
-            for role_id in role_ids:
-                role = discord.utils.get(member_role[0].guild.roles, id=role_id)
-                if not role:
-                    continue
-                roles.append(role)
-            for role_to_remove in roles:
-                await member_role[0].remove_roles(role_to_remove)
-            # Remove members' reaction from all rfr messages in guild
-            guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
-            if not guild_rfr_messages:
-                KoalaBot.logger.error("Guild RFR messages is empty on raw reaction add. Please check")
-                print(self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id))
+        if not payload.member.bot:
+            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                                                                    payload.message_id)
+            if not rfr_message:
+                return
+            member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
+                                                    payload.message_id, payload.user_id)
+            if self.can_have_rfr_role(member_role[0]):
+                await member_role[0].add_roles(member_role[1])
             else:
-                for guild_rfr_message in guild_rfr_messages:
-                    guild: discord.Guild = member_role[0].guild
-                    channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
-                    msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
-                    for x in msg.reactions:
-                        await x.remove(payload.member)
+                # Remove all rfr roles from member
+                role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
+                roles: List[discord.Role] = []
+                for role_id in role_ids:
+                    role = discord.utils.get(member_role[0].guild.roles, id=role_id)
+                    if not role:
+                        continue
+                    roles.append(role)
+                for role_to_remove in roles:
+                    await member_role[0].remove_roles(role_to_remove)
+                # Remove members' reaction from all rfr messages in guild
+                guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
+                if not guild_rfr_messages:
+                    KoalaBot.logger.error("Guild RFR messages is empty on raw reaction add. Please check")
+                    print(self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id))
+                else:
+                    for guild_rfr_message in guild_rfr_messages:
+                        guild: discord.Guild = member_role[0].guild
+                        channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
+                        msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
+                        for x in msg.reactions:
+                            await x.remove(payload.member)
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -490,15 +491,16 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened.
         :return:
         """
-        rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                payload.message_id)
-        if not rfr_message:
-            return
-        member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
-                                                payload.message_id, payload.user_id)
-        if not member_role:
-            return
-        await member_role[0].remove_roles(member_role[1])
+        if not payload.member.bot:
+            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                                                                    payload.message_id)
+            if not rfr_message:
+                return
+            member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
+                                                    payload.message_id, payload.user_id)
+            if not member_role:
+                return
+            await member_role[0].remove_roles(member_role[1])
 
     def can_have_rfr_role(self, member: discord.Member) -> bool:
         """
@@ -650,11 +652,11 @@ class ReactForRole(commands.Cog):
         :param channel: Channel that the rfr message is in
         :return:
         """
-        roles: List[discord.Role] = guild.roles
+        #  Get the @everyone role.
+        role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
         overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
         overwrite.update(add_reactions=False)
-        for role in roles:
-            await channel.set_permissions(role, overwrite=overwrite)
+        await channel.set_permissions(role, overwrite=overwrite)
         bot_members: List[discord.Member] = [member for member in guild.members if member.bot]
         for bot in bot_members:
             for role in bot.roles:
@@ -802,7 +804,7 @@ class ReactForRoleDBManager:
 
     def add_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str, role_id: int):
         self.database_manager.db_execute_commit(
-            f"""REPLACE INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES ({emoji_role_id}, \"{emoji_raw}\", {role_id});""")
+            f"""INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES ({emoji_role_id}, \"{emoji_raw}\", {role_id});""")
 
     def remove_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str = None, role_id: int = None):
         if not emoji_raw:
