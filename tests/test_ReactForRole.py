@@ -105,8 +105,14 @@ def independent_get_guild_rfr_required_role(guild_id=None, role_id=None) -> List
     return rows
 
 
-# The below database tests are 2 of the ugliest pieces of code I have ever written. I only ask forgiveness for what you
-# see below
+def get_rfr_reaction_role_by_role_id(emoji_role_id: int, role_id: int) -> Optional[int]:
+    rows: Tuple[int, str, int] = DBManager.get_parent_database_manager().db_execute_select(
+        f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
+    if not rows:
+        return
+    return rows[0][2]
+
+
 @pytest.mark.asyncio
 async def test_rfr_db_functions_guild_rfr_messages():
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -227,7 +233,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     assert independent_get_rfr_message_emoji_role(
         1) == DBManager.get_rfr_message_emoji_roles(1)
     assert independent_get_rfr_message_emoji_role(1, role_id=fake_role_id_2)[0][
-               2] == DBManager.get_rfr_reaction_role_by_role_id(1, fake_role_id_2)
+               2] == get_rfr_reaction_role_by_role_id(emoji_role_id=1, role_id=fake_role_id_2)
 
     # 2 roles 2 emojis, 2 messages. duplicated messages
     msg2_id = dpyfactory.make_id()
