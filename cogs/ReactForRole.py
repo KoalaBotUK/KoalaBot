@@ -57,6 +57,11 @@ class ReactForRole(commands.Cog):
 
     @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
+        """
+        Group of commands for React for Role (rfr) functionality.
+        :param ctx: Context of the command
+        :return:
+        """
         return
 
     @commands.check(KoalaBot.is_admin)
@@ -219,9 +224,9 @@ class ReactForRole(commands.Cog):
         """
         Adds roles to an existing rfr message. User is prompted for rfr message channel ID/name/mention, rfr message ID/
         URL, emoji-role combos. Emoji-role combinations are to be given in
-        \\\n\"`<emoji>`, `<role>`\"
-        \\\n\"`<emoji>`, `<role>`\"
-        format. `<role>` can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
+        \\\n\"<emoji>, <role>\"
+        \\\n\"<emoji>, <role>\"
+        format. <role> can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
         unicode emoji. \\\nUser needs admin perms to use.
         :param ctx: Context of the command.
         :return:
@@ -257,8 +262,8 @@ class ReactForRole(commands.Cog):
                 await ctx.send("Okay, I'll stop the command then.")
                 return
         await ctx.send(
-            "Okay. Can I get the roles and emojis you want added to the message in a list with format: \n\"<emoji>,"
-            " <role>\"\n\"<emoji>, <role>\"\n\"<emoji>, <role>\"\netc. You can get a new line by using SHIFT + ENTER.")
+            "Okay. Can I get the roles and emojis you want added to the message in a list with format: \n<emoji>,"
+            " <role>\n<emoji>, <role>\n<emoji>, <role>\netc. You can get a new line by using SHIFT + ENTER.")
         await ctx.send(
             f"Please note however that you've only got {remaining_slots} emoji-role combinations you can enter. I'll "
             f"therefore only take the first {remaining_slots} you do. I'll wait for 3 minutes.")
@@ -282,12 +287,12 @@ class ReactForRole(commands.Cog):
                 await msg.add_reaction(discord_emoji)
                 if isinstance(discord_emoji, str):
                     KoalaBot.logger.info(
-                        f"Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} ({str(channel.id)}, "
-                        f"{str(ctx.guild.id)}) with emoji {discord_emoji}.")
+                        f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
+                        f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji}.")
                 else:
                     KoalaBot.logger.info(
-                        f"Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} ({str(channel.id)}, "
-                        f"{str(ctx.guild.id)}) with emoji {discord_emoji.id}.")
+                        f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
+                        f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji.id}.")
         await msg.edit(embed=rfr_embed)
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
@@ -299,9 +304,9 @@ class ReactForRole(commands.Cog):
         Removes roles from an existing rfr message. User is prompted for rfr message channel ID/name/mention, rfr message
         ID/URL, emojis/roles to remove. User can specify either the emoji or the role for any emoji-role combination to
         remove it, but it needs to be specified in the format below.
-        \\\n\"`<emoji>/<role>`\"
-        \\\n\"`<emoji>/<role>`\"
-        `<role>` can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
+        \\\n\"<emoji>/<role>\"
+        \\\n\"<emoji>/<role>\"
+        <role> can be the role ID, name or mention. emoji can be a custom emoji from the server, or a standard
         unicode emoji. \\\nUser needs admin perms to use.
         :param ctx: Context of the command.
         :return:
@@ -337,14 +342,13 @@ class ReactForRole(commands.Cog):
             wanted_removals = await self.parse_emoji_or_roles_input_str(ctx, input_emoji_roles)
             rfr_embed: discord.Embed = self.get_embed_from_message(msg)
             rfr_embed_fields = rfr_embed.fields
-            new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description, colour=KoalaColours.KOALA_GREEN)
-            embed.set_thumbnail(
+            new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description,
+                                      colour=KoalaColours.KOALA_GREEN)
+            new_embed.set_thumbnail(
                 url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
             new_embed.set_footer(text="ReactForRole")
             removed_field_indexes = []
             reactions_to_remove: List[discord.Reaction] = []
-            KoalaBot.logger.info(f"{[str(x) for x in msg.reactions]}")
-            KoalaBot.logger.info(f"{msg.reactions}")
             for row in wanted_removals:
                 if isinstance(row, discord.Emoji) or isinstance(row, str):
                     field_index = [x.name for x in rfr_embed_fields].index(str(row))
@@ -360,7 +364,6 @@ class ReactForRole(commands.Cog):
                 field = rfr_embed_fields[field_index]
                 removed_field_indexes.append(field_index)
                 reaction_emoji = await self.get_first_emoji_from_str(ctx, field.name)
-                KoalaBot.logger.info(f"reaction_emoji line 223 = {str(reaction_emoji)}")
                 reaction: discord.Reaction = [x for x in msg.reactions if str(x.emoji) == str(reaction_emoji)][0]
                 reactions_to_remove.append(reaction)
 
@@ -412,8 +415,9 @@ class ReactForRole(commands.Cog):
                 # Remove members' reaction from all rfr messages in guild
                 guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
                 if not guild_rfr_messages:
-                    KoalaBot.logger.error("Guild RFR messages is empty on raw reaction add. Please check")
-                    print(self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id))
+                    KoalaBot.logger.error(f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
+                                          f" guild ID {payload.guild_id}")
+
                 else:
                     for guild_rfr_message in guild_rfr_messages:
                         guild: discord.Guild = member_role[0].guild
@@ -473,12 +477,12 @@ class ReactForRole(commands.Cog):
         """
         role_ids = self.rfr_database_manager.get_guild_rfr_required_roles(ctx.guild.id)
         msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
-        KoalaBot.logger.info(role_ids)
         for role_id in role_ids:
 
             role: discord.Role = discord.utils.get(ctx.guild.roles, id=role_id)
             if not role:
-                KoalaBot.logger.error(f"couldn't find role {role_id} in guild {ctx.guild.id}. Please check.")
+                KoalaBot.logger.error(f"ReactForRole: Couldn't find role {role_id} in guild {ctx.guild.id}. Please "
+                                      f"check.")
             else:
                 msg_str += f"{role.mention}\n"
         await ctx.send(msg_str)
@@ -559,8 +563,8 @@ class ReactForRole(commands.Cog):
             role_id = self.rfr_database_manager.get_rfr_reaction_role_by_emoji_str(emoji_role_id, rep)
         else:
             KoalaBot.logger.error(
-                f"Database error, guild {guild_id} has no entry in rfr database for message_id {message_id} in channel_"
-                f"id {channel_id}. Please check this.")
+                f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
+                f"{message_id} in channel_id {channel_id}. Please check this.")
             return
         guild: discord.Guild = self.bot.get_guild(guild_id)
         member: discord.Member = guild.get_member(user_id)
@@ -726,7 +730,6 @@ class ReactForRole(commands.Cog):
         :return: Emoji if there is a valid one. Otherwise None.
         """
         # First check for a custom discord emoji in the string
-        KoalaBot.logger.info(msg=content)
         search_result = CUSTOM_EMOJI_REGEXP.search(content)
         if not search_result:
             # Check for a unicode emoji in the string
@@ -757,6 +760,10 @@ class ReactForRoleDBManager:
         self.database_manager: KoalaDBManager.KoalaDBManager = database_manager
 
     def get_parent_database_manager(self):
+        """
+        Gets the parent database manager, i.e. the KoalaDBManager class this takes from
+        :return: parent database manager
+        """
         return self.database_manager
 
     def create_tables(self):
@@ -799,14 +806,37 @@ class ReactForRoleDBManager:
         self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
 
     def add_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
+        """
+        Add an rfr message to a guild. Table stores a unique emoji_role_id to prevent the same combination
+        appearing twice on a given message
+        :param guild_id: ID of the guild
+        :param channel_id: ID of the channel the rfr message is in
+        :param message_id: ID of the rfr message
+        :return:
+        """
         self.database_manager.db_execute_commit(
             f"""INSERT INTO GuildRFRMessages  (guild_id, channel_id, message_id) VALUES ({guild_id}, {channel_id}, {message_id});""")
 
     def add_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str, role_id: int):
+        """
+        Add an emoji-role combination to an rfr message.
+        :param emoji_role_id: unique ID/key
+        :param emoji_raw: raw emoji representation in string format
+        :param role_id: ID of the role to give on react
+        :return:
+        """
         self.database_manager.db_execute_commit(
             f"""INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES ({emoji_role_id}, \"{emoji_raw}\", {role_id});""")
 
     def remove_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str = None, role_id: int = None):
+        """
+        Remove an emoji-role combination from the rfr message database. Uses the unique emoji_role_id to identify the
+        specific combo. Only removes one emoji-role combo
+        :param emoji_role_id: unique ID/key
+        :param emoji_raw: raw string representation of the emoji
+        :param role_id: ID of the role to give on react
+        :return:
+        """
         if not emoji_raw:
             self.database_manager.db_execute_commit(
                 f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
@@ -815,10 +845,22 @@ class ReactForRoleDBManager:
                 f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\";""")
 
     def remove_rfr_message_emoji_roles(self, emoji_role_id: int):
+        """
+        Removes all emoji-role combos with the same emoji_role_id i.e. on the same message.
+        :param emoji_role_id: unique ID/key
+        :return:
+        """
         self.database_manager.db_execute_commit(
             f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id};""")
 
     def remove_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
+        """
+        Removes an rfr message from the rfr message database, and also removes all emoji-role combos as part of it.
+        :param guild_id: Guild ID of the rfr message
+        :param channel_id: Channel ID of the rfr message
+        :param message_id: Message ID of the rfr message
+        :return:
+        """
         emoji_role_id = self.get_rfr_message(guild_id, channel_id, message_id)
         if not emoji_role_id:
             return
@@ -828,6 +870,13 @@ class ReactForRoleDBManager:
             f"""DELETE FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
 
     def get_rfr_message(self, guild_id: int, channel_id: int, message_id: int) -> Optional[Tuple[int, int, int, int]]:
+        """
+        Gets the unique rfr message that is specified by the guild ID, channel ID and message ID.
+        :param guild_id: Guild ID of the rfr message
+        :param channel_id: Channel ID of the rfr message
+        :param message_id: Message ID of the rfr message
+        :return: RFR message info of the specific message if found, otherwise None.
+        """
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
             f"""SELECT * FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
         if not rows:
@@ -835,6 +884,11 @@ class ReactForRoleDBManager:
         return rows[0]
 
     def get_guild_rfr_messages(self, guild_id: int):
+        """
+        Gets all rfr messages in a given guild, from the guild ID
+        :param guild_id: ID of the guild
+        :return: List of rfr messages in the guild.
+        """
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
             "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
         return rows
@@ -845,7 +899,6 @@ class ReactForRoleDBManager:
 
         :param guild_id: Guild ID to check in.
         :return: Role IDs of RFR roles in a specific guild
-        :rtype List[int]:
         """
         rfr_messages: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
             "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", guild_id)
@@ -865,8 +918,8 @@ class ReactForRoleDBManager:
         """
         Returns all the emoji-role combinations on an rfr message
 
-        :param emoji_role_id:
-        :return:
+        :param emoji_role_id: emoji-role combo identifier
+        :return: List of rows in the database if found, otherwise None
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
             f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id};""")
@@ -878,10 +931,10 @@ class ReactForRoleDBManager:
         """
         Returns a specific emoji-role combo on an rfr message
 
-        :param emoji_role_id:
-        :param emoji_raw:
-        :param role_id:
-        :return:
+        :param emoji_role_id: emoji-role combo identifier
+        :param emoji_raw: raw string representation of the emoji
+        :param role_id: role ID of the emoji-role combo
+        :return: Unique row corresponding to a specific emoji-role combo
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
             f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\" AND role_id = {role_id};""")
@@ -890,28 +943,44 @@ class ReactForRoleDBManager:
         return rows[0]
 
     def get_rfr_reaction_role_by_emoji_str(self, emoji_role_id: int, emoji_raw: str) -> Optional[int]:
+        """
+        Gets a role ID from the emoji_role_id and the emoji associated with that role in the emoji-role combo
+        :param emoji_role_id: emoji-role combo identifier
+        :param emoji_raw: raw string representation of the emoji
+        :return: role ID of the emoji-role combo
+        """
         rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
             f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\";""")
         if not rows:
             return
         return rows[0][2]
 
-    def get_rfr_reaction_role_by_role_id(self, emoji_role_id: int, role_id: int) -> Optional[int]:
-        rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
-        if not rows:
-            return
-        return rows[0][2]
-
     def add_guild_rfr_required_role(self, guild_id: int, role_id: int):
+        """
+        Adds a role to the list of roles required to use rfr functionality in a guild.
+        :param guild_id: guild ID
+        :param role_id: role ID
+        :return:
+        """
         self.database_manager.db_execute_commit("INSERT INTO GuildRFRRequiredRoles VALUES (?,?);",
                                                 args=[guild_id, role_id])
 
     def remove_guild_rfr_required_role(self, guild_id: int, role_id: int):
+        """
+        Removes a role from the list of roles required to use rfr functionality in a guild
+        :param guild_id: guild ID
+        :param role_id: role ID
+        :return:
+        """
         self.database_manager.db_execute_commit("DELETE FROM GuildRFRRequiredRoles WHERE guild_id = ? AND role_id = ?",
                                                 args=[guild_id, role_id])
 
     def get_guild_rfr_required_roles(self, guild_id) -> List[int]:
+        """
+        Gets the list of role IDs of roles required to use rfr functionality in a guild
+        :param guild_id: guild ID
+        :return: List of role IDs
+        """
         rows = self.database_manager.db_execute_select("SELECT * FROM GuildRFRRequiredRoles WHERE guild_id = ?",
                                                        args=[guild_id])
         role_ids = [x[1] for x in rows]
