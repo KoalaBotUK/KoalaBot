@@ -71,7 +71,7 @@ class ReactForRole(commands.Cog):
         """
         Creates a new rfr message in a channel of user's choice. User is prompted for (in this order)
         channel ID/name/mention, message title, message description. Default title and description exist, which are
-        \"React for Role\" and \"Roles below!\" respectively. User requires admin perms to use.
+        "React for Role" and "Roles below!" respectively. User requires admin perms to use.
         :param ctx: Context of the command
         :return:
         """
@@ -579,8 +579,8 @@ class ReactForRole(commands.Cog):
         Tuple[Union[discord.Emoji, str], discord.Role]]:
         """
         Parses input for the "k!rfr edit addRoles" commmand, in the
-        \\\n"`<emoji>`, `<role>`\\\n
-        `<emoji>`, `<role>`\"
+        \n"<emoji>, <role>\n
+        <emoji>, <role>"
         format.
         :param ctx: context of the command that called this
         :param input_str: input message content
@@ -608,9 +608,9 @@ class ReactForRole(commands.Cog):
         """
         Parses input prompt for the "k!rfr edit removeRoles" command, to get a list of roles and emoji as the output.
         Input format is
-        \\\n\"`<emoji>/<role>`\"
-        \\\n\"`<emoji>/<role>`\"
-        `<role>` can be the role ID, name or mention. `emoji` can be a custom emoji from the server, or a standard
+        \n"<emoji>/<role>\n
+        <emoji>/<role>"
+        <role> can be the role ID, name or mention. emoji can be a custom emoji from the server, or a standard
         unicode emoji.
         :param ctx: Context of the command that called this
         :param input_str: Input message content
