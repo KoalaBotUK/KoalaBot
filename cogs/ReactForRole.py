@@ -515,16 +515,16 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened.
         :return:
         """
-        if not payload.member.bot:
-            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                    payload.message_id)
-            if not rfr_message:
-                return
-            member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
-                                                    payload.message_id, payload.user_id)
-            if not member_role:
-                return
-            await member_role[0].remove_roles(member_role[1])
+
+        rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                                                                payload.message_id)
+        if not rfr_message:
+            return
+        member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
+                                                payload.message_id, payload.user_id)
+        if not member_role or member_role[0].bot:
+            return
+        await member_role[0].remove_roles(member_role[1])
 
     def can_have_rfr_role(self, member: discord.Member) -> bool:
         """
@@ -552,7 +552,7 @@ class ReactForRole(commands.Cog):
         msg_id = None if (msg_id_raw == "") else int(msg_id_raw)
         if not msg_id:
             raise commands.CommandError("Invalid Message ID given.")
-        msg = await ctx.fetch_message(msg_id)
+        msg = await channel.fetch_message(msg_id)
         if not msg:
             raise commands.CommandError("Invalid Message ID given.")
         rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg_id)
@@ -587,7 +587,7 @@ class ReactForRole(commands.Cog):
                 f"{message_id} in channel_id {channel_id}. Please check this.")
             return
         guild: discord.Guild = self.bot.get_guild(guild_id)
-        member: discord.Member = guild.get_member(user_id)
+        member: discord.Member = discord.utils.get(guild.members, id=user_id)
         if not member:
             return
         if not role_id:
@@ -683,8 +683,7 @@ class ReactForRole(commands.Cog):
         await channel.set_permissions(role, overwrite=overwrite)
         bot_members: List[discord.Member] = [member for member in guild.members if member.bot]
         for bot in bot_members:
-            for role in bot.roles:
-                await channel.set_permissions(role, overwrite=None)
+            await channel.set_permissions(bot, overwrite=None)
 
     @staticmethod
     async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0) -> Tuple[
