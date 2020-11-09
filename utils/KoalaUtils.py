@@ -19,7 +19,6 @@ from utils.KoalaColours import *
 # Constants
 ID_LENGTH = 18
 
-
 # Variables
 
 
@@ -28,8 +27,8 @@ def random_id():
     Creates a random int id of length ID_LENGTH
     :return: The randomly generated ID_LENGTH length number
     """
-    range_start = 10**(ID_LENGTH-1)
-    range_end = (10**ID_LENGTH)-1
+    range_start = 10 ** (ID_LENGTH - 1)
+    range_end = (10 ** ID_LENGTH) - 1
     return random.randint(range_start, range_end)
 
 
