@@ -578,7 +578,7 @@ async def test_rfr_create_message():
     test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KoalaColours.KOALA_GREEN)
     test_embed.set_footer(text="ReactForRole")
     test_embed.set_thumbnail(
-        url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
+        url=KoalaBot.KOALA_IMAGE_URL)
     with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
                     mock.AsyncMock(return_value=embed_channel.mention)):
         with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',

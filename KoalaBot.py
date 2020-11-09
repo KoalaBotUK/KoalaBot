@@ -19,6 +19,7 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 
+import logging
 # Built-in/Generic Imports
 import os
 
@@ -26,7 +27,6 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import logging
 
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
@@ -47,6 +47,7 @@ DATABASE_PATH = "Koala.db"
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
+KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 # Variables
 started = False
 client = commands.Bot(command_prefix=COMMAND_PREFIX)

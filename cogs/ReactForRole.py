@@ -255,7 +255,7 @@ class ReactForRole(commands.Cog):
                 old_embed = self.get_embed_from_message(msg)
                 embed: discord.Embed = discord.Embed(title=old_embed.title, description=old_embed.description)
                 embed.set_thumbnail(
-                    url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
+                    url=KoalaBot.KOALA_IMAGE_URL)
                 msg: discord.Message = await channel.send(embed=embed)
                 msg_id = msg.id
                 channel = msg.channel
