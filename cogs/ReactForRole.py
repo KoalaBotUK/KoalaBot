@@ -692,7 +692,6 @@ class ReactForRole(commands.Cog):
         bot_members = [member for member in guild.members if member.bot and "Koala" in str(member)]
         overwrite.update(add_reactions=None)
         for bot_member in bot_members:
-            KoalaBot.logger.info(bot_member)
             await channel.set_permissions(bot_member, overwrite=overwrite)
 
     @staticmethod
