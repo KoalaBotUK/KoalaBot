@@ -689,9 +689,10 @@ class ReactForRole(commands.Cog):
         overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
         overwrite.update(add_reactions=False)
         await channel.set_permissions(role, overwrite=overwrite)
-        bot_members: List[discord.Member] = [member for member in guild.members if member.bot]
-        for bot in bot_members:
-            await channel.set_permissions(bot, overwrite=None)
+        bot_members = [member for member in guild.members if member.bot and member.id == self.bot.user.id]
+        overwrite.update(add_reactions=True)
+        for bot_member in bot_members:
+            await channel.set_permissions(bot_member, overwrite=overwrite)
 
     @staticmethod
     async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0) -> Tuple[
