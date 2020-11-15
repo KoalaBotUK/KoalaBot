@@ -87,14 +87,18 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
-        error = """Something has gone wrong, this regex may already be filtered or you have entered the " 
-                command incorrectly. Try again with: `k!filterRegex [filtered_regex] [[risky] or [banned]]`. 
-                One example for a regex could be to block emails with: 
-                [a-zA-Z0-9\._]+@herts\.ac\.uk where EMAIL is the university type (e.g herts)"""
+        error = """Something has gone wrong, your regex may be invalid, this regex may already be filtered
+                or you have entered the command incorrectly. Try again with: `k!filterRegex 
+                [filtered_regex] [[risky] or [banned]]`. One example for a regex could be to block emails
+                with: [a-zA-Z0-9\._]+@herts\.ac\.uk where EMAIL is the university type (e.g herts)"""
         if too_many_arguments is None and type_exists(filter_type):
-            await self.filter_text(ctx, regex, filter_type, True)
-            await ctx.channel.send("*" + regex + "* has been filtered as **"+filter_type+"**.")
-            return
+            try:
+                re.compile(regex)
+                await self.filter_text(ctx, regex, filter_type, True)
+                await ctx.channel.send("*" + regex + "* has been filtered as **"+filter_type+"**.")
+                return
+            except:
+                raise Exception(error)    
         raise Exception(error)
 
     @commands.command(name="unfilter", aliases=["unfilter_word"])

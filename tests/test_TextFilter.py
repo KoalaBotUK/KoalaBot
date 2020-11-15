@@ -165,6 +165,12 @@ async def test_filter_email_regex():
     cleanup(dpytest.get_config().guilds[0].id)
 
 @pytest.mark.asyncio()
+async def test_invalid_regex():
+    with pytest.raises(Exception):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [")
+    cleanup(dpytest.get_config().guilds[0].id)
+
+@pytest.mark.asyncio()
 async def test_filter_various_emails_with_regex():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
     assertFilteredConfirmation("[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
