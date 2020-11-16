@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### Text Filter
+##### Changed
+- Add regex validation to ensure valid regex only
 
 ## [0.2.0] - 15-10-2020
 ### Text Filter
