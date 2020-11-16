@@ -9,6 +9,7 @@ A lot of these commands will only be available to administrators
 - Fix mod channel not saving correctly
 - Fix regex incorrectly being used on some messages
 
+
 ## [0.2.0] - 15-10-2020
 ### Text Filter
 ##### Added
