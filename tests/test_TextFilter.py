@@ -21,6 +21,7 @@ from tests.utils import TestUtilsCog
 from tests.utils.TestUtils import assert_activity
 from utils import KoalaDBManager
 from utils.KoalaColours import *
+from utils.KoalaUtils import is_int
 
 # Variables
 base_cog = None
@@ -239,6 +240,25 @@ async def test_add_mod_channel():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel "+str(channel.id))
     assert_embed = createNewModChannelEmbed(channel)
     dpytest.verify_embed(embed=assert_embed)
+    cleanup(dpytest.get_config().guilds[0].id)
+
+
+@pytest.fixture
+def text_filter_db_manager():
+    return TextFilter.TextFilterDBManager(KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY), dpytest.get_config())
+
+
+@pytest.mark.asyncio()
+async def test_add_mod_channel_tag(text_filter_db_manager):
+    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
+    dpytest.get_config().channels.append(channel)
+
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel <#"+str(channel.id)+">")
+    assert_embed = createNewModChannelEmbed(channel)
+    dpytest.verify_embed(embed=assert_embed)
+
+    result = text_filter_db_manager.database_manager.db_execute_select("SELECT channel_id FROM TextFilterModeration WHERE guild_id = ?;", args=[channel.guild.id])
+    assert is_int(result[0][0])
     cleanup(dpytest.get_config().guilds[0].id)
 
 @pytest.mark.asyncio()
