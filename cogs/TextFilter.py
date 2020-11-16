@@ -150,7 +150,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         error = "Channel not found or too many arguments, please try again: `k!setupModChannel [channel_id]`"
         channel = self.bot.get_channel(int(extract_id(channel_id)))
         if channel is not None and too_many_arguments is None:
-            self.tf_database_manager.new_mod_channel(ctx.guild.id, channel_id)
+            self.tf_database_manager.new_mod_channel(ctx.guild.id, channel.id)
             await ctx.channel.send(embed=build_moderation_channel_embed(ctx, channel, "Added"))
             return
         raise(Exception(error))

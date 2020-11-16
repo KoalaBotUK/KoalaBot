@@ -6,6 +6,7 @@ A lot of these commands will only be available to administrators
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only
+- Fix mod channel not saving correctly
 
 ## [0.2.0] - 15-10-2020
 ### Text Filter
