@@ -282,7 +282,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
             for word, filter_type, is_regex in censor_list:
-                if (word in message.content or re.search(word, message.content)) and not self.is_ignored(message):
+                if (word in message.content or (is_regex == '1' and re.search(word, message.content))) and not self.is_ignored(message):
                     if filter_type == "risky":
                         await message.author.send("Watch your language! Your message: '*"+message.content+"*' in " +
                                                   message.channel.mention+" contains a 'risky' word. "
