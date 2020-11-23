@@ -417,8 +417,10 @@ class ReactForRole(commands.Cog):
                                                                     payload.message_id)
             if not rfr_message:
                 return
-            member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
-                                                    payload.message_id, payload.user_id)
+
+            member_role = await self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id,
+                                                          payload.channel_id,
+                                                          payload.message_id, payload.user_id)
             if not member_role:
                 # Remove the reaction
                 guild: discord.Guild = self.bot.get_guild(payload.guild_id)
@@ -528,8 +530,9 @@ class ReactForRole(commands.Cog):
                                                                 payload.message_id)
         if not rfr_message:
             return
-        member_role = self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id, payload.channel_id,
-                                                payload.message_id, payload.user_id)
+        member_role = await self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id,
+                                                      payload.channel_id,
+                                                      payload.message_id, payload.user_id)
         if not member_role or member_role[0].bot:
             return
         await member_role[0].remove_roles(member_role[1])
@@ -568,8 +571,8 @@ class ReactForRole(commands.Cog):
             raise commands.CommandError("Message ID given is not that of a react for role message.")
         return msg, channel
 
-    def get_role_member_info(self, emoji_reacted: discord.PartialEmoji, emoji_role_id: int, guild_id: int,
-                             channel_id: int, message_id: int, user_id: int) -> Optional[
+    async def get_role_member_info(self, emoji_reacted: discord.PartialEmoji, emoji_role_id: int, guild_id: int,
+                                   channel_id: int, message_id: int, user_id: int) -> Optional[
         Tuple[discord.Member, discord.Role]]:
         """
         Gets the role that should be added/removed to/from a Member on reacting to a known RFR message, and works out
@@ -583,24 +586,42 @@ class ReactForRole(commands.Cog):
         :return: Optional 2-Tuple (member, role) where member is the Member that reacted, and Role is the role that
         should be given/taken away. If a role or member couldn't be found, returns None instead.
         """
+
+        guild: discord.Guild = self.bot.get_guild(guild_id)
+        member: discord.Member = discord.utils.get(guild.members, id=user_id)
+        if not member:
+            return
+        channel: discord.TextChannel = discord.utils.get(guild.text_channels, id=channel_id)
+        if not channel:
+            return
+        message: discord.Message = await channel.fetch_message(message_id)
+        if not message:
+            return
+        embed: discord.Embed = self.get_embed_from_message(message)
+
         if emoji_reacted.is_unicode_emoji():
             rep = emoji.demojize(emoji_reacted.name)
-            role_id = self.rfr_database_manager.get_rfr_reaction_role_by_emoji_str(emoji_role_id, rep)
+            field = await self.get_field_by_emoji(embed, rep)
+            if not field:
+                return
+            role_str: str = field
+            if not role_str:
+                return
+            role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
+            if not role:
+                return
         elif emoji_reacted.is_custom_emoji():
             rep = str(emoji_reacted)
-            role_id = self.rfr_database_manager.get_rfr_reaction_role_by_emoji_str(emoji_role_id, rep)
+            field = await self.get_field_by_emoji(embed, rep)
+            if not field:
+                return
+            role_str = field
+            role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
         else:
             KoalaBot.logger.error(
                 f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
                 f"{message_id} in channel_id {channel_id}. Please check this.")
             return
-        guild: discord.Guild = self.bot.get_guild(guild_id)
-        member: discord.Member = discord.utils.get(guild.members, id=user_id)
-        if not member:
-            return
-        if not role_id:
-            return
-        role: discord.Role = discord.utils.get(guild.roles, id=role_id)
         return member, role
 
     async def parse_emoji_and_role_input_str(self, ctx: commands.Context, input_str: str, remaining_slots: int) -> List[
@@ -778,6 +799,15 @@ class ReactForRole(commands.Cog):
                 await ctx.send("Couldn't get the emoji you used - is it from this server or a server I'm in?")
                 return None
 
+    async def get_field_by_emoji(self, embed: discord.Embed, emoji: Optional[str]):
+        if not emoji:
+            return
+        else:
+            fields = embed.fields
+            field = discord.utils.get(fields, name=emoji)
+            if not field:
+                return
+            return field.value
 
 class ReactForRoleDBManager:
     """
