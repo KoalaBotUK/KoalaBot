@@ -1,15 +1,36 @@
-import time
-import csv
+#!/usr/bin/env python
+
+"""
+KoalaBot Cog for guild members wishing to change their role colour
+"""
+
+# Futures
+
+# Built-in/Generic Imports
 import asyncio
+import csv
+import random
+import time
 from datetime import datetime
 from tkinter.filedialog import askopenfilename
+
+# Libs
 import discord
 from discord.ext import commands
-import random
-
 from discord.utils import get
 
+# Own modules
 import KoalaBot
+# Variables
+
+
+# Constants
+
+
+
+
+
+
 
 # Player tuple : (PlayerName, Rank, [Players they want to play with], [in-game role], attitude, availability, Substitute)
 
@@ -496,10 +517,6 @@ class TeamMaking(commands.Cog):
                             game = self.current_teams_being_made[game_object]
                     response = await parse_input_message(ctx.content, fullname, game)
                     await ctx.author.send(response)
-                #for i in self.current_teams_being_made:
-                 #   if fullname in self.current_teams_being_made[i].player_dict.keys():
-                  #      response = await parse_input_message(ctx.content, fullname, self.current_teams_being_made[i])
-                   #     await ctx.author.send(response)
 
     def __init__(self, bot):
         self.bot = bot
@@ -663,3 +680,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(TeamMaking(bot))
+    print("Team making is ready.")

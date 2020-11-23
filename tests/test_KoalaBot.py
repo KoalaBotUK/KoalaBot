@@ -11,20 +11,23 @@ Commented using reStructuredText (reST)
 
 # Libs
 import discord
-from discord.ext import commands
 import discord.ext.test as dpytest
 import mock
 import pytest
+from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from tests.utils.TestUtilsCog import TestUtilsCog
 from tests.utils.TestUtils import FakeAuthor
+from tests.utils.TestUtilsCog import TestUtilsCog
+from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 
 # Variables
 utils_cog = None
+DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+DBManager.create_base_tables()
 
 
 @pytest.fixture
@@ -36,6 +39,18 @@ async def test_ctx():
     dpytest.configure(bot)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     return utils_cog.get_last_ctx()
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_db():
+    DBManager.clear_all_tables(DBManager.fetch_all_tables())
+    yield DBManager
+
+
+@pytest.fixture(scope='function', autouse=True)
+async def setup_clean_messages():
+    await dpytest.empty_queue()
+    yield dpytest
 
 
 def test_test_user_is_owner(test_ctx):
@@ -82,3 +97,39 @@ def test_load_all_cogs():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
         test_koala.load_all_cogs()
     mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
+
+
+@pytest.mark.asyncio
+async def test_dm_single_group_message():
+    test_message = 'default message'
+    test_member = dpytest.get_config().members[0]
+    x = await KoalaBot.dm_group_message([test_member], test_message)
+    dpytest.verify_message(test_message)
+    assert x == 1
+
+
+@pytest.mark.asyncio
+async def test_dm_plural_group_message():
+    test_message = 'default message'
+    test_member = dpytest.get_config().members[0]
+    test_member_2 = await dpytest.member_join()
+    await dpytest.empty_queue()
+    x = await KoalaBot.dm_group_message([test_member, test_member_2], test_message)
+    dpytest.verify_message(test_message)
+    dpytest.verify_message(test_message)
+    assert x == 2
+
+
+@pytest.mark.asyncio
+async def test_dm_empty_group_message():
+    test_message = 'this should not be sent'
+    x = await KoalaBot.dm_group_message([], test_message)
+    dpytest.verify_message(assert_nothing=True)
+    assert x == 0
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False
