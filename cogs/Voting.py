@@ -22,10 +22,37 @@ from utils import KoalaDBManager
 
 # Constants
 load_dotenv()
-emote_reference = {1: "1️⃣", 2: "2️⃣", 3: "3️⃣",
-                   4: "4️⃣", 5: "5️⃣", 6: "6️⃣",
-                   7: "7️⃣", 8: "8️⃣", 9: "9️⃣", 10: "🔟"}
-reverse_reference = {v: k for k, v in emote_reference.items()}
+
+
+class TwoWay(dict):
+    def __init__(self, dict_in=None):
+        super(TwoWay, self).__init__()
+        if dict_in is not None:
+            self.update(dict_in)
+
+    def __delitem__(self, key):
+        self.pop(self.pop(key))
+
+    def __setitem__(self, key, value):
+        # essentially this assert prevents updates to the dict if values are already set
+        # which for a 1-1 mapping is reasonable imo, but you could also call __delitem__
+        # if you wanted overwriting behaviour to work correctly (but it might be surprising)
+        assert key not in self or self[key] == value
+        super(TwoWay, self).__setitem__(key, value)
+        super(TwoWay, self).__setitem__(value, key)
+
+    def update(self, e, **f):
+        # the original update method allows you to pass in keyword args
+        # but this version doesn't
+        # same amortized cost of O(n) even with the assert
+        for key, value in e.items():
+            assert key not in self or self[key]==value
+            self[key] = value
+
+
+emote_reference = TwoWay({0: "1️⃣", 1: "2️⃣", 2: "3️⃣",
+                          3: "4️⃣", 4: "5️⃣", 5: "6️⃣",
+                          6: "7️⃣", 7: "8️⃣", 8: "9️⃣", 9: "🔟"})
 
 
 # Variables
@@ -40,9 +67,7 @@ def is_vote_caller():
         cog = ctx.command.cog
         if KoalaBot.is_dm_channel(ctx):
             return False
-        return ctx.author.id in cog.vote_manager.active_votes.keys() and cog.vote_manager.active_votes[
-            ctx.author.id].target_server == ctx.guild.id and cog.vote_manager.active_votes[
-            ctx.author.id].setup
+        return ctx.author.id in cog.vote_manager.active_votes.keys() and cog.vote_manager.active_votes[ctx.author.id].guild == ctx.guild.id
 
     return commands.check(predicate)
 
@@ -58,200 +83,254 @@ def vote_is_enabled(ctx):
         result = KoalaBot.check_guild_has_ext(ctx, "Vote")
     except PermissionError:
         result = False
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest) or ctx.author.id == 135496683009081345
+    return result or (
+            str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest) or ctx.author.id == 135496683009081345
 
 
-class Voting(commands.Cog):
+class VoteManager:
+    def __init__(self):
+        self.active_votes = {}
+
+    def get_vote(self, ctx):
+        return self.active_votes[ctx.author.id]
+
+    def has_active_vote(self, author_id):
+        return author_id in self.active_votes.keys()
+
+    def create_vote(self, ctx, title):
+        vote = Vote(title, ctx.author.id, ctx.guild.id)
+        self.active_votes[ctx.author.id] = vote
+        return vote
+
+    def cancel_vote(self, author_id):
+        self.active_votes.pop(author_id)
+
+    def run_vote(self, author_id, sent_to):
+        vote = self.active_votes[author_id]
+        vote.active = True
+        vote.sent_to = sent_to
+
+    def was_sent_to(self, msg_id):
+        for vote in self.active_votes.values():
+            if msg_id in vote.sent_to.values():
+                return vote
+        return None
+
+    async def close_vote(self, author_id, bot):
+        vote = self.active_votes.pop(author_id)
+        return await vote.get_results(bot)
+
+
+class Vote:
+    def __init__(self, title, author_id, guild_id):
+        self.guild = guild_id
+        self.id = author_id
+        self.title = title
+
+        self.target_roles = []
+        self.chair = author_id
+        self.target_voice_channel = None
+
+        self.options = []
+
+        self.active = False
+        self.sent_to = {}
+
+    def is_ready(self):
+        return len(self.options) > 1
+
+    def add_role(self, role_id):
+        self.target_roles.append(role_id)
+
+    def add_roles(self, role_list):
+        self.target_roles += role_list
+
+    def remove_role(self, role_id):
+        self.target_roles.remove(role_id)
+
+    def remove_roles(self, role_list):
+        for role in role_list:
+            self.target_roles.remove(role)
+
+    def set_chair(self, chair_id):
+        self.chair = chair_id
+
+    def set_vc(self, channel_id=None):
+        self.target_voice_channel = channel_id
+
+    def add_option(self, option):
+        self.options.append(option)
+
+    def remove_option(self, index):
+        del self.options[index-1]
+
+    def start_vote(self):
+        self.active = True
+
+    def register_sent(self, user_id, msg_id):
+        self.sent_to[user_id] = msg_id
+
+    def create_embed(self):
+        embed = discord.Embed(title=self.title)
+        for x, option in enumerate(self.options):
+            embed.add_field(name=f"{emote_reference[x]} - {option.head}", value=option.body, inline=False)
+        return embed
+
+    async def add_reactions(self, msg):
+        for x, option in enumerate(self.options):
+            await msg.add_reaction(emote_reference[x])
+
+    async def get_results(self, bot):
+        results = {}
+        for u_id, msg_id in self.sent_to.items():
+            user = bot.get_user(u_id)
+            msg = await user.fetch_message(msg_id)
+            for reaction in msg.reactions:
+                if reaction.count > 1:
+                    opt = self.options[emote_reference[reaction.emoji]]
+                    if opt in results.keys():
+                        results[opt] += 1
+                    else:
+                        results[opt] = 1
+                    break
+        return results
+
+
+class Option:
+    def __init__(self, head, body):
+        self.head = head
+        self.body = body
+
+
+async def add_reactions(vote, msg):
+    for x in range(len(vote.options)):
+        await msg.add_reaction(emote_reference[x])
+
+
+async def make_result_embed(vote, results):
+    embed = discord.Embed(title=f"{vote.title} Results:")
+    for opt, count in results.items():
+        embed.add_field(name=opt.head, value=f"{count} votes", inline=False)
+    if not results:
+        embed.add_field(name="No votes yet!", value="Try giving more time to vote")
+    return embed
+
+
+class Voting(commands.Cog, name="Vote"):
     def __init__(self, bot, db_manager=None):
         self.bot = bot
         self.vote_manager = VoteManager()
         if not db_manager:
             self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
-            self.DBManager.insert_extension("Voting", 0, True, True)
+            self.DBManager.insert_extension("Vote", 0, True, True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
-        """
-        Update the message of the vote on react to let the voter know which way they've voted.
-        :param payload:
-        :return:
-        """
         await self.update_vote_message(payload)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        """
-        Update the message of the vote when a reaction is removed
-        :param payload:
-        :return:
-        """
         await self.update_vote_message(payload)
-
-    @staticmethod
-    async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0, check=lambda message: message.author == ctx.author):
-        """
-        Wrapper for wait_for_message for testing purposes with mock.patch
-        :param bot: the bot object
-        :param ctx: the context of the message
-        :param timeout: the time to wait before timing out
-        :param check: conditions for the message it's waiting for
-        :return: the message found
-        """
-        try:
-            msg = await bot.wait_for('message', timeout=timeout, check=check)
-            return msg
-        except Exception:
-            raise asyncio.TimeoutError
 
     @commands.group(name="vote")
     async def vote(self, ctx):
         """
         A group of commands to create a poll to send out to specific members of a discord server.
-        Do k!help vote to see related subcommands, or do k!vote create <title> to start a vote.
         :return:
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}vote create <title>` to start a vote, or`{KoalaBot.COMMAND_PREFIX}help vote` for more information")
+            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
-    @commands.check(vote_is_enabled)
-    @vote.command(name="create", brief="Start the creation of a vote.")
+    # @commands.check(KoalaBot.is_admin)
+    @vote.command(name="create")
     async def startVote(self, ctx, *, title):
-        """
-        Start the creation of a vote.
-        Admin only due to the potential to send messages to the whole server.
-        :param title: the title of the vote
-        :return:
-        """
-        if self.vote_manager.vote_exists(ctx.author.id):
-            await ctx.send(
-                "You already have an active vote somewhere, please close it before trying to create a new one.")
+        if self.vote_manager.has_active_vote(ctx.author.id):
+            guild_name = self.bot.get_guild(self.vote_manager.get_vote(ctx).guild)
+            await ctx.send(f"You already have an active vote in {guild_name}")
             return
 
         if len(title) > 200:
-            raise self.OptionsError("Title too long")
+            await ctx.send("Title too long")
+            return
 
-        msg_content = [
-            f"You have started making a vote titled '{title}'.\nEach upcoming prompt has a 60 second timeout.",
-            "Do you want this vote to be sent to users with specific roles? If so ping each role you want (e.g. @student @staff). If not, reply 'no'.",
-            "Vote will be sent to users with any of the following roles: ",
-            "Do you want this vote to be sent to users in a specific voice channel? If so please respond with the corresponding number from this list:",
-            "If not, replay 'no'.",
-            "Vote will be sent to users in this voice channel: ",
-            "Who is chairing the vote? (Vote results will be sent to them as well as the channel the vote is closed from).",
-            "Ping the user or reply 'no' to default to you.",
-            "Results will be sent to: ",
-            f"Vote creation is complete, for further commands view {KoalaBot.COMMAND_PREFIX}help vote again"]
-
-        vote = await self.vote_manager.create_vote(title, ctx.author.id, ctx.guild.id, ctx.guild.icon)
-
-        def response_check(message):
-            return message.author.id == ctx.author.id and message.channel.id == ctx.channel.id
-
-        msg = await ctx.send(content=f"```{msg_content[0]}\n{msg_content[1]}```")
-        vote.setup_message = msg
-        try:
-            # role_msg = await self.bot.wait_for('message', check=response_check, timeout=60.0)
-            role_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
-            if not role_msg.content:
-                raise self.TimeoutError("Vote creation timed out")
-            if role_msg.role_mentions:
-                vote.add_roles(role_msg.role_mentions)
-                roles_used = msg_content[2] + "\n" + (', '.join(role.name for role in role_msg.role_mentions))
-            else:
-                roles_used = "No roles selected."
-            server_vcs = {}
-            for x, vc in enumerate(ctx.guild.voice_channels):
-                server_vcs[x] = vc
-            vc_list = '\n'.join([f"{x}: {y.name}" for x, y in server_vcs.items()])
-            await msg.edit(
-                content=f"```{msg_content[0]}\n{roles_used}\n\n{msg_content[3]}\n{vc_list}\n{msg_content[4]}```")
-            try:
-                await role_msg.delete()
-            except discord.errors.Forbidden:
-                pass
-            vc_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
-            if not vc_msg:
-                raise self.TimeoutError("Vote creation timed out")
-            if vc_msg.content != "no":
-                channel = server_vcs[int(vc_msg.content)]
-                vote.add_channel(channel.id)
-                vc_used = msg_content[5] + channel.name
-            else:
-                vc_used = "No voice channel selected."
-
-            await msg.edit(
-                content=f"```{msg_content[0]}\n\n{roles_used}\n\n{vc_used}\n\n{msg_content[6]}\n{msg_content[7]}```")
-            try:
-                await vc_msg.delete()
-            except discord.errors.Forbidden:
-                pass
-
-            chair_msg = await self.wait_for_message(self.bot, ctx, timeout=60.0, check=response_check)
-            if not chair_msg:
-                raise self.TimeoutError("Vote creation timed out")
-            if chair_msg.content != "no" and chair_msg.mentions:
-                vote.add_chair(chair_msg.mentions[0].id)
-                chair_used = msg_content[8] + chair_msg.mentions[0].name
-            else:
-                vote.add_chair(ctx.author.id)
-                chair_used = msg_content[8] + ctx.author.name
-
-            embed = vote.create_voting_embed()
-            await msg.edit(content=f"```{roles_used}\n\n{vc_used}\n\n{chair_used}\n\n{msg_content[9]}```", embed=embed)
-            try:
-                await chair_msg.delete()
-            except discord.errors.Forbidden:
-                pass
-
-            vote.setup = True
-
-        except (KeyError, ValueError):
-            await msg.edit(content="```Vote was cancelled due to invalid response.```")
-            self.vote_manager.remove_vote(ctx.author.id)
-        except asyncio.TimeoutError:
-            await msg.edit(content="```Vote was cancelled due to timeout.```")
-            self.vote_manager.remove_vote(ctx.author.id)
+        self.vote_manager.create_vote(ctx, title)
+        await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}")
 
     @is_vote_caller()
-    @vote.command(name="addOption", brief="Add an option to an existing vote.")
-    async def addOption(self, ctx, *, options_string):
-        """
-        Add an option to an existing vote. Separate the header and the body with a "+".
-        :param options_string: the heading and body of the vote option being added
-        :return:
-        """
-        vote = self.vote_manager.active_votes[ctx.author.id]
+    @vote.command(name="addRole")
+    async def addRole(self, ctx, *, role: discord.Role):
+        vote = self.vote_manager.get_vote(ctx)
+        vote.add_role(role.id)
+        await ctx.send(f"Vote will be sent to those with the {role.name} role")
+
+    @is_vote_caller()
+    @vote.command(name="removeRole")
+    async def addRole(self, ctx, *, role: discord.Role):
+        vote = self.vote_manager.get_vote(ctx)
+        vote.remove_role(role.id)
+        await ctx.send(f"Vote will no longer be sent to those with the {role.name} role")
+
+    @is_vote_caller()
+    @vote.command(name="addChair")
+    async def setChair(self, ctx, *, chair: discord.Member = None):
+        vote = self.vote_manager.get_vote(ctx)
+        if chair:
+            vote.set_chair(chair.id)
+            await ctx.send(f"Set chair to {chair.name}")
+        else:
+            vote.set_chair(ctx.author.id)
+            await ctx.send(f"Have made you the chair")
+
+    @is_vote_caller()
+    @vote.command(name="setChannel")
+    async def setChannel(self, ctx, *, channel: discord.VoiceChannel = None):
+        vote = self.vote_manager.get_vote(ctx)
+        if channel:
+            vote.set_vc(channel.id)
+            await ctx.send(f"Set target channel to {channel.name}")
+        else:
+            vote.set_vc()
+            await ctx.send("Removed channel restriction on vote")
+
+    @is_vote_caller()
+    @vote.command(name="addOption")
+    async def addOption(self, ctx, *, option_string):
+        vote = self.vote_manager.get_vote(ctx)
         if len(vote.options) > 9:
-            raise self.OptionsError("The maximum number of options has been added")
-        if len(options_string) > 600:
-            raise self.OptionsError("Parameter too long, please use smaller options")
-        header, body = options_string.split("+")
-        vote.add_option({"header": header, "body": body})
-        embed = vote.create_voting_embed()
-        await vote.setup_message.edit(embed=embed)
-        await ctx.message.delete()
+            await ctx.send("Vote has maximum number of options already (10)")
+        if len(option_string) > 600:
+            await ctx.send("Option string is too long")
+        header, body = option_string.split("+")
+        vote.add_option(Option(header, body))
+        await ctx.send(f"Option {header} with description {body} added to vote")
 
     @is_vote_caller()
-    @vote.command(name="cancel", brief="Cancel the vote creation process.")
-    async def cancel(self, ctx):
-        """
-        Cancel the vote creation process.
-        :param ctx:
-        :return:
-        """
-        self.vote_manager.remove_vote(ctx.author.id)
+    @vote.command(name="removeOption")
+    async def removeOption(self, ctx, index: int):
+        vote = self.vote_manager.get_vote(ctx)
+        vote.remove_option(index)
+        await ctx.send(f"Option number {index} removed")
+
+    @is_vote_caller()
+    @vote.command(name="preview")
+    async def previewVote(self, ctx):
+        vote = self.vote_manager.get_vote(ctx)
+        await ctx.send(embed=vote.create_embed())
+
+    @is_vote_caller()
+    @vote.command(name="cancel")
+    async def cancelVote(self, ctx):
+        self.vote_manager.cancel_vote(ctx.author.id)
         await ctx.send("Your active vote has been cancelled")
 
     @is_vote_caller()
-    @vote.command(name="send", brief="Send the vote out to the specified group of users.")
-    async def send(self, ctx):
-        """
-        Send the vote out to the specified group of users.
-        :return:
-        """
-        vote = self.vote_manager.active_votes[ctx.author.id]
+    @vote.command(name="send")
+    async def sendVote(self, ctx):
+        vote = self.vote_manager.get_vote(ctx)
         if len(vote.options) < 2:
-            raise self.OptionsError(f"Not enough options. Please add options using {KoalaBot.COMMAND_PREFIX}vote addOption")
+            await ctx.send("Please add more than 1 option to vote for")
+            return
+
         users = ctx.guild.members
         if vote.target_voice_channel:
             vc_users = discord.utils.get(ctx.guild.voice_channels, id=vote.target_voice_channel).members
@@ -264,56 +343,32 @@ class Voting(commands.Cog):
             users = list(set(role_users) & set(users))
         for user in users:
             if not user.bot:
-                msg = await user.send(
-                    "You have been asked to participate in this vote. Please react to make your choice.\n"
-                    "You can change your mind until the vote is closed.\n"
-                    "If you react multiple times it will take the lowest number you have reacted with.",
-                    embed=vote.create_voting_embed())
-                vote.register_send(msg.id, user.id)
+                msg = await user.send(f"You have been asked to participate in this vote from {ctx.guild.name}.\nPlease react to make your choice (You can change your mind until the vote is closed)", embed=vote.create_embed())
+                vote.register_sent(user.id, msg.id)
                 await vote.add_reactions(msg)
-        await ctx.send(f"This vote has been sent out to {len(users)} people")
-
-    @is_vote_caller()
-    @vote.command(name="check", brief="Check the results of the vote without closing it.")
-    async def check(self, ctx):
-        """
-        Check the results of the vote without closing it.
-        :return:
-        """
-        embed = await self.make_result_embed(ctx)
-        await ctx.send(embed=embed)
 
     @is_vote_caller()
     @vote.command(name="close")
     async def close(self, ctx):
-        """
-        Gather the results of the vote and close it.
-        :return:
-        """
-        vote = self.vote_manager.active_votes[ctx.author.id]
-        chair = await vote.get_chair(self.bot)
-        embed = await self.make_result_embed(ctx)
-        if chair:
-            await chair.send(embed=embed)
-            await ctx.send(f"Results have been sent to {chair}")
+        vote = self.vote_manager.get_vote(ctx)
+        results = await self.vote_manager.close_vote(ctx.author.id, self.bot)
+        embed = await make_result_embed(vote, results)
         await ctx.send(embed=embed)
-        self.vote_manager.remove_vote(ctx.author.id)
 
-    async def make_result_embed(self, ctx):
-        """
-        Automates creation of the result embed
-        :param ctx: context of discord message
-        :return:
-        """
-        vote = self.vote_manager.active_votes[ctx.author.id]
+    @is_vote_caller()
+    @vote.command(name="checkResults")
+    async def check(self, ctx):
+        vote = self.vote_manager.get_vote(ctx)
         results = await vote.get_results(self.bot)
-        embed = discord.Embed(title=f"{vote.title} Results:")
-        embed.set_thumbnail(url=vote.image)
-        for opt in results:
-            embed.add_field(name=opt["header"], value=f"{opt['count']} votes", inline=False)
-        if not results:
-            embed.add_field(name="No votes yet!", value="Try giving more time to vote")
-        return embed
+        embed = await make_result_embed(vote, results)
+        await ctx.send(embed=embed)
+
+    # @vote.command(name="testvote")
+    # async def testvote(self, ctx):
+    #     vote = self.vote_manager.create_vote(ctx, "Test")
+    #     vote.add_option(Option("test1", "test1"))
+    #     vote.add_option(Option("test2", "test2"))
+    #     vote.set_vc(718532674527952920)
 
     async def update_vote_message(self, payload):
         """
@@ -321,7 +376,7 @@ class Voting(commands.Cog):
         :param payload: the reaction event raw payload
         :return:
         """
-        vote = self.vote_manager.get_sent_to(payload.message_id)
+        vote = self.vote_manager.was_sent_to(payload.message_id)
         user = self.bot.get_user(payload.user_id)
         if vote and not user.bot:
             msg = await user.fetch_message(payload.message_id)
@@ -332,117 +387,10 @@ class Voting(commands.Cog):
                     choice = reaction
                     break
             if choice:
-                embed.set_footer(text=f"You have chosen {choice.emoji}")
+                embed.set_footer(text=f"You will be voting for {choice.emoji} - {vote.options[emote_reference[choice.emoji]].head}")
             else:
                 embed.set_footer(text="There are no valid choices selected")
             await msg.edit(embed=embed)
-
-    class OptionsError(Exception):
-        pass
-
-    class TimeoutError(Exception):
-        pass
-
-
-class VoteManager:
-    """
-    Wrapper for active votes with some utility functions.
-    """
-    def __init__(self):
-        self.active_votes = {}
-
-    async def create_vote(self, title, vote_id, guild_id, guild_pic):
-        self.active_votes[vote_id] = Vote(title, vote_id, guild_id, guild_pic)
-        return self.active_votes[vote_id]
-
-    def remove_vote(self, vote_id):
-        self.active_votes.pop(vote_id, None)
-
-    def vote_exists(self, vote_id):
-        return vote_id in self.active_votes.keys() and self.active_votes[vote_id].setup
-
-    def get_sent_to(self, message_id):
-        for vote in self.active_votes.values():
-            if message_id in vote.sent_to.values():
-                return vote
-        return None
-
-
-class Vote:
-    """
-    A vote object.
-    """
-    def __init__(self, title, vote_id: int, target_server: int, guild_pic: str):
-        self.vote_start_time = time.time()
-        self.target_server = target_server
-        self.setup = False
-        self.id = vote_id
-        self.chair = 0
-        self.target_roles = []
-        self.target_voice_channel = 0
-        self.title = title
-        self.options = []
-        self.sent_to = {}
-        self.setup_message = None
-        self.image = f"https://cdn.discordapp.com/icons/{self.target_server}/{guild_pic}.webp"
-
-    def add_roles(self, roles):
-        self.target_roles += roles
-
-    def add_channel(self, channel_id):
-        self.target_voice_channel = channel_id
-
-    def add_chair(self, user_id):
-        self.chair = user_id
-
-    def add_option(self, options):
-        option_id = len(self.options) + 1
-        options["id"] = option_id
-        self.options.append(options)
-
-    def create_voting_embed(self):
-        embed = discord.Embed(title=self.title)
-        embed.set_thumbnail(url=self.image)
-        for option in self.options:
-            embed.add_field(name=f'{option["id"]} - {option["header"]}', value=option["body"], inline=False)
-        return embed
-
-    def register_send(self, msg_id, user_id):
-        self.sent_to[user_id] = msg_id
-
-    async def get_results(self, bot):
-        results = {}
-        for user_id, msg_id in self.sent_to.items():
-            user = bot.get_user(user_id)
-            msg = await user.fetch_message(msg_id)
-            for reaction in msg.reactions:
-                if reaction.count > 1:
-                    if reaction.emoji in results.keys():
-                        results[reaction.emoji] += 1
-                    else:
-                        results[reaction.emoji] = 1
-                    break
-        results_list = []
-        for k, count in results.items():
-            opt = self.get_opt_from_id(reverse_reference[k])
-            opt["count"] = count
-            results_list.append(opt)
-        return results_list
-
-    def get_opt_from_id(self, opt_id):
-        for opt in self.options:
-            if opt["id"] == opt_id:
-                return opt
-
-    async def add_reactions(self, msg):
-        for option in self.options:
-            await msg.add_reaction(emote_reference[option["id"]])
-
-    async def get_chair(self, bot):
-        if self.chair:
-            return bot.get_user(self.chair)
-        else:
-            return None
 
 
 def setup(bot: KoalaBot) -> None:
