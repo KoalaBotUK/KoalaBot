@@ -800,6 +800,13 @@ class ReactForRole(commands.Cog):
                 return None
 
     async def get_field_by_emoji(self, embed: discord.Embed, emoji: Optional[str]):
+        """
+        Get the specific field value of an rfr embed by the string representation of the emoji in the field name
+
+        :param embed: RFR Embed to check
+        :param emoji: Emoji required
+        :return: If a field exists such that its name is :emoji:, then that field's value. Else None
+        """
         if not emoji:
             return
         else:
