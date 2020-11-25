@@ -418,7 +418,7 @@ class ReactForRole(commands.Cog):
             if not rfr_message:
                 return
 
-            member_role = await self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id,
+            member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
                                                           payload.channel_id,
                                                           payload.message_id, payload.user_id)
             if not member_role:
@@ -530,7 +530,7 @@ class ReactForRole(commands.Cog):
                                                                 payload.message_id)
         if not rfr_message:
             return
-        member_role = await self.get_role_member_info(payload.emoji, rfr_message[3], payload.guild_id,
+        member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
                                                       payload.channel_id,
                                                       payload.message_id, payload.user_id)
         if not member_role or member_role[0].bot:
@@ -571,7 +571,7 @@ class ReactForRole(commands.Cog):
             raise commands.CommandError("Message ID given is not that of a react for role message.")
         return msg, channel
 
-    async def get_role_member_info(self, emoji_reacted: discord.PartialEmoji, emoji_role_id: int, guild_id: int,
+    async def get_role_member_info(self, emoji_reacted: discord.PartialEmoji, guild_id: int,
                                    channel_id: int, message_id: int, user_id: int) -> Optional[
         Tuple[discord.Member, discord.Role]]:
         """
