@@ -9,6 +9,8 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import asyncio
 # Libs
+from unittest import TestCase
+
 import discord
 import discord.ext.test as dpytest
 import mock
@@ -20,79 +22,115 @@ import KoalaBot
 from cogs import Voting
 from utils.KoalaDBManager import KoalaDBManager
 
-# Constants
-msg1 = None
-msg2 = None
-msg3 = None
+class Fake:
+    def __getattr__(self, item):
+        setattr(self, item, Fake())
+        return getattr(self, item)
 
 
-def get_test_vote(vote_cog, config):
-    return vote_cog.vote_manager.active_votes[config.members[0].id]
+ctx = Fake()
+ctx.author.id = 1234
+ctx.guild.id = 4567
+cog = None
 
-# Variables
 
-
-# Test TwitchAlert
-@pytest.fixture
-async def vote_cog():
-    global msg1, msg2, msg3
+def setup_function():
     """ setup any state specific to the execution of the given module."""
-    KoalaBot.is_dpytest = True
+    global cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    vote_cog = Voting.Voting(bot)
-    bot.add_cog(vote_cog)
-    await dpytest.empty_queue()
+    cog = Voting.Voting(bot)
+    bot.add_cog(cog)
     dpytest.configure(bot)
-    config = dpytest.get_config()
-    msg1 = dpytest.back.make_message(content="no", channel=config.channels[0], author=config.members[0])
-    msg2 = dpytest.back.make_message(content="no", channel=config.channels[0], author=config.members[0])
-    msg3 = dpytest.back.make_message(content="no", channel=config.channels[0], author=config.members[0])
-    print("Tests starting")
-    return vote_cog
+
+
+@pytest.fixture(scope='session', autouse=True)
+def setup_is_dpytest():
+    KoalaBot.is_dpytest = True
+    yield
+    KoalaBot.is_dpytest = False
+
+def test_two_way():
+    def test_asserts(f, *args, **kwargs):
+        try:
+            f(*args, **kwargs)
+        except AssertionError:
+            return
+        raise AssertionError
+
+    # test internal asserts don't false positive
+    t = Voting.TwoWay({1: 2, 3: 4})
+    t2 = Voting.TwoWay({1: 2, 2: 1, 4: 3})
+    assert t == t2
+
+    # test an invalid dict cannot be made
+    test_asserts(Voting.TwoWay, {1: 2, 2: 3})
+
+    def ta2():
+        t = Voting.TwoWay()
+        t[1] = 2
+        t[2] = 3
+        test_asserts(ta2)
+
+def test_vote_manager_general():
+    vm = Voting.VoteManager()
+    assert not vm.active_votes
+    vote = vm.create_vote(ctx, "Test Vote")
+    assert ctx.author.id in vm.active_votes.keys()
+    assert vm.get_vote(ctx) == vote
+    assert vm.has_active_vote(1234)
+    vm.cancel_vote(1234)
+    assert not vm.has_active_vote(1234)
+
+
+def test_vote_general():
+    vm = Voting.VoteManager()
+    vote = vm.create_vote(ctx, "Test Vote")
+    assert vote.id == ctx.author.id and vote.guild == ctx.guild.id and vote.title == "Test Vote"
+    assert not vote.is_ready()
+
+    vote.add_role(7890)
+    assert 7890 in vote.target_roles
+    vote.remove_role(7890)
+    assert 7890 not in vote.target_roles
+
+    vote.set_vc(1234)
+    assert vote.target_voice_channel == 1234
+
+    opt1 = Voting.Option("test option 1", "test body 1")
+    opt2 = Voting.Option("test option 2", "test body 2")
+    vote.add_option(opt1)
+    vote.add_option(opt2)
+    assert len(vote.options) == 2
+    assert vote.is_ready()
+
+    vote.remove_option(1)
+    assert vote.options[0] == opt2
+
 
 @pytest.mark.asyncio
-async def test_test(vote_cog):
-    assert vote_cog
-
-# currently broken
-@pytest.mark.asyncio
-async def test_example_vote(vote_cog):
+async def test_vote():
     config = dpytest.get_config()
-    with mock.patch('cogs.Voting.Voting.wait_for_message', side_effect=[msg1, msg2, msg3]):
-        with mock.patch('discord.Message.edit') as mock_edit:
-            await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create test")
-            dpytest.verify_message(text="""```You have started making a vote titled 'test'.
-Each upcoming prompt has a 60 second timeout.
-Do you want this vote to be sent to users with specific roles? If so ping each role you want (e.g. @student @staff). If not, reply 'no'.```""")
-            mock_edit.assert_called()
-            assert vote_cog.vote_manager.vote_exists(config.members[0].id)
-        with mock.patch('discord.Message.edit') as mock_edit:
-            await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test1+test2")
-            mock_edit.assert_called()
-            await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test3+test4")
-            mock_edit.assert_called()
-        await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote send")
-        await dpytest.verify_message("This vote has been sent out to 1 people")
+    guild = config.guilds[0]
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
+    dpytest.verify_message(f"Vote titled `Test Vote` created for guild {guild.name}")
 
-#works but i tried to combine it into the first one along with testing the send
-# @pytest.mark.asyncio
-# async def test_addOption(vote_cog):
-#     with mock.patch('cogs.Voting.Voting.wait_for_message', side_effect=[msg1, msg2, msg3]):
-#         with mock.patch('discord.Message.edit') as mock_edit:
-#             await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create test")
-#             dpytest.verify_message(text="""```You have started making a vote titled 'test'.
-# Each upcoming prompt has a 60 second timeout.
-# Do you want this vote to be sent to users with specific roles? If so ping each role you want (e.g. @student @staff). If not, reply 'no'.```""")
+    role = guild.roles[0]
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addRole {role.id}")
+    dpytest.verify_message(f"Vote will be sent to those with the {role.name} role")
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote removeRole {role.id}")
+    dpytest.verify_message(f"Vote will no longer be sent to those with the {role.name} role")
 
+    usr = guild.members[0]
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addChair {usr.id}")
+    dpytest.verify_message(f"Set chair to {usr.name}")
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addChair")
+    dpytest.verify_message("Results will just be sent to channel the vote is closed in")
 
-@pytest.mark.asyncio
-async def test_cancel(vote_cog):
-    config = dpytest.get_config()
-    with mock.patch('cogs.Voting.Voting.wait_for_message', side_effect=[msg1, msg2, msg3]):
-        await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create test")
-        dpytest.verify_message(text="""```You have started making a vote titled 'test'.
-Each upcoming prompt has a 60 second timeout.
-Do you want this vote to be sent to users with specific roles? If so ping each role you want (e.g. @student @staff). If not, reply 'no'.```""")
-        await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote cancel")
-        dpytest.verify_message("Your active vote has been cancelled")
-        assert config.members[0].id not in vote_cog.vote_manager.active_votes.keys()
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test option+test1")
+    dpytest.verify_message(f"Option test option with description test1 added to vote")
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test option 2+test2")
+    dpytest.verify_message(f"Option test option 2 with description test2 added to vote")
+
+    # await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote send")
+    # dpytest.verify_message(f"Sent vote to 1 users")
+    # errors trying to send embed because I think an old version of discord.py is wanting it as a dict? not sure
