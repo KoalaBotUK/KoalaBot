@@ -14,38 +14,14 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from utils import KoalaDBManager
+from utils.KoalaVoteUtils import TwoWay, VoteManager, Vote, Option
 
 # Constants
 load_dotenv()
 
-class TwoWay(dict):
-    """Class to because a friend was bored and wanted a better way to make a two way dict than the way I had before
-    """
-    def __init__(self, dict_in=None):
-        super(TwoWay, self).__init__()
-        if dict_in is not None:
-            self.update(dict_in)
-
-    def __delitem__(self, key):
-        self.pop(self.pop(key))
-
-    def __setitem__(self, key, value):
-        # essentially this assert prevents updates to the dict if values are already set
-        # which for a 1-1 mapping is reasonable imo, but you could also call __delitem__
-        # if you wanted overwriting behaviour to work correctly (but it might be surprising)
-        assert key not in self or self[key] == value
-        super(TwoWay, self).__setitem__(key, value)
-        super(TwoWay, self).__setitem__(value, key)
-
-    def update(self, e, **f):
-        for key, value in e.items():
-            assert key not in self or self[key]==value
-            self[key] = value
-
-
 emote_reference = TwoWay({0: "1️⃣", 1: "2️⃣", 2: "3️⃣",
-                          3: "4️⃣", 4: "5️⃣", 5: "6️⃣",
-                          6: "7️⃣", 7: "8️⃣", 8: "9️⃣", 9: "🔟"})
+                               3: "4️⃣", 4: "5️⃣", 5: "6️⃣",
+                               6: "7️⃣", 7: "8️⃣", 8: "9️⃣", 9: "🔟"})
 
 
 def is_vote_caller():
@@ -88,203 +64,37 @@ async def make_result_embed(vote, results):
     return embed
 
 
-class Option:
-    def __init__(self, head, body):
-        """
-        Object holding information about an option
-        :param head: the title of the option
-        :param body: the description of the option
-        """
-        self.head = head
-        self.body = body
+def create_embed(vote):
+    """
+    Creates an embed of the current vote configuration
+    :return: discord.Embed
+    """
+    embed = discord.Embed(title=vote.title)
+    for x, option in enumerate(vote.options):
+        embed.add_field(name=f"{emote_reference[x]} - {option.head}", value=option.body, inline=False)
+    return embed
 
 
-class VoteManager:
-    def __init__(self):
-        """
-        Manages votes for the bot
-        """
-        self.active_votes = {}
-
-    def get_vote(self, ctx):
-        """
-        Returns a vote from a given discord context
-        :param ctx: discord.Context object from a command
-        :return: Relevant vote object
-        """
-        return self.active_votes[ctx.author.id]
-
-    def has_active_vote(self, author_id):
-        """
-        Checks if a user already has an active vote somewhere
-        :param author_id: the user id of the person trying to create a vote
-        :return: True if they have an existing vote, otherwise False
-        """
-        return author_id in self.active_votes.keys()
-
-    def create_vote(self, ctx, title):
-        """
-        Creates a vote object and assigns it to a users ID
-        :param ctx: discord.Context object from the command
-        :param title: title of the vote
-        :return: the newly created Vote object
-        """
-        vote = Vote(title, ctx.author.id, ctx.guild.id)
-        self.active_votes[ctx.author.id] = vote
-        return vote
-
-    def cancel_vote(self, author_id):
-        """
-        Removed a vote from the list of active votes
-        :param author_id: the user who created the vote
-        :return: None
-        """
-        self.active_votes.pop(author_id)
-
-    def was_sent_to(self, msg_id):
-        """
-        Checks if a given message was sent by the bot for a vote, so it knows if it should listen for reactions on it.
-        :param msg_id: the message that has been reacted on
-        :return: the relevant vote for the message, if there is one
-        """
-        for vote in self.active_votes.values():
-            if msg_id in vote.sent_to.values():
-                return vote
-        return None
-
-    async def close_vote(self, author_id, bot):
-        """
-        Closes a vote and collects the results
-        :param author_id: the creator of the vote's id
-        :param bot: the bot who has access to the vote messages
-        :return: a dict of the results
-        """
-        vote = self.active_votes.pop(author_id)
-        return await vote.get_results(bot)
-
-
-class Vote:
-    def __init__(self, title, author_id, guild_id):
-        """
-        An object containing methods and attributes of an active vote
-        :param title: title of the vote
-        :param author_id: creator of the vote
-        :param guild_id: location of the vote
-        """
-        self.guild = guild_id
-        self.id = author_id
-        self.title = title
-
-        self.target_roles = []
-        self.chair = author_id
-        self.target_voice_channel = None
-
-        self.options = []
-
-        self.sent_to = {}
-
-    def is_ready(self):
-        """
-        Check if the vote is ready to be sent out
-        :return: True if ready, False otherwise
-        """
-        return 1 < len(self.options) < 11
-
-    def add_role(self, role_id):
-        """
-        Adds a target role to send the vote to
-        :param role_id: target role
-        :return: None
-        """
-        self.target_roles.append(role_id)
-
-    def remove_role(self, role_id):
-        """
-        Removes target role from vote targets
-        :param role_id: target role
-        :return: None
-        """
-        self.target_roles.remove(role_id)
-
-    def set_chair(self, chair_id):
-        """
-        Sets the chair of the vote to the given id
-        :param chair_id: target chair
-        :return: None
-        """
-        self.chair = chair_id
-
-    def set_vc(self, channel_id=None):
-        """
-        Sets the target voice channel to a given channel id
-        :param channel_id: target discord voice channel id
-        :return: None
-        """
-        self.target_voice_channel = channel_id
-
-    def add_option(self, option):
-        """
-        Adds an option to the vote
-        :param option: Option object
-        :return: None
-        """
-        self.options.append(option)
-
-    def remove_option(self, index):
-        """
-        Removes an option from the vote
-        :param index: the location in the list of options to remove
-        :return: None
-        """
-        del self.options[index-1]
-
-    def register_sent(self, user_id, msg_id):
-        """
-        Marks a user as having been sent a message to vote on
-        :param user_id: user who was sent the message
-        :param msg_id: the id of the message that was sent
-        :return:
-        """
-        self.sent_to[user_id] = msg_id
-
-    def create_embed(self):
-        """
-        Creates an embed of the current vote configuration
-        :return: discord.Embed
-        """
-        embed = discord.Embed(title=self.title)
-        for x, option in enumerate(self.options):
-            embed.add_field(name=f"{emote_reference[x]} - {option.head}", value=option.body, inline=False)
-        return embed
-
-    async def add_reactions(self, msg):
-        """
-        Adds the potential reactions it is listening to for a given vote to a message that has been sent to a user
-        :param msg: the target message
-        :return: None
-        """
-        for x, option in enumerate(self.options):
-            await msg.add_reaction(emote_reference[x])
-
-    async def get_results(self, bot):
-        """
-        Gathers the results from all users who were sent the vote
-        :param bot: the discord.commands.Bot that sent out the vote messages
-        :return: dict of results
-        """
-        results = {}
-        for u_id, msg_id in self.sent_to.items():
-            user = bot.get_user(u_id)
-            msg = await user.fetch_message(msg_id)
-            for reaction in msg.reactions:
-                if reaction.count > 1:
-                    opt = self.options[emote_reference[reaction.emoji]]
-                    if opt in results.keys():
-                        results[opt] += 1
-                    else:
-                        results[opt] = 1
-                    break
-        return results
+async def get_results(bot, vote):
+    """
+    Gathers the results from all users who were sent the vote
+    :param vote:
+    :param bot: the discord.commands.Bot that sent out the vote messages
+    :return: dict of results
+    """
+    results = {}
+    for u_id, msg_id in vote.sent_to.items():
+        user = bot.get_user(u_id)
+        msg = await user.fetch_message(msg_id)
+        for reaction in msg.reactions:
+            if reaction.count > 1:
+                opt = vote.options[emote_reference[reaction.emoji]]
+                if opt in results.keys():
+                    results[opt] += 1
+                else:
+                    results[opt] = 1
+                break
+    return results
 
 
 class Voting(commands.Cog, name="Vote"):
@@ -367,7 +177,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Vote will no longer be sent to those with the {role.name} role")
 
     @is_vote_caller()
-    @vote.command(name="addChair")
+    @vote.command(name="setChair")
     async def setChair(self, ctx, *, chair: discord.Member = None):
         """
         Sets the chair of a vote
@@ -438,7 +248,7 @@ class Voting(commands.Cog, name="Vote"):
         Generates a preview of what users will see with the current configuration of the vote
         """
         vote = self.vote_manager.get_vote(ctx)
-        msg = await ctx.send(embed=vote.create_embed())
+        msg = await ctx.send(embed=create_embed(vote))
         await add_reactions(vote, msg)
 
     @is_vote_caller()
@@ -472,9 +282,9 @@ class Voting(commands.Cog, name="Vote"):
             role_users = list(dict.fromkeys(role_users))
             users = list(set(role_users) & set(users))
         for user in users:
-            msg = await user.send(f"You have been asked to participate in this vote from {ctx.guild.name}.\nPlease react to make your choice (You can change your mind until the vote is closed)", embed=vote.create_embed())
+            msg = await user.send(f"You have been asked to participate in this vote from {ctx.guild.name}.\nPlease react to make your choice (You can change your mind until the vote is closed)", embed=create_embed(vote))
             vote.register_sent(user.id, msg.id)
-            await vote.add_reactions(msg)
+            await add_reactions(vote, msg)
         await ctx.send(f"Sent vote to {len(users)} users")
 
     @is_vote_caller()
@@ -484,11 +294,13 @@ class Voting(commands.Cog, name="Vote"):
         Ends a vote, and collects the results
         """
         vote = self.vote_manager.get_vote(ctx)
-        results = await self.vote_manager.close_vote(ctx.author.id, self.bot)
+        results = await get_results(self.bot, vote)
+        self.vote_manager.cancel_vote(ctx.author.id)
         embed = await make_result_embed(vote, results)
         if vote.chair:
             chair = await self.bot.fetch_user(vote.chair)
             await chair.send(embed=embed)
+            await ctx.send(f"Sent results to {chair}")
         else:
             await ctx.send(embed=embed)
 
@@ -499,17 +311,17 @@ class Voting(commands.Cog, name="Vote"):
         Checks the results of a vote without closing it
         """
         vote = self.vote_manager.get_vote(ctx)
-        results = await vote.get_results(self.bot)
+        results = await get_results(self.bot, vote)
         embed = await make_result_embed(vote, results)
         await ctx.send(embed=embed)
 
-    # @vote.command(name="testvote")
-    # async def testvote(self, ctx):
-    #     # vote setup for ease of testing
-    #     vote = self.vote_manager.create_vote(ctx, "Test")
-    #     vote.add_option(Option("test1", "test1"))
-    #     vote.add_option(Option("test2", "test2"))
-    #     vote.set_vc(718532674527952920)
+    @vote.command(name="testvote")
+    async def testvote(self, ctx):
+        # vote setup for ease of testing
+        vote = self.vote_manager.create_vote(ctx, "Test")
+        vote.add_option(Option("test1", "test1"))
+        vote.add_option(Option("test2", "test2"))
+        vote.set_vc(718532674527952920)
 
     async def update_vote_message(self, payload):
         """
