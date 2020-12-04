@@ -1,12 +1,16 @@
 # Changelog
 All notable changes to KoalaBot will be documented in this file.
-A lot these commands will only be available to administrators
+A lot of these commands will only be available to administrators
 
 ## [Unreleased]
-### Twitch Alert
+### Text Filter
 ##### Changed
-- Add catch so errors don't stop the alert loop
+- Add regex validation to ensure valid regex only
+- Fix mod channel not saving correctly
+- Fix regex incorrectly being used on some messages
 
+
+## [0.2.0] - 15-10-2020
 ### Text Filter
 ##### Added
 - `filter <text> [type]`  Filter a word or string of text. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
@@ -22,7 +26,27 @@ A lot these commands will only be available to administrators
 - `ignoreList` See a list of ignored users/channels in the server.
 
 - `unfilter <text>` Unfilter a word/string/regex of text that was previously filtered.
-- `unignore <mention>` Unignore a user/channel that was previously set as ingored
+- `unignore <mention>` Unignore a user/channel that was previously set as ignored
+
+### React For Role (RFR)
+##### Added
+- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`. 
+- `rfr delete` Delete an existing rfr message. 
+- `rfr addRequiredRole` Add a role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality.
+- `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality 
+
+- `rfr edit addRoles` Add emoji/role combos to an existing rfr message. 
+- `rfr edit removeRoles` Remove emoji/role combos from an existing rfr message. 
+- `rfr edit description` Edit the description of an existing rfr message  
+- `rfr edit title` Edit the title of an existing rfr message.
+
+### Colour Role
+##### Changed
+- Fixed error that occasionally made custom colour roles be created in the wrong position, thus not showing correctly
+
+### Twitch Alert
+##### Changed
+- Add catch so errors don't stop the alert loop
 
 
 ## [0.1.8] - 18-10-2020
@@ -126,6 +150,7 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
 [0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.5...v0.1.6

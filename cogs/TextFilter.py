@@ -87,14 +87,18 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
-        error = """Something has gone wrong, this regex may already be filtered or you have entered the " 
-                command incorrectly. Try again with: `k!filterRegex [filtered_regex] [[risky] or [banned]]`. 
-                One example for a regex could be to block emails with: 
-                [a-zA-Z0-9\._]+@herts\.ac\.uk where EMAIL is the university type (e.g herts)"""
+        error = """Something has gone wrong, your regex may be invalid, this regex may already be filtered
+                or you have entered the command incorrectly. Try again with: `k!filterRegex 
+                [filtered_regex] [[risky] or [banned]]`. One example for a regex could be to block emails
+                with: [a-zA-Z0-9\._]+@herts\.ac\.uk where EMAIL is the university type (e.g herts)"""
         if too_many_arguments is None and type_exists(filter_type):
-            await self.filter_text(ctx, regex, filter_type, True)
-            await ctx.channel.send("*" + regex + "* has been filtered as **"+filter_type+"**.")
-            return
+            try:
+                re.compile(regex)
+                await self.filter_text(ctx, regex, filter_type, True)
+                await ctx.channel.send("*" + regex + "* has been filtered as **"+filter_type+"**.")
+                return
+            except:
+                raise Exception(error)    
         raise Exception(error)
 
     @commands.command(name="unfilter", aliases=["unfilter_word"])
@@ -146,7 +150,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         error = "Channel not found or too many arguments, please try again: `k!setupModChannel [channel_id]`"
         channel = self.bot.get_channel(int(extract_id(channel_id)))
         if channel is not None and too_many_arguments is None:
-            self.tf_database_manager.new_mod_channel(ctx.guild.id, channel_id)
+            self.tf_database_manager.new_mod_channel(ctx.guild.id, channel.id)
             await ctx.channel.send(embed=build_moderation_channel_embed(ctx, channel, "Added"))
             return
         raise(Exception(error))
@@ -278,7 +282,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
             for word, filter_type, is_regex in censor_list:
-                if (word in message.content or re.search(word, message.content)) and not self.is_ignored(message):
+                if (word in message.content or (is_regex == '1' and re.search(word, message.content))) and not self.is_ignored(message):
                     if filter_type == "risky":
                         await message.author.send("Watch your language! Your message: '*"+message.content+"*' in " +
                                                   message.channel.mention+" contains a 'risky' word. "

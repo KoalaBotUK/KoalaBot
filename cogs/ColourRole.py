@@ -276,10 +276,10 @@ class ColourRole(commands.Cog):
             return 1
         if protected_role_list is None or len(protected_role_list) == 0:
             bot_member: discord.Member = guild.get_member(self.bot.user.id)
-            role_pos = sorted(bot_member.roles, key=lambda x: x.position)[0].position - 1
+            role_pos = sorted(bot_member.roles, key=lambda x: x.position)[-1].position - 1
         else:
             sorted_protected_role_list: List[discord.Role] = sorted(protected_role_list, key=lambda x: x.position)
-            role_pos = sorted_protected_role_list[0].position - 1
+            role_pos = sorted_protected_role_list[0].position
         if role_pos < 1:
             role_pos = 1
         return role_pos
