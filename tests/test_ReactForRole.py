@@ -684,6 +684,21 @@ async def test_rfr_edit_title():
                 dpytest.verify_message()
                 dpytest.verify_message()
 
+@pytest.mark.asyncio
+async def test_rfr_edit_thumbnail():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.thumbnail == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        pass
 
 @pytest.mark.asyncio
 async def test_rfr_add_roles_to_msg():
