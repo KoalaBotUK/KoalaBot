@@ -285,8 +285,8 @@ async def test_calculate_custom_colour_role_position(num_roles):
     if lowest_protected == 2000000000 or lowest_protected == 1:
         expected = 1
     else:
-        expected = lowest_protected - 1
-    assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected
+        expected = lowest_protected
+    assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected, num_roles
 
 
 @pytest.mark.asyncio
@@ -321,7 +321,9 @@ async def test_get_guild_protected_colours(num_roles):
             assert result == colours
 
 
-@pytest.mark.parametrize("num_total, num_protected", [(0, 0), (1, 0), (2, 0), (1, 1), (2, 1), (5, 0), (5, 1), (5, 2)])
+@pytest.mark.parametrize("num_total, num_protected",
+                         [(0, 0), (1, 0), (2, 0), (1, 1), (2, 1), (5, 0), (5, 1), (5, 2), (50, 5), (50, 1), (50, 2),
+                          (50, 0)])
 @pytest.mark.asyncio
 async def test_list_protected_roles(num_total, num_protected):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -344,7 +346,9 @@ async def test_list_protected_roles(num_total, num_protected):
         assert r.mention in msg.content, r.mention + " " + msg.content
 
 
-@pytest.mark.parametrize("num_total, num_protected", [(0, 0), (1, 0), (2, 0), (1, 1), (2, 1), (5, 0), (5, 1), (5, 2)])
+@pytest.mark.parametrize("num_total, num_protected",
+                         [(0, 0), (1, 0), (2, 0), (1, 1), (2, 1), (5, 0), (5, 1), (5, 2), (50, 5), (50, 1), (50, 2),
+                          (50, 0)])
 @pytest.mark.asyncio
 async def test_list_custom_colour_allowed_roles(num_total, num_protected):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -411,7 +415,7 @@ async def test_is_valid_custom_colour(num_total, num_protected, test_colour):
     assert role_colour_cog.is_valid_custom_colour(test_colour, protected_colours)[0] != (lowest_colour_dist < 38.4)
 
 
-@pytest.mark.parametrize("num_members", [0, 1, 2, 5])
+@pytest.mark.parametrize("num_members", [0, 1, 2, 5, 50])
 @pytest.mark.asyncio
 async def test_prune_member_old_colour_roles(num_members):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -548,6 +552,7 @@ async def test_custom_colour_valid():
     colour_role = discord.utils.get(guild.roles, name=f"KoalaBot[0xE34A21]")
     dpytest.verify_message(
         f"Your new custom role colour is #E34A21, with the role {colour_role.mention}")
+    dpytest.verify_message(assert_nothing=True)
     assert "KoalaBot[0xE34A21]" in [role.name for role in guild.roles]
     assert "KoalaBot[0xE34A21]" in [role.name for role in member.roles]
 
