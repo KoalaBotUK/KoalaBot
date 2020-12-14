@@ -49,7 +49,9 @@ PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to 
                         "or use `k!help enableExt` to enable it"
 # Variables
 started = False
-client = commands.Bot(command_prefix=COMMAND_PREFIX)
+
+intents = discord.Intents(messages=True, members=True)
+client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
