@@ -219,6 +219,100 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @edit_group.command(name="thumbnail", aliases=["image", "picture"])
+    async def rfr_edit_thumbnail(self, ctx: commands.Context):
+        """
+
+        :param ctx:
+        :return:
+        """
+        await ctx.send("Okay, this will edit the thumbnail of a react for role message. I'll need some detail"
+                       "s first though.")
+        msg, channel = await self.get_rfr_message_from_prompts(ctx)
+        embed = self.get_embed_from_message(msg)
+        if not embed:
+            KoalaBot.logger.error(
+                f"RFR: Can't find embed for message id {msg.id}, channel {channel.id}, guild id {ctx.guild.id}.")
+        await ctx.send(f"Your current image here is {embed.thumbnail}")
+        image = await self.prompt_for_input(ctx, "image you'd like to use as a thumbnail")
+        if not image or image == "":
+            await ctx.send("Okay, cancelling command.")
+        if isinstance(image, discord.Attachment):
+            # correct type
+            if not image.url:
+                KoalaBot.logger.error(f"Attachment url not found, details : {image}")
+            else:
+                embed.set_thumbnail(url=str(image.url))
+                await msg.edit(embed=embed)
+                await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image. This will error if you "
+                               "delete the message you sent with the image, so make sure you don't.")
+        else:
+            raise commands.BadArgument("Couldn't get an image from the message you sent.")
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
+    @edit_group.command(name="inline")
+    async def rfr_edit_inline(self, ctx: commands.Context):
+        """
+
+        :param ctx:
+        :return:
+        """
+        await ctx.send("Okay, this will change how your embeds look. By default fields are not inline. However, you can"
+                       " choose to change this for a specific message or all rfr messages on the server. To do this, I'"
+                       "ll need some information though. Can you say if you want a specific message edited, or all mess"
+                       "ages on the server?")
+        input_comm = await self.prompt_for_input(ctx, "all or specific")
+        if not input_comm or input_comm.rstrip().lstrip().lower() not in ["all", "specific"]:
+            await ctx.send("Okay, cancelling command.")
+        elif input_comm.lstrip().rstrip().lower() == "all":
+            await ctx.send("Okay, do you want all rfr messages in this server to have inline fields or not? Y for yes, "
+                           "N for no.")
+            change_all = await self.prompt_for_input(ctx, "Y/N")
+            if not change_all or change_all.rstrip().lstrip().upper() not in ["Y", "N"]:
+                await ctx.send("Okay, cancelling command")
+            else:
+                all_yes = change_all.lstrip().rstrip().upper() == "Y"
+                await ctx.send("Keep in mind that this process may a while if you have a lot of RFR messages on your "
+                               "server.")
+                # fetch rfr messages
+                guild: discord.Guild = ctx.guild
+                text_channels: List[discord.TextChannel] = guild.text_channels
+                guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
+                for rfr_message in guild_rfr_messages:
+                    channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
+                    msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
+                    embed: discord.Embed = self.get_embed_from_message(msg)
+                    length = self.get_number_of_embed_fields(embed)
+                    for i in range(length):
+                        field = embed.fields[i]
+                        embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
+                    await msg.edit(embed=embed)
+                await ctx.send("Okay, the process should be finished now. Please check.")
+        elif input_comm.lstrip().rstrip().lower() == "specific":
+            # try and get specific message
+            await ctx.send("Okay, I'll need the information about the specific rfr message.")
+            msg, channel = await self.get_rfr_message_from_prompts(ctx)
+            embed: discord.Embed = self.get_embed_from_message(msg)
+            if not embed:
+                await ctx.send("Couldn't get embed, is this an RFR message?")
+            else:
+                await ctx.send("Okay, please say Y if you want inline fields, or N if you don't.")
+                yes_no = await self.prompt_for_input(ctx, "Y/N")
+                if not yes_no or yes_no.lstrip().rstrip().upper() not in ["Y", "N"]:
+                    await ctx.send("Invalid input, cancelling command.")
+                else:
+                    all_yes = yes_no.lstrip().rstrip().upper() == "Y"
+                    await ctx.send("Okay, I'll change it as requested.")
+                    length = self.get_number_of_embed_fields(embed)
+                    for i in range(length):
+                        field = embed.fields[i]
+                        embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
+                    await msg.edit(embed=embed)
+                    await ctx.send("Okay, should be done. Please check.")
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
         """
@@ -680,7 +774,7 @@ class ReactForRole(commands.Cog):
                 arr.append(raw_emoji)
         return arr
 
-    async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> str:
+    async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> Union[discord.Attachment, str]:
         """
         Prompts a user for input in the form of a message. Has a forced timer of 60 seconds, because it basically just
         deals with the rfr specific stuff. Returns whatever was input, or cancels the calling command
@@ -690,6 +784,8 @@ class ReactForRole(commands.Cog):
         """
         await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
         msg, channel = await self.wait_for_message(self.bot, ctx)
+        if len(msg.attachments) > 0:
+            return msg.attachments[0]
         if not msg:
             await channel.send("Okay, I'll cancel the command.")
             return ""
@@ -815,6 +911,7 @@ class ReactForRole(commands.Cog):
             if not field:
                 return
             return field.value
+
 
 class ReactForRoleDBManager:
     """
