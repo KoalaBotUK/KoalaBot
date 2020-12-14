@@ -9,40 +9,66 @@ from discord.ext import commands
 import KoalaBot
 
 
-def insights_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled insights
-    e.g. @commands.check(KoalaBot.is_admin)
-    :param ctx: The context of the message
-    :return: True if admin or test, False otherwise
-    """
-    try:
-        result = KoalaBot.check_guild_has_ext(ctx, "Insights")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
-
-
 class Insights(commands.Cog):
     """
     A discord.py cog pertaining to showing the insights of the KoalaBot
+
     """
+
     def __init__(self, bot, database_manager=None):
         self.bot = bot
 
-    @commands.check(KoalaBot.is_admin)
-    @commands.check(insights_is_enabled)
-    @commands.command(name="insightServer", aliases=["insight_server"])
-    async def insight_server(self, ctx):
-        print("h")
+    @commands.check(KoalaBot.is_owner)
+    @commands.command(name="insights", aliases=[])
+    async def insights(self, ctx):
+        """
+        Returns the number of servers KoalaBot is in and the total number of members of those servers.
 
+        :param ctx: The discord context
+        """
+        guilds = self.bot.guilds
+        number_of_servers = len(guilds)
+        number_of_members = 0
 
+        for guild in guilds:
+            number_of_members += guild.member_count
 
+        await ctx.send(f"KoalaBot is in {number_of_servers} servers with a member total of {number_of_members}.")
 
+    @commands.check(KoalaBot.is_owner)
+    @commands.command(name="servers", aliases=[])
+    async def servers(self, ctx, *, arg=None):
+        """
+        Returns the names of the servers KoalaBot is in
 
+        :param ctx: The discord context
+        :param arg: Searches for guilds with argument provided
+        """
+        guild_list = self.bot.fetch_guilds()
+        guild_list_names = []
 
+        async for guild in guild_list:
+            if arg is not None:
+                if arg.upper() in guild.name.upper().split(" "):
+                    guild_list_names.append(guild.name)
+            else:
+                guild_list_names.append(guild.name)
 
+        if len(guild_list_names) == 0 and arg is None:
+            await ctx.send("KoalaBot is in no servers!")
+        elif len(guild_list_names) == 0 and arg is not None:
+            await ctx.send(f"No servers with {arg} in their name!")
+        else:
+            string_to_send = ''
+            while len(guild_list_names) != 0:
+                length = len(guild_list_names[0])
+                if len(string_to_send) + length + 2 > 2000:
+                    await ctx.send(string_to_send)
+                    string_to_send = ''
+                else:
+                    guild = guild_list_names.pop(0)
+                    string_to_send += guild + ", "
+            await ctx.send(string_to_send[:-2])
 
 
 def setup(bot: KoalaBot) -> None:
