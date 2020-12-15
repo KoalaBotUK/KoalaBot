@@ -54,7 +54,6 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.tf_database_manager.create_tables()
 
     @commands.command(name="filter", aliases=["filter_word"])
-    @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def filter_new_word(self, ctx, word, filter_type="banned", too_many_arguments=None):
         """
