@@ -431,7 +431,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
 
 @pytest.mark.parametrize("msg_content", [None, "", "something", " "])
 @pytest.mark.asyncio
-async def test_prompt_for_input(msg_content):
+async def test_prompt_for_input_str(msg_content):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
@@ -453,6 +453,29 @@ async def test_prompt_for_input(msg_content):
             dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert result == msg_content
 
+
+@pytest.mark.asyncio
+async def test_prompt_for_input_attachment():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    author: discord.Member = config.members[0]
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    await dpytest.empty_queue()
+    attach: discord.Attachment = discord.Attachment(state=dpytest.back.get_state(),
+                                                    data=dpytest.back.facts.make_attachment_dict("test.jpg", 15112122,
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 height=1000,
+                                                                                                 width=1000))
+    message_dict = dpytest.back.facts.make_message_dict(channel, author, attachments=[attach])
+    message: discord.Message = discord.Message(state=dpytest.back.get_state(), channel=channel, data=message_dict)
+    with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', mock.AsyncMock(return_value=(message, channel))):
+        result = await rfr_cog.prompt_for_input(ctx, "test")
+        dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+        assert isinstance(result, discord.Attachment)
+        assert result.url == attach.url
 
 @pytest.mark.asyncio
 async def test_overwrite_channel_add_reaction_perms():
@@ -693,12 +716,68 @@ async def test_rfr_edit_thumbnail():
     embed.set_thumbnail(
         url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
     message: discord.Message = await dpytest.message("rfr")
+    attach: discord.Attachment = discord.Attachment(state=dpytest.back.get_state(),
+                                                    data=dpytest.back.facts.make_attachment_dict("test.jpg", 15112122,
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 height=1000,
+                                                                                                 width=1000))
     msg_id = message.id
+    bad_attach = "something that's not an attachment"
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
-    assert embed.thumbnail == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
     with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        pass
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
+                await dpytest.message("k!rfr edit image")
+                assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
+            embed.set_thumbnail(
+                url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+            assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=bad_attach):
+                with pytest.raises(commands.BadArgument):
+                    await dpytest.message("k!rfr edit image")
+                    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+
+@pytest.mark.skip("Unsupported API Calls")
+@pytest.mark.parametrize("arg", ["Y", "N"])
+@pytest.mark.asyncio
+async def test_rfr_edit_inline_all(arg):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed1: discord.Embed = discord.Embed(title="title", description="description")
+    embed1.add_field(name="field1", value="value1", inline=True)
+    embed2: discord.Embed = discord.Embed(title="title2", description="description2")
+    embed2.add_field(name="field2", value="value2", inline=False)
+    message1: discord.Message = await dpytest.message("rfr")
+    message2: discord.Message = await dpytest.message("rfr")
+    msg1_id = message1.id
+    msg2_id = message2.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg1_id)
+    DBManager.add_rfr_message(guild.id, channel.id, msg2_id)
+    await dpytest.sent_queue.empty()
+    calls = [mock.call(0, name="field1", value="value1", inline=(arg == "Y")),
+             mock.call(0, name="field2", value="value2", inline=(arg == "Y"))]
+    with mock.patch("cogs.ReactForRole.ReactForRole.prompt_for_input", side_effects=["all", arg]):
+        with mock.patch("discord.abc.Messageable.fetch_message", side_effects=[message1, message2]):
+            with mock.patch("cogs.ReactForRole.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
+                with mock.patch('discord.Embed.set_field_at') as mock_call:
+                    await dpytest.message("k!rfr edit inline")
+                    dpytest.verify_message()
+                    dpytest.verify_message()
+                    dpytest.verify_message(
+                        "Keep in mind that this process may take a while if you have a lot of RFR messages on your server.")
+                    dpytest.verify_message("Okay, the process should be finished now. Please check.")
+
+
+@pytest.mark.skip("Unsupported API Calls")
+async def test_rfr_edit_inline_specific():
+    assert False
+
 
 @pytest.mark.asyncio
 async def test_rfr_add_roles_to_msg():
