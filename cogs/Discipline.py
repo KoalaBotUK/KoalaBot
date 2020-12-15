@@ -70,16 +70,18 @@ class DisciplineDBManager:
         """
         Creates all the tables associated with the React For Role extension
         """
-        sql_create_guild_rfr_message_ids_table = """
+        sql_create_guild_warnings_table = """
         CREATE TABLE IF NOT EXISTS GuildWarnings (
             guild_id integer NOT NULL,
+            channel_id integer NOT NULL,
+            message_id integer NOT NULL,
             user_id integer NOT NULL,
-            warning_timeout text NOT NULL, 
+            warning_timeout text, 
             warning_reason text,
-            primary key (guild_id, user_id, warning_timeout)
+            primary key (guild_id, channel_id, message_id, user_id)
         );
         """
-        self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
+        self.database_manager.db_execute_commit(sql_create_guild_warnings_table)
 
 
 def setup(bot: KoalaBot) -> None:
