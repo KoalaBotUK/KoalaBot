@@ -50,9 +50,11 @@ PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to 
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 # Variables
 started = False
-
-intents = discord.Intents(messages=True, members=True)
-client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
+intent = discord.Intents.default()
+intent.members = True
+intent.guilds = True
+intent.messages = True
+client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
