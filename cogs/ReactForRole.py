@@ -222,8 +222,9 @@ class ReactForRole(commands.Cog):
     @edit_group.command(name="thumbnail", aliases=["image", "picture"])
     async def rfr_edit_thumbnail(self, ctx: commands.Context):
         """
-
-        :param ctx:
+        Edit the thumbnail of an existing rfr message. User is prompted for rfr message channel ID/name/mention, rfr
+        message ID/URL, new thumbnail, Y/N confirmation. User needs admin perms
+        :param ctx: Context of the command
         :return:
         """
         await ctx.send("Okay, this will edit the thumbnail of a react for role message. I'll need some detail"
@@ -241,6 +242,7 @@ class ReactForRole(commands.Cog):
             # correct type
             if not image.url:
                 KoalaBot.logger.error(f"Attachment url not found, details : {image}")
+                raise commands.BadArgument("Couldn't get an image from the message you sent.")
             else:
                 embed.set_thumbnail(url=str(image.url))
                 await msg.edit(embed=embed)
@@ -254,62 +256,70 @@ class ReactForRole(commands.Cog):
     @edit_group.command(name="inline")
     async def rfr_edit_inline(self, ctx: commands.Context):
         """
-
-        :param ctx:
+        Edit the inline property of embed fields in rfr embeds. Can edit all rfr messages in a server or a specific one.
+        User is prompted for whether they'd like inline fields or not, as well as details of the specific message if
+        that option is selected. User requires admin perms
+        :param ctx: Context of the command
         :return:
         """
         await ctx.send("Okay, this will change how your embeds look. By default fields are not inline. However, you can"
                        " choose to change this for a specific message or all rfr messages on the server. To do this, I'"
                        "ll need some information though. Can you say if you want a specific message edited, or all mess"
                        "ages on the server?")
-        input_comm = await self.prompt_for_input(ctx, "all or specific")
-        if not input_comm or input_comm.rstrip().lstrip().lower() not in ["all", "specific"]:
-            await ctx.send("Okay, cancelling command.")
-        elif input_comm.lstrip().rstrip().lower() == "all":
-            await ctx.send("Okay, do you want all rfr messages in this server to have inline fields or not? Y for yes, "
-                           "N for no.")
-            change_all = await self.prompt_for_input(ctx, "Y/N")
-            if not change_all or change_all.rstrip().lstrip().upper() not in ["Y", "N"]:
-                await ctx.send("Okay, cancelling command")
-            else:
-                all_yes = change_all.lstrip().rstrip().upper() == "Y"
-                await ctx.send("Keep in mind that this process may a while if you have a lot of RFR messages on your "
-                               "server.")
-                # fetch rfr messages
-                guild: discord.Guild = ctx.guild
-                text_channels: List[discord.TextChannel] = guild.text_channels
-                guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
-                for rfr_message in guild_rfr_messages:
-                    channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
-                    msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
-                    embed: discord.Embed = self.get_embed_from_message(msg)
-                    length = self.get_number_of_embed_fields(embed)
-                    for i in range(length):
-                        field = embed.fields[i]
-                        embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
-                    await msg.edit(embed=embed)
-                await ctx.send("Okay, the process should be finished now. Please check.")
-        elif input_comm.lstrip().rstrip().lower() == "specific":
-            # try and get specific message
-            await ctx.send("Okay, I'll need the information about the specific rfr message.")
-            msg, channel = await self.get_rfr_message_from_prompts(ctx)
-            embed: discord.Embed = self.get_embed_from_message(msg)
-            if not embed:
-                await ctx.send("Couldn't get embed, is this an RFR message?")
-            else:
-                await ctx.send("Okay, please say Y if you want inline fields, or N if you don't.")
-                yes_no = await self.prompt_for_input(ctx, "Y/N")
-                if not yes_no or yes_no.lstrip().rstrip().upper() not in ["Y", "N"]:
-                    await ctx.send("Invalid input, cancelling command.")
+        input = await self.prompt_for_input(ctx, "all or specific")
+        if not isinstance(input, str) or not input:
+            await ctx.send("Okay, cancelling command")
+        else:
+            input_comm = input.lstrip().rstrip().lower()
+            if input_comm not in ["all", "specific"]:
+                await ctx.send("Okay, cancelling command.")
+            elif input_comm.lstrip().rstrip().lower() == "all":
+                await ctx.send(
+                    "Okay, do you want all rfr messages in this server to have inline fields or not? Y for yes, "
+                    "N for no.")
+                change_all = await self.prompt_for_input(ctx, "Y/N")
+                if not change_all or change_all.rstrip().lstrip().upper() not in ["Y", "N"]:
+                    await ctx.send("Okay, cancelling command")
                 else:
-                    all_yes = yes_no.lstrip().rstrip().upper() == "Y"
-                    await ctx.send("Okay, I'll change it as requested.")
-                    length = self.get_number_of_embed_fields(embed)
-                    for i in range(length):
-                        field = embed.fields[i]
-                        embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
-                    await msg.edit(embed=embed)
-                    await ctx.send("Okay, should be done. Please check.")
+                    all_yes = change_all.lstrip().rstrip().upper() == "Y"
+                    await ctx.send(
+                        "Keep in mind that this process may take a while if you have a lot of RFR messages on your "
+                        "server.")
+                    # fetch rfr messages
+                    guild: discord.Guild = ctx.guild
+                    text_channels: List[discord.TextChannel] = guild.text_channels
+                    guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
+                    for rfr_message in guild_rfr_messages:
+                        channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
+                        msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
+                        embed: discord.Embed = self.get_embed_from_message(msg)
+                        length = self.get_number_of_embed_fields(embed)
+                        for i in range(length):
+                            field = embed.fields[i]
+                            embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
+                        await msg.edit(embed=embed)
+                    await ctx.send("Okay, the process should be finished now. Please check.")
+            elif input_comm.lstrip().rstrip().lower() == "specific":
+                # try and get specific message
+                await ctx.send("Okay, I'll need the information about the specific rfr message.")
+                msg, channel = await self.get_rfr_message_from_prompts(ctx)
+                embed: discord.Embed = self.get_embed_from_message(msg)
+                if not embed:
+                    await ctx.send("Couldn't get embed, is this an RFR message?")
+                else:
+                    await ctx.send("Okay, please say Y if you want inline fields, or N if you don't.")
+                    yes_no = await self.prompt_for_input(ctx, "Y/N")
+                    if not yes_no or yes_no.lstrip().rstrip().upper() not in ["Y", "N"]:
+                        await ctx.send("Invalid input, cancelling command.")
+                    else:
+                        all_yes = yes_no.lstrip().rstrip().upper() == "Y"
+                        await ctx.send("Okay, I'll change it as requested.")
+                        length = self.get_number_of_embed_fields(embed)
+                        for i in range(length):
+                            field = embed.fields[i]
+                            embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
+                        await msg.edit(embed=embed)
+                        await ctx.send("Okay, should be done. Please check.")
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -784,11 +794,11 @@ class ReactForRole(commands.Cog):
         """
         await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
         msg, channel = await self.wait_for_message(self.bot, ctx)
-        if len(msg.attachments) > 0:
-            return msg.attachments[0]
         if not msg:
             await channel.send("Okay, I'll cancel the command.")
             return ""
+        elif len(msg.attachments) > 0:
+            return msg.attachments[0]
         else:
             return msg.content
 
