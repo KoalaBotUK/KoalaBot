@@ -402,9 +402,9 @@ This email is stored so you don't need to verify it multiple times across server
             try:
                 guild = self.bot.get_guild(g_id)
                 role = discord.utils.get(guild.roles, id=r_id)
-                member = guild.get_member(user_id[0])
+                member = guild.get_member(user_id)
                 if not member:
-                    member = await guild.fetch_member(user_id[0])
+                    member = await guild.fetch_member(user_id)
                 await member.remove_roles(role)
             except AttributeError as e:
                 # bot not in guild
