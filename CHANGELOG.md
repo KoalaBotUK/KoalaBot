@@ -8,6 +8,11 @@ A lot of these commands will only be available to administrators
 - Add regex validation to ensure valid regex only
 - Fix mod channel not saving correctly
 
+### Insights
+#### Added
+- `insights` Displays the insights for KoalaBot
+- `servers <text>` Displays the servers that the bot is in with the given text in their name. (If left blank, displays all servers)
+
 ## [0.2.0] - 15-10-2020
 ### Text Filter
 ##### Added
