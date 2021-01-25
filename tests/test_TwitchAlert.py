@@ -144,15 +144,6 @@ async def test_add_user_to_twitch_alert(twitch_cog):
 
 
 @pytest.mark.asyncio(order=3)
-async def test_add_invalid_user_to_twitch_alert(twitch_cog):
-    assert_embed = KoalaBot.error_embed("The given twitch_username is not a valid username (please use lowercase)", discord.errors.InvalidArgument)
-
-    await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}add_user_to_twitch_alert {dpytest.get_config().channels[0].id} monsTercat")
-    dpytest.verify_embed(embed=assert_embed)
-
-
-@pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
