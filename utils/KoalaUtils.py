@@ -65,6 +65,6 @@ def extract_id(raw_id):
             raw_id = raw_id[1:]
         return int(raw_id[:-1])
     elif is_int(raw_id):
-        return raw_id
+        return int(raw_id)
     else:
         raise TypeError("ID given is not a valid ID")

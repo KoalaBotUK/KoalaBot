@@ -3,10 +3,14 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
-### Twitch Alert
+### Text Filter
 ##### Changed
-- Add catch so errors don't stop the alert loop
+- Add regex validation to ensure valid regex only
+- Fix mod channel not saving correctly
+- Fix regex incorrectly being used on some messages
 
+
+## [0.2.0] - 15-10-2020
 ### Text Filter
 ##### Added
 - `filter <text> [type]`  Filter a word or string of text. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
@@ -39,6 +43,11 @@ A lot of these commands will only be available to administrators
 ### Colour Role
 ##### Changed
 - Fixed error that occasionally made custom colour roles be created in the wrong position, thus not showing correctly
+
+### Twitch Alert
+##### Changed
+- Add catch so errors don't stop the alert loop
+
 
 ## [0.1.8] - 18-10-2020
 ### Twitch Alert
@@ -141,6 +150,7 @@ A lot of these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
 [0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.5...v0.1.6
