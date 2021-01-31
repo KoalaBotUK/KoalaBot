@@ -22,6 +22,7 @@ from utils import KoalaColours
 from utils.KoalaColours import *
 from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
 from utils.KoalaDBManager import KoalaDBManager
+from utils.AnnouncementUtil import AnnounceManager, AnnounceMessage
 
 
 def announce_is_enabled(ctx):
@@ -51,6 +52,7 @@ class Announce(commands.Cog, name="Announce"):
 
     def __init__(self, bot):
         self.bot = bot
+        self.announce_manager = AnnounceManager(bot)
         KoalaBot.database_manager.create_base_tables()
         KoalaBot.database_manager.insert_extension("Announce", 0, True, True)
         self.anc_database_manager = AnnounceDBManager(KoalaBot.database_manager)
@@ -59,75 +61,62 @@ class Announce(commands.Cog, name="Announce"):
     def not_exceeded_limit(self):
         return int(datetime.now().strftime('%Y%m%d')) - self.anc_database_manager.get_last_use_date() > 30
 
-    @commands.command(name="announce", aliases=["announcement"])
-    @commands.check(KoalaBot.is_admin)
-    @commands.check(announce_is_enabled)
-    async def make_announcement(self, ctx: commands.Context):
+    @commands.group(name="announce")
+    async def announce(self, ctx):
         """
-            Create a new announcement in a server targeting specific roles
-        :param ctx:
-        :return:
+        Use k!announce create to create an announcement
         """
+        if ctx.invoked_subcommand is None:
+            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help announce` for more information")
 
-        while True:
-            await ctx.send("Now please enter the message that you want to send")
-            message = await self.wait_for("message")
-            if not message:
-                await ctx.send(
-                    "Okay, didn't receive a message. Cancelling command.")
-                return
-            else:
-                if len(message.content) <= 2000:
-                    content = message.content
-                else:
-                    await ctx.send(
-                        "The message is too long, please keep the message within 2000 characters")
-                    return
-            embed: discord.Embed = discord.Embed(title=f"This announcement is from {ctx.guild.name}",
-                                                 description=content, colour=KoalaColours.KOALA_GREEN)
-            embed.set_thumbnail(url=ctx.guild.icon_url)
-            await ctx.channel.send(embed=embed)
-            await ctx.send("Are you happy with the message you are sending? Please respond with Y if you are")
-            reply = await self.wait_for("message")
-            if not reply or reply.content == 'Y':
-                break
-        while True:
-            await ctx.send(
-                "Please add the roles that you want to tag separated by comma, remove roles by typing in the form -@role_name,or enter Y when you are done")
-            roles = await self.wait_for("message")
-            receiver = []
-            role_list = []
-            if not roles:
-                await ctx.send("There doesn't seem to be any input, cancelling the command due to inactivity")
-                return
-            elif roles.content == 'Y':
-                if not receiver:
-                    receiver = ctx.guild.members
-                    roles.content = "everyone"
-                    role_list.append(ctx.guild.id)
-                break
-            else:
-                for role in roles.content.split():
-                    if role[0] == '-':
-                        try:
-                            role_list.remove(extract_id(role[1:]))
-                        except TypeError:
-                            continue
-                    else:
-                        role_list.append(extract_id(role))
-                for member in ctx.guild.members:
-                    for role in member.roles:
-                        if role.id in role_list:
-                            receiver.append(member)
-                            break
-            await ctx.send(
-                f"You will send to {roles.content} and there are {str(len(receiver))} receivers")
+    @announce.command(name="create")
+    async def create(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await ctx.send("There is currently an active announcement")
+        else:
+            await self.announce_manager.create_msg(ctx)
 
-        for user in receiver:
-            await user.send(embed=embed)
+    @announce.command(name="createTitle")
+    async def change_title(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await self.announce_manager.change_title(ctx)
+        else:
+            await ctx.send("There is currently no active announcement")
 
-        self.anc_database_manager.set_last_use_date(guild_id=ctx.guild.id, date=datetime.month)
-        self.anc_database_manager.add_announcement(guild_id=ctx.guild.id, role_id=str(role_list), message_id=embed.id)
+    @announce.command(name="changeContent")
+    async def change_content(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await self.announce_manager.change_content(ctx)
+        else:
+            await ctx.send("There is currently no active announcement")
+
+    @announce.command(name="addRole")
+    async def add_role(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await self.announce_manager.add_roles(ctx)
+        else:
+            await ctx.send("There is currently no active announcement")
+
+    @announce.command(name="removeRole")
+    async def remove_role(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await self.announce_manager.remove_roles(ctx)
+        else:
+            await ctx.send("There is currently no active announcement")
+
+    @announce.command(name="preview")
+    async def preview(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await self.announce_manager.preview(ctx)
+        else:
+            await ctx.send("There is currently no active announcement")
+
+    @announce.command(name="send")
+    async def send(self, ctx):
+        if self.announce_manager.has_active_msg(ctx.author.id):
+            await self.announce_manager.send_msg(ctx)
+        else:
+            await ctx.send("There is currently no active announcement")
 
 
 class AnnounceDBManager:
