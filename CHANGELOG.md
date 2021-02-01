@@ -3,6 +3,23 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### Voting
+##### Added
+- `vote create <title>` Start the vote creation process
+- `vote addRole <@role>/<role id>` Add a role to the list of roles to send the vote to
+- `vote removeRole <@role>/<role id>` Remove a role from the list of roles to send the vote to
+- `vote setChair <@user>/<user id>` Sets the "chair" of a vote to send the results to
+    -  if not set the results will be sent to the channel vote is ended in
+- `vote setChannel <#voice_channel>/<channel_id>` Sets the voice channel the vote will look for users to send to in
+- `vote addOption <title+description>` Takes a string separated by a + containing the title and the description of an option that can be selected in the vote
+- `vote removeOption <index>` Removes the specified option from the pool
+- `vote preview` Displays a preview of what the vote will look like to users who receive it
+- `vote cancel` Cancel a vote that is being set up
+- `vote send` Send the vote with the current configuration to any users in the constraints
+    - Constraints being "users who have roles specified or are currently in the specified voice channel"
+    - If channel/roles aren't set the vote will be sent to the whole server
+- `vote checkResults` Check the current results of the vote without ending it
+- `vote close` End the vote and send the results to the channel it was called in or DM to the set chair
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only

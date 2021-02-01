@@ -338,7 +338,7 @@ class Voting(commands.Cog, name="Vote"):
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
-    # @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.is_admin)
     @commands.check(vote_is_enabled)
     @vote.command(name="create")
     async def startVote(self, ctx, *, title):
@@ -520,13 +520,13 @@ class Voting(commands.Cog, name="Vote"):
         embed = await make_result_embed(vote, results)
         await ctx.send(embed=embed)
 
-    @vote.command(name="testVote")
-    async def testVote(self, ctx):
-        # vote setup for ease of testing
-        vote = self.vote_manager.create_vote(ctx, "Test")
-        vote.add_option(Option("test1", "test1"))
-        vote.add_option(Option("test2", "test2"))
-        vote.set_vc(718532674527952920)
+    # @vote.command(name="testVote")
+    # async def testVote(self, ctx):
+    #     # vote setup for ease of testing
+    #     vote = self.vote_manager.create_vote(ctx, "Test")
+    #     vote.add_option(Option("test1", "test1"))
+    #     vote.add_option(Option("test2", "test2"))
+    #     vote.set_vc(718532674527952920)
 
     async def update_vote_message(self, payload):
         """
