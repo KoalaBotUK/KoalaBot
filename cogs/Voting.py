@@ -20,25 +20,39 @@ load_dotenv()
 
 
 class TwoWay(dict):
-    """Class to because a friend was bored and wanted a better way to make a two way dict than the way I had before
-    """
+    """Class to because a friend was bored and wanted a better way to make a two way dict than the way I had before"""
     def __init__(self, dict_in=None):
+        """
+        Constructor method
+        :param dict_in: an existing dict to make two-way
+        """
         super(TwoWay, self).__init__()
         if dict_in is not None:
             self.update(dict_in)
 
     def __delitem__(self, key):
+        """
+        Remove an item from the dict
+        :param key: the key of the item
+        """
         self.pop(self.pop(key))
 
     def __setitem__(self, key, value):
-        # essentially this assert prevents updates to the dict if values are already set
-        # which for a 1-1 mapping is reasonable imo, but you could also call __delitem__
-        # if you wanted overwriting behaviour to work correctly (but it might be surprising)
+        """
+        Add an item to the dict. Errors if it already exists
+        :param key: the key of the item to add
+        :param value: the value of the item to add
+        """
         assert key not in self or self[key] == value
         super(TwoWay, self).__setitem__(key, value)
         super(TwoWay, self).__setitem__(value, key)
 
     def update(self, e, **f):
+        """
+        Update the dict
+        :param e: new dict to integrate into the existing one
+        :param f: keyword arguments
+        """
         for key, value in e.items():
             assert key not in self or self[key]==value
             self[key] = value
@@ -213,6 +227,21 @@ def is_vote_caller():
     return commands.check(predicate)
 
 
+def vote_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled verify
+    e.g. @commands.check(vote_is_enabled)
+    :param ctx: The context of the message
+    :return: True if enabled or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "Vote")
+    except PermissionError:
+        result = False
+
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
+
 async def add_reactions(vote, msg):
     """
     Adds the relevant reactions from a vote to a given message
@@ -253,7 +282,7 @@ def create_embed(vote):
 async def get_results(bot, vote):
     """
     Gathers the results from all users who were sent the vote
-    :param vote:
+    :param vote: the vote object
     :param bot: the discord.commands.Bot that sent out the vote messages
     :return: dict of results
     """
@@ -310,6 +339,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
     # @commands.check(KoalaBot.is_admin)
+    @commands.check(vote_is_enabled)
     @vote.command(name="create")
     async def startVote(self, ctx, *, title):
         """
@@ -389,7 +419,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         Adds an option to the current vote
         separate the title and description with a "+" e.g. option title+option description
-        :param option_string:
+        :param option_string: a title and description for the option separated by a '+'
         """
         vote = self.vote_manager.get_vote(ctx)
         if len(vote.options) > 9:
@@ -490,8 +520,8 @@ class Voting(commands.Cog, name="Vote"):
         embed = await make_result_embed(vote, results)
         await ctx.send(embed=embed)
 
-    @vote.command(name="testvote")
-    async def testvote(self, ctx):
+    @vote.command(name="testVote")
+    async def testVote(self, ctx):
         # vote setup for ease of testing
         vote = self.vote_manager.create_vote(ctx, "Test")
         vote.add_option(Option("test1", "test1"))
