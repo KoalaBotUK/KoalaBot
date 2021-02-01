@@ -18,7 +18,7 @@ import logging
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-if os.name == 'nt':
+if os.name == 'nt' or os.name == 'posix':
     logging.info("Windows Detected: Database Encryption Disabled")
     import sqlite3
 else:

@@ -13,7 +13,7 @@ import os
 
 
 # Libs
-if os.name == 'nt':
+if os.name == 'nt' or os.name == 'posix':
     print("Windows Detected: Database Encryption Disabled")
     import sqlite3
 else:
@@ -33,7 +33,7 @@ class KoalaDBManager:
 
     def __init__(self, db_file_path, db_secret_key):
         self.db_file_path = db_file_path
-        if os.name == 'nt':
+        if os.name == 'nt' or os.name == 'posix':
             self.db_file_path = "windows_"+self.db_file_path
         self.db_secret_key = db_secret_key
     def create_connection(self):
@@ -45,7 +45,7 @@ class KoalaDBManager:
         try:
             conn = sqlite3.connect(self.db_file_path)
             c = conn.cursor()
-            if os.name != 'nt':
+            if os.name != 'nt' and os.name != 'posix':
                 c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
 
             return conn, c
