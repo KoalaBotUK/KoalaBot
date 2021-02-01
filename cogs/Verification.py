@@ -370,9 +370,9 @@ This email is stored so you don't need to verify it multiple times across server
                 guild = self.bot.get_guild(g_id)
                 role = discord.utils.get(guild.roles, id=r_id)
                 await self.assign_role_to_guild(guild, role, suffix)
-            except AttributeError:
+            except AttributeError as e:
                 # bot not in guild
-                pass
+                print(e)
 
     async def assign_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
@@ -386,10 +386,14 @@ This email is stored so you don't need to verify it multiple times across server
                 guild = self.bot.get_guild(g_id)
                 role = discord.utils.get(guild.roles, id=r_id)
                 member = guild.get_member(user_id)
+                if not member:
+                    member = await guild.fetch_member(user_id)
                 await member.add_roles(role)
-            except AttributeError:
-                # user not in a guild/bot no longer in guild
-                pass
+            except AttributeError as e:
+                # bot not in guild
+                print(e)
+            except discord.errors.NotFound:
+                print(f"user with id {user_id} not found")
 
     async def remove_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
@@ -399,10 +403,14 @@ This email is stored so you don't need to verify it multiple times across server
                 guild = self.bot.get_guild(g_id)
                 role = discord.utils.get(guild.roles, id=r_id)
                 member = guild.get_member(user_id)
+                if not member:
+                    member = await guild.fetch_member(user_id)
                 await member.remove_roles(role)
-            except AttributeError:
-                # user not in a guild/bot no longer in guild
-                pass
+            except AttributeError as e:
+                # bot not in guild
+                print(e)
+            except discord.errors.NotFound:
+                print(f"user with id {user_id} not found in {guild}")
 
     async def assign_role_to_guild(self, guild, role, suffix):
         results = self.DBManager.db_execute_select("SELECT u_id FROM verified_emails WHERE email LIKE ('%' || ?)",
@@ -413,11 +421,16 @@ This email is stored so you don't need to verify it multiple times across server
                                                                (role.id, user_id[0]))
                 if blacklisted:
                     continue
-
                 member = guild.get_member(user_id[0])
+                if not member:
+                    member = await guild.fetch_member(user_id[0])
                 await member.add_roles(role)
-            except AttributeError:
-                pass
+            except AttributeError as e:
+                # bot not in guild
+                print(e)
+            except discord.errors.NotFound:
+                print(f"user with id {user_id} not found in {guild}")
+
 
 
 def setup(bot: KoalaBot) -> None:
