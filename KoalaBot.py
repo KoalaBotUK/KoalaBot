@@ -56,6 +56,7 @@ if discord.__version__ != "1.3.4":
     intent.members = True
     intent.guilds = True
     intent.messages = True
+    intent.reactions = True
     client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent)
 else:
     logging.info("discord.py v1.3.4: Intents Disabled")
