@@ -3,6 +3,18 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### Base
+#### Added
+- `support` Command gives a link to our support server
+- dev: logging saved to files
+#### Changed
+- `clear <amount>` now clears one extra (to include the command used)
+- Koala's activity is refreshed every connection to discord api servers
+### Twitch Alert
+#### Changed
+- TwitchAlert now requires lower case team names and usernames
+- dev: Minor console fixes (removed excess error notifications)
+
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only
