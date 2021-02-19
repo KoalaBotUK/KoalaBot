@@ -45,12 +45,10 @@ class Announce(commands.Cog):
         A discord.py cog to allow announcements to certain roles.
     """
 
-    messages = {}
-    roles = {}
-    announce_database_manager = None
-
     def __init__(self, bot):
         self.bot = bot
+        self.messages = {}
+        self.roles = {}
         KoalaBot.database_manager.create_base_tables()
         KoalaBot.database_manager.insert_extension("Announce", 0, True, True)
         self.announce_database_manager = AnnounceDBManager(KoalaBot.database_manager)
@@ -62,7 +60,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.announce_database_manager.get_last_use_date(guild_id):
-            return int(time.time()) - self.announce_database_manager.get_last_use_date(guild_id) > 2592000 #30*24*60*60
+            return int(time.time()) - self.announce_database_manager.get_last_use_date(
+                guild_id) > 2592000  # 30*24*60*60
         return True
 
     def has_active_msg(self, guild_id):
@@ -76,6 +75,7 @@ class Announce(commands.Cog):
     def get_role_names(self, guild_id, roles):
         """
         A function to get the names of all the roles the announcement will be sent to
+        :param roles: The list of roles in the guild
         :param guild_id: The id of the guild
         :return: All the names of the roles that are tagged
         """
@@ -87,6 +87,7 @@ class Announce(commands.Cog):
     def get_receivers(self, guild_id, roles):
         """
         A function to get the receivers of a particular announcement
+        :param roles: The list of roles in the guild
         :param guild_id: The id of the guild
         :return: All the receivers of the announcement
         """
@@ -126,10 +127,20 @@ class Announce(commands.Cog):
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help announce` for more information")
 
     @commands.check(announce_is_enabled)
+    @announce.command(name="date")
+    async def date(self, ctx):
+        await ctx.send(self.announce_database_manager.get_last_use_date(ctx.guild.id))
+
+    @commands.check(announce_is_enabled)
     @announce.command(name="create")
     async def create(self, ctx):
-        # if not self.not_exceeded_limit(ctx.guild.id):
-        #    ctx.send("You have recently sent an announcement and cannot use this function for now")
+        """
+        This command creates a new message that will be available for sending
+        :param ctx: The context of the bot
+        :return:
+        """
+        if not self.not_exceeded_limit(ctx.guild.id):
+            ctx.send("You have recently sent an announcement and cannot use this function for now")
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("There is currently an active announcement")
         else:
@@ -151,6 +162,11 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="changeTitle")
     async def change_title(self, ctx):
+        """
+        This commands changes the title of the embedded message
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the new title")
             title = await self.bot.wait_for("message", timeout=60)
@@ -165,6 +181,11 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="changeContent")
     async def change_content(self, ctx):
+        """
+        This commands changes the content of the embedded message
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the new message")
             message = await self.bot.wait_for("message", timeout=60)
@@ -182,6 +203,11 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="addRole", aliases=["add"])
     async def add_role(self, ctx):
+        """
+        This command adds a tagged role from the tagged list
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the roles you want to tag separated by space")
             message = await self.bot.wait_for("message", timeout=60)
@@ -199,6 +225,11 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="removeRole", aliases=["remove"])
     async def remove_role(self, ctx):
+        """
+        This command removes a tagged role from the tagged list
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the roles you want to remove separated by space")
             message = await self.bot.wait_for("message", timeout=60)
@@ -216,6 +247,11 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="preview")
     async def preview(self, ctx):
+        """
+        This command posts a constructed embedded message to the channel where the command is invoked
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send(embed=self.construct_embed(ctx.guild.id))
             await ctx.send(self.receiver_msg(ctx))
@@ -225,10 +261,13 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="send")
     async def send(self, ctx):
-        print("Hello")
+        """
+        This command sends a pending message
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             embed = self.construct_embed(ctx.guild.id)
-            ctx.send(embed=self.construct_embed(ctx.guild.id))
             if self.roles[ctx.guild.id]:
                 for receiver in self.get_receivers(ctx.guild.id, ctx.guild.roles):
                     await receiver.send(embed=embed)
@@ -244,7 +283,12 @@ class Announce(commands.Cog):
 
     @commands.check(announce_is_enabled)
     @announce.command(name="cancel")
-    async def send(self, ctx):
+    async def cancel(self, ctx):
+        """
+        This command cancels a pending message
+        :param ctx: The context of the bot
+        :return:
+        """
         if self.has_active_msg(ctx.guild.id):
             self.messages[ctx.guild.id] = None
             self.roles[ctx.guild.id] = []
@@ -255,44 +299,60 @@ class Announce(commands.Cog):
 
 class AnnounceDBManager:
     """
-        A class for interacting with the KoalaBot announcement database
+    A class for interacting with the KoalaBot announcement database
     """
 
     def __init__(self, database_manager: KoalaBot.database_manager):
         """
-            initiate variables
+        initiate variables
         :param database_manager:
         """
         self.database_manager = database_manager
 
     def create_tables(self):
         """
-            create all the tables related to the announce database
+        create all the tables related to the announce database
         """
         sql_create_usage_tables = """
         CREATE TABLE IF NOT EXISTS GUILDUSAGE (
         guild_id integer NOT NULL,
         last_message_epoch_time integer NOT NULL,
-        PRIMARY KEY (guild_id)
+        PRIMARY KEY (guild_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id)
         );
         """
 
         self.database_manager.db_execute_commit(sql_create_usage_tables)
 
     def get_last_use_date(self, guild_id: int):
+        """
+        Gets the last time when this function was used
+        :param guild_id: id of the target guild
+        :return:
+        """
         date: int = self.database_manager.db_execute_select(
-            f"""SELECT last_message_epoch_time FROM Usage WHERE guild_id = {guild_id}""")
+            """SELECT last_message_epoch_time FROM GUILDUSAGE WHERE guild_id = ?""", args=[guild_id])
         if not date:
             return
         else:
             return date
 
     def set_last_use_date(self, guild_id: int, last_time: int):
-        if not (self.database_manager.db_execute_select(f"""SELECT * FROM Usage where guild_id = {guild_id}""")):
+        """
+        Set the last time when this function was used
+        :param guild_id: id of the guild
+        :param last_time: time when the function was used
+        :return:
+        """
+        if not (
+                self.database_manager.db_execute_select("""SELECT * FROM GUILDUSAGE where guild_id = ?""",
+                                                        args=[guild_id])):
             self.database_manager.db_execute_commit(
-                f"""UPDATE Usage SET last_message_epoch_time = {last_time} WHERE guild_id = {guild_id}""")
+                """UPDATE GUILDUSAGE SET last_message_epoch_time = ? WHERE guild_id = ?""", args=[last_time, guild_id])
         else:
-            self.database_manager.db_execute_commit(f"""INSERT INTO Usage VALUES {guild_id},{last_time}""")
+            self.database_manager.db_execute_commit(
+                """INSERT INTO GUILDUSAGE (guild_id,last_messgae_epoch_time) VALUES (?,?)""",
+                args=[guild_id, last_time])
 
 
 class AnnounceMessage:
