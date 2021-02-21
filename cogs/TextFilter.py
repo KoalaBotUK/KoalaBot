@@ -10,7 +10,6 @@ import os
 import asyncio
 import time
 import re
-import logging
 
 # Libs
 from discord.ext import commands, tasks
