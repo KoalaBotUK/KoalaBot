@@ -9,6 +9,7 @@ Created by: Bill Cao
 import asyncio
 
 # Libs
+
 import discord
 from discord.ext import commands
 from utils.KoalaUtils import extract_id
@@ -17,11 +18,6 @@ import time
 # Own modules
 
 import KoalaBot
-
-
-# global check variables
-# datetime object for last use date
-# 30 days strictly
 
 
 def announce_is_enabled(ctx):
@@ -35,7 +31,7 @@ def announce_is_enabled(ctx):
     try:
         result = KoalaBot.check_guild_has_ext(ctx, "Announce")
     except PermissionError:
-        result = True
+        result = False
 
     return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
@@ -129,7 +125,12 @@ class Announce(commands.Cog):
     @commands.check(announce_is_enabled)
     @announce.command(name="date")
     async def date(self, ctx):
-        await ctx.send(self.announce_database_manager.get_last_use_date(ctx.guild.id))
+        print(self.announce_database_manager.get_last_use_date(ctx.guild.id))
+
+    @commands.check(announce_is_enabled)
+    @announce.command(name="curr")
+    async def curr(self, ctx):
+        self.announce_database_manager.set_last_use_date(ctx.guild.id, int(time.time()))
 
     @commands.check(announce_is_enabled)
     @announce.command(name="create")
@@ -140,7 +141,8 @@ class Announce(commands.Cog):
         :return:
         """
         if not self.not_exceeded_limit(ctx.guild.id):
-            ctx.send("You have recently sent an announcement and cannot use this function for now")
+            await ctx.send("You have recently sent an announcement and cannot use this function for now")
+            return
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("There is currently an active announcement")
         else:
@@ -314,15 +316,15 @@ class AnnounceDBManager:
         create all the tables related to the announce database
         """
         sql_create_usage_tables = """
-        CREATE TABLE IF NOT EXISTS GUILDUSAGE (
+        CREATE TABLE IF NOT EXISTS GuildUsage (
         guild_id integer NOT NULL,
         last_message_epoch_time integer NOT NULL,
         PRIMARY KEY (guild_id),
         FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id)
         );
         """
-
         self.database_manager.db_execute_commit(sql_create_usage_tables)
+        #self.database_manager.db_execute_commit("""DELETE FROM GuildUsage WHERE (guild_id=413997757695787008)""") a tsetign line for my server
 
     def get_last_use_date(self, guild_id: int):
         """
@@ -330,12 +332,11 @@ class AnnounceDBManager:
         :param guild_id: id of the target guild
         :return:
         """
-        date: int = self.database_manager.db_execute_select(
-            """SELECT last_message_epoch_time FROM GUILDUSAGE WHERE guild_id = ?""", args=[guild_id])
-        if not date:
+        row = self.database_manager.db_execute_select(
+            """SELECT * FROM GuildUsage WHERE guild_id = ?""", args=[guild_id])
+        if not row:
             return
-        else:
-            return date
+        return row[0][1]
 
     def set_last_use_date(self, guild_id: int, last_time: int):
         """
@@ -344,15 +345,16 @@ class AnnounceDBManager:
         :param last_time: time when the function was used
         :return:
         """
-        if not (
-                self.database_manager.db_execute_select("""SELECT * FROM GUILDUSAGE where guild_id = ?""",
-                                                        args=[guild_id])):
+        if (self.database_manager.db_execute_select("""SELECT last_message_epoch_time FROM GuildUsage where 
+        guild_id = ?""", args=[guild_id])):
             self.database_manager.db_execute_commit(
-                """UPDATE GUILDUSAGE SET last_message_epoch_time = ? WHERE guild_id = ?""", args=[last_time, guild_id])
+                """UPDATE GuildUsage SET last_message_epoch_time = ? WHERE guild_id = ?""", args=[last_time, guild_id])
         else:
             self.database_manager.db_execute_commit(
-                """INSERT INTO GUILDUSAGE (guild_id,last_messgae_epoch_time) VALUES (?,?)""",
+                """INSERT INTO GuildUsage (guild_id,last_message_epoch_time) VALUES (?,?)""",
                 args=[guild_id, last_time])
+            print("Hello")
+        print(self.database_manager.db_execute_select("""SELECT * FROM GuildUsage"""))
 
 
 class AnnounceMessage:

@@ -17,6 +17,7 @@ from tests.utils import TestUtils as utils
 from tests.utils import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
 
+
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global announce_cog
