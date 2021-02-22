@@ -158,6 +158,7 @@ class Announce(commands.Cog):
                                                           message.content,
                                                           ctx.guild.icon_url)
             self.roles[ctx.guild.id] = []
+            await ctx.send(f"An announcement has been created for guild {ctx.guild.name}")
             await ctx.send(embed=self.construct_embed(ctx.guild.id))
             await ctx.send(self.receiver_msg(ctx))
 
@@ -324,7 +325,6 @@ class AnnounceDBManager:
         );
         """
         self.database_manager.db_execute_commit(sql_create_usage_tables)
-        #self.database_manager.db_execute_commit("""DELETE FROM GuildUsage WHERE (guild_id=413997757695787008)""") a tsetign line for my server
 
     def get_last_use_date(self, guild_id: int):
         """
@@ -353,8 +353,6 @@ class AnnounceDBManager:
             self.database_manager.db_execute_commit(
                 """INSERT INTO GuildUsage (guild_id,last_message_epoch_time) VALUES (?,?)""",
                 args=[guild_id, last_time])
-            print("Hello")
-        print(self.database_manager.db_execute_select("""SELECT * FROM GuildUsage"""))
 
 
 class AnnounceMessage:
