@@ -16,21 +16,23 @@ import aiohttp
 import logging
 logging.basicConfig(filename='TwitchAlert.log')
 
+# Own modules
+import KoalaBot
+from utils.KoalaColours import *
+from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
+from utils import KoalaDBManager
+
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-if os.name == 'nt' or os.name == 'posix':
+if os.name == 'nt' or KoalaDBManager.ENCRYPTED_DB:
     logging.info("Windows Detected: Database Encryption Disabled")
     import sqlite3
 else:
     logging.info("Linux Detected: Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
 
-# Own modules
-import KoalaBot
-from utils.KoalaColours import *
-from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
-from utils.KoalaDBManager import KoalaDBManager
+
 
 # Constants
 load_dotenv()
@@ -751,7 +753,7 @@ class TwitchAlertDBManager:
     A class for interacting with the Koala twitch database
     """
 
-    def __init__(self, database_manager: KoalaDBManager, bot_client: discord.client):
+    def __init__(self, database_manager: KoalaDBManager.KoalaDBManager, bot_client: discord.client):
         """
         Initialises local variables
         :param database_manager:
