@@ -11,13 +11,17 @@ Commented using reStructuredText (reST)
 import os
 
 # Libs
-if os.name == 'nt' or os.name == 'posix':
-    print("Windows Detected: Database Encryption Disabled")
+from dotenv import load_dotenv
+load_dotenv()
+ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
+if ENCRYPTED_DB:
+    print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
+if os.name == 'nt' or not ENCRYPTED_DB:
+    print("Database Encryption Disabled")
     import sqlite3
 else:
-    print("Linux Detected: Database Encryption Enabled")
+    print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
-
 
 # Own modules
 
@@ -30,7 +34,7 @@ class KoalaDBManager:
 
     def __init__(self, db_file_path, db_secret_key):
         self.db_file_path = db_file_path
-        if os.name == 'nt' or os.name == 'posix':
+        if os.name == 'nt' or not ENCRYPTED_DB:
             self.db_file_path = "windows_" + self.db_file_path
         self.db_secret_key = db_secret_key
 
@@ -43,7 +47,7 @@ class KoalaDBManager:
         try:
             conn = sqlite3.connect(self.db_file_path)
             c = conn.cursor()
-            if os.name != 'nt' and os.name != 'posix':
+            if not (os.name == 'nt' or not ENCRYPTED_DB):
                 c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
 
             return conn, c
