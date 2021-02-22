@@ -25,13 +25,14 @@ from utils import KoalaDBManager
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
+"""
 if os.name == 'nt' or not KoalaDBManager.ENCRYPTED_DB:
     logging.info("Windows Detected: Database Encryption Disabled")
     import sqlite3
 else:
     logging.info("Linux Detected: Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
-
+"""
 
 
 # Constants
@@ -1030,7 +1031,8 @@ class TwitchAlertDBManager:
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
-                except sqlite3.IntegrityError:
+                except Exception as err:
+                    logging.error(f"Twitch Alert: 1034: {err}")
                     pass
 
     async def update_all_teams_members(self):
