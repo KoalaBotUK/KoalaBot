@@ -1022,8 +1022,9 @@ class TwitchAlertDBManager:
         if re.search(TWITCH_USERNAME_REGEX, team_name):
             users = await self.twitch_handler.get_team_users(team_name)
             for user in users:
-                sql_add_user = """INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
-                                   VALUES(?, ?)"""
+                sql_add_user = "UPDATE UserInTwitchTeam " \
+                               "SET team_twitch_alert_id = ?, " \
+                               "    twitch_username = ?"
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
