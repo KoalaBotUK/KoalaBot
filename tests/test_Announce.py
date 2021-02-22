@@ -39,8 +39,10 @@ def setup_function():
 
 @pytest.mark.asyncio
 async def test_is_allowed_to_create_true():
+    """
     config = dpytest.get_config()
     guild = config.guilds[0]
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "announce create")
     dpytest.verify_message()
-    assert not ColourRole.is_allowed_to_change_colour(ctx)
+    assert not ColourRole.is_allowed_to_change_colour(ctx)"""
+    assert False, "Not Implemented"
