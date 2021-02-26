@@ -6,6 +6,7 @@ Commented using reStructuredText (reST)
 """
 # Built-in/Generic Imports
 from dotenv import load_dotenv
+from random import randint
 
 # Libs
 import discord
@@ -59,22 +60,88 @@ class TwoWay(dict):
 
 
 class Option:
-    def __init__(self, head, body):
+    def __init__(self, head, body, opt_id=None):
         """
         Object holding information about an option
         :param head: the title of the option
         :param body: the description of the option
         """
+        if not opt_id:
+            self.id = randint(100000, 999999)
+        else:
+            self.id = opt_id
         self.head = head
         self.body = body
 
 
 class VoteManager:
-    def __init__(self):
+    def __init__(self, db_manager):
         """
         Manages votes for the bot
         """
         self.active_votes = {}
+        self.DBManager = db_manager
+        self.set_up_tables()
+
+    def set_up_tables(self):
+        vote_table = """
+        CREATE TABLE IF NOT EXISTS votes (
+        author_id integer NOT NULL,
+        guild_id integer NOT NULL,
+        title text NOT NULL,
+        chair_id integer,
+        voice_id integer
+        )
+        """
+
+        role_table = """
+        CREATE TABLE IF NOT EXISTS vote_target_roles (
+        vote_author_id integer NOT NULL,
+        role_id integer NOT NULL
+        )"""
+
+        option_table = """
+        CREATE TABLE IF NOT EXISTS vote_options (
+        vote_author_id integer NOT NULL,
+        opt_id integer NOT NULL,
+        option_title text NOT NULL,
+        option_desc text NOT NULL
+        )"""
+
+        delivered_table = """
+        CREATE TABLE IF NOT EXISTS vote_sent (
+        vote_author_id integer NOT NULL,
+        vote_receiver_id integer NOT NULL,
+        vote_receiver_message integer NOT NULL
+        )"""
+
+        self.DBManager.db_execute_commit(vote_table)
+        self.DBManager.db_execute_commit(role_table)
+        self.DBManager.db_execute_commit(option_table)
+        self.DBManager.db_execute_commit(delivered_table)
+
+    def load_from_db(self):
+        existing_votes = self.DBManager.db_execute_select("SELECT * FROM votes")
+        for a_id, g_id, title, chair_id, voice_id in existing_votes:
+            vote = Vote(title, a_id, g_id, self.DBManager)
+            vote.set_chair(chair_id)
+            vote.set_vc(voice_id)
+            self.active_votes[a_id] = vote
+
+            target_roles = self.DBManager.db_execute_select("SELECT * FROM vote_target_roles WHERE vote_author_id=?", (a_id,))
+            if target_roles:
+                for _, r_id in target_roles:
+                    vote.add_role(r_id)
+
+            options = self.DBManager.db_execute_select("SELECT * FROM vote_options WHERE vote_author_id=?", (a_id,))
+            if options:
+                for _, o_id, o_title, o_desc in options:
+                    vote.add_option(Option(o_title, o_desc, opt_id=o_id))
+
+            delivered = self.DBManager.db_execute_select("SELECT * FROM vote_sent WHERE vote_author_id=?", (a_id,))
+            if delivered:
+                for _, rec_id, msg_id in delivered:
+                    vote.register_sent(rec_id, msg_id)
 
     def get_vote(self, ctx):
         """
@@ -99,8 +166,10 @@ class VoteManager:
         :param title: title of the vote
         :return: the newly created Vote object
         """
-        vote = Vote(title, ctx.author.id, ctx.guild.id)
+        vote = Vote(title, ctx.author.id, ctx.guild.id, self.DBManager)
         self.active_votes[ctx.author.id] = vote
+        self.DBManager.db_execute_commit("INSERT INTO votes VALUES (?, ?, ?, ?, ?)",
+                                         (vote.id, vote.guild, vote.title, vote.chair, vote.target_voice_channel))
         return vote
 
     def cancel_vote(self, author_id):
@@ -110,6 +179,10 @@ class VoteManager:
         :return: None
         """
         self.active_votes.pop(author_id)
+        self.DBManager.db_execute_commit("DELETE FROM votes WHERE author_id=?", (author_id,))
+        self.DBManager.db_execute_commit("DELETE FROM vote_target_roles WHERE vote_author_id=?", (author_id,))
+        self.DBManager.db_execute_commit("DELETE FROM vote_options WHERE vote_author_id=?", (author_id,))
+        self.DBManager.db_execute_commit("DELETE FROM vote_sent WHERE vote_author_id=?", (author_id,))
 
     def was_sent_to(self, msg_id):
         """
@@ -124,7 +197,7 @@ class VoteManager:
 
 
 class Vote:
-    def __init__(self, title, author_id, guild_id):
+    def __init__(self, title, author_id, guild_id, db_manager):
         """
         An object containing methods and attributes of an active vote
         :param title: title of the vote
@@ -134,9 +207,10 @@ class Vote:
         self.guild = guild_id
         self.id = author_id
         self.title = title
+        self.DBManager = db_manager
 
         self.target_roles = []
-        self.chair = author_id
+        self.chair = None
         self.target_voice_channel = None
 
         self.options = []
@@ -157,6 +231,7 @@ class Vote:
         :return: None
         """
         self.target_roles.append(role_id)
+        self.DBManager.db_execute_commit("INSERT INTO vote_target_roles VALUES (?, ?)", (self.id, role_id))
 
     def remove_role(self, role_id):
         """
@@ -165,14 +240,16 @@ class Vote:
         :return: None
         """
         self.target_roles.remove(role_id)
+        self.DBManager.db_execute_commit("DELETE FROM vote_target_roles WHERE vote_author_id=? AND role_id=?", (self.id, role_id))
 
-    def set_chair(self, chair_id):
+    def set_chair(self, chair_id=None):
         """
         Sets the chair of the vote to the given id
         :param chair_id: target chair
         :return: None
         """
         self.chair = chair_id
+        self.DBManager.db_execute_commit("UPDATE votes SET chair_id=? WHERE author_id=?", (chair_id, self.id))
 
     def set_vc(self, channel_id=None):
         """
@@ -181,6 +258,7 @@ class Vote:
         :return: None
         """
         self.target_voice_channel = channel_id
+        self.DBManager.db_execute_commit("UPDATE votes SET voice_id=? WHERE author_id=?", (channel_id, self.id))
 
     def add_option(self, option):
         """
@@ -189,6 +267,7 @@ class Vote:
         :return: None
         """
         self.options.append(option)
+        self.DBManager.db_execute_commit("INSERT INTO vote_options VALUES (?, ?, ?, ?)", (self.id, option.id, option.head, option.body))
 
     def remove_option(self, index):
         """
@@ -196,7 +275,8 @@ class Vote:
         :param index: the location in the list of options to remove
         :return: None
         """
-        del self.options[index-1]
+        opt = self.options.pop(index-1)
+        self.DBManager.db_execute_commit("DELETE FROM vote_options WHERE vote_author_id=? AND opt_id=?", (self.id, opt.id))
 
     def register_sent(self, user_id, msg_id):
         """
@@ -206,6 +286,7 @@ class Vote:
         :return:
         """
         self.sent_to[user_id] = msg_id
+        self.DBManager.db_execute_commit("INSERT INTO vote_sent VALUES (?, ?, ?)", (self.id, user_id, msg_id))
 
 
 emote_reference = TwoWay({0: "1️⃣", 1: "2️⃣", 2: "3️⃣",
@@ -309,10 +390,12 @@ class Voting(commands.Cog, name="Vote"):
         :param db_manager: a database manager (allows testing on a clean database)
         """
         self.bot = bot
-        self.vote_manager = VoteManager()
         if not db_manager:
             self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
             self.DBManager.insert_extension("Vote", 0, True, True)
+        self.vote_manager = VoteManager(self.DBManager)
+        self.vote_manager.load_from_db()
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -394,8 +477,8 @@ class Voting(commands.Cog, name="Vote"):
             vote.set_chair(chair.id)
             await ctx.send(f"Set chair to {chair.name}")
         else:
-            vote.set_chair(ctx.author.id)
-            await ctx.send(f"Results will just be sent to channel the vote is closed in")
+            vote.set_chair(None)
+            await ctx.send(f"Results will be sent to the channel vote is closed in")
 
     @is_vote_caller()
     @vote.command(name="setChannel")
@@ -478,7 +561,9 @@ class Voting(commands.Cog, name="Vote"):
 
         users = [x for x in ctx.guild.members if not x.bot]
         if vote.target_voice_channel:
+            print(vote.target_voice_channel)
             vc_users = discord.utils.get(ctx.guild.voice_channels, id=vote.target_voice_channel).members
+            print(vc_users)
             users = list(set(vc_users) & set(users))
         if vote.target_roles:
             role_users = []
@@ -520,13 +605,13 @@ class Voting(commands.Cog, name="Vote"):
         embed = await make_result_embed(vote, results)
         await ctx.send(embed=embed)
 
-    # @vote.command(name="testVote")
-    # async def testVote(self, ctx):
-    #     # vote setup for ease of testing
-    #     vote = self.vote_manager.create_vote(ctx, "Test")
-    #     vote.add_option(Option("test1", "test1"))
-    #     vote.add_option(Option("test2", "test2"))
-    #     vote.set_vc(718532674527952920)
+    @vote.command(name="testVote")
+    async def testVote(self, ctx):
+        # vote setup for ease of testing
+        vote = self.vote_manager.create_vote(ctx, "Test")
+        vote.add_option(Option("test1", "test1"))
+        vote.add_option(Option("test2", "test2"))
+        vote.set_vc(788169900710821891)
 
     async def update_vote_message(self, payload):
         """

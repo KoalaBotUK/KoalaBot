@@ -20,6 +20,7 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from cogs import Voting
+from utils import KoalaDBManager
 
 
 class Fake:
@@ -32,6 +33,8 @@ ctx = Fake()
 ctx.author.id = 1234
 ctx.guild.id = 4567
 cog = None
+db_manager = KoalaDBManager.KoalaDBManager("votingTest.db", KoalaBot.DB_KEY)
+db_manager.create_base_tables()
 
 
 def setup_function():
@@ -67,7 +70,7 @@ async def test_vote():
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair {usr.id}")
     dpytest.verify_message(f"Set chair to {usr.name}")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair")
-    dpytest.verify_message("Results will just be sent to channel the vote is closed in")
+    dpytest.verify_message("Results will be sent to the channel vote is closed in")
 
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test option+test1")
     dpytest.verify_message(f"Option test option with description test1 added to vote")
@@ -103,36 +106,56 @@ def test_two_way():
 
 
 def test_vote_manager_general():
-    vm = Voting.VoteManager()
+    vm = Voting.VoteManager(db_manager)
     assert not vm.active_votes
     vote = vm.create_vote(ctx, "Test Vote")
+    added = db_manager.db_execute_select("SELECT * FROM votes WHERE author_id=?", (ctx.author.id,))
+    assert added
     assert ctx.author.id in vm.active_votes.keys()
     assert vm.get_vote(ctx) == vote
     assert vm.has_active_vote(1234)
     vm.cancel_vote(1234)
+    cancelled = db_manager.db_execute_select("SELECT * FROM votes WHERE author_id=?", (ctx.author.id,))
     assert not vm.has_active_vote(1234)
+    assert not cancelled
 
 
 def test_vote_general():
-    vm = Voting.VoteManager()
+    vm = Voting.VoteManager(db_manager)
     vote = vm.create_vote(ctx, "Test Vote")
     assert vote.id == ctx.author.id and vote.guild == ctx.guild.id and vote.title == "Test Vote"
     assert not vote.is_ready()
 
     vote.add_role(7890)
     assert 7890 in vote.target_roles
+    roles = db_manager.db_execute_select("SELECT * FROM vote_target_roles WHERE vote_author_id=?", (ctx.author.id,))
+    assert roles[0][1] == 7890
     vote.remove_role(7890)
     assert 7890 not in vote.target_roles
+    roles = db_manager.db_execute_select("SELECT * FROM vote_target_roles WHERE vote_author_id=?", (ctx.author.id,))
+    assert not roles
 
     vote.set_vc(1234)
     assert vote.target_voice_channel == 1234
+    vc = db_manager.db_execute_select("SELECT * FROM votes WHERE author_id=?", (ctx.author.id,))
+    assert vc[4] == 1234
 
     opt1 = Voting.Option("test option 1", "test body 1")
     opt2 = Voting.Option("test option 2", "test body 2")
     vote.add_option(opt1)
     vote.add_option(opt2)
+    opts = db_manager.db_execute_select("SELECT * FROM vote_options WHERE vote_author_id=?", (ctx.author.id,))
+    assert opts[0][2] == opt1.head
+    assert opts[1][2] == opt2.head
     assert len(vote.options) == 2
     assert vote.is_ready()
 
     vote.remove_option(1)
+    opts = db_manager.db_execute_select("SELECT * FROM vote_options WHERE vote_author_id=?", (ctx.author.id,))
     assert vote.options[0] == opt2
+    assert opts[0][2] == opt2.head
+
+    vm.cancel_vote(vote.id)
+    cancelled = db_manager.db_execute_select("SELECT * FROM votes WHERE author_id=?", (ctx.author.id,))
+    assert not vm.has_active_vote(1234)
+    assert not cancelled
