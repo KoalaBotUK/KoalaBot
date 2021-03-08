@@ -55,6 +55,7 @@ class ReactForRole(commands.Cog):
         self.rfr_database_manager = ReactForRoleDBManager(KoalaBot.database_manager)
         self.rfr_database_manager.create_tables()
 
+    @commands.check(KoalaBot.is_guild_channel)
     @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
         """
@@ -546,6 +547,7 @@ class ReactForRole(commands.Cog):
             await ctx.send("Okay, I've removed those options from the react for role message.")
 
     @commands.Cog.listener()
+    @commands.check(KoalaBot.is_guild_channel)
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         """
         Event listener for adding a reaction. Doesn't need message to be in loaded cache.
@@ -553,6 +555,7 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened
         :return:
         """
+
         if not payload.member.bot:
             rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
                                                                     payload.message_id)
@@ -661,6 +664,7 @@ class ReactForRole(commands.Cog):
         await ctx.send(msg_str)
 
     @commands.Cog.listener()
+    @commands.check(KoalaBot.is_guild_channel)
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         """
         Event listener for removing a reaction. Doesn't need message to be in loaded cache. Removes the role from the
