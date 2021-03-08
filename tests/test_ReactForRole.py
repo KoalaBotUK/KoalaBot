@@ -619,7 +619,7 @@ async def test_rfr_create_message():
                             "existing ones. Please keep this in mind, or setup another channel entirely for this.")
                         dpytest.verify_message("This should be a thing sent in the right channel.")
                         dpytest.verify_message(
-                            "Okay, what would you like the title of the react for role message to be? Please enter within 30 seconds.")
+                            "Okay, what would you like the title of the react for role message to be? Please enter within 60 seconds.")
                         dpytest.verify_message(
                             "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
                         dpytest.verify_message(
