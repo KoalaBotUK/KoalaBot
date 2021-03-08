@@ -625,7 +625,7 @@ async def test_rfr_create_message():
                         dpytest.verify_message(
                             "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit commands.")
                         dpytest.verify_message(
-                            "Okay, the title of the message will be \"React for Role\". What do you want the description to be?")
+                            "Okay, the title of the message will be \"React for Role\". What do you want the description to be? I'll wait 60 seconds, don't worry")
                         dpytest.verify_message(
                             "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
                         dpytest.verify_message(
