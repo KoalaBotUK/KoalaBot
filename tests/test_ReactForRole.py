@@ -23,9 +23,10 @@ from discord.ext.test import factories as dpyfactory
 import KoalaBot
 from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
-from tests.utils import TestUtils as utils
-from tests.utils import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
+from utils import KoalaColours
+from tests.utils import TestUtils as testutils
+from tests.utils import TestUtilsCog
 
 # Constants
 
@@ -188,7 +189,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     expected_full_list: List[Tuple[int, str, int]] = []
     assert independent_get_rfr_message_emoji_role() == expected_full_list
     # 1 unicode, 1 role
-    fake_emoji_1 = utils.fake_unicode_emoji()
+    fake_emoji_1 = testutils.fake_unicode_emoji()
     fake_role_id_1 = dpyfactory.make_id()
     expected_full_list.append((1, fake_emoji_1, fake_role_id_1))
     DBManager.add_rfr_message_emoji_role(
@@ -199,7 +200,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
                                                   fake_role_id_1) == [DBManager.get_rfr_reaction_role(
         guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
     # 1 unicode, 1 custom, trying to get same role
-    fake_emoji_2 = utils.fake_custom_emoji_str_rep()
+    fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
     DBManager.add_rfr_message_emoji_role(
         guild_rfr_message[3], fake_emoji_2, fake_role_id_1)
     assert independent_get_rfr_message_emoji_role() == expected_full_list
@@ -218,7 +219,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
         guild_rfr_message[3], fake_emoji_1, fake_role_id_2)] == [None]
 
     # 2 roles, 2 emojis, 1 message. split between them
-    fake_emoji_2 = utils.fake_custom_emoji_str_rep()
+    fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
     fake_role_id_2 = dpyfactory.make_id()
     expected_full_list.append((1, fake_emoji_2, fake_role_id_2))
     DBManager.add_rfr_message_emoji_role(*expected_full_list[1])
@@ -305,7 +306,7 @@ async def test_rfr_db_functions_guild_rfr_required_roles():
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = []
     for i in range(50):
-        role: discord.Role = utils.fake_guild_role(guild)
+        role: discord.Role = testutils.fake_guild_role(guild)
         roles.append(role)
         DBManager.add_guild_rfr_required_role(guild.id, role.id)
         assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], i
@@ -368,14 +369,14 @@ async def test_parse_emoji_and_role_input_str(num_rows):
         expected_role_list = []
         for j in range(num_rows):
             fake_emoji = random.choice(
-                [utils.fake_guild_emoji(guild), utils.fake_unicode_emoji()])
+                [testutils.fake_guild_emoji(guild), testutils.fake_unicode_emoji()])
             expected_emoji_list.append(str(fake_emoji))
             if isinstance(fake_emoji, discord.Emoji):
                 fake_emoji_str = random.choice(
                     [fake_emoji.id, fake_emoji.name])
             else:
                 fake_emoji_str = fake_emoji
-            fake_role = utils.fake_guild_role(guild)
+            fake_role = testutils.fake_guild_role(guild)
             expected_role_list.append(fake_role)
             fake_role_str = random.choice([fake_role.id, fake_role.name,
                                            fake_role.mention])
@@ -403,18 +404,18 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
     for j in range(num_rows):
         if random.choice([True, False]):
             if random.choice([True, False]):
-                fake_emoji = utils.fake_emoji_unicode()
+                fake_emoji = testutils.fake_emoji_unicode()
                 input_str += fake_emoji + "\n\r"
                 expected_list.append(fake_emoji)
                 print(f"Unicode emoji {j} in test {num_rows}: {emoji.emojize(fake_emoji)}")
             else:
-                fake_emoji_name = utils.fake_custom_emoji_name_str()
-                fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image=utils.random_image())
+                fake_emoji_name = testutils.fake_custom_emoji_name_str()
+                fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image=testutils.random_image())
                 expected_list.append(fake_emoji)
                 input_str += str(fake_emoji) + "\n\r"
                 print(f"Custom emoji {j} in test {num_rows}: {str(fake_emoji)}")
         else:
-            role_name = utils.fake_custom_emoji_name_str()
+            role_name = testutils.fake_custom_emoji_name_str()
             await guild.create_role(name=role_name, mentionable=True, hoist=True)
             fake_role: discord.Role = discord.utils.get(guild.roles, name=role_name)
             expected_list.append(fake_role)
@@ -572,7 +573,7 @@ async def test_get_first_emoji_from_str():
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
-    guild_emoji = utils.fake_guild_emoji(guild)
+    guild_emoji = testutils.fake_guild_emoji(guild)
     guild_emoji = discord.Emoji(guild=guild, state=None,
                                 data={'name': "AAA", 'image': None, 'id': dpyfactory.make_id(),
                                       'require_colons': True, 'managed': False})
@@ -597,7 +598,6 @@ async def test_rfr_create_message():
     channel: discord.TextChannel = guild.text_channels[0]
     embed_channel: discord.TextChannel = dpytest.back.make_text_channel('EmbedChannel', guild)
     author: discord.Member = config.members[0]
-    from utils import KoalaColours
     test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KoalaColours.KOALA_GREEN)
     test_embed.set_footer(text="ReactForRole")
     test_embed.set_thumbnail(
@@ -661,7 +661,6 @@ async def test_rfr_delete_message():
                 assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
 
 
-# @pytest.mark.skip("Not implemented yet.")
 @pytest.mark.asyncio
 async def test_rfr_edit_description():
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -706,6 +705,7 @@ async def test_rfr_edit_title():
                 dpytest.verify_message()
                 dpytest.verify_message()
                 dpytest.verify_message()
+
 
 @pytest.mark.asyncio
 async def test_rfr_edit_thumbnail():
@@ -794,8 +794,8 @@ async def test_rfr_add_roles_to_msg():
     em_list = []
     ro_list = []
     for i in range(5):
-        em = utils.fake_unicode_emoji()
-        ro = utils.fake_guild_role(guild)
+        em = testutils.fake_unicode_emoji()
+        ro = testutils.fake_guild_role(guild)
         input_em_ro_content += f"{str(em)}, {ro.id}\n\r"
         em_list.append(em)
         ro_list.append(ro.mention)
@@ -827,8 +827,8 @@ async def test_rfr_remove_roles_from_msg():
     input_em_ro_content = ""
     em_ro_list = []
     for i in range(5):
-        em = utils.fake_unicode_emoji()
-        ro = utils.fake_guild_role(guild)
+        em = testutils.fake_unicode_emoji()
+        ro = testutils.fake_guild_role(guild)
         x = random.choice([str(em), str(ro.id)])
         input_em_ro_content += f"{x}\n\r"
         em_ro_list.append(x)
@@ -861,7 +861,7 @@ async def test_can_have_rfr_role(num_roles, num_required):
     guild: discord.Guild = config.guilds[0]
     r_list = []
     for i in range(num_roles):
-        role = utils.fake_guild_role(guild)
+        role = testutils.fake_guild_role(guild)
         r_list.append(role)
     required = random.sample(set(r_list), num_required)
     for r in required:
