@@ -20,6 +20,7 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 # Futures
 
 import logging
+
 logging.basicConfig(filename='KoalaBot.log')
 # Built-in/Generic Imports
 import os
@@ -97,6 +98,10 @@ def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
 
 
+def is_guild_channel(ctx):
+    return isinstance(ctx.channel, discord.abc.GuildChannel)
+
+
 def load_all_cogs():
     """
     Loads all cogs in COGS_DIR into the client
@@ -152,6 +157,8 @@ async def on_command_error(ctx, error):
                                                      f"{str(error.retry_after)}s."))
     else:
         await ctx.send(embed=error_embed(description=error))
+
+
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
