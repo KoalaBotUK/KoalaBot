@@ -87,7 +87,7 @@ class ReactForRole(commands.Cog):
         else:
             del_msg = await channel.send(f"This should be a thing sent in the right channel.")
             await ctx.send(
-                "Okay, what would you like the title of the react for role message to be? Please enter within 30"
+                "Okay, what would you like the title of the react for role message to be? Please enter within 60"
                 " seconds.")
             x = await self.wait_for_message(self.bot, ctx)
             msg: discord.Message = x[0]
@@ -106,7 +106,8 @@ class ReactForRole(commands.Cog):
             else:
                 title: str = msg.content
             await ctx.send(
-                f"Okay, the title of the message will be \"{title}\". What do you want the description to be?")
+                f"Okay, the title of the message will be \"{title}\". What do you want the description to be? "
+                f"I'll wait 60 seconds, don't worry")
             y = await self.wait_for_message(self.bot, ctx)
             msg: discord.Message = y[0]
             if not y[0]:
@@ -234,7 +235,7 @@ class ReactForRole(commands.Cog):
         if not embed:
             KoalaBot.logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {channel.id}, guild id {ctx.guild.id}.")
-        await ctx.send(f"Your current image here is {embed.thumbnail}")
+        await ctx.send(f"Your current image here is {embed.thumbnail.url}")
         image = await self.prompt_for_input(ctx, "image you'd like to use as a thumbnail")
         if not image or image == "":
             await ctx.send("Okay, cancelling command.")
@@ -320,6 +321,42 @@ class ReactForRole(commands.Cog):
                             embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
                         await msg.edit(embed=embed)
                         await ctx.send("Okay, should be done. Please check.")
+
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
+    @edit_group.command(name="fixEmbed")
+    async def rfr_fix_embed(self, ctx: commands.Context):
+        """
+        Cosmetic fix method if the bot ever has a moment and doesn't react with the correct emojis/has duplicates.
+        """
+        msg, chnl = await self.get_rfr_message_from_prompts(ctx)
+        await self.overwrite_channel_add_reaction_perms(chnl.guild, chnl)
+        emb = self.get_embed_from_message(msg)
+        reacts: List[Union[discord.PartialEmoji,discord.Emoji,str]] = [x.emoji for x in msg.reactions]
+        if not emb:
+            KoalaBot.logger.error(
+                f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
+        else:
+            er_id, _, _, _ = self.rfr_database_manager.get_rfr_message(ctx.guild.id, chnl.id, msg.id)
+            rfr_er = self.rfr_database_manager.get_rfr_message_emoji_roles(er_id)
+            combos = ""
+            for er in rfr_er:
+                combos += er[1] + ", " + str(er[2]) + "\n"
+            er_list = await self.parse_emoji_and_role_input_str(ctx, combos, 20)
+            embed: discord.Embed = discord.Embed(title=emb.title, description=emb.description, colour=KoalaColours.KOALA_GREEN)
+            embed.set_footer(text=emb.footer)
+            embed.set_thumbnail(url=emb.thumbnail.url)
+            emb.set_image(url=emb.image.url)
+            for e in reacts:
+                if e not in [x for x,_ in er_list]:
+                    await msg.clear_reaction(e)
+            for e, r in er_list:
+                embed.add_field(name=str(e), value=r.mention, inline=False)
+                if e not in reacts:
+                    await msg.add_reaction(e)
+            await msg.edit(embed=embed)
+            await ctx.send("Tried fixing the message, please check that it's fixed.")
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -816,7 +853,8 @@ class ReactForRole(commands.Cog):
         overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
         overwrite.update(add_reactions=False)
         await channel.set_permissions(role, overwrite=overwrite)
-        bot_members = [member for member in guild.members if member.bot]
+        bot_members = [member for member in guild.members if member.bot and member.id == self.bot.user.id]
+        overwrite.update(add_reactions=True)
         for bot_member in bot_members:
             await channel.set_permissions(bot_member, overwrite=overwrite)
 
