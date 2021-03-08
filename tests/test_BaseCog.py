@@ -102,6 +102,12 @@ async def test_ping():
 
 
 @pytest.mark.asyncio
+async def test_support():
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "support")
+    dpytest.verify_message("Join our support server for more help! https://discord.gg/5etEjVd")
+
+
+@pytest.mark.asyncio
 async def test_default_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear")
@@ -112,7 +118,7 @@ async def test_default_clear():
 async def test_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear 4")
-    mock1.assert_called_with(limit=4)
+    mock1.assert_called_with(limit=5)
 
 
 @pytest.mark.asyncio

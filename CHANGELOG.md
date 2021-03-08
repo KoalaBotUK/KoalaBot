@@ -20,6 +20,18 @@ A lot of these commands will only be available to administrators
     - If channel/roles aren't set the vote will be sent to the whole server
 - `vote checkResults` Check the current results of the vote without ending it
 - `vote close` End the vote and send the results to the channel it was called in or DM to the set chair
+### Base
+#### Added
+- `support` Command gives a link to our support server
+- dev: logging saved to files
+#### Changed
+- `clear <amount>` now clears one extra (to include the command used)
+- Koala's activity is refreshed every connection to discord api servers
+### Twitch Alert
+#### Changed
+- TwitchAlert now requires lower case team names and usernames
+- dev: Minor console fixes (removed excess error notifications)
+
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only
