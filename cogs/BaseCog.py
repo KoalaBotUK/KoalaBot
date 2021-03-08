@@ -7,18 +7,17 @@ Commented using reStructuredText (reST)
 """
 # Futures
 
-import inspect
 # Built-in/Generic Imports
-import io
-import textwrap
-import traceback
-from contextlib import redirect_stdout
 
 # Libs
+import inspect
+
+import discord
 from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from utils.KoalaUtils import extract_id, error_embed
 from utils.KoalaColours import *
 
 
@@ -87,6 +86,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
+
     def __init__(self, bot):
         """
         Initialises local variables
@@ -102,9 +102,9 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         Ran after all cogs have been started and bot is ready
         """
-        if not self.started:  # Used to prevent changing activity every time the bot connects to discord servers
-            await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
-            self.started = True
+        #if not self.started:  # Used to prevent changing activity every time the bot connects to discord servers
+        await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
+        self.started = True
         print("Bot is ready.")
 
     @commands.command(name="activity", aliases=["change_activity"])
@@ -128,17 +128,25 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Returns the ping of the bot
         :param ctx: Context of the command
         """
-        await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
+        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
+
+    @commands.command()
+    async def support(self, ctx):
+        """
+        KoalaBot Support server link
+        :param ctx: Context of the command
+        """
+        await ctx.send(f"Join our support server for more help! https://discord.gg/5etEjVd")
 
     @commands.command(name="clear")
     @commands.check(KoalaBot.is_admin)
-    async def clear(self, ctx, amount=2):
+    async def clear(self, ctx, amount: int = 1):
         """
         Clears a given number of messages from the given channel
         :param ctx: Context of the command
         :param amount: Amount of lines to delete
         """
-        await ctx.channel.purge(limit=amount)
+        await ctx.channel.purge(limit=amount + 1)
 
     @commands.command(name="loadCog", aliases=["load_cog"])
     @commands.check(KoalaBot.is_owner)
@@ -148,7 +156,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        self.bot.load_extension(self.COGS_DIR.replace("/", ".")+f'.{extension}')
+        self.bot.load_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
         await ctx.send(f'{extension} Cog Loaded')
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
@@ -185,7 +193,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         else:
             KoalaBot.database_manager.give_guild_extension(guild_id, koala_extension)
             embed = list_ext_embed(guild_id)
-            embed.title = koala_extension+" enabled"
+            embed.title = koala_extension + " enabled"
 
         await ctx.send(embed=embed)
 
@@ -206,7 +214,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             raise NotImplementedError(f"{koala_extension} is not an enabled extension")
         KoalaBot.database_manager.remove_guild_extension(guild_id, koala_extension)
         embed = list_ext_embed(guild_id)
-        embed.title = koala_extension+" disabled"
+        embed.title = koala_extension + " disabled"
         await ctx.send(embed=embed)
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
@@ -221,90 +229,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 
         await ctx.send(embed=embed)
 
-    @commands.command(name="debug", hidden=True)
-    @commands.check(KoalaBot.is_owner)
-    async def debug(self, ctx, *, body: str):
-        """Evaluates code."""
-
-        blocked_words = ['.delete()', 'os', 'subprocess', 'history()', '("token")', "('token')"]
-        for x in blocked_words:
-            if x in body:
-                return await ctx.send('Your code contains certain blocked words.')
-        env = {
-            'ctx': ctx,
-            'channel': ctx.channel,
-            'author': ctx.author,
-            'guild': ctx.guild,
-            'message': ctx.message,
-            'source': inspect.getsource,
-        }
-
-        env.update(globals())
-
-        env.update(locals())
-
-        body = self.cleanup_code(body)
-        stdout = io.StringIO()
-        err = out = None
-
-        to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
-
-        def paginate(text: str):
-            '''Simple generator that paginates text.'''
-            last = 0
-            pages = []
-            for curr in range(0, len(text)):
-                if curr % 1980 == 0:
-                    pages.append(text[last:curr])
-                    last = curr
-                    appd_index = curr
-            if appd_index != len(text) - 1:
-                pages.append(text[last:curr])
-            return list(filter(lambda a: a != '', pages))
-
-        try:
-            exec(to_compile, env)
-        except Exception as e:
-            err = await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
-            return await ctx.message.add_reaction('\u2049')
-
-        func = env['func']
-        try:
-            with redirect_stdout(stdout):
-                ret = await func()
-        except Exception as e:
-            value = stdout.getvalue()
-            err = await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
-        else:
-            value = stdout.getvalue()
-            if ret is None:
-                if value:
-                    await ctx.send(format(value))
-            else:
-                self.bot._last_result = ret
-                out = await ctx.send(f'```py\n{value}{ret}\n```')
-
-        if out:
-            await ctx.message.add_reaction('\u2705')  # tick
-        elif err:
-            await ctx.message.add_reaction('\u2049')  # x
-        else:
-            await ctx.message.add_reaction('\u2708')
-
-    def cleanup_code(self, content):
-        """Automatically removes code blocks from the code."""
-        # remove ```py\n```
-        if content.startswith('```') and content.endswith('```'):
-            return '\n'.join(content.split('\n')[1:-1])
-
-        # remove `foo`
-        return content.strip('` \n')
-
-    def get_syntax_error(self, e):
-        if e.text is None:
-            return f'```py\n{e.__class__.__name__}: {e}\n```'
-        return f'```py\n{e.text}{"^":>{e.offset}}\n{e.__class__.__name__}: {e}```'
-
 
 def setup(bot: KoalaBot) -> None:
     """
@@ -313,4 +237,3 @@ def setup(bot: KoalaBot) -> None:
     """
     bot.add_cog(BaseCog(bot))
     print("BaseCog is ready.")
-
