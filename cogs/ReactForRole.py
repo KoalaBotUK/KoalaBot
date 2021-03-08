@@ -656,6 +656,8 @@ class ReactForRole(commands.Cog):
                                       f"check.")
             else:
                 msg_str += f"{role.mention}\n"
+        if msg_str == "You will need one of these roles to react to rfr messages on this server:\n":
+            msg_str = "Anyone can react to rfr messages on this server."
         await ctx.send(msg_str)
 
     @commands.Cog.listener()
