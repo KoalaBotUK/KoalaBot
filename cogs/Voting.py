@@ -231,7 +231,9 @@ class Vote:
         :return: None
         """
         self.target_roles.append(role_id)
-        self.DBManager.db_execute_commit("INSERT INTO vote_target_roles VALUES (?, ?)", (self.id, role_id))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM vote_target_roles WHERE vote_author_id=? AND role_id=?", (self.id, role_id))
+        if not in_db:
+            self.DBManager.db_execute_commit("INSERT INTO vote_target_roles VALUES (?, ?)", (self.id, role_id))
 
     def remove_role(self, role_id):
         """
@@ -267,7 +269,9 @@ class Vote:
         :return: None
         """
         self.options.append(option)
-        self.DBManager.db_execute_commit("INSERT INTO vote_options VALUES (?, ?, ?, ?)", (self.id, option.id, option.head, option.body))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM vote_options WHERE opt_id=?", (option.id,))
+        if not in_db:
+            self.DBManager.db_execute_commit("INSERT INTO vote_options VALUES (?, ?, ?, ?)", (self.id, option.id, option.head, option.body))
 
     def remove_option(self, index):
         """
@@ -286,7 +290,9 @@ class Vote:
         :return:
         """
         self.sent_to[user_id] = msg_id
-        self.DBManager.db_execute_commit("INSERT INTO vote_sent VALUES (?, ?, ?)", (self.id, user_id, msg_id))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM vote_sent WHERE vote_receiver_message=?", (msg_id,))
+        if not in_db:
+            self.DBManager.db_execute_commit("INSERT INTO vote_sent VALUES (?, ?, ?)", (self.id, user_id, msg_id))
 
 
 emote_reference = TwoWay({0: "1️⃣", 1: "2️⃣", 2: "3️⃣",
@@ -561,13 +567,12 @@ class Voting(commands.Cog, name="Vote"):
 
         users = [x for x in ctx.guild.members if not x.bot]
         if vote.target_voice_channel:
-            print(vote.target_voice_channel)
             vc_users = discord.utils.get(ctx.guild.voice_channels, id=vote.target_voice_channel).members
-            print(vc_users)
             users = list(set(vc_users) & set(users))
         if vote.target_roles:
             role_users = []
-            for role in vote.target_roles:
+            for role_id in vote.target_roles:
+                role = discord.utils.get(ctx.guild.roles, id=role_id)
                 role_users += role.members
             role_users = list(dict.fromkeys(role_users))
             users = list(set(role_users) & set(users))
