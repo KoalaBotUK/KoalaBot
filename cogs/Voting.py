@@ -173,7 +173,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(f"You already have an active vote in {guild_name}. Please send that with {KoalaBot.COMMAND_PREFIX}vote send <title> before creating a new one.")
             return
 
-        in_db = self.DBManager.db_execute_select("SELECT * FROM votes WHERE title=? AND author_id=?", (title, ctx.author.id))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE title=? AND author_id=?", (title, ctx.author.id))
         if in_db:
             await ctx.send(f"You already have a vote with title {title} sent!")
 
@@ -309,7 +309,7 @@ class Voting(commands.Cog, name="Vote"):
     @vote.command("currentVotes")
     async def check_current_votes(self, ctx):
         embed = discord.Embed(title="Your current votes")
-        votes = self.DBManager.db_execute_select("SELECT * FROM votes WHERE author_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
+        votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE author_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
         body_string = ""
         for _, _, _, title, _, _ in votes:
             body_string += title
@@ -485,7 +485,7 @@ class VoteManager:
                               6: "7️⃣", 7: "8️⃣", 8: "9️⃣", 9: "🔟"})
 
     def generate_unique_opt_id(self):
-        used_ids = self.DBManager.db_execute_select("SELECT * FROM vote_options")
+        used_ids = self.DBManager.db_execute_select("SELECT * FROM VoteOptions")
         used_ids = [x[1] for x in used_ids]
         if len(used_ids) > (999999999999999999 - 100000000000000000):
             return None
@@ -496,7 +496,7 @@ class VoteManager:
 
     def set_up_tables(self):
         vote_table = """
-        CREATE TABLE IF NOT EXISTS votes (
+        CREATE TABLE IF NOT EXISTS Votes (
         vote_id integer NOT NULL,
         author_id integer NOT NULL,
         guild_id integer NOT NULL,
@@ -507,13 +507,13 @@ class VoteManager:
         """
 
         role_table = """
-        CREATE TABLE IF NOT EXISTS vote_target_roles (
+        CREATE TABLE IF NOT EXISTS VoteTargetRoles (
         vote_id integer NOT NULL,
         role_id integer NOT NULL
         )"""
 
         option_table = """
-        CREATE TABLE IF NOT EXISTS vote_options (
+        CREATE TABLE IF NOT EXISTS VoteOptions (
         vote_id integer NOT NULL,
         opt_id integer NOT NULL,
         option_title text NOT NULL,
@@ -521,7 +521,7 @@ class VoteManager:
         )"""
 
         delivered_table = """
-        CREATE TABLE IF NOT EXISTS vote_sent (
+        CREATE TABLE IF NOT EXISTS VoteSent (
         vote_id integer NOT NULL,
         vote_receiver_id integer NOT NULL,
         vote_receiver_message integer NOT NULL
@@ -533,24 +533,24 @@ class VoteManager:
         self.DBManager.db_execute_commit(delivered_table)
 
     def load_from_db(self):
-        existing_votes = self.DBManager.db_execute_select("SELECT * FROM votes")
+        existing_votes = self.DBManager.db_execute_select("SELECT * FROM Votes")
         for v_id, a_id, g_id, title, chair_id, voice_id in existing_votes:
             vote = Vote(v_id, title, a_id, g_id, self.DBManager)
             vote.set_chair(chair_id)
             vote.set_vc(voice_id)
             self.vote_lookup[(a_id, title)] = v_id
 
-            target_roles = self.DBManager.db_execute_select("SELECT * FROM vote_target_roles WHERE vote_id=?", (v_id,))
+            target_roles = self.DBManager.db_execute_select("SELECT * FROM VoteTargetRoles WHERE vote_id=?", (v_id,))
             if target_roles:
                 for _, r_id in target_roles:
                     vote.add_role(r_id)
 
-            options = self.DBManager.db_execute_select("SELECT * FROM vote_options WHERE vote_id=?", (v_id,))
+            options = self.DBManager.db_execute_select("SELECT * FROM VoteOptions WHERE vote_id=?", (v_id,))
             if options:
                 for _, o_id, o_title, o_desc in options:
                     vote.add_option(Option(o_title, o_desc, opt_id=o_id))
 
-            delivered = self.DBManager.db_execute_select("SELECT * FROM vote_sent WHERE vote_id=?", (v_id,))
+            delivered = self.DBManager.db_execute_select("SELECT * FROM VoteSent WHERE vote_id=?", (v_id,))
             if delivered:
                 self.sent_votes[v_id] = vote
                 for _, rec_id, msg_id in delivered:
@@ -589,7 +589,7 @@ class VoteManager:
         vote = Vote(v_id, title, author_id, guild_id, self.DBManager)
         self.vote_lookup[(author_id, title)] = v_id
         self.configuring_votes[author_id] = vote
-        self.DBManager.db_execute_commit("INSERT INTO votes VALUES (?, ?, ?, ?, ?, ?)",
+        self.DBManager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?)",
                                          (vote.id, author_id, vote.guild, vote.title, vote.chair, vote.target_voice_channel))
         return vote
 
@@ -616,10 +616,10 @@ class VoteManager:
 
     def cancel_vote(self, vote):
         self.vote_lookup.pop((vote.author, vote.title))
-        self.DBManager.db_execute_commit("DELETE FROM votes WHERE vote_id=?", (vote.id,))
-        self.DBManager.db_execute_commit("DELETE FROM vote_target_roles WHERE vote_id=?", (vote.id,))
-        self.DBManager.db_execute_commit("DELETE FROM vote_options WHERE vote_id=?", (vote.id,))
-        self.DBManager.db_execute_commit("DELETE FROM vote_sent WHERE vote_id=?", (vote.id,))
+        self.DBManager.db_execute_commit("DELETE FROM Votes WHERE vote_id=?", (vote.id,))
+        self.DBManager.db_execute_commit("DELETE FROM VoteTargetRoles WHERE vote_id=?", (vote.id,))
+        self.DBManager.db_execute_commit("DELETE FROM VoteOptions WHERE vote_id=?", (vote.id,))
+        self.DBManager.db_execute_commit("DELETE FROM VoteSent WHERE vote_id=?", (vote.id,))
 
     def was_sent_to(self, msg_id):
         """
@@ -671,9 +671,9 @@ class Vote:
         if self.sent_to:
             return
         self.target_roles.append(role_id)
-        in_db = self.DBManager.db_execute_select("SELECT * FROM vote_target_roles WHERE vote_id=? AND role_id=?", (self.id, role_id))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM VoteTargetRoles WHERE vote_id=? AND role_id=?", (self.id, role_id))
         if not in_db:
-            self.DBManager.db_execute_commit("INSERT INTO vote_target_roles VALUES (?, ?)", (self.id, role_id))
+            self.DBManager.db_execute_commit("INSERT INTO VoteTargetRoles VALUES (?, ?)", (self.id, role_id))
 
     def remove_role(self, role_id):
         """
@@ -684,7 +684,7 @@ class Vote:
         if self.sent_to:
             return
         self.target_roles.remove(role_id)
-        self.DBManager.db_execute_commit("DELETE FROM vote_target_roles WHERE vote_id=? AND role_id=?", (self.id, role_id))
+        self.DBManager.db_execute_commit("DELETE FROM VoteTargetRoles WHERE vote_id=? AND role_id=?", (self.id, role_id))
 
     def set_chair(self, chair_id=None):
         """
@@ -717,9 +717,9 @@ class Vote:
         if self.sent_to:
             return
         self.options.append(option)
-        in_db = self.DBManager.db_execute_select("SELECT * FROM vote_options WHERE opt_id=?", (option.id,))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM VoteOptions WHERE opt_id=?", (option.id,))
         if not in_db:
-            self.DBManager.db_execute_commit("INSERT INTO vote_options VALUES (?, ?, ?, ?)", (self.id, option.id, option.head, option.body))
+            self.DBManager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (self.id, option.id, option.head, option.body))
 
     def remove_option(self, index):
         """
@@ -730,7 +730,7 @@ class Vote:
         if self.sent_to:
             return
         opt = self.options.pop(index-1)
-        self.DBManager.db_execute_commit("DELETE FROM vote_options WHERE vote_id=? AND opt_id=?", (self.id, opt.id))
+        self.DBManager.db_execute_commit("DELETE FROM VoteOptions WHERE vote_id=? AND opt_id=?", (self.id, opt.id))
 
     def register_sent(self, user_id, msg_id):
         """
@@ -740,9 +740,9 @@ class Vote:
         :return:
         """
         self.sent_to[user_id] = msg_id
-        in_db = self.DBManager.db_execute_select("SELECT * FROM vote_sent WHERE vote_receiver_message=?", (msg_id,))
+        in_db = self.DBManager.db_execute_select("SELECT * FROM VoteSent WHERE vote_receiver_message=?", (msg_id,))
         if not in_db:
-            self.DBManager.db_execute_commit("INSERT INTO vote_sent VALUES (?, ?, ?)", (self.id, user_id, msg_id))
+            self.DBManager.db_execute_commit("INSERT INTO VoteSent VALUES (?, ?, ?)", (self.id, user_id, msg_id))
 
 
 def setup(bot: KoalaBot) -> None:
