@@ -176,6 +176,7 @@ class Voting(commands.Cog, name="Vote"):
         in_db = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE title=? AND author_id=?", (title, ctx.author.id))
         if in_db:
             await ctx.send(f"You already have a vote with title {title} sent!")
+            return
 
         if len(title) > 200:
             await ctx.send("Title too long")
@@ -695,7 +696,7 @@ class Vote:
         if self.sent_to:
             return
         self.chair = chair_id
-        self.DBManager.db_execute_commit("UPDATE votes SET chair_id=? WHERE vote_id=?", (chair_id, self.id))
+        self.DBManager.db_execute_commit("UPDATE Votes SET chair_id=? WHERE vote_id=?", (chair_id, self.id))
 
     def set_vc(self, channel_id=None):
         """
@@ -706,7 +707,7 @@ class Vote:
         if self.sent_to:
             return
         self.target_voice_channel = channel_id
-        self.DBManager.db_execute_commit("UPDATE votes SET voice_id=? WHERE vote_id=?", (channel_id, self.id))
+        self.DBManager.db_execute_commit("UPDATE Votes SET voice_id=? WHERE vote_id=?", (channel_id, self.id))
 
     def add_option(self, option):
         """
