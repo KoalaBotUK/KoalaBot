@@ -7,9 +7,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 from dotenv import load_dotenv
 from random import randint
-import asyncio
 import time
-from datetime import datetime
 
 # Libs
 import discord
@@ -18,7 +16,6 @@ import parsedatetime.parsedatetime
 
 # Own modules
 import KoalaBot
-from utils import KoalaDBManager
 
 # Constants
 load_dotenv()
@@ -139,10 +136,17 @@ class Voting(commands.Cog, name="Vote"):
             self.DBManager = db_manager
         self.vote_manager = VoteManager(self.DBManager)
         self.vote_manager.load_from_db()
-        self.vote_end_loop.start()
+        self.running = False
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if not self.running:
+            self.vote_end_loop.start()
+            self.running = True
 
     def cog_unload(self):
         self.vote_end_loop.cancel()
+        self.running = False
 
     @tasks.loop(seconds=5.0)
     async def vote_end_loop(self):

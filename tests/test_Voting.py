@@ -39,14 +39,14 @@ vote_manager = None
 
 
 def populate_vote_tables():
-    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?)",
-                                 (111, 222, 333, "Test Vote 1", None, None))
+    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                 (111, 222, 333, "Test Vote 1", None, None, None))
     db_manager.db_execute_commit("INSERT INTO VoteTargetRoles VALUES (?, ?)", (111, 999))
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (111, 888, "vote1opt", "vote1body"))
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (111, 887, "vote1opt2", "vote1body"))
     db_manager.db_execute_commit("INSERT INTO VoteSent VALUES (?, ?, ?)", (111, 777, 666))
-    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?)",
-                                 (112, 223, 334, "Test Vote 2", 555, 666))
+    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                 (112, 223, 334, "Test Vote 2", 555, 666, None))
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (112, 888, "vote1opt", "vote1body"))
 
 
@@ -90,7 +90,7 @@ async def test_discord_create_vote():
 async def test_discord_create_vote_wrong():
     config = dpytest.get_config()
     guild = config.guilds[0]
-    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?)", (111, guild.members[0].id, guild.id, "Test Vote", None, None))
+    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)", (111, guild.members[0].id, guild.id, "Test Vote", None, None, None))
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
     dpytest.verify_message("You already have a vote with title Test Vote sent!")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
