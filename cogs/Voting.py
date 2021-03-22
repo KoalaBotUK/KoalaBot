@@ -7,10 +7,14 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 from dotenv import load_dotenv
 from random import randint
+import asyncio
+import time
+from datetime import datetime
 
 # Libs
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
+import parsedatetime.parsedatetime
 
 # Own modules
 import KoalaBot
@@ -135,6 +139,37 @@ class Voting(commands.Cog, name="Vote"):
             self.DBManager = db_manager
         self.vote_manager = VoteManager(self.DBManager)
         self.vote_manager.load_from_db()
+        self.vote_end_loop.start()
+
+    def cog_unload(self):
+        self.vote_end_loop.cancel()
+
+    @tasks.loop(seconds=5.0)
+    async def vote_end_loop(self):
+        now = time.time()
+        votes = self.DBManager.db_execute_select("SELECT * FROM votes WHERE end_time < ?", (now,))
+        for v_id, a_id, g_id, title, _, _, end_time in votes:
+            if v_id in self.vote_manager.sent_votes.keys():
+                vote = self.vote_manager.get_vote_from_id(v_id)
+                results = await get_results(self.bot, vote)
+                self.vote_manager.cancel_sent_vote(vote.id)
+                embed = await make_result_embed(vote, results)
+                try:
+                    if vote.chair:
+                        chair = await self.bot.fetch_user(vote.chair)
+                        await chair.send(f"Your vote {title} has closed")
+                        await chair.send(embed=embed)
+                    else:
+                        user = await self.bot.fetch_user(vote.author)
+                        await user.send(f"Your vote {title} has closed")
+                        await user.send(embed=embed)
+                except Exception as e:
+                    print(e)
+        self.DBManager.db_execute_commit("DELETE FROM votes WHERE end_time < ?", (now,))
+
+    @vote_end_loop.before_loop
+    async def before_vote_loop(self):
+        await self.bot.wait_until_ready()
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -279,6 +314,30 @@ class Voting(commands.Cog, name="Vote"):
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         vote.remove_option(index)
         await ctx.send(f"Option number {index} removed")
+
+    @currently_configuring()
+    @commands.check(vote_is_enabled)
+    @vote.command(name="setEndTime")
+    async def set_end_time(self, ctx, *, time_string):
+        """
+        Sets a specific time for the vote to end.
+        If the vote has not been sent by the end time it will close automatically once it is sent.
+        :param time_string: string representing a time e.g. "2021-03-22 12:56" or "tomorrow at 10am" or "in 5 days and 15 minutes"
+        :return:
+        """
+        now = time.time()
+        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
+        cal = parsedatetime.Calendar()
+        end_time_readable = cal.parse(time_string)[0]
+        end_time = time.mktime(end_time_readable)
+        if (end_time - now) < 0:
+            await ctx.send("You can't set a vote to end in the past")
+            return
+        if (end_time - now) < 600:
+            await ctx.send("Please set the end time to be at least 10 minutes in the future.")
+            return
+        vote.set_end_time(end_time)
+        await ctx.send(f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC")
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -503,7 +562,8 @@ class VoteManager:
         guild_id integer NOT NULL,
         title text NOT NULL,
         chair_id integer,
-        voice_id integer
+        voice_id integer,
+        end_time float
         )
         """
 
@@ -535,7 +595,7 @@ class VoteManager:
 
     def load_from_db(self):
         existing_votes = self.DBManager.db_execute_select("SELECT * FROM Votes")
-        for v_id, a_id, g_id, title, chair_id, voice_id in existing_votes:
+        for v_id, a_id, g_id, title, chair_id, voice_id, end_time in existing_votes:
             vote = Vote(v_id, title, a_id, g_id, self.DBManager)
             vote.set_chair(chair_id)
             vote.set_vc(voice_id)
@@ -590,8 +650,8 @@ class VoteManager:
         vote = Vote(v_id, title, author_id, guild_id, self.DBManager)
         self.vote_lookup[(author_id, title)] = v_id
         self.configuring_votes[author_id] = vote
-        self.DBManager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?)",
-                                         (vote.id, author_id, vote.guild, vote.title, vote.chair, vote.target_voice_channel))
+        self.DBManager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                         (vote.id, author_id, vote.guild, vote.title, vote.chair, vote.target_voice_channel, vote.end_time))
         return vote
 
     def gen_vote_id(self):
@@ -651,6 +711,7 @@ class Vote:
         self.target_roles = []
         self.chair = None
         self.target_voice_channel = None
+        self.end_time = None
 
         self.options = []
 
@@ -686,6 +747,15 @@ class Vote:
             return
         self.target_roles.remove(role_id)
         self.DBManager.db_execute_commit("DELETE FROM VoteTargetRoles WHERE vote_id=? AND role_id=?", (self.id, role_id))
+
+    def set_end_time(self, time=None):
+        """
+        Sets the end time of the vote.
+        :param time: time in unix time
+        :return:
+        """
+        self.end_time = time
+        self.DBManager.db_execute_commit("UPDATE votes SET end_time=? WHERE vote_id=?", (time, self.id))
 
     def set_chair(self, chair_id=None):
         """
