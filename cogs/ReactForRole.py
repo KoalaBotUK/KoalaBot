@@ -229,8 +229,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
-        await ctx.send("Okay, this will edit the thumbnail of a react for role message. I'll need some detail"
-                       "s first though.")
+        await ctx.send("Okay, this will edit the thumbnail of a react for role message. I'll need some details first "
+                       "though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
         embed = self.get_embed_from_message(msg)
         if not embed:
@@ -323,7 +323,6 @@ class ReactForRole(commands.Cog):
                         await msg.edit(embed=embed)
                         await ctx.send("Okay, should be done. Please check.")
 
-
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="fixEmbed")
@@ -334,7 +333,7 @@ class ReactForRole(commands.Cog):
         msg, chnl = await self.get_rfr_message_from_prompts(ctx)
         await self.overwrite_channel_add_reaction_perms(chnl.guild, chnl)
         emb = self.get_embed_from_message(msg)
-        reacts: List[Union[discord.PartialEmoji,discord.Emoji,str]] = [x.emoji for x in msg.reactions]
+        reacts: List[Union[discord.PartialEmoji, discord.Emoji, str]] = [x.emoji for x in msg.reactions]
         if not emb:
             KoalaBot.logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
