@@ -340,24 +340,33 @@ class ReactForRole(commands.Cog):
                 f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
         else:
             er_id, _, _, _ = self.rfr_database_manager.get_rfr_message(ctx.guild.id, chnl.id, msg.id)
-            rfr_er = self.rfr_database_manager.get_rfr_message_emoji_roles(er_id)
-            combos = ""
-            for er in rfr_er:
-                combos += er[1] + ", " + str(er[2]) + "\n"
-            er_list = await self.parse_emoji_and_role_input_str(ctx, combos, 20)
-            embed: discord.Embed = discord.Embed(title=emb.title, description=emb.description, colour=KoalaColours.KOALA_GREEN)
-            embed.set_footer(text=emb.footer)
-            embed.set_thumbnail(url=emb.thumbnail.url)
-            emb.set_image(url=emb.image.url)
-            for e in reacts:
-                if e not in [x for x,_ in er_list]:
-                    await msg.clear_reaction(e)
-            for e, r in er_list:
-                embed.add_field(name=str(e), value=r.mention, inline=False)
-                if e not in reacts:
-                    await msg.add_reaction(e)
-            await msg.edit(embed=embed)
-            await ctx.send("Tried fixing the message, please check that it's fixed.")
+            if not er_id:
+                KoalaBot.logger.error(
+                    f"RFR: Can't find rfr message with {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}. DB ER_ID : {er_id}")
+            else:
+                rfr_er = self.rfr_database_manager.get_rfr_message_emoji_roles(er_id)
+                if not rfr_er:
+                    KoalaBot.logger.error(
+                        f"RFR: Can't retrieve RFR message (ER_ID: {er_id})'s emoji role combinations.")
+                else:
+                    combos = ""
+                    for er in rfr_er:
+                        combos += er[1] + ", " + str(er[2]) + "\n"
+                    er_list = await self.parse_emoji_and_role_input_str(ctx, combos, 20)
+                    embed: discord.Embed = discord.Embed(title=emb.title, description=emb.description,
+                                                         colour=KoalaColours.KOALA_GREEN)
+                    embed.set_footer(text=emb.footer)
+                    embed.set_thumbnail(url=emb.thumbnail.url)
+                    emb.set_image(url=emb.image.url)
+                    for e in reacts:
+                        if e not in [x for x, _ in er_list]:
+                            await msg.clear_reaction(e)
+                    for e, r in er_list:
+                        embed.add_field(name=str(e), value=r.mention, inline=False)
+                        if e not in reacts:
+                            await msg.add_reaction(e)
+                    await msg.edit(embed=embed)
+                    await ctx.send("Tried fixing the message, please check that it's fixed.")
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
