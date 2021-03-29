@@ -1038,7 +1038,8 @@ class ReactForRoleDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO GuildRFRMessages  (guild_id, channel_id, message_id) VALUES ({guild_id}, {channel_id}, {message_id});""")
+            "INSERT INTO GuildRFRMessages  (guild_id, channel_id, message_id) VALUES (?, ?, ?);",
+            args=[guild_id, channel_id, message_id])
 
     def add_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str, role_id: int):
         """
@@ -1049,7 +1050,8 @@ class ReactForRoleDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            f"""INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES ({emoji_role_id}, \"{emoji_raw}\", {role_id});""")
+            "INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES (?, \"?\", ?);",
+            args=[emoji_role_id, emoji_raw, role_id])
 
     def remove_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str = None, role_id: int = None):
         """
@@ -1062,10 +1064,12 @@ class ReactForRoleDBManager:
         """
         if not emoji_raw:
             self.database_manager.db_execute_commit(
-                f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
+                "DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND role_id = ?;",
+                args=[emoji_role_id, role_id])
         else:
             self.database_manager.db_execute_commit(
-                f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\";""")
+                "DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = \"?\";",
+                args=[emoji_role_id, emoji_raw])
 
     def remove_rfr_message_emoji_roles(self, emoji_role_id: int):
         """
@@ -1074,7 +1078,7 @@ class ReactForRoleDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            f"""DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id};""")
+            "DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = ?;", args=[emoji_role_id])
 
     def remove_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
         """
@@ -1090,7 +1094,8 @@ class ReactForRoleDBManager:
         else:
             self.remove_rfr_message_emoji_roles(emoji_role_id[3])
         self.database_manager.db_execute_commit(
-            f"""DELETE FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
+            "DELETE FROM GuildRFRMessages WHERE guild_id = ? AND channel_id = ? AND message_id = ?;",
+            args=[guild_id, channel_id, message_id])
 
     def get_rfr_message(self, guild_id: int, channel_id: int, message_id: int) -> Optional[Tuple[int, int, int, int]]:
         """
@@ -1101,7 +1106,8 @@ class ReactForRoleDBManager:
         :return: RFR message info of the specific message if found, otherwise None.
         """
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM GuildRFRMessages WHERE guild_id = {guild_id} AND channel_id = {channel_id} AND message_id = {message_id};""")
+            "SELECT * FROM GuildRFRMessages WHERE guild_id = ? AND channel_id = ? AND message_id = ?;",
+            args=[guild_id, channel_id, message_id])
         if not rows:
             return
         return rows[0]
@@ -1124,7 +1130,7 @@ class ReactForRoleDBManager:
         :return: Role IDs of RFR roles in a specific guild
         """
         rfr_messages: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", guild_id)
+            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
         if not rfr_messages:
             return []
         role_ids: List[int] = []
@@ -1145,7 +1151,7 @@ class ReactForRoleDBManager:
         :return: List of rows in the database if found, otherwise None
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id};""")
+            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ?;", args=[emoji_role_id])
         if not rows:
             return
         return rows
@@ -1160,7 +1166,8 @@ class ReactForRoleDBManager:
         :return: Unique row corresponding to a specific emoji-role combo
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\" AND role_id = {role_id};""")
+            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = \"?\" AND role_id = ?;",
+            args=[emoji_role_id, emoji_raw, role_id])
         if not rows:
             return
         return rows[0]
@@ -1173,7 +1180,8 @@ class ReactForRoleDBManager:
         :return: role ID of the emoji-role combo
         """
         rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
-            f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND emoji_raw = \"{emoji_raw}\";""")
+            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = \"?\";",
+            args=[emoji_role_id, emoji_raw])
         if not rows:
             return
         return rows[0][2]
