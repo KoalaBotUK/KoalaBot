@@ -31,7 +31,7 @@ def announce_is_enabled(ctx):
     try:
         result = KoalaBot.check_guild_has_ext(ctx, "Announce")
     except PermissionError:
-        result = False
+        result = True
 
     return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
@@ -66,7 +66,7 @@ class Announce(commands.Cog):
         :param guild_id: The id of the guild of the command
         :return: Boolean of whether there is an active announcement or not
         """
-        return guild_id in self.messages.keys() and self.messages[guild_id] is not None
+        return guild_id in self.messages.keys()
 
     def get_role_names(self, guild_id, roles):
         """
@@ -121,16 +121,6 @@ class Announce(commands.Cog):
         """
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help announce` for more information")
-
-    @commands.check(announce_is_enabled)
-    @announce.command(name="date")
-    async def date(self, ctx):
-        print(self.announce_database_manager.get_last_use_date(ctx.guild.id))
-
-    @commands.check(announce_is_enabled)
-    @announce.command(name="curr")
-    async def curr(self, ctx):
-        self.announce_database_manager.set_last_use_date(ctx.guild.id, int(time.time()))
 
     @commands.check(announce_is_enabled)
     @announce.command(name="create")
@@ -219,7 +209,7 @@ class Announce(commands.Cog):
                 return
             for new_role in message.content.split():
                 role_id = extract_id(new_role)
-                if role_id not in self.roles[ctx.guild.id]:
+                if role_id not in self.roles[ctx.guild.id] and discord.utils.get(ctx.guild.roles, id=role_id) is not None:
                     self.roles[ctx.guild.id].append(role_id)
             await ctx.send(self.receiver_msg(ctx))
         else:
@@ -277,8 +267,8 @@ class Announce(commands.Cog):
             else:
                 for receiver in ctx.guild.members:
                     await receiver.send(embed=embed)
-            self.messages[ctx.guild.id] = None
-            self.roles[ctx.guild.id] = []
+            self.messages.pop(ctx.guild.id)
+            self.roles.pop(ctx.guild.id)
             self.announce_database_manager.set_last_use_date(ctx.guild.id, int(time.time()))
             await ctx.send("The announcement was made successfully")
         else:
@@ -293,8 +283,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            self.messages[ctx.guild.id] = None
-            self.roles[ctx.guild.id] = []
+            self.messages.pop(ctx.guild.id)
+            self.roles.pop(ctx.guild.id)
             await ctx.send("The announcement was cancelled successfully")
         else:
             await ctx.send("There is currently no active announcement")
