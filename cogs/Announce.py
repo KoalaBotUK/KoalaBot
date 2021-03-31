@@ -15,7 +15,9 @@ from discord.ext import commands
 from utils.KoalaUtils import extract_id
 from utils import KoalaColours
 import time
-# Own modules
+
+# constants
+ANNOUNCE_SEPARATION_DAYS = 30
 
 import KoalaBot
 
@@ -31,7 +33,7 @@ def announce_is_enabled(ctx):
     try:
         result = KoalaBot.check_guild_has_ext(ctx, "Announce")
     except PermissionError:
-        result = True
+        result = False
 
     return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
@@ -57,7 +59,7 @@ class Announce(commands.Cog):
         """
         if self.announce_database_manager.get_last_use_date(guild_id):
             return int(time.time()) - self.announce_database_manager.get_last_use_date(
-                guild_id) > 2592000  # 30*24*60*60
+                guild_id) > ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60
         return True
 
     def has_active_msg(self, guild_id):
@@ -92,26 +94,28 @@ class Announce(commands.Cog):
             temp += discord.utils.get(roles, id=role).members
         return list(set(temp))
 
-    def receiver_msg(self, ctx):
+    def receiver_msg(self, guild):
         """
         A function to create a string message about receivers
-        :param ctx: The context of the bot
+        :param guild: The guild of the bot
         :return: A string message about receivers
         """
-        if not self.roles[ctx.guild.id]:
-            return f"You are currently sending to Everyone and there are {str(len(ctx.guild.members))} receivers"
-        return f"You are currently sending to {self.get_role_names(ctx.guild.id, ctx.guild.roles)} and there are {str(len(self.get_receivers(ctx.guild.id, ctx.guild.roles)))} receivers "
+        if not self.roles[guild.id]:
+            return f"You are currently sending to Everyone and there are {str(len(guild.members))} receivers"
+        return f"You are currently sending to {self.get_role_names(guild.id, guild.roles)} and there are {str(len(self.get_receivers(guild.id, guild.roles)))} receivers "
 
-    def construct_embed(self, guild_id):
+    def construct_embed(self, guild: discord.Guild):
         """
         Constructing an embedded message from the information stored in the manager
-        :param guild_id: The id of the guild
+        :param guild: The the guild
         :return: An embedded message for the announcement
         """
-        message = self.messages[guild_id]
+        message = self.messages[guild.id]
         embed: discord.Embed = discord.Embed(title=message.title,
                                              description=message.description, colour=KoalaColours.KOALA_GREEN)
-        embed.set_thumbnail(url=message.thumbnail)
+        embed.set_author(name="announcement from " + guild.name)
+        if message.thumbnail != 'https://cdn.discordapp.com/':
+            embed.set_thumbnail(url=message.thumbnail)
         return embed
 
     @commands.group(name="announce")
@@ -144,13 +148,13 @@ class Announce(commands.Cog):
             if len(message.content) > 2000:
                 await ctx.send("The content is more than 2000 characters long, and exceeds the limit")
                 return
-            self.messages[ctx.guild.id] = AnnounceMessage(f"This announcement is from {ctx.guild.name}",
+            self.messages[ctx.guild.id] = AnnounceMessage(f"",
                                                           message.content,
                                                           ctx.guild.icon_url)
             self.roles[ctx.guild.id] = []
             await ctx.send(f"An announcement has been created for guild {ctx.guild.name}")
-            await ctx.send(embed=self.construct_embed(ctx.guild.id))
-            await ctx.send(self.receiver_msg(ctx))
+            await ctx.send(embed=self.construct_embed(ctx.guild))
+            await ctx.send(self.receiver_msg(ctx.guild))
 
     @commands.check(announce_is_enabled)
     @announce.command(name="changeTitle")
@@ -167,7 +171,7 @@ class Announce(commands.Cog):
                 await ctx.send("Okay, I'll cancel the command.")
                 return
             self.messages[ctx.guild.id].set_title(title.content)
-            await ctx.send(embed=self.construct_embed(ctx.guild.id))
+            await ctx.send(embed=self.construct_embed(ctx.guild))
         else:
             await ctx.send("There is currently no active announcement")
 
@@ -189,7 +193,7 @@ class Announce(commands.Cog):
                 await ctx.send("The content is more than 2000 characters long, and exceeds the limit")
                 return
             self.messages[ctx.guild.id].set_description(message.content)
-            await ctx.send(embed=self.construct_embed(ctx.guild.id))
+            await ctx.send(embed=self.construct_embed(ctx.guild))
         else:
             await ctx.send("There is currently no active announcement")
 
@@ -209,9 +213,10 @@ class Announce(commands.Cog):
                 return
             for new_role in message.content.split():
                 role_id = extract_id(new_role)
-                if role_id not in self.roles[ctx.guild.id] and discord.utils.get(ctx.guild.roles, id=role_id) is not None:
+                if role_id not in self.roles[ctx.guild.id] and discord.utils.get(ctx.guild.roles,
+                                                                                 id=role_id) is not None:
                     self.roles[ctx.guild.id].append(role_id)
-            await ctx.send(self.receiver_msg(ctx))
+            await ctx.send(self.receiver_msg(ctx.guild))
         else:
             await ctx.send("There is currently no active announcement")
 
@@ -233,7 +238,7 @@ class Announce(commands.Cog):
                 role_id = extract_id(new_role)
                 if role_id in self.roles[ctx.guild.id]:
                     self.roles[ctx.guild.id].remove(role_id)
-            await ctx.send(self.receiver_msg(ctx))
+            await ctx.send(self.receiver_msg(ctx.guild))
         else:
             await ctx.send("There is currently no active announcement")
 
@@ -246,8 +251,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send(embed=self.construct_embed(ctx.guild.id))
-            await ctx.send(self.receiver_msg(ctx))
+            await ctx.send(embed=self.construct_embed(ctx.guild))
+            await ctx.send(self.receiver_msg(ctx.guild))
         else:
             await ctx.send("There is currently no active announcement")
 
@@ -260,7 +265,7 @@ class Announce(commands.Cog):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            embed = self.construct_embed(ctx.guild.id)
+            embed = self.construct_embed(ctx.guild)
             if self.roles[ctx.guild.id]:
                 for receiver in self.get_receivers(ctx.guild.id, ctx.guild.roles):
                     await receiver.send(embed=embed)
@@ -376,14 +381,6 @@ class AnnounceMessage:
         :return:
         """
         self.description = message
-
-    def set_thumbnail(self, thumbnail):
-        """
-        Changing the thumbnail picture of the announcement
-        :param thumbnail: A url to the picture
-        :return:
-        """
-        self.thumbnail = thumbnail
 
 
 def setup(bot: KoalaBot) -> None:
