@@ -222,7 +222,7 @@ class Voting(commands.Cog, name="Vote"):
             return
 
         self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title)
-        await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+        await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
