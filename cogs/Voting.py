@@ -209,7 +209,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         if self.vote_manager.has_active_vote(ctx.author.id):
             guild_name = self.bot.get_guild(self.vote_manager.get_configuring_vote(ctx.author.id).guild)
-            await ctx.send(f"You already have an active vote in {guild_name}. Please send that with {KoalaBot.COMMAND_PREFIX}vote send <title> before creating a new one.")
+            await ctx.send(f"You already have an active vote in {guild_name}. Please send that with `{KoalaBot.COMMAND_PREFIX}vote send` before creating a new one.")
             return
 
         in_db = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE title=? AND author_id=?", (title, ctx.author.id))
