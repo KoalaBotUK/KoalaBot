@@ -156,9 +156,10 @@ async def test_discord_cancel_vote():
     dpytest.verify_message("Vote Test Vote has been cancelled.")
 
 # can't get any tests that involve sending embeds to work
+@pytest.mark.skip(reason="can't get any tests that involve sending embeds to work")
 @pytest.mark.asyncio
 async def test_discord_send_vote():
-    pass
+    assert False
     # config = dpytest.get_config()
     # guild = config.guilds[0]
     # role = guild.roles[0]
