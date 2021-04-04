@@ -337,7 +337,7 @@ class Voting(commands.Cog, name="Vote"):
         if (end_time - now) < 0:
             await ctx.send("You can't set a vote to end in the past")
             return
-        if (end_time - now) < 600:
+        if (end_time - now) < 599:
             await ctx.send("Please set the end time to be at least 10 minutes in the future.")
             return
         vote.set_end_time(end_time)
