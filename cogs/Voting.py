@@ -370,7 +370,7 @@ class Voting(commands.Cog, name="Vote"):
 
     @commands.check(vote_is_enabled)
     @has_current_votes()
-    @vote.command("currentVotes")
+    @vote.command("list", aliases=["currentVotes"])
     async def check_current_votes(self, ctx):
         embed = discord.Embed(title="Your current votes")
         votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE author_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
