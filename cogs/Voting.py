@@ -148,7 +148,7 @@ class Voting(commands.Cog, name="Vote"):
         self.vote_end_loop.cancel()
         self.running = False
 
-    @tasks.loop(seconds=5.0)
+    @tasks.loop(seconds=30.0)
     async def vote_end_loop(self):
         now = time.time()
         votes = self.DBManager.db_execute_select("SELECT * FROM votes WHERE end_time < ?", (now,))
