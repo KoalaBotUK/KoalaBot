@@ -26,25 +26,24 @@ from tests.utils import TestUtilsCog
 # Variables
 insights_cog: Insights.Insights = None
 utils_cog: TestUtilsCog.TestUtilsCog = None
-
+bot: commands.Bot = None
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global insights_cog
     global utils_cog
-    bot: commands.Bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     insights_cog = Insights.Insights(bot)
     utils_cog = TestUtilsCog.TestUtilsCog(bot)
     bot.add_cog(insights_cog)
     bot.add_cog(utils_cog)
-    dpytest.configure(bot)
     print("Tests starting")
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("num_guilds, num_users", [(1, 1), (1, 2), (1, 5), (2, 1), (2, 2), (5, 4), (5,10)])
 async def test_insights(num_guilds, num_users):
-    test_config = dpytest.get_config()
+    test_config = dpytest.configure(bot,num_guilds,1,num_users)
     client = test_config.client
     for i in range(num_guilds - 1):
         guild = dpytest.back.make_guild(f"Test Guild {i}")
@@ -60,7 +59,7 @@ async def test_insights(num_guilds, num_users):
 
 @pytest.mark.asyncio
 async def test_servers_no_args():
-    test_config = dpytest.get_config()
+    test_config = dpytest.configure(bot)
     client = test_config.client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "servers")
     dpytest.verify_message("Test Guild 0")
@@ -77,7 +76,7 @@ async def test_servers_no_args():
 
 @pytest.mark.asyncio
 async def test_servers_fail_args():
-    test_config = dpytest.get_config()
+    test_config = dpytest.configure(bot)
     client = test_config.client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "servers")
     dpytest.verify_message("Test Guild 0")
@@ -93,7 +92,7 @@ async def test_servers_fail_args():
 
 @pytest.mark.asyncio
 async def test_servers_with_args():
-    test_config = dpytest.get_config()
+    test_config = dpytest.configure(bot)
     client = test_config.client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "servers")
     dpytest.verify_message("Test Guild 0")
