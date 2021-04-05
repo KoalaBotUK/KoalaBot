@@ -563,50 +563,50 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened
         :return:
         """
+        if payload.guild_id is not None:
+            if not payload.member.bot:
+                rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                                                                        payload.message_id)
+                if not rfr_message:
+                    return
 
-        if not payload.member.bot:
-            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                    payload.message_id)
-            if not rfr_message:
-                return
-
-            member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
-                                                          payload.channel_id,
-                                                          payload.message_id, payload.user_id)
-            if not member_role:
-                # Remove the reaction
-                guild: discord.Guild = self.bot.get_guild(payload.guild_id)
-                channel: discord.TextChannel = guild.get_channel(payload.channel_id)
-                msg: discord.Message = await channel.fetch_message(payload.message_id)
-                await msg.clear_reaction(payload.emoji)
-            else:
-                if self.can_have_rfr_role(member_role[0]):
-                    await member_role[0].add_roles(member_role[1])
+                member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
+                                                              payload.channel_id,
+                                                              payload.message_id, payload.user_id)
+                if not member_role:
+                    # Remove the reaction
+                    guild: discord.Guild = self.bot.get_guild(payload.guild_id)
+                    channel: discord.TextChannel = guild.get_channel(payload.channel_id)
+                    msg: discord.Message = await channel.fetch_message(payload.message_id)
+                    await msg.clear_reaction(payload.emoji)
                 else:
-                    # Remove all rfr roles from member
-                    role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
-                    roles: List[discord.Role] = []
-                    for role_id in role_ids:
-                        role = discord.utils.get(member_role[0].guild.roles, id=role_id)
-                        if not role:
-                            continue
-                        roles.append(role)
-                    for role_to_remove in roles:
-                        await member_role[0].remove_roles(role_to_remove)
-                    # Remove members' reaction from all rfr messages in guild
-                    guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
-                    if not guild_rfr_messages:
-                        KoalaBot.logger.error(
-                            f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
-                            f" guild ID {payload.guild_id}")
-
+                    if self.can_have_rfr_role(member_role[0]):
+                        await member_role[0].add_roles(member_role[1])
                     else:
-                        for guild_rfr_message in guild_rfr_messages:
-                            guild: discord.Guild = member_role[0].guild
-                            channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
-                            msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
-                            for x in msg.reactions:
-                                await x.remove(payload.member)
+                        # Remove all rfr roles from member
+                        role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
+                        roles: List[discord.Role] = []
+                        for role_id in role_ids:
+                            role = discord.utils.get(member_role[0].guild.roles, id=role_id)
+                            if not role:
+                                continue
+                            roles.append(role)
+                        for role_to_remove in roles:
+                            await member_role[0].remove_roles(role_to_remove)
+                        # Remove members' reaction from all rfr messages in guild
+                        guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
+                        if not guild_rfr_messages:
+                            KoalaBot.logger.error(
+                                f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
+                                f" guild ID {payload.guild_id}")
+
+                        else:
+                            for guild_rfr_message in guild_rfr_messages:
+                                guild: discord.Guild = member_role[0].guild
+                                channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
+                                msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
+                                for x in msg.reactions:
+                                    await x.remove(payload.member)
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -680,17 +680,17 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened.
         :return:
         """
-
-        rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                payload.message_id)
-        if not rfr_message:
-            return
-        member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
-                                                      payload.channel_id,
-                                                      payload.message_id, payload.user_id)
-        if not member_role or member_role[0].bot:
-            return
-        await member_role[0].remove_roles(member_role[1])
+        if payload.guild_id is not None:
+            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                                                                    payload.message_id)
+            if not rfr_message:
+                return
+            member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
+                                                          payload.channel_id,
+                                                          payload.message_id, payload.user_id)
+            if not member_role or member_role[0].bot:
+                return
+            await member_role[0].remove_roles(member_role[1])
 
     def can_have_rfr_role(self, member: discord.Member) -> bool:
         """

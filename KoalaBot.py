@@ -99,7 +99,7 @@ def is_dm_channel(ctx):
 
 
 def is_guild_channel(ctx):
-    return isinstance(ctx.channel, discord.abc.GuildChannel)
+    return ctx.guild is not None
 
 
 def load_all_cogs():
