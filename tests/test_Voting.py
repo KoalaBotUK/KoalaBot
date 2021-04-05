@@ -79,7 +79,7 @@ async def test_discord_create_vote():
     config = dpytest.get_config()
     guild = config.guilds[0]
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
-    dpytest.verify_message(f"Vote titled `Test Vote` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+    dpytest.verify_message(f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     in_db = db_manager.db_execute_select("SELECT * FROM Votes")[0]
     assert in_db
     assert in_db[1] == guild.members[0].id
@@ -97,9 +97,9 @@ async def test_discord_create_vote_wrong():
     dpytest.verify_message("Title too long")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote 2")
     dpytest.verify_message(
-        f"Vote titled `Test Vote 2` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+        f"Vote titled `Test Vote 2` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote 3")
-    dpytest.verify_message(f"You already have an active vote in {guild.name}. Please send that with {KoalaBot.COMMAND_PREFIX}vote send <title> before creating a new one.")
+    dpytest.verify_message(f"You already have an active vote in {guild.name}. Please send that with `{KoalaBot.COMMAND_PREFIX}vote send` before creating a new one.")
 
 
 @pytest.mark.asyncio
@@ -108,7 +108,7 @@ async def test_discord_vote_add_and_remove_role():
     guild = config.guilds[0]
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
     dpytest.verify_message(
-        f"Vote titled `Test Vote` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+        f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addRole {guild.roles[0].id}")
     dpytest.verify_message(f"Vote will be sent to those with the {guild.roles[0].name} role")
     vote = cog.vote_manager.get_configuring_vote(guild.members[0].id)
@@ -124,7 +124,7 @@ async def test_discord_set_chair():
     guild = config.guilds[0]
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
     dpytest.verify_message(
-        f"Vote titled `Test Vote` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+        f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair {guild.members[0].id}")
     dpytest.verify_message(f"Set chair to {guild.members[0].name}")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair")
@@ -136,7 +136,7 @@ async def test_discord_add_remove_option():
     guild = config.guilds[0]
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
     dpytest.verify_message(
-        f"Vote titled `Test Vote` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+        f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test+test")
     dpytest.verify_message("Option test with description test added to vote")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption testtest")
@@ -151,7 +151,7 @@ async def test_discord_cancel_vote():
     guild = config.guilds[0]
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
     dpytest.verify_message(
-        f"Vote titled `Test Vote` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
+        f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote cancel Test Vote")
     dpytest.verify_message("Vote Test Vote has been cancelled.")
 
