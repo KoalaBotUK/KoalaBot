@@ -10,6 +10,8 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+import asyncio
+
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
@@ -50,12 +52,10 @@ async def test_insights(num_guilds, num_users):
 
     for i in range(len(test_config.guilds)):
         for j in range(num_users - 1):
-            await dpytest.member_join(i, client.user)
             await dpytest.member_join(i)
-
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "insights")
     dpytest.verify_message(
-        f"KoalaBot is in {len(dpytest.get_config().guilds)} servers with a member total of {2 * num_guilds * num_users}.")
+        f"KoalaBot is in {len(dpytest.get_config().guilds)} servers with a member total of {num_guilds * num_users}.")
 
 
 @pytest.mark.asyncio
