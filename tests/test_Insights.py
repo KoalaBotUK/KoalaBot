@@ -10,8 +10,6 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
-import asyncio
-
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
@@ -26,24 +24,29 @@ from tests.utils import TestUtilsCog
 # Variables
 insights_cog: Insights.Insights = None
 utils_cog: TestUtilsCog.TestUtilsCog = None
-bot: commands.Bot = None
+
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
     global insights_cog
     global utils_cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+    bot: commands.Bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     insights_cog = Insights.Insights(bot)
     utils_cog = TestUtilsCog.TestUtilsCog(bot)
     bot.add_cog(insights_cog)
     bot.add_cog(utils_cog)
+    dpytest.configure(bot)
     print("Tests starting")
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("num_guilds, num_users", [(1, 1), (1, 2), (1, 5), (2, 1), (2, 2), (5, 4), (5,10)])
 async def test_insights(num_guilds, num_users):
-    test_config = dpytest.configure(bot,num_guilds,1,num_users)
+    bot: commands.Bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+    bot.add_cog(insights_cog)
+    bot.add_cog(utils_cog)
+    dpytest.configure(bot,num_guilds,1,num_users)
+    test_config = dpytest.get_config()
     client = test_config.client
     for i in range(num_guilds - 1):
         guild = dpytest.back.make_guild(f"Test Guild {i}")
@@ -51,15 +54,17 @@ async def test_insights(num_guilds, num_users):
 
     for i in range(len(test_config.guilds)):
         for j in range(num_users - 1):
+            await dpytest.member_join(i, client.user)
             await dpytest.member_join(i)
+
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "insights")
     dpytest.verify_message(
-        f"KoalaBot is in {len(dpytest.get_config().guilds)} servers with a member total of {num_guilds * num_users}.")
+        f"KoalaBot is in {len(dpytest.get_config().guilds)} servers with a member total of {2 * num_guilds * num_users}.")
 
 
 @pytest.mark.asyncio
 async def test_servers_no_args():
-    test_config = dpytest.configure(bot)
+    test_config = dpytest.get_config()
     client = test_config.client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "servers")
     dpytest.verify_message("Test Guild 0")
@@ -76,7 +81,7 @@ async def test_servers_no_args():
 
 @pytest.mark.asyncio
 async def test_servers_fail_args():
-    test_config = dpytest.configure(bot)
+    test_config = dpytest.get_config()
     client = test_config.client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "servers")
     dpytest.verify_message("Test Guild 0")
@@ -92,7 +97,7 @@ async def test_servers_fail_args():
 
 @pytest.mark.asyncio
 async def test_servers_with_args():
-    test_config = dpytest.configure(bot)
+    test_config = dpytest.get_config()
     client = test_config.client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "servers")
     dpytest.verify_message("Test Guild 0")
