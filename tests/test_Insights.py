@@ -12,29 +12,20 @@ import random
 from typing import *
 
 # Libs
-import discord
 import discord.ext.test as dpytest
-import mock
 import pytest
 from discord.ext import commands
-from discord.ext.test import factories as dpyfactory
 
 # Own modules
 import KoalaBot
 from cogs import Insights
-from cogs.Insights import InsightsDBManager
-from tests.utils import TestUtils as utils
 from tests.utils import TestUtilsCog
-from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 
 # Variables
 insights_cog: Insights.Insights = None
 utils_cog: TestUtilsCog.TestUtilsCog = None
-DBManager = InsightsDBManager(KoalaBot.database_manager)
-DBManager.create_tables()
-
 
 def setup_function():
     """ setup any state specific to the execution of the given module."""
