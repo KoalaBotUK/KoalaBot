@@ -379,7 +379,7 @@ class Voting(commands.Cog, name="Vote"):
         votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE author_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
         body_string = ""
         for _, _, _, title, _, _, _ in votes:
-            body_string += title
+            body_string += f"{title}\n"
         embed.add_field(name="Vote Title", value=body_string, inline=False)
         await ctx.send(embed=embed)
 
