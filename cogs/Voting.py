@@ -191,6 +191,9 @@ class Voting(commands.Cog, name="Vote"):
         """
         await self.update_vote_message(payload.message_id, payload.user_id)
 
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(vote_is_enabled)
     @commands.group(name="vote")
     async def vote(self, ctx):
         """
@@ -375,7 +378,7 @@ class Voting(commands.Cog, name="Vote"):
         embed = discord.Embed(title="Your current votes")
         votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE author_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
         body_string = ""
-        for _, _, _, title, _, _ in votes:
+        for _, _, _, title, _, _, _ in votes:
             body_string += title
         embed.add_field(name="Vote Title", value=body_string, inline=False)
         await ctx.send(embed=embed)
