@@ -40,7 +40,7 @@ def setup_function():
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("num_guilds, num_users", [(1, 1), (1, 2), (1, 5), (2, 1), (2, 2), (5, 4), (5, 100)])
+@pytest.mark.parametrize("num_guilds, num_users", [(1, 1), (1, 2), (1, 5), (2, 1), (2, 2), (5, 4), (5,10)])
 async def test_insights(num_guilds, num_users):
     test_config = dpytest.get_config()
     client = test_config.client
@@ -55,7 +55,7 @@ async def test_insights(num_guilds, num_users):
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "insights")
     dpytest.verify_message(
-        f"KoalaBot is in {len(dpytest.get_config().guilds)} servers with a member total of {num_guilds * num_users}.")
+        f"KoalaBot is in {len(dpytest.get_config().guilds)} servers with a member total of {2 * num_guilds * num_users}.")
 
 
 @pytest.mark.asyncio
