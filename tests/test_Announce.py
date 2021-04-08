@@ -402,7 +402,7 @@ async def test_remove_non_existent_role():
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == [roles[0].id]
 
-@pytest.mark.skip
+
 def test_embed_consistent():
     guild: discord.Guild = dpytest.get_config().guilds[0]
     announce_cog.messages[guild.id] = Announce.AnnounceMessage(f"This announcement is from {guild.name}",
@@ -411,7 +411,17 @@ def test_embed_consistent():
     embed: discord.Embed = announce_cog.construct_embed(guild)
     assert embed.title == f"This announcement is from {guild.name}"
     assert embed.description == "testMessage"
-    assert embed.thumbnail == discord.embeds.EmptyEmbed or embed.thumbnail.url == guild.icon.url
+    assert embed.thumbnail.url == ''
+
+def test_embed_consistent_with_url():
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    announce_cog.messages[guild.id] = Announce.AnnounceMessage(f"This announcement is from {guild.name}",
+                                                               "testMessage",
+                                                               "test_url")
+    embed: discord.Embed = announce_cog.construct_embed(guild)
+    assert embed.title == f"This announcement is from {guild.name}"
+    assert embed.description == "testMessage"
+    assert embed.thumbnail.url == "test_url"
 
 
 @pytest.mark.asyncio
