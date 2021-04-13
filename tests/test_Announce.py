@@ -6,15 +6,11 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 from discord.ext import commands
-from discord.ext.test import factories as dpyfactory
 
 # Own modules
 import KoalaBot
 from cogs import Announce
-from cogs.Announce import AnnounceDBManager
-from tests.utils import TestUtils as utils
 from tests.utils import TestUtilsCog
-from utils.KoalaDBManager import KoalaDBManager
 
 # Varibales
 announce_cog: Announce.Announce = None
@@ -154,7 +150,7 @@ async def test_create_message_after_send_before_30_days():
                         mock.AsyncMock(return_value=msg_mock)):
             await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
                                   channel=channel)
-            dpytest.verify_message("You have recently sent an announcement and cannot use this function for now")
+            dpytest.verify_message("You have recently sent an announcement and cannot use this function for 30 days")
             assert not announce_cog.has_active_msg(guild.id)
 
 
@@ -387,7 +383,7 @@ async def test_remove_non_existent_role():
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
     guild.roles.append(await guild.create_role(name="testrole"))
-    assert  len(guild.roles) == 2
+    assert len(guild.roles) == 2
     roles = guild.roles
     make_message(guild)
     announce_cog.roles[guild.id] = [roles[0].id]
@@ -412,6 +408,7 @@ def test_embed_consistent():
     assert embed.title == f"This announcement is from {guild.name}"
     assert embed.description == "testMessage"
     assert embed.thumbnail.url == ''
+
 
 def test_embed_consistent_with_url():
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -530,7 +527,7 @@ async def test_announce_db_no_update_time_from_illegal_use():
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
                               channel=channel)
-        dpytest.verify_message("You have recently sent an announcement and cannot use this function for now")
+        dpytest.verify_message("You have recently sent an announcement and cannot use this function for 30 days")
         assert not announce_cog.has_active_msg(guild.id)
         assert announce_cog.announce_database_manager.get_last_use_date(guild.id) == current_time
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',

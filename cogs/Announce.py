@@ -9,6 +9,8 @@ Created by: Bill Cao
 import asyncio
 
 # Libs
+import math
+from typing import Optional, Tuple
 
 import discord
 from discord.ext import commands
@@ -18,6 +20,8 @@ import time
 
 # constants
 ANNOUNCE_SEPARATION_DAYS = 30
+SECONDS_IN_A_DAY = 86400
+TIMEOUT_TIME = 60.0
 
 import KoalaBot
 
@@ -36,6 +40,25 @@ def announce_is_enabled(ctx):
         result = False
 
     return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
+
+async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = TIMEOUT_TIME) -> Tuple[
+    Optional[discord.Message], Optional[discord.TextChannel]]:
+    """
+        Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
+        timeout of 60 seconds.
+        :param bot: Koala Bot client
+        :param ctx: Context of the original command
+        :param timeout: Time to wait before raising TimeoutError
+        :return: If a message (msg) was received, returns a tuple (msg, None). Else returns (None, ctx.channel)
+        """
+    try:
+        msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
+    except (Exception, TypeError):
+        return None, ctx.channel
+    if not msg:
+        return msg, ctx.channel
+    return msg, None
 
 
 class Announce(commands.Cog):
@@ -59,7 +82,7 @@ class Announce(commands.Cog):
         """
         if self.announce_database_manager.get_last_use_date(guild_id):
             return int(time.time()) - self.announce_database_manager.get_last_use_date(
-                guild_id) > ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60
+                guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
         return True
 
     def has_active_msg(self, guild_id):
@@ -135,15 +158,17 @@ class Announce(commands.Cog):
         :return:
         """
         if not self.not_exceeded_limit(ctx.guild.id):
-            await ctx.send("You have recently sent an announcement and cannot use this function for now")
+            remaining_days = math.ceil(ANNOUNCE_SEPARATION_DAYS-((int(time.time()) - self.announce_database_manager.get_last_use_date(
+                ctx.guild.id)) / SECONDS_IN_A_DAY))
+            await ctx.send("You have recently sent an announcement and cannot use this function for " + str(remaining_days) + " days")
             return
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("There is currently an active announcement")
         else:
             await ctx.send("Please enter a message")
-            message = await self.bot.wait_for("message", timeout=60)
+            message, channel = await wait_for_message(self.bot, ctx)
             if not message:
-                await ctx.send("Okay, I'll cancel the command.")
+                await channel.send("Okay, I'll cancel the command.")
                 return
             if len(message.content) > 2000:
                 await ctx.send("The content is more than 2000 characters long, and exceeds the limit")
@@ -166,9 +191,9 @@ class Announce(commands.Cog):
         """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the new title")
-            title = await self.bot.wait_for("message", timeout=60)
+            title, channel = await wait_for_message(self.bot, ctx)
             if not title:
-                await ctx.send("Okay, I'll cancel the command.")
+                await channel.send("Okay, I'll cancel the command.")
                 return
             self.messages[ctx.guild.id].set_title(title.content)
             await ctx.send(embed=self.construct_embed(ctx.guild))
@@ -185,9 +210,9 @@ class Announce(commands.Cog):
         """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the new message")
-            message = await self.bot.wait_for("message", timeout=60)
+            message, channel = await wait_for_message(self.bot, ctx)
             if not message:
-                await ctx.send("Okay, I'll cancel the command.")
+                await channel.send("Okay, I'll cancel the command.")
                 return
             if len(message.content) > 2000:
                 await ctx.send("The content is more than 2000 characters long, and exceeds the limit")
@@ -207,9 +232,9 @@ class Announce(commands.Cog):
         """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the roles you want to tag separated by space")
-            message = await self.bot.wait_for("message", timeout=60)
+            message, channel = await wait_for_message(self.bot, ctx)
             if not message:
-                await ctx.send("Okay, I'll cancel the command.")
+                await channel.send("Okay, I'll cancel the command.")
                 return
             for new_role in message.content.split():
                 role_id = extract_id(new_role)
@@ -230,9 +255,9 @@ class Announce(commands.Cog):
         """
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the roles you want to remove separated by space")
-            message = await self.bot.wait_for("message", timeout=60)
+            message, channel = await wait_for_message(self.bot, ctx)
             if not message:
-                await ctx.send("Okay, I'll cancel the command.")
+                await channel.send("Okay, I'll cancel the command.")
                 return
             for new_role in message.content.split():
                 role_id = extract_id(new_role)
