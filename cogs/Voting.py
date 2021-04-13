@@ -19,6 +19,8 @@ import KoalaBot
 
 # Constants
 load_dotenv()
+MIN_ID_VALUE = 999999999999999999
+MAX_ID_VALUE = 100000000000000000
 
 # Variables
 
@@ -554,16 +556,16 @@ class VoteManager:
     def generate_unique_opt_id(self):
         used_ids = self.DBManager.db_execute_select("SELECT * FROM VoteOptions")
         used_ids = [x[1] for x in used_ids]
-        return self.gen_id(len(used_ids) > (999999999999999999 - 100000000000000000))
+        return self.gen_id(len(used_ids) > (MAX_ID_VALUE - MIN_ID_VALUE))
 
     def gen_vote_id(self):
-        return self.gen_id(len(self.configuring_votes.keys()) == (999999999999999999 - 100000000000000000))
+        return self.gen_id(len(self.configuring_votes.keys()) == (MAX_ID_VALUE - ))
 
     def gen_id(self, cond):
         if cond:
             return None
         while True:
-            temp_id = randint(100000000000000000, 999999999999999999)
+            temp_id = randint(MIN_ID_VALUE, MAX_ID_VALUE)
             if temp_id not in self.configuring_votes.keys():
                 return temp_id
 
