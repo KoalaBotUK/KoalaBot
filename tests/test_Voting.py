@@ -155,27 +155,6 @@ async def test_discord_cancel_vote():
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote cancel Test Vote")
     dpytest.verify_message("Vote Test Vote has been cancelled.")
 
-# can't get any tests that involve sending embeds to work
-@pytest.mark.skip(reason="can't get any tests that involve sending embeds to work")
-@pytest.mark.asyncio
-async def test_discord_send_vote():
-    assert False
-    # config = dpytest.get_config()
-    # guild = config.guilds[0]
-    # role = guild.roles[0]
-    # member = guild.members[0]
-    # await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
-    # dpytest.verify_message(
-    #     f"Vote titled `Test Vote` created for guild {guild.name}. Use {KoalaBot.COMMAND_PREFIX}help vote to see how to configure it.")
-    # await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addRole {role.id}")
-    # dpytest.verify_message(f"Vote will be sent to those with the {role.name} role")
-    # await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test+test")
-    # dpytest.verify_message("Option test with description test added to vote")
-    # await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote addOption test2+test2")
-    # dpytest.verify_message("Option test2 with description test2 added to vote")
-    # dpytest.back.update_member(member, roles=[role])
-    # await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote send")
-    # dpytest.verify_message("Sent vote to 1 users")
 
 def test_option():
     opt = Voting.Option("test", "option", 123456789)

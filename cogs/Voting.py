@@ -554,11 +554,17 @@ class VoteManager:
     def generate_unique_opt_id(self):
         used_ids = self.DBManager.db_execute_select("SELECT * FROM VoteOptions")
         used_ids = [x[1] for x in used_ids]
-        if len(used_ids) > (999999999999999999 - 100000000000000000):
+        return self.gen_id(len(used_ids) > (999999999999999999 - 100000000000000000))
+
+    def gen_vote_id(self):
+        return self.gen_id(len(self.configuring_votes.keys()) == (999999999999999999 - 100000000000000000))
+
+    def gen_id(self, cond):
+        if cond:
             return None
         while True:
             temp_id = randint(100000000000000000, 999999999999999999)
-            if temp_id not in used_ids:
+            if temp_id not in self.configuring_votes.keys():
                 return temp_id
 
     def set_up_tables(self):
@@ -660,14 +666,6 @@ class VoteManager:
         self.DBManager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
                                          (vote.id, author_id, vote.guild, vote.title, vote.chair, vote.target_voice_channel, vote.end_time))
         return vote
-
-    def gen_vote_id(self):
-        if len(self.configuring_votes.keys()) == (999999999999999999 - 100000000000000000):
-            return None
-        while True:
-            temp_id = randint(100000000000000000, 999999999999999999)
-            if temp_id not in self.configuring_votes.keys():
-                return temp_id
 
     def cancel_sent_vote(self, v_id):
         """
