@@ -559,7 +559,7 @@ class VoteManager:
         return self.gen_id(len(used_ids) > (MAX_ID_VALUE - MIN_ID_VALUE))
 
     def gen_vote_id(self):
-        return self.gen_id(len(self.configuring_votes.keys()) == (MAX_ID_VALUE - ))
+        return self.gen_id(len(self.configuring_votes.keys()) == (MAX_ID_VALUE - MIN_ID_VALUE))
 
     def gen_id(self, cond):
         if cond:
