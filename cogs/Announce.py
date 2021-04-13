@@ -22,6 +22,7 @@ import time
 ANNOUNCE_SEPARATION_DAYS = 30
 SECONDS_IN_A_DAY = 86400
 TIMEOUT_TIME = 60.0
+MAX_MESSAGE_LENGTH = 2000
 
 import KoalaBot
 
@@ -170,7 +171,7 @@ class Announce(commands.Cog):
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
                 return
-            if len(message.content) > 2000:
+            if len(message.content) > MAX_MESSAGE_LENGTH:
                 await ctx.send("The content is more than 2000 characters long, and exceeds the limit")
                 return
             self.messages[ctx.guild.id] = AnnounceMessage(f"",
@@ -214,7 +215,7 @@ class Announce(commands.Cog):
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
                 return
-            if len(message.content) > 2000:
+            if len(message.content) > MAX_MESSAGE_LENGTH:
                 await ctx.send("The content is more than 2000 characters long, and exceeds the limit")
                 return
             self.messages[ctx.guild.id].set_description(message.content)
