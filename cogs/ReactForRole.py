@@ -250,6 +250,12 @@ class ReactForRole(commands.Cog):
                 await msg.edit(embed=embed)
                 await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image. This will error if you "
                                "delete the message you sent with the image, so make sure you don't.")
+        elif isinstance(image, str) and (image.startswith("https://cdn") or image.startswith("https://images-ext-1.discordapp.net/external/") or image.startswith("https://media.discordapp.net/attachments/")):
+            # Should be a CDN from somewhere or discord external image server, just try and handle it.
+            # Or it's a link to an image attachment
+            embed.set_thumbnail(url=image)
+            await msg.edit(embed=embed)
+            await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image.")
         else:
             raise commands.BadArgument("Couldn't get an image from the message you sent.")
 
