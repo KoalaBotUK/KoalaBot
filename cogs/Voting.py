@@ -8,6 +8,8 @@ Commented using reStructuredText (reST)
 from dotenv import load_dotenv
 from random import randint
 import time
+import logging
+logging.basicConfig(filename='Vote.log')
 
 # Libs
 import discord
@@ -173,7 +175,7 @@ class Voting(commands.Cog, name="Vote"):
                         await user.send(f"Your vote {title} has closed")
                         await user.send(embed=embed)
                 except Exception as e:
-                    print(e)
+                    logging.error(f"error in vote loop: {e}")
         self.DBManager.db_execute_commit("DELETE FROM votes WHERE end_time < ?", (now,))
 
     @vote_end_loop.before_loop
