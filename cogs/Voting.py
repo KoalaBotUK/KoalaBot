@@ -113,13 +113,13 @@ async def get_results(bot, vote):
         user = bot.get_user(u_id)
         msg = await user.fetch_message(msg_id)
         for reaction in msg.reactions:
-            if reaction.count > 1:
-                opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
-                if opt in results.keys():
-                    results[opt] += 1
-                else:
-                    results[opt] = 1
-                break
+            opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
+            if opt in results.keys():
+                results[opt] += 1
+            else:
+                results[opt] = 0
+            break
+
     return results
 
 
