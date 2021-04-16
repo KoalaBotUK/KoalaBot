@@ -1186,7 +1186,7 @@ class ReactForRoleDBManager:
         :return: role ID of the emoji-role combo
         """
         rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
-            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = \"?\";",
+            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ?;",
             args=[emoji_role_id, emoji_raw])
         if not rows:
             return
