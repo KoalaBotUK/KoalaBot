@@ -23,10 +23,10 @@ from discord.ext.test import factories as dpyfactory
 import KoalaBot
 from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
-from utils.KoalaDBManager import KoalaDBManager
-from utils import KoalaColours
 from tests.utils import TestUtils as testutils
 from tests.utils import TestUtilsCog
+from utils import KoalaColours
+from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 
@@ -72,7 +72,7 @@ def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id
 
 def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, role_id=None) -> List[
     Tuple[int, str, int]]:
-    sql_select_str = "SELECT * FROM RFRMessageEmojiRoles WHERE "
+    sql_select_str = "SELECT emoji_role_id, emoji_raw, role_id FROM RFRMessageEmojiRoles WHERE "
     if emoji_role_id is not None:
         sql_select_str += f"emoji_role_id = {emoji_role_id} AND "
     if emoji_raw is not None:
@@ -194,7 +194,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     expected_full_list.append((1, fake_emoji_1, fake_role_id_1))
     DBManager.add_rfr_message_emoji_role(
         guild_rfr_message[3], fake_emoji_1, fake_role_id_1)
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
+    assert independent_get_rfr_message_emoji_role() == expected_full_list, DBManager.get_rfr_message_emoji_roles(1)
     assert independent_get_rfr_message_emoji_role(1) == expected_full_list
     assert independent_get_rfr_message_emoji_role(guild_rfr_message[3], fake_emoji_1,
                                                   fake_role_id_1) == [DBManager.get_rfr_reaction_role(
@@ -478,6 +478,7 @@ async def test_prompt_for_input_attachment():
         assert isinstance(result, discord.Attachment)
         assert result.url == attach.url
 
+
 @pytest.mark.asyncio
 async def test_overwrite_channel_add_reaction_perms():
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -708,7 +709,7 @@ async def test_rfr_edit_title():
 
 
 @pytest.mark.asyncio
-async def test_rfr_edit_thumbnail():
+async def test_rfr_edit_thumbnail_atttach():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -740,6 +741,35 @@ async def test_rfr_edit_thumbnail():
                 with pytest.raises(commands.BadArgument):
                     await dpytest.message("k!rfr edit image")
                     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("image_url", [
+    "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg",
+    "https://images-ext-1.discordapp.net/external/to2H6kvblcjDUm5Smwx4rSqwCPTP-UDFdWp1ToEXJQM/https/cdn.weeb.sh/images/Hk9GpT_Pb.png?width=864&height=660",
+    "https://cdn.weeb.sh/images/Hk9GpT_Pb.png",
+    "https://cdn.discordapp.com/attachments/611574654502699010/828026462552457266/unknown.png"])
+async def test_rfr_edit_thumbnail_links(image_url):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=image_url):
+                await dpytest.message("k!rfr edit image")
+                assert embed.thumbnail.url == image_url
+                embed.set_thumbnail(
+                    url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+                assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
 
 @pytest.mark.skip("Unsupported API Calls")
