@@ -718,7 +718,7 @@ async def test_rfr_edit_thumbnail_atttach():
         url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
     message: discord.Message = await dpytest.message("rfr")
     attach: discord.Attachment = discord.Attachment(state=dpytest.back.get_state(),
-                                                    data=dpytest.back.facts.make_attachment_dict("test.jpg", 15112122,
+                                                    data=dpytest.back.facts.make_attachment_dict("test.jpg", -1,
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  height=1000,
@@ -736,11 +736,29 @@ async def test_rfr_edit_thumbnail_atttach():
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
             embed.set_thumbnail(
                 url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
-            assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
-            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=bad_attach):
-                with pytest.raises(commands.BadArgument):
-                    await dpytest.message("k!rfr edit image")
-                    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+
+@pytest.mark.parametrize("attach", ["", "1", "not an attachment", "http://www.google.com", "why"])
+@pytest.mark.asyncio
+async def test_rfr_edit_thumbnail_bad_attach(attach):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
+                with pytest.raises(discord.ext.commands.BadArgument):
+                    await dpytest.message("k!rfr edit thumbnail")
+                    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
 
 
 @pytest.mark.asyncio
@@ -767,9 +785,6 @@ async def test_rfr_edit_thumbnail_links(image_url):
             with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=image_url):
                 await dpytest.message("k!rfr edit image")
                 assert embed.thumbnail.url == image_url
-                embed.set_thumbnail(
-                    url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
-                assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
 
 @pytest.mark.skip("Unsupported API Calls")
