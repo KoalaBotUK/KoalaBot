@@ -1074,7 +1074,7 @@ class ReactForRoleDBManager:
                 args=[emoji_role_id, role_id])
         else:
             self.database_manager.db_execute_commit(
-                "DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = \"?\";",
+                "DELETE FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ?;",
                 args=[emoji_role_id, emoji_raw])
 
     def remove_rfr_message_emoji_roles(self, emoji_role_id: int):
