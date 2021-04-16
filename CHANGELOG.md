@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+
+## [0.3.0] - 17-03-2021
 ### Voting
 ##### Added
 - `vote create <title>` Start the vote creation process
@@ -179,6 +181,7 @@ A lot of these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.3.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
 [0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7
