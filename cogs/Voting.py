@@ -121,7 +121,7 @@ async def get_results(bot, vote):
                 if opt in results.keys():
                     results[opt] += 1
                 else:
-                    results[opt] = 0
+                    results[opt] = 1
                 break
     return results
 
