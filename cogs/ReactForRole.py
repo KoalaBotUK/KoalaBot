@@ -1172,7 +1172,7 @@ class ReactForRoleDBManager:
         :return: Unique row corresponding to a specific emoji-role combo
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = \"?\" AND role_id = ?;",
+            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ? AND role_id = ?;",
             args=[emoji_role_id, emoji_raw, role_id])
         if not rows:
             return
