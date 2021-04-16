@@ -83,6 +83,9 @@ async def make_result_embed(vote, results):
     :return: discord.Embed object to send
     """
     embed = discord.Embed(title=f"{vote.title} Results:")
+    for option in vote.options:
+        if option not in results.keys():
+            results[option] = 0
     for opt, count in results.items():
         embed.add_field(name=opt.head, value=f"{count} votes", inline=False)
     if not results:
@@ -113,13 +116,13 @@ async def get_results(bot, vote):
         user = bot.get_user(u_id)
         msg = await user.fetch_message(msg_id)
         for reaction in msg.reactions:
-            opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
-            if opt in results.keys():
-                results[opt] += 1
-            else:
-                results[opt] = 0
-            break
-
+            if reaction.count > 1:
+                opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
+                if opt in results.keys():
+                    results[opt] += 1
+                else:
+                    results[opt] = 0
+                break
     return results
 
 
