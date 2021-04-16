@@ -332,7 +332,7 @@ class Voting(commands.Cog, name="Vote"):
     @vote.command(name="setEndTime")
     async def set_end_time(self, ctx, *, time_string):
         """
-        Sets a specific time for the vote to end.
+        Sets a specific time for the vote to end. Results will be sent to the chair if you use this.
         If the vote has not been sent by the end time it will close automatically once it is sent.
         :param time_string: string representing a time e.g. "2021-03-22 12:56" or "tomorrow at 10am" or "in 5 days and 15 minutes"
         :return:
