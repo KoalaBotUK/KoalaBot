@@ -59,6 +59,8 @@ class ReactForRole(commands.Cog):
         self.rfr_database_manager.create_tables()
 
     @commands.check(KoalaBot.is_guild_channel)
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(rfr_is_enabled)
     @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
         """
