@@ -10,8 +10,10 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import re
+from io import BytesIO
 from typing import *
 
+import aiohttp
 import discord
 import emoji
 from discord.ext import commands
@@ -26,6 +28,7 @@ from utils import KoalaDBManager, KoalaColours
 UNICODE_DISCORD_EMOJI_REGEXP: re.Pattern = re.compile("^:(\w+):$")
 CUSTOM_EMOJI_REGEXP: re.Pattern = re.compile("^<a?:(\w+):(\d+)>$")
 UNICODE_EMOJI_REGEXP: re.Pattern = re.compile(emoji.get_emoji_regexp())
+IMAGE_FORMATS = ("image/png", "image/jpeg", "image/gif")
 
 
 def rfr_is_enabled(ctx):
@@ -64,6 +67,53 @@ class ReactForRole(commands.Cog):
         :return:
         """
         return
+
+    @staticmethod
+    async def get_image_from_url(ctx: discord.ext.commands.Context, url: str) -> str:
+        """
+        Gets a workable image URL that was sent/handled without a file attachment in disc, but as a raw URL in msg content. Works by sending the image in the same context, then getting that attachment
+        :param ctx: Context of the original message
+        :param url: Original raw URL
+        :return: URL of attachment to use in a method call
+        """
+
+        async def file_type_from_hdr(resp: aiohttp.ClientResponse):
+            """
+            Gets a file extension based only on the Content-Type MIME type header of the HTTP GET request sent.
+            :param resp: Original HTTP response
+            :return: file ext or empty string if not compatible as discord image
+            """
+            content_type: str = resp.content_type
+            if content_type == 'image/png':
+                return "png"
+            elif content_type == 'image/jpeg':
+                return "jpg"
+            elif content_type == 'image/gif':
+                return "gif"
+            else:
+                return ""
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status != 200:
+                    KoalaBot.logger.error(
+                        "RFR: HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
+                    raise Exception("HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
+                image_bytes = await response.read()
+                data = BytesIO(image_bytes)
+                ftype: str = await file_type_from_hdr(response)
+                if len(ftype) < 1:
+                    KoalaBot.logger.error(
+                        "RFR: Couldn't verify image file type from " + url + " due to missing/different Content-Type header")
+                    raise commands.BadArgument("Couldn't get an image from the message you sent.")
+                msg: discord.Message = await ctx.send(file=discord.File(data, f"thumbnail.{ftype}"))
+                try:
+                    img = msg.attachments[0].url
+                    await msg.delete()
+                    return img
+                except Exception as e:
+                    KoalaBot.logger.error("RFR " + str(e))
+                    raise e
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -250,10 +300,10 @@ class ReactForRole(commands.Cog):
                 await msg.edit(embed=embed)
                 await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image. This will error if you "
                                "delete the message you sent with the image, so make sure you don't.")
-        elif isinstance(image, str) and (image.startswith("https://cdn") or image.startswith("https://images-ext-1.discordapp.net/external/") or image.startswith("https://media.discordapp.net/attachments/")):
-            # Should be a CDN from somewhere or discord external image server, just try and handle it.
-            # Or it's a link to an image attachment
-            embed.set_thumbnail(url=image)
+        elif isinstance(image, str):
+            # no attachment in message, just a raw URL in content
+            img_url = await self.get_image_from_url(ctx, image)
+            embed.set_thumbnail(url=img_url)
             await msg.edit(embed=embed)
             await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image.")
         else:

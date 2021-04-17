@@ -738,7 +738,8 @@ async def test_rfr_edit_thumbnail_atttach():
                 url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
 
 
-@pytest.mark.parametrize("attach", ["", "1", "not an attachment", "http://www.google.com", "why"])
+@pytest.mark.parametrize("attach", ["", "1", "not an attachment", "http://www.google.com", "https://www.google.com",
+                                    "https://cdn.discordapp.com/attachments/734739036564095026/832375039650299954/9-24_EUW1-4321454326_01.webm"])
 @pytest.mark.asyncio
 async def test_rfr_edit_thumbnail_bad_attach(attach):
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -756,9 +757,9 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
             with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
-                with pytest.raises(discord.ext.commands.BadArgument):
+                with pytest.raises(Exception):
                     await dpytest.message("k!rfr edit thumbnail")
-                    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
+                    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
 
 @pytest.mark.asyncio
@@ -783,8 +784,9 @@ async def test_rfr_edit_thumbnail_links(image_url):
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
             with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=image_url):
+                assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
                 await dpytest.message("k!rfr edit image")
-                assert embed.thumbnail.url == image_url
+                assert embed.thumbnail.url != "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
 
 @pytest.mark.skip("Unsupported API Calls")
