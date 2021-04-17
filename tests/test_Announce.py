@@ -15,6 +15,7 @@ from tests.utils import TestUtilsCog
 # Varibales
 announce_cog: Announce.Announce = None
 utils_cog: TestUtilsCog.TestUtilsCog = None
+KoalaBot.is_dpytest = True
 
 
 def setup_function():

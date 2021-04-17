@@ -14,7 +14,7 @@ from typing import Optional, Tuple
 
 import discord
 from discord.ext import commands
-from utils.KoalaUtils import extract_id
+from utils.KoalaUtils import extract_id, wait_for_message
 from utils import KoalaColours
 import time
 
@@ -43,35 +43,15 @@ def announce_is_enabled(ctx):
     return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 
-async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = TIMEOUT_TIME) -> Tuple[
-    Optional[discord.Message], Optional[discord.TextChannel]]:
-    """
-        Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
-        timeout of 60 seconds.
-        :param bot: Koala Bot client
-        :param ctx: Context of the original command
-        :param timeout: Time to wait before raising TimeoutError
-        :return: If a message (msg) was received, returns a tuple (msg, None). Else returns (None, ctx.channel)
-        """
-    try:
-        msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
-    except (Exception, TypeError):
-        return None, ctx.channel
-    if not msg:
-        return msg, ctx.channel
-    return msg, None
-
-
 class Announce(commands.Cog):
     """
-        A discord.py cog to allow announcements to certain roles.
+        Send DM announcements to certain roles and people.
     """
 
     def __init__(self, bot):
         self.bot = bot
         self.messages = {}
         self.roles = {}
-        KoalaBot.database_manager.create_base_tables()
         KoalaBot.database_manager.insert_extension("Announce", 0, True, True)
         self.announce_database_manager = AnnounceDBManager(KoalaBot.database_manager)
         self.announce_database_manager.create_tables()
@@ -137,7 +117,7 @@ class Announce(commands.Cog):
         message = self.messages[guild.id]
         embed: discord.Embed = discord.Embed(title=message.title,
                                              description=message.description, colour=KoalaColours.KOALA_GREEN)
-        embed.set_author(name="announcement from " + guild.name)
+        embed.set_author(name="Announcement from " + guild.name)
         if message.thumbnail != 'https://cdn.discordapp.com/':
             embed.set_thumbnail(url=message.thumbnail)
         return embed
@@ -154,19 +134,22 @@ class Announce(commands.Cog):
     @announce.command(name="create")
     async def create(self, ctx):
         """
-        This command creates a new message that will be available for sending
+        Create a new message that will be available for sending
         :param ctx: The context of the bot
         :return:
         """
         if not self.not_exceeded_limit(ctx.guild.id):
-            remaining_days = math.ceil(ANNOUNCE_SEPARATION_DAYS-((int(time.time()) - self.announce_database_manager.get_last_use_date(
-                ctx.guild.id)) / SECONDS_IN_A_DAY))
-            await ctx.send("You have recently sent an announcement and cannot use this function for " + str(remaining_days) + " days")
+            remaining_days = math.ceil(
+                ANNOUNCE_SEPARATION_DAYS - ((int(time.time()) - self.announce_database_manager.get_last_use_date(
+                    ctx.guild.id)) / SECONDS_IN_A_DAY))
+            await ctx.send("You have recently sent an announcement and cannot use this function for " + str(
+                remaining_days) + " days")
             return
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("There is currently an active announcement")
+            await ctx.send("There is currently an active announcement being created, you can use 'k!announce cancel' "
+                           "or 'k!announce send' to complete it")
         else:
-            await ctx.send("Please enter a message")
+            await ctx.send("Please enter a message, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -186,12 +169,12 @@ class Announce(commands.Cog):
     @announce.command(name="changeTitle")
     async def change_title(self, ctx):
         """
-        This commands changes the title of the embedded message
+        Change the title of the embedded message
         :param ctx: The context of the bot
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the new title")
+            await ctx.send("Please enter the new title, I'll wait for 60 seconds, no rush.")
             title, channel = await wait_for_message(self.bot, ctx)
             if not title:
                 await channel.send("Okay, I'll cancel the command.")
@@ -205,12 +188,12 @@ class Announce(commands.Cog):
     @announce.command(name="changeContent")
     async def change_content(self, ctx):
         """
-        This commands changes the content of the embedded message
+        Change the content of the embedded message
         :param ctx: The context of the bot
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the new message")
+            await ctx.send("Please enter the new message, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -227,12 +210,12 @@ class Announce(commands.Cog):
     @announce.command(name="addRole", aliases=["add"])
     async def add_role(self, ctx):
         """
-        This command adds a tagged role from the tagged list
+        Add a tagged role from the tagged list
         :param ctx: The context of the bot
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the roles you want to tag separated by space")
+            await ctx.send("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -250,12 +233,12 @@ class Announce(commands.Cog):
     @announce.command(name="removeRole", aliases=["remove"])
     async def remove_role(self, ctx):
         """
-        This command removes a tagged role from the tagged list
+        Remove a tagged role from the tagged list
         :param ctx: The context of the bot
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the roles you want to remove separated by space")
+            await ctx.send("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -272,7 +255,7 @@ class Announce(commands.Cog):
     @announce.command(name="preview")
     async def preview(self, ctx):
         """
-        This command posts a constructed embedded message to the channel where the command is invoked
+        Post a constructed embedded message to the channel where the command is invoked
         :param ctx: The context of the bot
         :return:
         """
@@ -286,7 +269,7 @@ class Announce(commands.Cog):
     @announce.command(name="send")
     async def send(self, ctx):
         """
-        This command sends a pending message
+        Send a pending announcement
         :param ctx: The context of the bot
         :return:
         """
@@ -309,7 +292,7 @@ class Announce(commands.Cog):
     @announce.command(name="cancel")
     async def cancel(self, ctx):
         """
-        This command cancels a pending message
+        Cancel a pending announcement
         :param ctx: The context of the bot
         :return:
         """
