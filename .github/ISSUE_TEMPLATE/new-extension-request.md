@@ -2,7 +2,7 @@
 name: New Extension Request
 about: Suggest an idea for this project
 title: ''
-labels: koala extension suggestion
+labels: new koala extension
 assignees: ''
 
 ---
