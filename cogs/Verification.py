@@ -10,7 +10,9 @@ Commented using reStructuredText (reST)
 import random
 import string
 import smtplib
-from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 import os
 
@@ -123,14 +125,18 @@ class Verification(commands.Cog, name="Verify"):
         username = GMAIL_EMAIL
         password = GMAIL_PASSWORD
 
-        msg = EmailMessage()
-        msg.set_content(f"Please send the bot the command:\n\n{KoalaBot.COMMAND_PREFIX}confirm {token}")
+        html = open("utils/emailtemplate.html").read()
+        soup = BeautifulSoup(html, features="html.parser")
+        soup.find(id="confirmbuttonbody").string = f"{KoalaBot.COMMAND_PREFIX}confirm {token}"
+
+        msg = MIMEMultipart('alternative')
+        msg.attach(MIMEText(str(soup), 'html'))
         msg['Subject'] = "Koalabot Verification"
         msg['From'] = username
         msg['To'] = email
 
         email_server.login(username, password)
-        email_server.send_message(msg)
+        email_server.sendmail(username, [email], msg.as_string())
         email_server.quit()
 
     @commands.Cog.listener()
