@@ -236,7 +236,18 @@ This email is stored so you don't need to verify it multiple times across server
         in_blacklist = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE u_id=?",
                                                         (ctx.author.id,))
         if already_verified and not in_blacklist:
-            raise self.VerifyError("That email is already verified")
+            if already_verified[0][0] == ctx.author.id:
+                await ctx.send("This email is already assigned to your account. Would you like to re-verify? (y/n)")
+            else:
+                await ctx.send("This email is already assigned to a different account. Would you like to transfer it to this one? (y/n)")
+
+            def check(m):
+                return m.channel == ctx.channel and m.author == ctx.author
+
+            msg = await self.bot.wait_for('message', check=check)
+            if msg.content.lower() == "n" or msg.content.lower() == "no":
+                await ctx.send("The email will remain registered to the old account.")
+                return
 
         verification_code = ''.join(random.choice(string.ascii_letters) for _ in range(8))
         self.DBManager.db_execute_commit("INSERT INTO non_verified_emails VALUES (?, ?, ?)",
@@ -272,18 +283,30 @@ This email is stored so you don't need to verify it multiple times across server
         :param token: the token emailed to you to verify with
         :return:
         """
-        entry = self.DBManager.db_execute_select("SELECT * FROM non_verified_emails WHERE token=?",
-                                                 (token,))
+        entry = self.DBManager.db_execute_select("SELECT * FROM non_verified_emails WHERE token=? and u_id=?",
+                                                 (token, ctx.author.id))
         if not entry:
             raise self.InvalidArgumentError("That is not a valid token")
 
-        already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
-                                                            (ctx.author.id, entry[0][1]))
-        if not already_verified:
+        email_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE email=?",
+                                                          (entry[0][1],))
+
+        if email_verified:
+            old_id = email_verified[0][0]
+            email = email_verified[0][1]
+
+            if email_verified[0][0] != ctx.author.id:
+                self.DBManager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=? and email=?",
+                                                 (old_id, email))
+                await self.remove_roles_for_user(old_id, email)
+                self.DBManager.db_execute_commit("INSERT INTO verified_emails VALUES (?, ?)",
+                                                 (ctx.author.id, email))
+        else:
             self.DBManager.db_execute_commit("INSERT INTO verified_emails VALUES (?, ?)",
-                                             (entry[0][0], entry[0][1]))
-        self.DBManager.db_execute_commit("DELETE FROM non_verified_emails WHERE token=?",
-                                         (token,))
+                                             (ctx.author.id, entry[0][1]))
+
+        self.DBManager.db_execute_commit("DELETE FROM non_verified_emails WHERE token=? and u_id=?",
+                                         (token, ctx.author.id))
         potential_roles = self.DBManager.db_execute_select("SELECT r_id FROM roles WHERE ? LIKE ('%' || email_suffix)",
                                                            (entry[0][1],))
         if potential_roles:
