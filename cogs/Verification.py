@@ -171,6 +171,8 @@ This email is stored so you don't need to verify it multiple times across server
         if not role or not suffix:
             raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
+        suffix = suffix.lower()
+
         try:
             role_id = int(role[3:-1])
         except ValueError:
@@ -219,7 +221,6 @@ This email is stored so you don't need to verify it multiple times across server
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
-
     @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email):
@@ -229,6 +230,7 @@ This email is stored so you don't need to verify it multiple times across server
         :param email: the email you want to verify
         :return:
         """
+        email = email.lower()
         already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE email=?",
                                                             (email,))
         in_blacklist = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE u_id=?",
