@@ -318,10 +318,13 @@ This email is stored so you don't need to verify it multiple times across server
         role_dict = {}
         for role_id, suffix in roles:
             role = discord.utils.get(ctx.guild.roles, id=role_id)
-            if suffix in role_dict:
-                role_dict[suffix].append("@" + role.name)
-            else:
-                role_dict[suffix] = ["@" + role.name]
+            try:
+                if suffix in role_dict:
+                    role_dict[suffix].append("@" + role.name)
+                else:
+                    role_dict[suffix] = ["@" + role.name]
+            except AttributeError as e:
+                self.DBManager.db_execute_commit("DELETE FROM roles WHERE r_id=?", (role_id,))
 
         for suffix, roles in role_dict.items():
             embed.add_field(name=suffix, value='\n'.join(roles))
@@ -402,9 +405,9 @@ This email is stored so you don't need to verify it multiple times across server
             try:
                 guild = self.bot.get_guild(g_id)
                 role = discord.utils.get(guild.roles, id=r_id)
-                member = guild.get_member(user_id[0])
+                member = guild.get_member(user_id)
                 if not member:
-                    member = await guild.fetch_member(user_id[0])
+                    member = await guild.fetch_member(user_id)
                 await member.remove_roles(role)
             except AttributeError as e:
                 # bot not in guild
