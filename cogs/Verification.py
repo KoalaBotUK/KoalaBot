@@ -97,10 +97,18 @@ class Verification(commands.Cog, name="Verify"):
         );
         """
 
+        blacklist_table = """
+        CREATE TABLE IF NOT EXISTS blacklist (
+        u_id integer NOT NULL,
+        r_id integer NOT NULL,
+        email text NOT NULL
+        )"""
+
         self.DBManager.db_execute_commit(verified_table)
         self.DBManager.db_execute_commit(non_verified_table)
         self.DBManager.db_execute_commit(role_table)
         self.DBManager.db_execute_commit(re_verify_table)
+        self.DBManager.db_execute_commit(blacklist_table)
 
     @staticmethod
     def send_email(email, token):
@@ -220,6 +228,25 @@ This email is stored so you don't need to verify it multiple times across server
         self.DBManager.db_execute_commit("DELETE FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.command(name="verifyBlacklist")
+    @commands.check(verify_is_enabled)
+    async def blacklist(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
+        role_valid = discord.utils.get(ctx.guild.roles, id=role.id)
+        if not role_valid:
+            raise self.InvalidArgumentError("Please mention a role in this guild")
+        already_blacklisted = self.DBManager.db_execute_select("SELECT * FROM blacklist WHERE u_id=? and r_id=? and email=?",
+                                                               (user.id, role.id, suffix))
+        if not already_blacklisted:
+            self.DBManager.db_execute_commit("INSERT INTO blacklist VALUES (?, ?, ?)",
+                                             (user.id, role.id, suffix))
+            await ctx.send(f"{user} will no longer receive {role} upon verifying with this email")
+        else:
+            self.DBManager.db_execute_commit("DELETE FROM blacklist WHERE u_id=? and r_id=? and email=?",
+                                             (user.id, role.id, suffix))
+            await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email")
+            await self.assign_role_to_guild(ctx.guild, role, suffix)
 
     @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
@@ -406,9 +433,11 @@ This email is stored so you don't need to verify it multiple times across server
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
                                                    (email,))
         for g_id, r_id, suffix in results:
-            blacklisted = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
+            should_re_verify = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
                                                            (r_id, user_id))
-            if blacklisted:
+            blacklisted = self.DBManager.db_execute_select("SELECT * FROM blacklist WHERE u_id=? and r_id=? and ? like ('%' || email)",
+                                                           (user_id, r_id, email))
+            if blacklisted or should_re_verify:
                 continue
             try:
                 guild = self.bot.get_guild(g_id)
@@ -422,6 +451,9 @@ This email is stored so you don't need to verify it multiple times across server
                 print(e)
             except discord.errors.NotFound:
                 print(f"user with id {user_id} not found")
+            except discord.errors.Forbidden:
+                raise self.VerifyError(f"I do not have permission to assign a role. Make sure I have permission to give roles and that is lower than the KoalaBot role in the hierarchy, then try again.")
+
 
     async def remove_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
@@ -438,27 +470,35 @@ This email is stored so you don't need to verify it multiple times across server
                 # bot not in guild
                 print(e)
             except discord.errors.NotFound:
-                print(f"user with id {user_id} not found in {guild}")
+                print(f"user with id {user_id} not found in guild with id {g_id}")
+            except discord.errors.Forbidden:
+                raise self.VerifyError(f"I do not have permission to remove a role. Make sure I have permission to give roles and that role is lower than the KoalaBot role in the hierarchy, then try again.")
+
 
     async def assign_role_to_guild(self, guild, role, suffix):
-        results = self.DBManager.db_execute_select("SELECT u_id FROM verified_emails WHERE email LIKE ('%' || ?)",
+        results = self.DBManager.db_execute_select("SELECT u_id, email FROM verified_emails WHERE email LIKE ('%' || ?)",
                                                    (suffix,))
-        for user_id in results:
+        for user_id, email in results:
             try:
-                blacklisted = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
-                                                               (role.id, user_id[0]))
-                if blacklisted:
+                should_re_verify = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
+                                                               (role.id, user_id))
+                blacklisted = self.DBManager.db_execute_select("SELECT * FROM blacklist WHERE u_id=? and r_id=? and ? like ('%' || email)",
+                                                                (user_id, role.id, email))
+                if blacklisted or should_re_verify:
                     continue
-                member = guild.get_member(user_id[0])
+                member = guild.get_member(user_id)
                 if not member:
-                    member = await guild.fetch_member(user_id[0])
+                    member = await guild.fetch_member(user_id)
                 await member.add_roles(role)
             except AttributeError as e:
                 # bot not in guild
                 print(e)
             except discord.errors.NotFound:
-                print(f"user with id {user_id} not found in {guild}")
-
+                pass
+                # user not in guild
+                # print(f"user with id {user_id} not found in {guild}")
+            except discord.errors.Forbidden:
+                raise self.VerifyError(f"I do not have permission to assign {role}. Make sure I have permission to give roles and {role} is lower than the KoalaBot role in the hierarchy, then try again.")
 
 
 def setup(bot: KoalaBot) -> None:
