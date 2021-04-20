@@ -2,7 +2,7 @@ aiohttp==3.7.4.post0
 async-timeout==3.0.1
 atomicwrites==1.4.0
 attrs==20.1.0
-certifi==2020.6.20
+certifi==2020.12.5
 chardet==4.0.0
 colorama==0.4.3
 discord.py==1.4.1
@@ -12,9 +12,9 @@ iniconfig==1.0.1
 mock==4.0.2
 more-itertools==8.4.0
 multidict==4.7.6
-packaging==20.4
+packaging==20.9
 pluggy==0.13.1
-py==1.9.0
+py==1.10.0
 pyparsing==2.4.7
 pytest==6.2.3
 pytest-asyncio==0.14.0
