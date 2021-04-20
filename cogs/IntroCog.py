@@ -19,7 +19,6 @@ from dotenv import load_dotenv
 # Own modules
 import KoalaBot
 from utils import KoalaDBManager
-from utils.KoalaUtils import wait_for_message
 
 # Constants
 
@@ -30,6 +29,15 @@ the following link: http://legal.koalabot.uk/"""
 DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
 # Variables
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+
+
+def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
+    try:
+        confirmation = bot.wait_for('message', timeout=60.0, check=lambda message: message.author == ctx.author)
+        return confirmation
+    except Exception:
+        confirmation = None
+    return confirmation, ctx.channel
 
 
 async def ask_for_confirmation(confirmation: discord.Message, channel: discord.TextChannel):

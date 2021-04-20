@@ -19,7 +19,6 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from utils import KoalaDBManager, KoalaColours
-from utils.KoalaUtils import wait_for_message
 
 # Libs
 
@@ -695,6 +694,25 @@ class ReactForRole(commands.Cog):
         overwrite.update(add_reactions=True)
         for bot_member in bot_members:
             await channel.set_permissions(bot_member, overwrite=overwrite)
+
+    @staticmethod
+    async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0) -> Tuple[
+        Optional[discord.Message], Optional[discord.TextChannel]]:
+        """
+        Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
+        timeout of 60 seconds.
+        :param bot: Koala Bot client
+        :param ctx: Context of the original command
+        :param timeout: Time to wait before raising TimeoutError
+        :return: If a message (msg) was received, returns a tuple (msg, None). Else returns (None, ctx.channel)
+        """
+        try:
+            msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
+        except (Exception, TypeError):
+            return None, ctx.channel
+        if not msg:
+            return msg, ctx.channel
+        return msg, None
 
     async def is_user_alive(self, ctx: commands.Context):
         """
