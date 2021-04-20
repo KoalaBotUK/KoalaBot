@@ -14,7 +14,7 @@ more-itertools==8.4.0
 multidict==4.7.6
 packaging==20.9
 pluggy==0.13.1
-py==1.9.0
+py==1.10.0
 pyparsing==2.4.7
 pytest==6.2.3
 pytest-asyncio==0.14.0
