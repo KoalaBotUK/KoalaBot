@@ -5,7 +5,7 @@ attrs==20.3.0
 certifi==2020.12.5
 chardet==4.0.0
 colorama==0.4.4
-discord.py==1.4.1
+discord.py==1.7.1
 dpytest==0.0.20
 idna==2.10
 iniconfig==1.1.1
