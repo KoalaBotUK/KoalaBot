@@ -480,7 +480,10 @@ async def test_overwrite_channel_add_reaction_perms(rfr_cog):
             await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
         await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
-        mock_edit_channel_perms.assert_called_once_with(channel.id, role.id, 0, 64, 'role', reason=None)
+        calls = [mock.call(channel.id, role.id, 0, 64, 'role', reason=None),
+                 mock.call(channel.id, config.client.user.id, 64, 0, 'member',
+                           reason=None)]  # assert it's called the role perms change first, then the member change
+        mock_edit_channel_perms.assert_has_calls(calls)
 
 
 @pytest.mark.parametrize("msg_content", [" ", "something"])
@@ -601,10 +604,10 @@ async def test_rfr_create_message(bot):
                         mock.AsyncMock(return_value=(None, channel))):
             with mock.patch('cogs.ReactForRole.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
                 with mock.patch(
-                        'discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
+                        'cogs.ReactForRole.ReactForRole.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
                     with mock.patch('discord.Message.delete') as mock_delete:
                         await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr createMessage")
-                        mock_edit_channel_perms.assert_called_once()
+                        mock_edit_channel_perms.assert_called_once_with(guild, embed_channel)
                         dpytest.verify_message(
                             "Okay, this will create a new react for role message in a channel of your choice."
                             "\nNote: The channel you specify will have its permissions edited to make it such that the "
