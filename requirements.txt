@@ -5,8 +5,8 @@ attrs==20.1.0
 certifi==2020.12.5
 chardet==3.0.4
 colorama==0.4.3
-discord.py
-dpytest==0.0.20
+discord.py==1.6.0
+git+https://github.com/bravosierra99/dpytest@913ddbbd9f405e4632caf76376834ab83e706b68
 emoji==0.6.0
 idna==2.10
 iniconfig==1.1.1

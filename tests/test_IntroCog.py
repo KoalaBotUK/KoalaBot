@@ -28,23 +28,25 @@ fake_guild_id = 1000
 non_existent_guild_id = 9999
 
 # Variables
-utils_cog = None
-intro_cog = None
-DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 DBManager.create_base_tables()
 
 
-def setup_function():
-    """ setup any state specific to the execution of the given module."""
-    global intro_cog, utils_cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
+@pytest.fixture(autouse=True)
+def utils_cog(bot):
     utils_cog = TestUtilsCog(bot)
-    intro_cog = IntroCog.IntroCog(bot)
-    bot.add_cog(intro_cog)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
-    return dpytest.get_config()
+    return utils_cog
+
+@pytest.fixture(autouse=True)
+def intro_cog(bot):
+    intro_cog = IntroCog.IntroCog(bot)
+    bot.add_cog(intro_cog)
+    dpytest.configure(bot)
+    print("Tests starting")
+    return intro_cog
 
 
 # Welcome Message Database Manager Tests
@@ -160,7 +162,7 @@ async def test_on_member_join():
 
 
 @pytest.mark.asyncio
-async def test_wait_for_message():
+async def test_wait_for_message(utils_cog):
     bot = dpytest.get_config().client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
@@ -174,7 +176,7 @@ async def test_wait_for_message():
 
 
 @pytest.mark.asyncio
-async def test_wait_for_message_timeout():
+async def test_wait_for_message_timeout(utils_cog):
     bot = dpytest.get_config().client
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
@@ -326,11 +328,7 @@ def setup_db():
     yield DBManager
 
 
-@pytest.fixture(scope='session', autouse=True)
-def setup_is_dpytest():
-    KoalaBot.is_dpytest = True
-    yield
-    KoalaBot.is_dpytest = False
+
 
 
 @pytest.fixture(scope='function', autouse=True)
