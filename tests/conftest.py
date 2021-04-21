@@ -25,7 +25,6 @@ async def bot(event_loop):
     b = commands.Bot(KoalaBot.COMMAND_PREFIX, loop=event_loop, intents=intents)
     await dpytest.empty_queue()
     dpytest.configure(b)
-    print("SHEESH")
     return b
 
 

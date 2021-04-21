@@ -101,12 +101,12 @@ async def test_on_guild_join():
 
 
 @pytest.mark.asyncio
-async def test_on_guild_remove():
+async def test_on_guild_remove(bot):
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
     client = test_config.client
     bot_member = test_config.guilds[0].get_member(client.user.id)
-    await dpytest.kick_callback(guild, bot_member)
+    dpytest.backend.delete_member(bot_member)
     val = DBManager.fetch_guild_welcome_message(guild.id)
     assert val is None
 
@@ -136,7 +136,7 @@ async def test_get_non_bot_members():
                                                            IntroCog.get_non_bot_members(guild)]
     print(
         [str(non_bot_member) + " " + str(non_bot_member.bot) for non_bot_member in IntroCog.get_non_bot_members(guild)])
-    await dpytest.kick_callback(guild, guild.get_member(client.user.id))
+    dpytest.backend.delete_member(guild.get_member(client.user.id))
     assert len(IntroCog.get_non_bot_members(guild)) == 5, [non_bot_member.name for non_bot_member in
                                                            IntroCog.get_non_bot_members(guild)]
     print(
