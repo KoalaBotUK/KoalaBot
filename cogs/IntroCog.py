@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 
 # Own modules
 import KoalaBot
-from utils import KoalaDBManager
+from utils import KoalaDBManager, KoalaUtils
 
 # Constants
 
@@ -29,15 +29,6 @@ the following link: http://legal.koalabot.uk/"""
 DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
 # Variables
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
-
-
-def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
-    try:
-        confirmation = bot.wait_for('message', timeout=60.0, check=lambda message: message.author == ctx.author)
-        return confirmation
-    except Exception:
-        confirmation = None
-    return confirmation, ctx.channel
 
 
 async def ask_for_confirmation(confirmation: discord.Message, channel: discord.TextChannel):
@@ -134,7 +125,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
 
         await ctx.send(f"This will DM {len(non_bot_members)} people. Are you sure you wish to do this? Y/N")
         try:
-            confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
+            confirmation_received = await ask_for_confirmation(await KoalaUtils.wait_for_message(self.bot, ctx)[0], ctx.channel)
         except asyncio.TimeoutError:
             await ctx.send('Timed out.')
             confirmation_received = False
@@ -164,7 +155,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             await ctx.send(f"""Your new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}\n\rWould """ +
                            """you like to update the message? Y/N?""")
             try:
-                confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
+                confirmation_received = await ask_for_confirmation(await KoalaUtils.wait_for_message(self.bot, ctx)[0], ctx.channel)
             except asyncio.TimeoutError:
                 await ctx.send('Timed out.')
                 confirmation_received = False
