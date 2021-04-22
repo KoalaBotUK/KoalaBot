@@ -44,6 +44,22 @@ def setup_function():
     db_manager.insert_extension("Verify", 0, True, True)
     print("Tests starting")
 
+@pytest.fixture(autouse=True)
+def cog(bot):
+    cog = Verification.Verification(bot, db_manager)
+    bot.add_cog(cog)
+    dpytest.configure(bot)
+    db_manager.db_execute_commit("DROP TABLE verified_emails")
+    db_manager.db_execute_commit("DROP TABLE non_verified_emails")
+    db_manager.db_execute_commit("DROP TABLE to_re_verify")
+    db_manager.db_execute_commit("DROP TABLE roles")
+    db_manager.db_execute_commit("CREATE TABLE verified_emails (u_id, email)")
+    db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
+    db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
+    db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
+    db_manager.insert_extension("Verify", 0, True, True)
+    print("Tests starting")
+    return cog
 
 @pytest.mark.asyncio
 async def test_member_join_no_verify():
@@ -69,15 +85,16 @@ This email is stored so you don't need to verify it multiple times across server
 
 
 @pytest.mark.asyncio
-async def test_member_join_already_verified():
+async def test_member_join_already_verified(bot):
     test_config = dpytest.get_config()
     guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
-    test_config.guilds.append(guild)
+    bot.guilds.append(guild)
+
     test_user = dpytest.back.make_user("TestUser", 1234, id_num=999)
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit("INSERT INTO verified_emails VALUES (999, 'egg@test.com')")
     db_manager.db_execute_commit("INSERT INTO roles VALUES (1234, 555, 'test.com')")
-    await dpytest.member_join(1, test_user)
+    await dpytest.member_join(guild, test_user)
     await asyncio.sleep(0.25)
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
 Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.

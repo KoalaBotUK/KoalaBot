@@ -30,13 +30,13 @@ from utils.KoalaDBManager import KoalaDBManager
 # Constants
 
 # Variables
-rfr_cog: ReactForRole.ReactForRole = None
-utils_cog: TestUtilsCog.TestUtilsCog = None
 DBManager = ReactForRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
 
-def setup_function():
+#rfr_cog: ReactForRole.ReactForRole = None
+#utils_cog: TestUtilsCog.TestUtilsCog = None
+def setup_fsnction():
     """ setup any state specific to the execution of the given module."""
     global rfr_cog
     global utils_cog
@@ -47,6 +47,22 @@ def setup_function():
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
+
+@pytest.fixture(autouse=True)
+def utils_cog(bot):
+    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    bot.add_cog(utils_cog)
+    dpytest.configure(bot)
+    print("Tests starting")
+    return utils_cog
+
+@pytest.fixture(autouse=True)
+def rfr_cog(bot):
+    rfr_cog = ReactForRole.ReactForRole(bot)
+    bot.add_cog(rfr_cog)
+    dpytest.configure(bot)
+    print("Tests starting")
+    return rfr_cog
 
 
 def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id=None) -> List[
@@ -321,11 +337,11 @@ async def test_rfr_db_functions_guild_rfr_required_roles():
 
 
 @pytest.mark.asyncio
-async def test_get_rfr_message_from_prompts():
+async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
-    guild: discord.Guild = config.guilds[0]
+    guild: discord.Guild = bot.guilds[0]
     channel: discord.TextChannel = guild.channels[0]
-    member: discord.Member = config.members[0]
+    member: discord.Member = bot.guilds[0].members[0]
     msg: discord.Message = dpytest.back.make_message(".", member, channel)
     channel_id = msg.channel.id
     msg_id = msg.id
@@ -357,7 +373,7 @@ async def test_get_rfr_message_from_prompts():
 # TODO Actually implement the test.
 @pytest.mark.parametrize("num_rows", [0, 1, 2, 20, 100, 250])
 @pytest.mark.asyncio
-async def test_parse_emoji_and_role_input_str(num_rows):
+async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
@@ -431,7 +447,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
 
 @pytest.mark.parametrize("msg_content", [None, "", "something", " "])
 @pytest.mark.asyncio
-async def test_prompt_for_input(msg_content):
+async def test_prompt_for_input(msg_content,utils_cog,rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
@@ -455,7 +471,7 @@ async def test_prompt_for_input(msg_content):
 
 
 @pytest.mark.asyncio
-async def test_overwrite_channel_add_reaction_perms():
+async def test_overwrite_channel_add_reaction_perms(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -464,12 +480,15 @@ async def test_overwrite_channel_add_reaction_perms():
             await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
         await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
-        mock_edit_channel_perms.assert_called_once_with(channel.id, role.id, 0, 64, 'role', reason=None)
+        calls = [mock.call(channel.id, role.id, 0, 64, 'role', reason=None),
+                 mock.call(channel.id, config.client.user.id, 64, 0, 'member',
+                           reason=None)]  # assert it's called the role perms change first, then the member change
+        mock_edit_channel_perms.assert_has_calls(calls)
 
 
 @pytest.mark.parametrize("msg_content", [" ", "something"])
 @pytest.mark.asyncio
-async def test_wait_for_message_not_none(msg_content):
+async def test_wait_for_message_not_none(msg_content, utils_cog, rfr_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -483,7 +502,7 @@ async def test_wait_for_message_not_none(msg_content):
 
 
 @pytest.mark.asyncio
-async def test_wait_for_message_none():
+async def test_wait_for_message_none(utils_cog, rfr_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -494,7 +513,7 @@ async def test_wait_for_message_none():
 
 
 @pytest.mark.asyncio
-async def test_is_user_alive():
+async def test_is_user_alive(utils_cog, rfr_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
@@ -507,7 +526,7 @@ async def test_is_user_alive():
 
 
 @pytest.mark.asyncio
-async def test_get_embed_from_message():
+async def test_get_embed_from_message(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
@@ -526,7 +545,7 @@ async def test_get_embed_from_message():
 
 
 @pytest.mark.asyncio
-async def test_get_number_of_embed_fields():
+async def test_get_number_of_embed_fields(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -568,7 +587,7 @@ async def test_get_first_emoji_from_str():
 
 
 @pytest.mark.asyncio
-async def test_rfr_create_message():
+async def test_rfr_create_message(bot):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -585,10 +604,10 @@ async def test_rfr_create_message():
                         mock.AsyncMock(return_value=(None, channel))):
             with mock.patch('cogs.ReactForRole.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
                 with mock.patch(
-                        'discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
+                        'cogs.ReactForRole.ReactForRole.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
                     with mock.patch('discord.Message.delete') as mock_delete:
                         await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr createMessage")
-                        mock_edit_channel_perms.assert_called_once()
+                        mock_edit_channel_perms.assert_called_once_with(guild, embed_channel)
                         dpytest.verify_message(
                             "Okay, this will create a new react for role message in a channel of your choice."
                             "\nNote: The channel you specify will have its permissions edited to make it such that the "
@@ -762,7 +781,7 @@ async def test_rfr_remove_roles_from_msg():
 @pytest.mark.parametrize("num_roles, num_required",
                          [(0, 0), (1, 0), (1, 1), (2, 0), (2, 1), (2, 2), (5, 1), (5, 2), (20, 5)])
 @pytest.mark.asyncio
-async def test_can_have_rfr_role(num_roles, num_required):
+async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     r_list = []
