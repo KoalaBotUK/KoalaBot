@@ -22,7 +22,6 @@ import KoalaBot
 from cogs import IntroCog
 from tests.utils.TestUtilsCog import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
-from utils.KoalaUtils import wait_for_message
 
 # Constants
 fake_guild_id = 1000
@@ -169,7 +168,7 @@ async def test_wait_for_message():
     import threading
     t2 = threading.Timer(interval=1.0, function=dpytest.message, args=("y"))
     t2.start()
-    fut = wait_for_message(bot, ctx)
+    fut = IntroCog.wait_for_message(bot, ctx)
     t2.join()
     assert fut, dpytest.sent_queue
 
@@ -180,7 +179,7 @@ async def test_wait_for_message_timeout():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
     with pytest.raises(asyncio.TimeoutError):
-        await wait_for_message(bot, ctx)
+        await IntroCog.wait_for_message(bot, ctx)
 
 
 @pytest.mark.parametrize("msg_content, is_invalid, expected",
@@ -212,7 +211,7 @@ async def test_confirm_message(msg_content, expected):
 @pytest.mark.asyncio
 async def test_send_welcome_message():
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
     dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
     dpytest.verify_message("Okay, sending out the welcome message now.")
@@ -222,7 +221,7 @@ async def test_send_welcome_message():
 @pytest.mark.asyncio
 async def test_send_welcome_message_cancelled():
     msg_mock = dpytest.back.make_message('n', dpytest.get_config().members[0], dpytest.get_config().channels[0])
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
     dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
     dpytest.verify_message("Okay, I won't send out the welcome message then.")
@@ -231,7 +230,7 @@ async def test_send_welcome_message_cancelled():
 
 @pytest.mark.asyncio
 async def test_send_welcome_message_timeout():
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=None)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=None)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
         dpytest.verify_message("This will DM 1 people. Are you sure you wish to do this? Y/N")
         dpytest.verify_message('Timed out.')
@@ -245,7 +244,7 @@ async def test_cancel_update_welcome_message():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     msg_mock = dpytest.back.make_message('n', dpytest.get_config().members[0], dpytest.get_config().channels[0])
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
     dpytest.verify_message(f"""Your current welcome message is:\n\r{old_message}""")
@@ -262,7 +261,7 @@ async def test_update_welcome_message():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
     dpytest.verify_message(f"""Your current welcome message is:\n\r{old_message}""")
@@ -281,7 +280,7 @@ async def test_update_welcome_message_too_long():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "".join(random.choice(string.ascii_letters) for _ in range(1800))
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=msg_mock)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
     dpytest.verify_message("Your welcome message is too long to send, sorry. The maximum character limit is 1600.")
     dpytest.verify_message(assert_nothing=True)
@@ -309,7 +308,7 @@ async def test_update_welcome_message_timeout():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     # msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
-    with mock.patch('wait_for_message', mock.AsyncMock(return_value=None)):
+    with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=None)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
     dpytest.verify_message(f"""Your current welcome message is:\n\r{old_message}""")
