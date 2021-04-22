@@ -10,7 +10,9 @@ matrix:
     - JOBNAME=UNIT_TESTS
 
     python:
+    - "3.7"
     - "3.8"
+    - "3.9"
 
     install:
     - python --version
