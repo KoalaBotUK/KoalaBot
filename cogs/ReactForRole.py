@@ -93,18 +93,18 @@ class ReactForRole(commands.Cog):
             elif content_type == 'image/gif':
                 return "gif"
             else:
-                return ""
+                return None
 
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
                     KoalaBot.logger.error(
                         "RFR: HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
-                    raise Exception("HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
+                    raise aiohttp.ClientError("HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
                 image_bytes = await response.read()
                 data = BytesIO(image_bytes)
                 ftype: str = await file_type_from_hdr(response)
-                if len(ftype) < 1:
+                if not ftype:
                     KoalaBot.logger.error(
                         "RFR: Couldn't verify image file type from " + url + " due to missing/different Content-Type header")
                     raise commands.BadArgument("Couldn't get an image from the message you sent.")

@@ -12,6 +12,7 @@ import random
 from typing import *
 
 # Libs
+import aiohttp
 import discord
 import discord.ext.test as dpytest
 import mock
@@ -757,8 +758,9 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
             with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
-                with pytest.raises(Exception):
+                with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument, commands.CommandInvokeError)) as exc:
                     await dpytest.message("k!rfr edit thumbnail")
+
                     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
 
