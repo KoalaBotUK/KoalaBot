@@ -5,7 +5,7 @@ attrs==20.3.0
 certifi==2020.12.5
 chardet==4.0.0
 colorama==0.4.4
-discord.py==1.6.0
+discord.py==1.7.1
 git+https://github.com/KoalaBotUK/dpytest@ebfcdb5b5b5232183615107ff9cf88a5b7773406
 emoji==0.6.0
 idna==2.10
