@@ -170,20 +170,8 @@ async def test_filter_too_many_arguments():
 
 @pytest.mark.asyncio()
 async def test_filter_risky_word(tf_cog):
-    print(dpytest.sent_queue.qsize())
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
-    print(dpytest.sent_queue.qsize())
-    messages = []
-    while not dpytest.sent_queue.empty():
-        tmp_message = dpytest.sent_queue.get_nowait()
-        print(tmp_message.content)
-        messages.append(tmp_message)
-    for tmp_message in messages:
-        dpytest.sent_queue.put_nowait(tmp_message)
-
-
     assertFilteredConfirmation("yup","risky")
-
 
     await dpytest.message("yup test")
     assertRiskyWarning("yup test")
