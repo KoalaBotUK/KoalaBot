@@ -50,22 +50,21 @@ def populate_vote_tables():
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (112, 888, "vote1opt", "vote1body"))
 
 
-def setup_function():
-    """ setup any state specific to the execution of the given module."""
-    global cog
+
+@pytest.fixture(autouse=True)
+def cog(bot):
     global vote_manager
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     cog = Voting.Voting(bot, db_manager)
     db_manager.db_execute_commit("DROP TABLE Votes")
     db_manager.db_execute_commit("DROP TABLE VoteTargetRoles")
     db_manager.db_execute_commit("DROP TABLE VoteOptions")
     db_manager.db_execute_commit("DROP TABLE VoteSent")
-    db_manager.insert_extension("Verify", 0, True, True)
+    db_manager.insert_extension("Vote", 0, True, True)
     vote_manager = Voting.VoteManager(db_manager)
     bot.add_cog(cog)
     dpytest.configure(bot)
-    print("tests starting")
-
+    print("Tests starting")
+    return cog
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
@@ -103,7 +102,7 @@ async def test_discord_create_vote_wrong():
 
 
 @pytest.mark.asyncio
-async def test_discord_vote_add_and_remove_role():
+async def test_discord_vote_add_and_remove_role(cog):
     config = dpytest.get_config()
     guild = config.guilds[0]
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
