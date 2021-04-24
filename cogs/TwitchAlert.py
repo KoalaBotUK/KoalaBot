@@ -17,15 +17,24 @@ import logging
 
 logging.basicConfig(filename='TwitchAlert.log')
 
-# Libs
-from discord.ext import commands, tasks
-from dotenv import load_dotenv
-
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
 from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
 from utils import KoalaDBManager
+
+# Libs
+from discord.ext import commands, tasks
+from dotenv import load_dotenv
+"""
+if os.name == 'nt' or not KoalaDBManager.ENCRYPTED_DB:
+    logging.info("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    logging.info("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
+"""
+
 
 # Constants
 load_dotenv()
@@ -1031,7 +1040,8 @@ class TwitchAlertDBManager:
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
-                except KoalaDBManager.sqlite3.IntegrityError:
+                except KoalaDBManager.sqlite3.IntegrityError as err:
+                    logging.error(f"Twitch Alert: 1034: {err}")
                     pass
 
     async def update_all_teams_members(self):
