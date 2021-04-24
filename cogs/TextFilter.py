@@ -275,6 +275,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param message: The newly received message
         :return:
         """
+        if message.author.bot:
+            return
         if message.content.startswith(KoalaBot.COMMAND_PREFIX+"filter") or \
                 message.content.startswith(KoalaBot.COMMAND_PREFIX+"unfilter"):
             return

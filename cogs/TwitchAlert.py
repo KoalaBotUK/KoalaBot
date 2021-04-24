@@ -14,6 +14,7 @@ import time
 import re
 import aiohttp
 import logging
+
 logging.basicConfig(filename='TwitchAlert.log')
 
 # Own modules
@@ -44,8 +45,8 @@ TWITCH_CLIENT_ID = os.environ['TWITCH_TOKEN']
 TWITCH_SECRET = os.environ['TWITCH_SECRET']
 TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
 
-
 # Variables
+
 
 def twitch_is_enabled(ctx):
     """
@@ -59,13 +60,14 @@ def twitch_is_enabled(ctx):
     except PermissionError:
         result = False
 
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result
 
 
 class TwitchAlert(commands.Cog):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
+
     def __init__(self, bot, database_manager=None):
 
         """
@@ -100,7 +102,7 @@ class TwitchAlert(commands.Cog):
             channel_id = extract_id(raw_channel_id)
         except TypeError:
             channel_id = ctx.message.channel.id
-            default_live_message = (raw_channel_id, )+default_live_message
+            default_live_message = (raw_channel_id,) + default_live_message
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -117,7 +119,7 @@ class TwitchAlert(commands.Cog):
         else:
             default_message = None
 
-# Creates a new Twitch Alert with the used guild ID and default message if provided
+        # Creates a new Twitch Alert with the used guild ID and default message if provided
         default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id, default_message,
                                                           replace=True)
 
@@ -378,10 +380,19 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         if not self.running:
-            self.loop_update_teams.start()
-            self.loop_check_team_live.start()
-            self.loop_check_live.start()
-            self.running = True
+            self.start_loops()
+
+    def start_loops(self):
+        self.loop_update_teams.start()
+        self.loop_check_team_live.start()
+        self.loop_check_live.start()
+        self.running = True
+
+    def end_loops(self):
+        self.loop_update_teams.cancel()
+        self.loop_check_team_live.cancel()
+        self.loop_check_live.cancel()
+        self.running = False
 
     @tasks.loop(minutes=1)
     async def loop_check_live(self):
@@ -405,7 +416,6 @@ class TwitchAlert(commands.Cog):
                 self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_user, args=[user[0]])
             else:
                 usernames.append(user[0])
-
 
         # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
         if not usernames:
@@ -473,7 +483,7 @@ class TwitchAlert(commands.Cog):
 
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(False, usernames)
-        time_diff = time.time()-start
+        time_diff = time.time() - start
         if time_diff > 5:
             logging.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")
 
@@ -495,7 +505,7 @@ class TwitchAlert(commands.Cog):
         start = time.time()
         # logging.info("TwitchAlert: Started Update Teams")
         await self.ta_database_manager.update_all_teams_members()
-        time_diff = time.time()-start
+        time_diff = time.time() - start
         if time_diff > 5:
             logging.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
 
@@ -595,7 +605,7 @@ class TwitchAlert(commands.Cog):
 
         # Deals with remaining offline streams
         self.ta_database_manager.delete_all_offline_streams(True, usernames)
-        time_diff = time.time()-start
+        time_diff = time.time() - start
         if time_diff > 5:
             logging.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
 
@@ -704,7 +714,7 @@ class TwitchAPIHandler:
 
         next_hundred_users = usernames[:100]
         usernames = usernames[100:]
-        result = (await self.requests_get(url+"user_login="+"&user_login=".join(next_hundred_users))).get("data")
+        result = (await self.requests_get(url + "user_login=" + "&user_login=".join(next_hundred_users))).get("data")
 
         while usernames:
             next_hundred_users = usernames[:100]
@@ -1030,7 +1040,7 @@ class TwitchAlertDBManager:
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
-                except Exception as err:
+                except KoalaDBManager.sqlite3.IntegrityError:
                     logging.error(f"Twitch Alert: 1034: {err}")
                     pass
 
