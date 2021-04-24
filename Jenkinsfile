@@ -15,7 +15,6 @@ pipeline {
                 sh 'apt-get install -y libsqlcipher-dev'
                 sh 'python3 --version'
                 sh 'pip3 install -r requirements.txt'
-                sh 'pip3 install discord.py==1.3.4'
             }
         }
         stage("test") {

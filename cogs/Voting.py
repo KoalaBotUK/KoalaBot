@@ -8,6 +8,8 @@ Commented using reStructuredText (reST)
 from dotenv import load_dotenv
 from random import randint
 import time
+import logging
+logging.basicConfig(filename='Vote.log')
 
 # Libs
 import discord
@@ -83,6 +85,9 @@ async def make_result_embed(vote, results):
     :return: discord.Embed object to send
     """
     embed = discord.Embed(title=f"{vote.title} Results:")
+    for option in vote.options:
+        if option not in results.keys():
+            results[option] = 0
     for opt, count in results.items():
         embed.add_field(name=opt.head, value=f"{count} votes", inline=False)
     if not results:
@@ -113,13 +118,13 @@ async def get_results(bot, vote):
         user = bot.get_user(u_id)
         msg = await user.fetch_message(msg_id)
         for reaction in msg.reactions:
-            opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
-            if opt in results.keys():
-                results[opt] += 1
-            else:
-                results[opt] = 0
-            break
-
+            if reaction.count > 1:
+                opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
+                if opt in results.keys():
+                    results[opt] += 1
+                else:
+                    results[opt] = 1
+                break
     return results
 
 
@@ -170,7 +175,7 @@ class Voting(commands.Cog, name="Vote"):
                         await user.send(f"Your vote {title} has closed")
                         await user.send(embed=embed)
                 except Exception as e:
-                    print(e)
+                    logging.error(f"error in vote loop: {e}")
         self.DBManager.db_execute_commit("DELETE FROM votes WHERE end_time < ?", (now,))
 
     @vote_end_loop.before_loop
@@ -329,7 +334,7 @@ class Voting(commands.Cog, name="Vote"):
     @vote.command(name="setEndTime")
     async def set_end_time(self, ctx, *, time_string):
         """
-        Sets a specific time for the vote to end.
+        Sets a specific time for the vote to end. Results will be sent to the chair or owner if you use this, not a channel.
         If the vote has not been sent by the end time it will close automatically once it is sent.
         :param time_string: string representing a time e.g. "2021-03-22 12:56" or "tomorrow at 10am" or "in 5 days and 15 minutes"
         :return:
