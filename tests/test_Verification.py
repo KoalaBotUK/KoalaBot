@@ -37,10 +37,12 @@ def setup_function():
     db_manager.db_execute_commit("DROP TABLE non_verified_emails")
     db_manager.db_execute_commit("DROP TABLE to_re_verify")
     db_manager.db_execute_commit("DROP TABLE roles")
+    db_manager.db_execute_commit("DROP TABLE blacklist")
     db_manager.db_execute_commit("CREATE TABLE verified_emails (u_id, email)")
     db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
     db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
     db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
+    db_manager.db_execute_commit("CREATE TABLE blacklist (u_id, r_id, email)")
     db_manager.insert_extension("Verify", 0, True, True)
     print("Tests starting")
 
