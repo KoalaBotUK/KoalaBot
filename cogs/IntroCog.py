@@ -31,9 +31,9 @@ DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the 
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
 
-def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
+def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (discord.Message, discord.TextChannel):
     try:
-        confirmation = bot.wait_for('message', timeout=60.0, check=lambda message: message.author == ctx.author)
+        confirmation = bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
         return confirmation
     except Exception:
         confirmation = None

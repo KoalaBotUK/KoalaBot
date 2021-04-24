@@ -1040,7 +1040,7 @@ class TwitchAlertDBManager:
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
                                                             pass_errors=True)
-                except KoalaDBManager.sqlite3.IntegrityError:
+                except KoalaDBManager.sqlite3.IntegrityError as err:
                     logging.error(f"Twitch Alert: 1034: {err}")
                     pass
 
