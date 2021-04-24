@@ -26,6 +26,7 @@ from cogs.ReactForRole import ReactForRoleDBManager
 from tests.utils import TestUtils as utils
 from tests.utils import TestUtilsCog
 from utils.KoalaDBManager import KoalaDBManager
+from utils.KoalaUtils import wait_for_message
 
 # Constants
 
@@ -456,7 +457,7 @@ async def test_prompt_for_input(msg_content,utils_cog,rfr_cog):
     ctx: commands.Context = utils_cog.get_last_ctx()
     await dpytest.empty_queue()
     if not msg_content:
-        with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
+        with mock.patch('utils.KoalaUtils.wait_for_message',
                         mock.AsyncMock(return_value=(None, channel))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
             dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
@@ -464,7 +465,7 @@ async def test_prompt_for_input(msg_content,utils_cog,rfr_cog):
             assert not result
     else:
         msg: discord.Message = dpytest.back.make_message(content=msg_content, author=author, channel=channel)
-        with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', mock.AsyncMock(return_value=(msg, None))):
+        with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(msg, None))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
             dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert result == msg_content
@@ -496,7 +497,7 @@ async def test_wait_for_message_not_none(msg_content, utils_cog, rfr_cog):
     import threading
     t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
     t2.start()
-    fut = rfr_cog.wait_for_message(bot, ctx)
+    fut = wait_for_message(bot, ctx)
     t2.join()
     assert fut, dpytest.sent_queue
 
@@ -507,7 +508,7 @@ async def test_wait_for_message_none(utils_cog, rfr_cog):
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client
-    msg, channel = await rfr_cog.wait_for_message(bot, ctx, 0.2)
+    msg, channel = await wait_for_message(bot, ctx, 0.2)
     assert not msg
     assert channel == ctx.channel
 
@@ -516,11 +517,11 @@ async def test_wait_for_message_none(utils_cog, rfr_cog):
 async def test_is_user_alive(utils_cog, rfr_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
+    with mock.patch('utils.KoalaUtils.wait_for_message',
                     mock.AsyncMock(return_value=(None, ctx.channel))):
         alive: bool = await rfr_cog.is_user_alive(ctx)
         assert not alive
-    with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', mock.AsyncMock(return_value=('a', None))):
+    with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=('a', None))):
         alive: bool = await rfr_cog.is_user_alive(ctx)
         assert alive
 
@@ -600,7 +601,7 @@ async def test_rfr_create_message(bot):
         url=KoalaBot.KOALA_IMAGE_URL)
     with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
                     mock.AsyncMock(return_value=embed_channel.mention)):
-        with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message',
+        with mock.patch('utils.KoalaUtils.wait_for_message',
                         mock.AsyncMock(return_value=(None, channel))):
             with mock.patch('cogs.ReactForRole.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
                 with mock.patch(
@@ -729,7 +730,7 @@ async def test_rfr_add_roles_to_msg():
     with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
-            with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', return_value=(input_em_ro_msg, None)):
+            with mock.patch('utils.KoalaUtils.wait_for_message', return_value=(input_em_ro_msg, None)):
                 with mock.patch('discord.Embed.add_field') as add_field:
                     await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr addRoles")
                     calls = []
@@ -764,7 +765,7 @@ async def test_rfr_remove_roles_from_msg():
     with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
-            with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', return_value=(input_em_ro_msg, None)):
+            with mock.patch('utils.KoalaUtils.wait_for_message', return_value=(input_em_ro_msg, None)):
                 with mock.patch('discord.Embed.add_field') as add_field:
                     with mock.patch(
                             'cogs.ReactForRole.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
