@@ -181,7 +181,7 @@ async def test_wait_for_message_timeout(utils_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
     with pytest.raises(asyncio.TimeoutError):
-        await IntroCog.wait_for_message(bot, ctx)
+        await IntroCog.wait_for_message(bot, ctx, 0.2)
 
 
 @pytest.mark.parametrize("msg_content, is_invalid, expected",
