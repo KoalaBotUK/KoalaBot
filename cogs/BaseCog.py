@@ -86,6 +86,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
+
     def __init__(self, bot):
         """
         Initialises local variables
@@ -101,9 +102,9 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         Ran after all cogs have been started and bot is ready
         """
-        if not self.started:  # Used to prevent changing activity every time the bot connects to discord servers
-            await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
-            self.started = True
+        #if not self.started:  # Used to prevent changing activity every time the bot connects to discord servers
+        await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
+        self.started = True
         print("Bot is ready.")
 
     @commands.command(name="activity", aliases=["change_activity"])
@@ -127,17 +128,25 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Returns the ping of the bot
         :param ctx: Context of the command
         """
-        await ctx.send(f"Pong! {round(self.bot.latency*1000)}ms")
+        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
+
+    @commands.command()
+    async def support(self, ctx):
+        """
+        KoalaBot Support server link
+        :param ctx: Context of the command
+        """
+        await ctx.send(f"Join our support server for more help! https://discord.gg/5etEjVd")
 
     @commands.command(name="clear")
     @commands.check(KoalaBot.is_admin)
-    async def clear(self, ctx, amount=2):
+    async def clear(self, ctx, amount: int = 1):
         """
         Clears a given number of messages from the given channel
         :param ctx: Context of the command
         :param amount: Amount of lines to delete
         """
-        await ctx.channel.purge(limit=amount)
+        await ctx.channel.purge(limit=amount + 1)
 
     @commands.command(name="loadCog", aliases=["load_cog"])
     @commands.check(KoalaBot.is_owner)
@@ -147,7 +156,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        self.bot.load_extension(self.COGS_DIR.replace("/", ".")+f'.{extension}')
+        self.bot.load_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
         await ctx.send(f'{extension} Cog Loaded')
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
@@ -184,7 +193,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         else:
             KoalaBot.database_manager.give_guild_extension(guild_id, koala_extension)
             embed = list_ext_embed(guild_id)
-            embed.title = koala_extension+" enabled"
+            embed.title = koala_extension + " enabled"
 
         await ctx.send(embed=embed)
 
@@ -205,7 +214,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             raise NotImplementedError(f"{koala_extension} is not an enabled extension")
         KoalaBot.database_manager.remove_guild_extension(guild_id, koala_extension)
         embed = list_ext_embed(guild_id)
-        embed.title = koala_extension+" disabled"
+        embed.title = koala_extension + " disabled"
         await ctx.send(embed=embed)
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
@@ -221,8 +230,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(embed=embed)
 
 
-
-
 def setup(bot: KoalaBot) -> None:
     """
     Load this cog to the KoalaBot.
@@ -230,4 +237,3 @@ def setup(bot: KoalaBot) -> None:
     """
     bot.add_cog(BaseCog(bot))
     print("BaseCog is ready.")
-

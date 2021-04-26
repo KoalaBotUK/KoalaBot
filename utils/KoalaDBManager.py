@@ -10,17 +10,18 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import os
 
-
-
 # Libs
-if os.name == 'nt':
-    print("Windows Detected: Database Encryption Disabled")
+from dotenv import load_dotenv
+load_dotenv()
+ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
+if ENCRYPTED_DB:
+    print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
+if os.name == 'nt' or not ENCRYPTED_DB:
+    print("Database Encryption Disabled")
     import sqlite3
 else:
-    print("Linux Detected: Database Encryption Enabled")
+    print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
-
-
 
 # Own modules
 
@@ -33,9 +34,10 @@ class KoalaDBManager:
 
     def __init__(self, db_file_path, db_secret_key):
         self.db_file_path = db_file_path
-        if os.name == 'nt':
-            self.db_file_path = "windows_"+self.db_file_path
+        if os.name == 'nt' or not ENCRYPTED_DB:
+            self.db_file_path = "windows_" + self.db_file_path
         self.db_secret_key = db_secret_key
+
     def create_connection(self):
         """ Create a database connection to the SQLite3 database specified in db_file_path
 
@@ -45,7 +47,7 @@ class KoalaDBManager:
         try:
             conn = sqlite3.connect(self.db_file_path)
             c = conn.cursor()
-            if os.name != 'nt':
+            if not (os.name == 'nt' or not ENCRYPTED_DB):
                 c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
 
             return conn, c
@@ -173,15 +175,14 @@ class KoalaDBManager:
                                "WHERE extension_id = ? AND guild_id = ?"
         self.db_execute_commit(sql_remove_extension, args=[extension_id, guild_id], pass_errors=True)
 
-    def get_enabled_guild_extensions(self, guild_id:int):
+    def get_enabled_guild_extensions(self, guild_id: int):
         sql_select_enabled = "SELECT extension_id FROM GuildExtensions WHERE guild_id = ?"
         return self.db_execute_select(sql_select_enabled, args=[guild_id], pass_errors=True)
 
-    def get_all_available_guild_extensions(self, guild_id:int):
+    def get_all_available_guild_extensions(self, guild_id: int):
         sql_select_all = "SELECT DISTINCT KoalaExtensions.extension_id " \
                          "FROM KoalaExtensions WHERE available = 1"
         return self.db_execute_select(sql_select_all, pass_errors=True)
-
 
     def fetch_all_tables(self):
         return self.db_execute_select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
@@ -209,5 +210,6 @@ class KoalaDBManager:
     def new_guild_welcome_message(self, guild_id):
         from cogs import IntroCog
         self.db_execute_commit(
-            "INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);", args=[guild_id, IntroCog.DEFAULT_WELCOME_MESSAGE])
+            "INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);",
+            args=[guild_id, IntroCog.DEFAULT_WELCOME_MESSAGE])
         return self.fetch_guild_welcome_message(guild_id)

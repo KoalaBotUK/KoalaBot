@@ -1,11 +1,102 @@
 # Changelog
 All notable changes to KoalaBot will be documented in this file.
-A lot these commands will only be available to administrators
+A lot of these commands will only be available to administrators
 
 ## [Unreleased]
 
+## [0.3.0] - 17-03-2021
+### Voting
+##### Added
+- `vote create <title>` Start the vote creation process
+- `vote addRole <@role>/<role id>` Add a role to the list of roles to send the vote to
+- `vote removeRole <@role>/<role id>` Remove a role from the list of roles to send the vote to
+- `vote setChair <@user>/<user id>` Sets the "chair" of a vote to send the results to
+    -  if not set the results will be sent to the channel vote is ended in
+- `vote setChannel <#voice_channel>/<channel_id>` Sets the voice channel the vote will look for users to send to in
+- `vote addOption <title+description>` Takes a string separated by a + containing the title and the description of an option that can be selected in the vote
+- `vote removeOption <index>` Removes the specified option from the pool
+- `vote preview` Displays a preview of what the vote will look like to users who receive it
+- `vote cancel` Cancel a vote that is being set up
+- `vote send` Send the vote with the current configuration to any users in the constraints
+    - Constraints being "users who have roles specified or are currently in the specified voice channel"
+    - If channel/roles aren't set the vote will be sent to the whole server
+- `vote checkResults` Check the current results of the vote without ending it
+- `vote close` End the vote and send the results to the channel it was called in or DM to the set chair
+### Base
+#### Added
+- `support` Command gives a link to our support server
+- dev: logging saved to files
+#### Changed
+- `clear <amount>` now clears one extra (to include the command used)
+- Koala's activity is refreshed every connection to discord api servers
+### Twitch Alert
+#### Changed
+- TwitchAlert now requires lower case team names and usernames
+- dev: Minor console fixes (removed excess error notifications)
+
+### Text Filter
+##### Changed
+- Add regex validation to ensure valid regex only
+- Fix mod channel not saving correctly
+- Fix regex incorrectly being used on some messages
+
+
+## [0.2.0] - 15-10-2020
+### Text Filter
+##### Added
+- `filter <text> [type]`  Filter a word or string of text. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
+- `filterRegex <regex> [type]` Filter a regex string. Type is defaulted to `banned` which will delete the message and warn the user. Use type `risky` to just warn the user.
+- `filterList` Get a list of filtered words in the server
+
+- `modChannelAdd <channelId>` Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to.
+- `modChannelRemove <channelId>` Remove a mod channel from the server.
+- `modChannelList` See a list of mod channels in the server.
+
+- `ignoreUser <userMention>` Add a new ignored user for the server. This users' messages will be ignored by the Text Filter.
+- `ignoreChannel <channelMention>` Add a new ignored channel for the server. Messages in this channel will be ignored by the Text Filter.
+- `ignoreList` See a list of ignored users/channels in the server.
+
+- `unfilter <text>` Unfilter a word/string/regex of text that was previously filtered.
+- `unignore <mention>` Unignore a user/channel that was previously set as ignored
+
+### React For Role (RFR)
+##### Added
+- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`. 
+- `rfr delete` Delete an existing rfr message. 
+- `rfr addRequiredRole` Add a role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality.
+- `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality 
+
+- `rfr edit addRoles` Add emoji/role combos to an existing rfr message. 
+- `rfr edit removeRoles` Remove emoji/role combos from an existing rfr message. 
+- `rfr edit description` Edit the description of an existing rfr message  
+- `rfr edit title` Edit the title of an existing rfr message.
+
+### Colour Role
+##### Changed
+- Fixed error that occasionally made custom colour roles be created in the wrong position, thus not showing correctly
+
+### Twitch Alert
+##### Changed
+- Add catch so errors don't stop the alert loop
+
+
+## [0.1.8] - 18-10-2020
+### Twitch Alert
+##### Changed
+- Add 'No Category' option
+- Reduced Logging
+- Fix regex allowing underscore at start of name
+
+## [0.1.7] - 13-10-2020
+### Twitch Alert
+##### Changed
+- Fix InvalidArgument errors from not showing
+- Add logging
+- Add removal of chats that are no longer accessible
+
 ## [0.1.6] - 12-10-2020
 ### Twitch Alert
+##### Changed
 - Minor Bug Fixes
 
 ## [0.1.5] - 11-10-2020
@@ -90,6 +181,10 @@ A lot these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.3.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
+[0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
+[0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7
 [0.1.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.3...v0.1.4

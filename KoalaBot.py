@@ -19,6 +19,8 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 
+import logging
+logging.basicConfig(filename='KoalaBot.log')
 # Built-in/Generic Imports
 import os
 
@@ -26,7 +28,6 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import logging
 
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
@@ -47,13 +48,24 @@ DATABASE_PATH = "Koala.db"
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
+KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 # Variables
 started = False
-client = commands.Bot(command_prefix=COMMAND_PREFIX)
+if discord.__version__ != "1.3.4":
+    logging.info("Intents Enabled")
+    intent = discord.Intents.default()
+    intent.members = True
+    intent.guilds = True
+    intent.messages = True
+    client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent)
+else:
+    logging.info("discord.py v1.3.4: Intents Disabled")
+    client = commands.Bot(command_prefix=COMMAND_PREFIX)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
+
 
 def is_owner(ctx):
     """
@@ -65,7 +77,7 @@ def is_owner(ctx):
     if is_dm_channel(ctx):
         return False
     else:
-        return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and is_dpytest)
+        return ctx.author.id == int(BOT_OWNER) or is_dpytest
 
 
 def is_admin(ctx):
@@ -78,10 +90,12 @@ def is_admin(ctx):
     if is_dm_channel(ctx):
         return False
     else:
-        return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
+        return ctx.author.guild_permissions.administrator or is_dpytest
+
 
 def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
+
 
 def load_all_cogs():
     """
@@ -138,7 +152,6 @@ async def on_command_error(ctx, error):
                                                      f"{str(error.retry_after)}s."))
     else:
         await ctx.send(embed=error_embed(description=error))
-
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()

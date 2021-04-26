@@ -92,15 +92,12 @@ async def test_setup():
 
 # Test TwitchAlert
 @pytest.fixture
-async def twitch_cog():
+async def twitch_cog(bot):
     """ setup any state specific to the execution of the given module."""
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    database_manager = KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY)
-    twitch_cog = TwitchAlert.TwitchAlert(bot, database_manager=database_manager)
+    twitch_cog = TwitchAlert.TwitchAlert(bot)
     bot.add_cog(twitch_cog)
     await dpytest.empty_queue()
     dpytest.configure(bot)
-    print("Tests starting")
     return twitch_cog
 
 
@@ -334,8 +331,9 @@ async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
 
 
 @pytest.mark.asyncio()
-async def test_on_ready(twitch_cog):
-    with mock.patch.object(TwitchAlert.TwitchAlert.loop_check_live, 'start') as mock1:
+@pytest.mark.first
+async def test_on_ready(twitch_cog: TwitchAlert.TwitchAlert):
+    with mock.patch.object(TwitchAlert.TwitchAlert, 'start_loops') as mock1:
         await twitch_cog.on_ready()
     mock1.assert_called_with()
 

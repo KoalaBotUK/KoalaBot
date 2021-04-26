@@ -24,6 +24,7 @@ import requests
 
 # Own modules
 import KoalaBot
+from utils import KoalaDBManager
 from utils.KoalaColours import *
 from utils.KoalaUtils import extract_id, error_embed, is_channel_in_guild
 
@@ -36,6 +37,21 @@ TWITTER_TOKEN_SECRET = os.environ['TWITTER_TOKEN_SECRET']
 
 
 # Variables
+
+def social_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled social alert
+    e.g. @commands.check(KoalaBot.is_admin)
+    :param ctx: The context of the message
+    :return: True if admin or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "SocialAlert")
+    except PermissionError:
+        result = False
+
+    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
 
 class SocialAlert(commands.Cog):
     """
@@ -50,6 +66,7 @@ class SocialAlert(commands.Cog):
     # TODO: Extracting twitter display name from id and vice versa
     @commands.command(name="twitterAdd", aliases=['add_user_to_twitter_alert'])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(social_is_enabled)
     async def add_user_to_twitter_alert(self, ctx, raw_channel_id, twitter_id=None):
         """
 
@@ -59,7 +76,6 @@ class SocialAlert(commands.Cog):
         :param twitter_id:
         :return:
         """
-        KoalaBot.check_guild_has_ext(ctx, "SocialAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -88,6 +104,7 @@ class SocialAlert(commands.Cog):
 
     @commands.command(name="twitterRemove", aliases=['remove_user_from_twitter_alert'])
     @commands.check(KoalaBot.is_admin)
+    @commands.check(social_is_enabled)
     async def remove_user_from_twitter_alert(self, ctx, raw_channel_id, twitter_id=None):
         """
 
@@ -96,8 +113,6 @@ class SocialAlert(commands.Cog):
         :param twitter_id:
         :return:
         """
-
-        KoalaBot.check_guild_has_ext(ctx, "SocialAlert")
 
         try:
             channel_id = extract_id(raw_channel_id)
@@ -137,15 +152,17 @@ class SocialAlert(commands.Cog):
         # test authentication
         try:
             api.verify_credentials()
+            print("twitter authenticated")
+
             return discord.Embed(title=str(type("yeet").__name__), description=str("yeet"), colour=ERROR_RED)
         except:
             print("Error during authentication")
 
-        #tweet_stream = tweepy.Stream(auth=self.twitter_handler.api, listener=self.twitter_handler.stream_listener)
-        #current_text = tweet_stream.filter(follow=self.twitter_handler.followed_accounts, is_async=True)
-        #tweet_embed = create_social_embed("twitter", "template_user", current_text)
-        #channel = self.bot.get_channel("channel_id")
-        #channel.send(embed=tweet_embed)
+        # tweet_stream = tweepy.Stream(auth=self.twitter_handler.api, listener=self.twitter_handler.stream_listener)
+        # current_text = tweet_stream.filter(follow=self.twitter_handler.followed_accounts, is_async=True)
+        # tweet_embed = create_social_embed("twitter", "template_user", current_text)
+        # channel = self.bot.get_channel("channel_id")
+        # channel.send(embed=tweet_embed)
 
 
 def create_social_embed(platform, user_info, post_info):
@@ -237,9 +254,72 @@ class FacebookGraphAPIHandler:
         return self.graph.get_object(page_id)
 
 
+class SocialAlertDBManager:
+    """
+        A class for interacting with the Koala twitch database
+        """
+
+    def __init__(self, database_manager: KoalaDBManager, bot_client: discord.client):
+        """
+        Initialises local variables
+        :param database_manager:
+        :param bot_client:
+        """
+        self.database_manager = database_manager
+        # self.twitch_handler = TwitterAPIHandler(TWITCH_CLIENT_ID, TWITCH_SECRET)
+        self.bot = bot_client
+
+    def get_parent_database_manager(self):
+        """
+        A getter for the database manager of this object
+        :return:
+        """
+        return self.database_manager
+
+    def create_tables(self):
+        """
+        Creates all the tables associated with the twitch alert extension
+        :return:
+        """
+
+        # TwitchAlerts
+        sql_create_social_alerts_table = """
+           CREATE TABLE IF NOT EXISTS SocialAlerts (
+           guild_id integer NOT NULL,
+           channel_id integer NOT NULL,
+           default_message text NOT NULL,
+           PRIMARY KEY (guild_id, channel_id),
+           CONSTRAINT fk_guild
+               FOREIGN KEY (guild_id) 
+               REFERENCES GuildExtensions (guild_id)
+               ON DELETE CASCADE 
+           );"""
+
+        # UserInTwitterAlert
+        sql_create_user_in_social_alert_table = """
+           CREATE TABLE IF NOT EXISTS UserInSocialAlert (
+           channel_id integer NOT NULL,
+           twitter_username text NOT NULL,
+           custom_message text,
+           message_id integer,
+           PRIMARY KEY (channel_id, twitter_username),
+           CONSTRAINT fk_channel
+               FOREIGN KEY (channel_id) 
+               REFERENCES SocialAlerts (channel_id)
+               ON DELETE CASCADE 
+           );"""
+
+
+        # Create Tables
+        self.database_manager.db_execute_commit(sql_create_social_alerts_table)
+        self.database_manager.db_execute_commit(sql_create_user_in_social_alert_table)
+
+
+
 def setup(bot: KoalaBot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(SocialAlert(bot))
+    print("SocialAlert is ready.")
