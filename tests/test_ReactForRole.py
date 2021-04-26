@@ -37,20 +37,6 @@ DBManager = ReactForRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
 
-#rfr_cog: ReactForRole.ReactForRole = None
-#utils_cog: TestUtilsCog.TestUtilsCog = None
-def setup_fsnction():
-    """ setup any state specific to the execution of the given module."""
-    global rfr_cog
-    global utils_cog
-    bot: commands.Bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    rfr_cog = ReactForRole.ReactForRole(bot)
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
-    bot.add_cog(rfr_cog)
-    bot.add_cog(utils_cog)
-    dpytest.configure(bot)
-    print("Tests starting")
-
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
     utils_cog = TestUtilsCog.TestUtilsCog(bot)
@@ -490,7 +476,7 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
                                                                                                  width=1000))
     message_dict = dpytest.back.facts.make_message_dict(channel, author, attachments=[attach])
     message: discord.Message = discord.Message(state=dpytest.back.get_state(), channel=channel, data=message_dict)
-    with mock.patch('cogs.ReactForRole.ReactForRole.wait_for_message', mock.AsyncMock(return_value=(message, channel))):
+    with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(message, channel))):
         result = await rfr_cog.prompt_for_input(ctx, "test")
         dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
         assert isinstance(result, discord.Attachment)
