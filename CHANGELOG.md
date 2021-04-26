@@ -3,6 +3,37 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+
+## [0.3.0] - 17-03-2021
+### Voting
+##### Added
+- `vote create <title>` Start the vote creation process
+- `vote addRole <@role>/<role id>` Add a role to the list of roles to send the vote to
+- `vote removeRole <@role>/<role id>` Remove a role from the list of roles to send the vote to
+- `vote setChair <@user>/<user id>` Sets the "chair" of a vote to send the results to
+    -  if not set the results will be sent to the channel vote is ended in
+- `vote setChannel <#voice_channel>/<channel_id>` Sets the voice channel the vote will look for users to send to in
+- `vote addOption <title+description>` Takes a string separated by a + containing the title and the description of an option that can be selected in the vote
+- `vote removeOption <index>` Removes the specified option from the pool
+- `vote preview` Displays a preview of what the vote will look like to users who receive it
+- `vote cancel` Cancel a vote that is being set up
+- `vote send` Send the vote with the current configuration to any users in the constraints
+    - Constraints being "users who have roles specified or are currently in the specified voice channel"
+    - If channel/roles aren't set the vote will be sent to the whole server
+- `vote checkResults` Check the current results of the vote without ending it
+- `vote close` End the vote and send the results to the channel it was called in or DM to the set chair
+### Base
+#### Added
+- `support` Command gives a link to our support server
+- dev: logging saved to files
+#### Changed
+- `clear <amount>` now clears one extra (to include the command used)
+- Koala's activity is refreshed every connection to discord api servers
+### Twitch Alert
+#### Changed
+- TwitchAlert now requires lower case team names and usernames
+- dev: Minor console fixes (removed excess error notifications)
+
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only
@@ -150,6 +181,7 @@ A lot of these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.3.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
 [0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7

@@ -26,14 +26,13 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 utils_cog = None
-DBManager = KoalaDBManager("./" + KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 DBManager.create_base_tables()
 
 
-@pytest.fixture
-async def test_ctx():
+@pytest.fixture(autouse=True)
+async def test_ctx(bot):
     global utils_cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     utils_cog = TestUtilsCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
@@ -58,8 +57,10 @@ def test_test_user_is_owner(test_ctx):
 
 
 def test_invalid_test_user_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(name="TestUser#0002")
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER)+1)
+    KoalaBot.is_dpytest = False
     assert not KoalaBot.is_owner(test_ctx)
+    KoalaBot.is_dpytest = True
 
 
 def test_owner_is_owner(test_ctx):
@@ -72,8 +73,10 @@ def test_test_user_is_admin(test_ctx):
 
 
 def test_invalid_test_user_is_admin(test_ctx):
-    test_ctx.author = FakeAuthor(name="TestUser#0002")
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER)+2)
+    KoalaBot.is_dpytest = False
     assert not KoalaBot.is_admin(test_ctx)
+    KoalaBot.is_dpytest = True
 
 
 def test_admin_test_user_is_admin(test_ctx):
@@ -88,7 +91,9 @@ def test_admin_is_admin(test_ctx):
 
 def test_not_admin_is_admin(test_ctx):
     test_ctx.author = FakeAuthor(all_permissions=False)
+    KoalaBot.is_dpytest = False
     assert not KoalaBot.is_admin(test_ctx)
+    KoalaBot.is_dpytest = True
 
 
 def test_load_all_cogs():

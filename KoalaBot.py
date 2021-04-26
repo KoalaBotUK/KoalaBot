@@ -20,6 +20,7 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 # Futures
 
 import logging
+logging.basicConfig(filename='KoalaBot.log')
 # Built-in/Generic Imports
 import os
 
@@ -76,7 +77,7 @@ def is_owner(ctx):
     if is_dm_channel(ctx):
         return False
     else:
-        return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and is_dpytest)
+        return ctx.author.id == int(BOT_OWNER) or is_dpytest
 
 
 def is_admin(ctx):
@@ -89,7 +90,7 @@ def is_admin(ctx):
     if is_dm_channel(ctx):
         return False
     else:
-        return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
+        return ctx.author.guild_permissions.administrator or is_dpytest
 
 
 def is_dm_channel(ctx):

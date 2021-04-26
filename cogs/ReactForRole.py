@@ -18,11 +18,12 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from utils import KoalaDBManager, KoalaColours
+from utils import KoalaDBManager, KoalaColours, KoalaUtils
 
 # Libs
 
 # Constants
+
 UNICODE_DISCORD_EMOJI_REGEXP: re.Pattern = re.compile("^:(\w+):$")
 CUSTOM_EMOJI_REGEXP: re.Pattern = re.compile("^<a?:(\w+):(\d+)>$")
 UNICODE_EMOJI_REGEXP: re.Pattern = re.compile(emoji.get_emoji_regexp())
@@ -89,7 +90,7 @@ class ReactForRole(commands.Cog):
             await ctx.send(
                 "Okay, what would you like the title of the react for role message to be? Please enter within 30"
                 " seconds.")
-            x = await self.wait_for_message(self.bot, ctx)
+            x = await KoalaUtils.wait_for_message(self.bot, ctx)
             msg: discord.Message = x[0]
             if not x[0]:
                 await ctx.send(
@@ -107,7 +108,7 @@ class ReactForRole(commands.Cog):
                 title: str = msg.content
             await ctx.send(
                 f"Okay, the title of the message will be \"{title}\". What do you want the description to be?")
-            y = await self.wait_for_message(self.bot, ctx)
+            y = await KoalaUtils.wait_for_message(self.bot, ctx)
             msg: discord.Message = y[0]
             if not y[0]:
                 await ctx.send(
@@ -273,7 +274,7 @@ class ReactForRole(commands.Cog):
             f"Please note however that you've only got {remaining_slots} emoji-role combinations you can enter. I'll "
             f"therefore only take the first {remaining_slots} you do. I'll wait for 3 minutes.")
 
-        input_role_emojis = (await self.wait_for_message(self.bot, ctx, 180))[0].content
+        input_role_emojis = (await KoalaUtils.wait_for_message(self.bot, ctx, 180))[0].content
         emoji_role_list = await self.parse_emoji_and_role_input_str(ctx, input_role_emojis, remaining_slots)
         rfr_embed = self.get_embed_from_message(msg)
 
@@ -352,7 +353,7 @@ class ReactForRole(commands.Cog):
                 "separated by new lines (SHIFT+ENTER). You can enter either the emojis used or the roles' ID/mention/"
                 "name, for each one.")
 
-            input_emoji_roles = (await self.wait_for_message(self.bot, ctx, 120))[0].content
+            input_emoji_roles = (await KoalaUtils.wait_for_message(self.bot, ctx, 120))[0].content
             wanted_removals = await self.parse_emoji_or_roles_input_str(ctx, input_emoji_roles)
             rfr_embed: discord.Embed = self.get_embed_from_message(msg)
             rfr_embed_fields = rfr_embed.fields
@@ -668,7 +669,7 @@ class ReactForRole(commands.Cog):
         :return: User's response's content
         """
         await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
-        msg, channel = await self.wait_for_message(self.bot, ctx)
+        msg, channel = await KoalaUtils.wait_for_message(self.bot, ctx)
         if not msg:
             await channel.send("Okay, I'll cancel the command.")
             return ""
@@ -694,32 +695,13 @@ class ReactForRole(commands.Cog):
         for bot_member in bot_members:
             await channel.set_permissions(bot_member, overwrite=overwrite)
 
-    @staticmethod
-    async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = 60.0) -> Tuple[
-        Optional[discord.Message], Optional[discord.TextChannel]]:
-        """
-        Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
-        timeout of 60 seconds.
-        :param bot: Koala Bot client
-        :param ctx: Context of the original command
-        :param timeout: Time to wait before raising TimeoutError
-        :return: If a message (msg) was received, returns a tuple (msg, None). Else returns (None, ctx.channel)
-        """
-        try:
-            msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
-        except (Exception, TypeError):
-            return None, ctx.channel
-        if not msg:
-            return msg, ctx.channel
-        return msg, None
-
     async def is_user_alive(self, ctx: commands.Context):
         """
         Prompts user for message to check if they're alive. Any message will do. We hope they're alive anyways.
         :param ctx: Context of the command that calls this
         :return: True if message received, False otherwise.
         """
-        msg = await self.wait_for_message(self.bot, ctx, 10)
+        msg = await KoalaUtils.wait_for_message(self.bot, ctx, 10)
         if not msg[0]:
             return False
         return True

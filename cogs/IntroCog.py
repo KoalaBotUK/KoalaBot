@@ -21,6 +21,7 @@ import KoalaBot
 from utils import KoalaDBManager
 
 # Constants
+
 load_dotenv()
 BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
 KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
@@ -30,9 +31,9 @@ DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the 
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
 
-def wait_for_message(bot: discord.Client, ctx: commands.Context) -> (discord.Message, discord.TextChannel):
+def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (discord.Message, discord.TextChannel):
     try:
-        confirmation = bot.wait_for('message', timeout=60.0, check=lambda message: message.author == ctx.author)
+        confirmation = bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
         return confirmation
     except Exception:
         confirmation = None
