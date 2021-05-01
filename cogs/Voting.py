@@ -417,9 +417,13 @@ class Voting(commands.Cog, name="Vote"):
             role_users = list(dict.fromkeys(role_users))
             users = list(set(role_users) & set(users))
         for user in users:
-            msg = await user.send(f"You have been asked to participate in this vote from {ctx.guild.name}.\nPlease react to make your choice (You can change your mind until the vote is closed)", embed=create_embed(vote))
-            vote.register_sent(user.id, msg.id)
-            await add_reactions(vote, msg)
+            try:
+                msg = await user.send(f"You have been asked to participate in this vote from {ctx.guild.name}.\nPlease react to make your choice (You can change your mind until the vote is closed)", embed=create_embed(vote))
+                vote.register_sent(user.id, msg.id)
+                await add_reactions(vote, msg)
+            except discord.Forbidden:
+                # user doesn't allow dms
+                pass
         await ctx.send(f"Sent vote to {len(users)} users")
 
     @commands.check(vote_is_enabled)
