@@ -125,6 +125,7 @@ async def test_discord_set_chair():
     dpytest.verify_message(
         f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair {guild.members[0].id}")
+    dpytest.verify_message(f"You have been selected as chair for vote titled Test Vote")
     dpytest.verify_message(f"Set chair to {guild.members[0].name}")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair")
     dpytest.verify_message("Results will be sent to the channel vote is closed in")
