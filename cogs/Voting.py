@@ -158,25 +158,37 @@ class Voting(commands.Cog, name="Vote"):
     @tasks.loop(seconds=30.0)
     async def vote_end_loop(self):
         now = time.time()
-        votes = self.DBManager.db_execute_select("SELECT * FROM votes WHERE end_time < ?", (now,))
+        votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE end_time < ?", (now,))
         for v_id, a_id, g_id, title, _, _, end_time in votes:
             if v_id in self.vote_manager.sent_votes.keys():
                 vote = self.vote_manager.get_vote_from_id(v_id)
                 results = await get_results(self.bot, vote)
-                self.vote_manager.cancel_sent_vote(vote.id)
                 embed = await make_result_embed(vote, results)
                 try:
                     if vote.chair:
-                        chair = await self.bot.fetch_user(vote.chair)
-                        await chair.send(f"Your vote {title} has closed")
-                        await chair.send(embed=embed)
+                        try:
+                            chair = await self.bot.fetch_user(vote.chair)
+                            await chair.send(f"Your vote {title} has closed")
+                            await chair.send(embed=embed)
+                        except discord.Forbidden:
+                            user = await self.bot.fetch_user(vote.author)
+                            await user.send(f"Your vote {title} has closed")
+                            await user.send(embed=embed)
                     else:
-                        user = await self.bot.fetch_user(vote.author)
-                        await user.send(f"Your vote {title} has closed")
-                        await user.send(embed=embed)
+                        try:
+                            user = await self.bot.fetch_user(vote.author)
+                            await user.send(f"Your vote {title} has closed")
+                            await user.send(embed=embed)
+                        except discord.Forbidden:
+                            guild = await self.bot.fetch_guild(vote.guild)
+                            user = await self.bot.fetch_user(guild.owner_id)
+                            await user.send(f"A vote in your guild titled {title} has closed and the chair is unavailable.")
+                            await user.send(embed=embed)
+                    self.DBManager.db_execute_commit("DELETE FROM Votes WHERE vote_id=?", (vote.id,))
+                    self.vote_manager.cancel_sent_vote(vote.id)
                 except Exception as e:
+                    self.DBManager.db_execute_commit("UPDATE Votes SET end_time=? WHERE vote_id=?", (time.time() + 86400, vote.id))
                     logging.error(f"error in vote loop: {e}")
-        self.DBManager.db_execute_commit("DELETE FROM votes WHERE end_time < ?", (now,))
 
     @vote_end_loop.before_loop
     async def before_vote_loop(self):
@@ -197,7 +209,6 @@ class Voting(commands.Cog, name="Vote"):
         :param payload: payload of data about the reaction
         """
         await self.update_vote_message(payload.message_id, payload.user_id)
-
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(vote_is_enabled)
@@ -270,8 +281,12 @@ class Voting(commands.Cog, name="Vote"):
         """
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         if chair:
-            vote.set_chair(chair.id)
-            await ctx.send(f"Set chair to {chair.name}")
+            try:
+                await chair.send(f"You have been selected as the chair for vote titled {vote.title}")
+                vote.set_chair(chair.id)
+                await ctx.send(f"Set chair to {chair.name}")
+            except discord.Forbidden:
+                await ctx.send("Chair not set as requested user is not accepting direct messages.")
         else:
             vote.set_chair(None)
             await ctx.send(f"Results will be sent to the channel vote is closed in")
@@ -347,9 +362,9 @@ class Voting(commands.Cog, name="Vote"):
         if (end_time - now) < 0:
             await ctx.send("You can't set a vote to end in the past")
             return
-        if (end_time - now) < 599:
-            await ctx.send("Please set the end time to be at least 10 minutes in the future.")
-            return
+        # if (end_time - now) < 599:
+        #     await ctx.send("Please set the end time to be at least 10 minutes in the future.")
+        #     return
         vote.set_end_time(end_time)
         await ctx.send(f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC")
 
@@ -369,7 +384,8 @@ class Voting(commands.Cog, name="Vote"):
     @vote.command(name="cancel")
     async def cancel_vote(self, ctx, *, title):
         """
-        Cancels a vote you are setting up
+        Cancels a vote you are setting up or have sent
+        :param title: title of the vote to cancel
         """
         v_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
         if v_id in self.vote_manager.sent_votes.keys():
@@ -382,6 +398,10 @@ class Voting(commands.Cog, name="Vote"):
     @has_current_votes()
     @vote.command("list", aliases=["currentVotes"])
     async def check_current_votes(self, ctx):
+        """
+        Return a list of all votes you have in this guild.
+        :return:
+        """
         embed = discord.Embed(title="Your current votes")
         votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE author_id=? AND guild_id=?", (ctx.author.id, ctx.guild.id))
         body_string = ""
@@ -422,7 +442,7 @@ class Voting(commands.Cog, name="Vote"):
                 vote.register_sent(user.id, msg.id)
                 await add_reactions(vote, msg)
             except discord.Forbidden:
-                # user doesn't allow dms
+                logging.error(f"tried to send vote to user {user.id} but direct messages are turned off.")
                 pass
         await ctx.send(f"Sent vote to {len(users)} users")
 
@@ -446,9 +466,13 @@ class Voting(commands.Cog, name="Vote"):
         self.vote_manager.cancel_sent_vote(vote.id)
         embed = await make_result_embed(vote, results)
         if vote.chair:
-            chair = await self.bot.fetch_user(vote.chair)
-            await chair.send(embed=embed)
-            await ctx.send(f"Sent results to {chair}")
+            try:
+                chair = await self.bot.fetch_user(vote.chair)
+                await chair.send(embed=embed)
+                await ctx.send(f"Sent results to {chair}")
+            except discord.Forbidden:
+                await ctx.send("Chair does not accept direct messages, sending results here.")
+                await ctx.send(embed=embed)
         else:
             await ctx.send(embed=embed)
 
