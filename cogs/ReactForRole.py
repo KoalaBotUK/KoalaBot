@@ -118,6 +118,13 @@ class ReactForRole(commands.Cog):
                     KoalaBot.logger.error("RFR " + str(e))
                     raise e
 
+    @staticmethod
+    async def attachment_img_content_type(mime: Optional[str]):
+        if not mime:
+            return False
+        else:
+            return mime.startswith("image/")
+
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="createMsg", aliases=["create", "createMessage"])
@@ -293,7 +300,7 @@ class ReactForRole(commands.Cog):
         image = await self.prompt_for_input(ctx, "image you'd like to use as a thumbnail")
         if not image or image == "":
             await ctx.send("Okay, cancelling command.")
-        if isinstance(image, discord.Attachment):
+        if isinstance(image, discord.Attachment) and self.attachment_img_content_type(image.content_type):
             # correct type
             if not image.url:
                 KoalaBot.logger.error(f"Attachment url not found, details : {image}")
