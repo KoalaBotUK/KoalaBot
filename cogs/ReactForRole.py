@@ -334,15 +334,19 @@ class ReactForRole(commands.Cog):
             input_comm = input.lstrip().rstrip().lower()
             if input_comm not in ["all", "specific"]:
                 await ctx.send("Okay, cancelling command.")
-            elif input_comm.lstrip().rstrip().lower() == "all":
+            elif input_comm == "all":
                 await ctx.send(
                     "Okay, do you want all rfr messages in this server to have inline fields or not? Y for yes, "
                     "N for no.")
                 change_all = await self.prompt_for_input(ctx, "Y/N")
                 if not change_all or change_all.rstrip().lstrip().upper() not in ["Y", "N"]:
                     await ctx.send("Okay, cancelling command")
+                    return
+                change_all = change_all.rstrip().lstrip().upper()
+                if change_all not in ["Y", "N"]:
+                    await ctx.send("Invalid input for Y/N. Okay, cancelling command")
+                    return
                 else:
-                    all_yes = change_all.lstrip().rstrip().upper() == "Y"
                     await ctx.send(
                         "Keep in mind that this process may take a while if you have a lot of RFR messages on your "
                         "server.")
@@ -357,7 +361,7 @@ class ReactForRole(commands.Cog):
                         length = self.get_number_of_embed_fields(embed)
                         for i in range(length):
                             field = embed.fields[i]
-                            embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
+                            embed.set_field_at(i, name=field.name, value=field.value, inline=change_all == "Y")
                         await msg.edit(embed=embed)
                     await ctx.send("Okay, the process should be finished now. Please check.")
             elif input_comm.lstrip().rstrip().lower() == "specific":
@@ -372,13 +376,17 @@ class ReactForRole(commands.Cog):
                     yes_no = await self.prompt_for_input(ctx, "Y/N")
                     if not yes_no or yes_no.lstrip().rstrip().upper() not in ["Y", "N"]:
                         await ctx.send("Invalid input, cancelling command.")
+                        return
+                    yes_no = yes_no.lstrip().rstrip().upper()
+                    if yes_no not in ["Y", "N"]:
+                        await ctx.send("Invalid input, cancelling command")
+                        pass
                     else:
-                        all_yes = yes_no.lstrip().rstrip().upper() == "Y"
                         await ctx.send("Okay, I'll change it as requested.")
                         length = self.get_number_of_embed_fields(embed)
                         for i in range(length):
                             field = embed.fields[i]
-                            embed.set_field_at(i, name=field.name, value=field.value, inline=all_yes)
+                            embed.set_field_at(i, name=field.name, value=field.value, inline=yes_no == "Y")
                         await msg.edit(embed=embed)
                         await ctx.send("Okay, should be done. Please check.")
 
