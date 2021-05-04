@@ -19,8 +19,8 @@ from discord.ext.test import factories as dpyfactory
 # Own modules
 
 # Constants
-unicode_emojis = list(emoji.UNICODE_EMOJI.values())
-emoji_unicodes = list(emoji.EMOJI_UNICODE.values())
+unicode_emojis = list(dict(emoji.UNICODE_EMOJI.get('en')).values())
+emoji_unicodes = list(dict(emoji.EMOJI_UNICODE.get('en')).values())
 
 
 # Variables
