@@ -486,7 +486,7 @@ async def test_announce_db_first_creation(announce_cog):
         for _ in guild.members:
             dpytest.verify_embed()
         dpytest.verify_message("The announcement was made successfully")
-        assert announce_cog.announce_database_manager.get_last_use_date(guild.id) == int(time.time())
+        assert (int(time.time())-1) <= announce_cog.announce_database_manager.get_last_use_date(guild.id) <= int(time.time())
 
 
 @pytest.mark.asyncio
