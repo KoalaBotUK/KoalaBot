@@ -14,6 +14,14 @@ A lot of these commands will only be available to administrators
 - `announce send` Send the announcement to the receivers, no designated receiver means all members of the guild
 - `announce cancel` Cancel the pending announcement and delete everything related to it
 
+### Voting
+##### Changed
+- No longer allows users with direct messages disabled to be set as a vote chair.
+- If vote chair, vote owner and guild owner have direct messages disabled vote will not be abandoned but will need to be closed
+manually if a timer is deleted.
+- If vote chair has dms disabled when k!vote is called it outputs results to the channel it is called in.
+
+
 ## [0.3.0] - 17-03-2021
 ### Voting
 ##### Added
