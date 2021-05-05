@@ -106,8 +106,10 @@ def load_all_cogs():
     """
     Loads all cogs in COGS_DIR into the client
     """
+    UNRELEASED = ["Announce.py"]
+
     for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py'):
+        if filename.endswith('.py') and filename not in UNRELEASED:
             client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
 
