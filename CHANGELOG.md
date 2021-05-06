@@ -58,6 +58,14 @@ manually if a timer is deleted.
 - Fix mod channel not saving correctly
 - Fix regex incorrectly being used on some messages
 
+### ReactForRole
+#### Added
+- `rfr edit thumbnail` Edit the displayed thumbnail of an RFR message
+- `rfr edit inline` Edit the fields of a specific or all RFR messages on the server
+- `rfr fixEmbed` Try and fix a broken embed automatically without needing to recreate it from scratch
+####Changed
+- Fix issue where KoalaBot would sometimes fail to recognize a message sent in response to a prompt
+- Fix KoalaBot incorrectly overriding too many permissions in a channel when it created an RFR message.
 
 ## [0.2.0] - 15-10-2020
 ### Text Filter
