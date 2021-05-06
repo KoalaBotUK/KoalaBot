@@ -47,5 +47,12 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Test with pytest
+      env:
+        BOT_OWNER: ${{secrets.BOT_OWNER}}
+        DISCORD_TOKEN: ${{secrets.DISCORD_TOKEN}}
+        GMAIL_EMAIL: ${{secrets.GMAIL_EMAIL}}
+        GMAIL_PASSWORD: ${{secrets.GMAIL_PASSWORD}}
+        TWITCH_SECRET: ${{secrets.TWITCH_SECRET}}
+        TWITCH_TOKEN: ${{secrets.TWITCH_TOKEN}}
       run: |
         python -m pytest tests/
