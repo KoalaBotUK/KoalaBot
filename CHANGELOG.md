@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+
+## [0.4.0] - 06-04-2021
 ###Announce
 ##### Added
 - `announce create` Start the creation of an announcement
@@ -13,14 +15,20 @@ A lot of these commands will only be available to administrators
 - `announce preview` Preview the pending announcement as an embed
 - `announce send` Send the announcement to the receivers, no designated receiver means all members of the guild
 - `announce cancel` Cancel the pending announcement and delete everything related to it
-
 ### Voting
 ##### Changed
 - No longer allows users with direct messages disabled to be set as a vote chair.
 - If vote chair, vote owner and guild owner have direct messages disabled vote will not be abandoned but will need to be closed
 manually if a timer is deleted.
 - If vote chair has dms disabled when k!vote is called it outputs results to the channel it is called in.
-
+### ReactForRole
+#### Added
+- `rfr edit thumbnail` Edit the displayed thumbnail of an RFR message
+- `rfr edit inline` Edit the fields of a specific or all RFR messages on the server
+- `rfr fixEmbed` Try and fix a broken embed automatically without needing to recreate it from scratch
+####Changed
+- Fix issue where KoalaBot would sometimes fail to recognize a message sent in response to a prompt
+- Fix KoalaBot incorrectly overriding too many permissions in a channel when it created an RFR message.
 
 ## [0.3.0] - 17-03-2021
 ### Voting
@@ -51,21 +59,12 @@ manually if a timer is deleted.
 #### Changed
 - TwitchAlert now requires lower case team names and usernames
 - dev: Minor console fixes (removed excess error notifications)
-
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only
 - Fix mod channel not saving correctly
 - Fix regex incorrectly being used on some messages
 
-### ReactForRole
-#### Added
-- `rfr edit thumbnail` Edit the displayed thumbnail of an RFR message
-- `rfr edit inline` Edit the fields of a specific or all RFR messages on the server
-- `rfr fixEmbed` Try and fix a broken embed automatically without needing to recreate it from scratch
-####Changed
-- Fix issue where KoalaBot would sometimes fail to recognize a message sent in response to a prompt
-- Fix KoalaBot incorrectly overriding too many permissions in a channel when it created an RFR message.
 
 ## [0.2.0] - 15-10-2020
 ### Text Filter
@@ -207,6 +206,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.4.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
 [0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8

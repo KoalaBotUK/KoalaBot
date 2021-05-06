@@ -1,5 +1,7 @@
 # KoalaBot
-[![Discord Server](https://img.shields.io/discord/523301176309972993.svg?label=Support_Discord)](https://discord.gg/5etEjVd)
+[![Discord Server](https://discord.com/api/guilds/729325378681962576/widget.png?style=shield)](https://discord.gg/5etEjVd)
+[![Build Status](https://api.travis-ci.org/KoalaBotUK/KoalaBot.svg?branch=master)](https://travis-ci.org/KoalaBotUK/KoalaBot)
+
 
 KoalaBot is a free open source discord bot being developed by students from around the UK. 
 Our aim is to ensure university society committee leaders can access all they need and from one easy to use discord bot 
@@ -8,17 +10,13 @@ to improve their server and society!
 ## Authors
 
 * **Jack Draper** - *Project Manager* - [JayDwee](https://github.com/JayDwee)
-* **Kieran Allinson** - *Project Lead: Backend* - [Kaspiaan](https://github.com/Kaspiaan)
-* **Viraj Shah** - *Project Lead: Frontend* - [VirajShah18](https://github.com/VirajShah18)
+* **Stefan Cooper** - *Senior Developer* - [stefan-cooper](https://github.com/stefan-cooper)
+* **Kieran Allinson** - *Senior Developer* - [Kaspiaan](https://github.com/Kaspiaan)
+* **Viraj Shah** - *Senior Developer* - [VirajShah18](https://github.com/VirajShah18)
 
+All of our other amazing developers can be seen on our website https://koalabot.uk
 
-* **Anan Venkatesh** - *Developer* - [Unknownlocal](https://github.com/Unknownlocal)
-* **Harry Nelson** - *Developer* - [largereptile](https://github.com/largereptile)
-* **Robert Slawik** - *Developer* - [RobertSlawik](https://github.com/RobertSlawik)
-* **Rurda Malik** - *Developer* - [BlahBlahRudra](https://github.com/BlahBlahRudra)
-* **Stefan Cooper** - *Developer* - [3eak](https://github.com/3eak)
-
-See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) who participated in this project.
+See also the list of [current developers](https://github.com/orgs/KoalaBotUK/teams/developers) who are actively participating in this project.
 
 ## License
 
@@ -44,11 +42,13 @@ pip3 install -r requirements.txt
 
 Before running the bot you will need to create a `.env` file in the root directory of this project. A template for this can be found here:
 
-```python
+```dotenv
 # Discord Bot
 DISCORD_TOKEN = AdiSc0RdT0k3N # A discord Token taken from the discord developers portal 
 BOT_OWNER = 123456789 # A discord ID for the person who should have access to owner commands
 
+# Encryption (optional)
+ENCRIPTION = False # or True (default) for disabling/enabling the database encryption
 
 # Twitch Alert
 TWITCH_TOKEN = tw1tch70k3n # Twitch Token taken from the twitch developers portal
@@ -57,24 +57,18 @@ TWITCH_SECRET = tw1tch53cr3t # Twitch Secret taken from the twitch developers po
 # Verification
 GMAIL_EMAIL = example@gmail.com # email for a gmail account
 GMAIL_PASSWORD = example_password123 # password for the same gmail account
+
+
 ```
 
 ## Running the tests
-
-Due to the incompatibility of the `discord.py 1.4` with our testing library `dpytest` you will need to download an
-older version of discord.py for testing.
-```
-pip3 install dpytest==0.0.20
-pip3 install discord.py==1.3.4
-```
-
 Tests are run using `pytest`
 ```
 python3 -m pytest tests/
 ```
 
 ## Links
-* Website & Dashboard: [koalabot.uk](http://koalabot.uk)
+* Website & Dashboard: [koalabot.uk](https://koalabot.uk)
 * Support Discord: [discord.koalabot.uk](http://discord.koalabot.uk)
 * Development Documentation: [documents.koalabot.uk](http://documents.koalabot.uk)
 * Developer Roadmap: [development.koalabot.uk](http://development.koalabot.uk)
