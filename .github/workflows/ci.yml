@@ -26,6 +26,8 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
           sudo apt-get install libsqlcipher-dev
+        elif  [ "$RUNNER_OS" == "macOS" ]; then
+          echo "ENCRYPTED=False" >> $GITHUB_ENV
         fi
 
     - name: Install dependencies
