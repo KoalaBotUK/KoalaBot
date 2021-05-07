@@ -918,7 +918,7 @@ async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
     for i in range(num_roles):
         role = testutils.fake_guild_role(guild)
         r_list.append(role)
-    required = random.sample(set(r_list), num_required)
+    required = random.sample(list(r_list), num_required)
     for r in required:
         DBManager.add_guild_rfr_required_role(guild.id, r.id)
         assert independent_get_guild_rfr_required_role(guild.id, r.id) is not None
