@@ -55,4 +55,4 @@ jobs:
         TWITCH_SECRET: ${{secrets.TWITCH_SECRET}}
         TWITCH_TOKEN: ${{secrets.TWITCH_TOKEN}}
       run: |
-        pytest
+        python -m pytest
