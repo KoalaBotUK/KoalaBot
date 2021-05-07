@@ -170,7 +170,7 @@ async def test_wait_for_message(utils_cog):
     import threading
     t2 = threading.Timer(interval=1.0, function=dpytest.message, args=("y"))
     t2.start()
-    fut = IntroCog.wait_for_message(bot, ctx)
+    fut = await IntroCog.wait_for_message(bot, ctx)
     t2.join()
     assert fut, dpytest.sent_queue
 
