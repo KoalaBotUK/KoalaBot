@@ -716,7 +716,7 @@ async def test_rfr_edit_title():
 
 
 @pytest.mark.asyncio
-async def test_rfr_edit_thumbnail_atttach():
+async def test_rfr_edit_thumbnail_attach():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -729,7 +729,7 @@ async def test_rfr_edit_thumbnail_atttach():
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  height=1000,
-                                                                                                 width=1000))
+                                                                                                 width=1000, content_type="image/jpeg"))
     msg_id = message.id
     bad_attach = "something that's not an attachment"
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
