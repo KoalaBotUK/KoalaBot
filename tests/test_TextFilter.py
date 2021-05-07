@@ -17,8 +17,8 @@ import time
 import KoalaBot
 from cogs import BaseCog
 from cogs import TextFilter
-from tests.utils import TestUtilsCog
-from tests.utils.TestUtils import assert_activity
+from tests.utils_testing import LastCtxCog
+from tests.utils_testing.TestUtils import assert_activity
 from utils import KoalaDBManager
 from utils.KoalaColours import *
 from utils.KoalaUtils import is_int
@@ -36,7 +36,7 @@ def se5tup_function():
     base_cog = BaseCog.BaseCog(bot)
     tf_cog = TextFilter.TextFilter(bot)
     tf_cog.tf_database_manager.create_tables()
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(base_cog)
     bot.add_cog(tf_cog)
     bot.add_cog(utils_cog)
@@ -46,7 +46,7 @@ def se5tup_function():
 
 @pytest.fixture(scope="function", autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")

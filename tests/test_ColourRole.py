@@ -23,7 +23,7 @@ from discord.ext import commands
 import KoalaBot
 from cogs import ColourRole
 from cogs.ColourRole import ColourRoleDBManager
-from tests.utils import TestUtilsCog
+from tests.utils_testing import LastCtxCog
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -41,7 +41,7 @@ def setup_funsction():
     global utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     role_colour_cog = ColourRole.ColourRole(bot)
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(role_colour_cog)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
@@ -50,7 +50,7 @@ def setup_funsction():
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")

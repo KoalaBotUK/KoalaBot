@@ -20,7 +20,7 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from cogs import IntroCog
-from tests.utils.TestUtilsCog import TestUtilsCog
+from tests.utils_testing.LastCtxCog import LastCtxCog
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -34,7 +34,7 @@ DBManager.create_base_tables()
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog(bot)
+    utils_cog = LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")

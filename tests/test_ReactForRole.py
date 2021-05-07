@@ -24,8 +24,8 @@ from discord.ext.test import factories as dpyfactory
 import KoalaBot
 from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
-from tests.utils import TestUtils as testutils
-from tests.utils import TestUtilsCog
+from tests.utils_testing import TestUtils as testutils
+from tests.utils_testing import LastCtxCog
 from utils import KoalaColours
 from utils.KoalaDBManager import KoalaDBManager
 from utils.KoalaUtils import wait_for_message
@@ -39,7 +39,7 @@ DBManager.create_tables()
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
