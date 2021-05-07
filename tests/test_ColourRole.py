@@ -351,7 +351,7 @@ async def test_list_protected_roles(num_total, num_protected):
     elif num_protected == num_total:
         protected = roles.copy()
     else:
-        protected = random.sample(set(roles), 2)
+        protected = random.sample(list(roles), 2)
     for r in protected:
         DBManager.add_guild_protected_colour_role(guild.id, r.id)
 
@@ -376,7 +376,7 @@ async def test_list_custom_colour_allowed_roles(num_total, num_protected):
     elif num_protected == num_total:
         allowed = roles.copy()
     else:
-        allowed = random.sample(set(roles), 2)
+        allowed = random.sample(list(roles), 2)
     for r in allowed:
         DBManager.add_colour_change_role_perms(guild.id, r.id)
 
