@@ -315,7 +315,7 @@ async def test_create_custom_colour_role(role_colour_cog, utils_cog):
     with mock.patch('cogs.ColourRole.ColourRole.calculate_custom_colour_role_position', return_value=2) as mock_calc:
         role = await role_colour_cog.create_custom_colour_role(colour, colour_str, ctx)
         assert role in guild.roles
-        assert re.match("^KoalaBot\[0x([A-F0-9]{6})\]", role.name), role.name
+        assert re.match(ColourRole.COLOUR_ROLE_NAMING, role.name), role.name
         assert role.colour.value == colour.value
         assert role.position == 2
         mock_calc.assert_called_once_with(guild)

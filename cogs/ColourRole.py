@@ -22,6 +22,7 @@ from utils.KoalaDBManager import KoalaDBManager
 
 
 # Constants
+COLOUR_ROLE_NAMING = "^KoalaBot[0x[A-F0-9]{6}]$"
 
 def is_allowed_to_change_colour(ctx: commands.Context):
     """
@@ -180,7 +181,7 @@ class ColourRole(commands.Cog):
         """
         author: discord.Member = ctx.author
         roles: List[discord.Role] = [role for role in author.roles if
-                                     re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
+                                     re.match(COLOUR_ROLE_NAMING, role.name)]
         if not roles:
             KoalaBot.logger.debug(
                 f"User {author.id} in guild {ctx.guild.id} changed their colour. Found no old colour roles to prune.")
@@ -203,7 +204,7 @@ class ColourRole(commands.Cog):
         """
         guild: discord.Guild = ctx.guild
         roles: List[discord.Role] = [role for role in guild.roles if
-                                     re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name) and len(role.members) == 0]
+                                     re.match(COLOUR_ROLE_NAMING, role.name) and len(role.members) == 0]
         if not roles:
             KoalaBot.logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
         else:
@@ -231,7 +232,7 @@ class ColourRole(commands.Cog):
         msg = "Removed colour roles from members who had held this role previously. These were members "
         for member in members:
             roles: List[discord.Role] = [role for role in member.roles if
-                                         re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
+                                         re.match(COLOUR_ROLE_NAMING, role.name)]
             if not roles:
                 KoalaBot.logger.debug(
                     f"Guild {member.guild.id} removed a role from their roles allowed to have custom colours. Found no newly illegal custom colour roles to prune from member {member.id}.")
@@ -293,7 +294,7 @@ class ColourRole(commands.Cog):
         """
         role_pos = self.calculate_custom_colour_role_position(guild)
         roles: List[discord.Role] = [role for role in guild.roles if
-                                     re.match("^KoalaBot\[0x([A-F0-9]{6})\]$", role.name)]
+                                     re.match(COLOUR_ROLE_NAMING, role.name)]
         for role in roles:
             await role.edit(position=role_pos)
 
