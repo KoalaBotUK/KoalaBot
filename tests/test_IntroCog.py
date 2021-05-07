@@ -168,7 +168,7 @@ async def test_wait_for_message(utils_cog):
     ctx = utils_cog.get_last_ctx()
 
     import threading
-    t2 = threading.Timer(interval=1.0, function=dpytest.message, args=("y"))
+    t2 = threading.Timer(interval=0.2, function=dpytest.message, args=("y"))
     t2.start()
     fut = IntroCog.wait_for_message(bot, ctx)
     t2.join()

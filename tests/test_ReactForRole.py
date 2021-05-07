@@ -509,7 +509,7 @@ async def test_wait_for_message_not_none(msg_content, utils_cog, rfr_cog):
     import threading
     t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
     t2.start()
-    fut = await wait_for_message(bot, ctx)
+    fut = await wait_for_message(bot, ctx, 0.2)
     t2.join()
     assert fut, dpytest.sent_queue
 
