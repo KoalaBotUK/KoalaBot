@@ -33,8 +33,8 @@ load_dotenv()
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \
               "/128/social-twitch-circle-512.png"
-TWITCH_CLIENT_ID = os.environ['TWITCH_TOKEN']
-TWITCH_SECRET = os.environ['TWITCH_SECRET']
+TWITCH_CLIENT_ID = os.environ.get('TWITCH_TOKEN')
+TWITCH_SECRET = os.environ.get('TWITCH_SECRET')
 TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
 
 # Variables
@@ -1095,5 +1095,11 @@ def setup(bot: KoalaBot) -> None:
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(TwitchAlert(bot))
-    logging.info("TwitchAlert is ready.")
+    if TWITCH_SECRET is None or TWITCH_CLIENT_ID is None:
+        logging.error("TwitchAlert not started. API keys not found in environment.")
+        print("TwitchAlert not started. API keys not found in environment.")
+        KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, False)
+    else:
+        bot.add_cog(TwitchAlert(bot))
+        logging.info("TwitchAlert is ready.")
+        print("TwitchAlert is ready.")
