@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+###Announce
+- Announce is now enabled successfully
 
 ## [0.4.0] - 06-04-2021
 ###Announce
