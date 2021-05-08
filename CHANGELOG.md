@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### TwitchAlert
+- Fix issue of teams having repeated notifications
 
 ## [0.4.1] - 08-04-2021
 ### Announce
