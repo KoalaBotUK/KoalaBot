@@ -10,7 +10,7 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from cogs import Announce
-from tests.utils import TestUtilsCog
+from tests.utils_testing import LastCtxCog
 
 # Varibales
 KoalaBot.is_dpytest = True
@@ -20,7 +20,7 @@ KoalaBot.is_dpytest = True
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot: discord.ext.commands.Bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")

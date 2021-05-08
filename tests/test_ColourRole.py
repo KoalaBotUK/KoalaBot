@@ -23,7 +23,7 @@ from discord.ext import commands
 import KoalaBot
 from cogs import ColourRole
 from cogs.ColourRole import ColourRoleDBManager
-from tests.utils import TestUtilsCog
+from tests.utils_testing import LastCtxCog
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
@@ -41,7 +41,7 @@ def setup_funsction():
     global utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     role_colour_cog = ColourRole.ColourRole(bot)
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(role_colour_cog)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
@@ -50,7 +50,7 @@ def setup_funsction():
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -315,7 +315,7 @@ async def test_create_custom_colour_role(role_colour_cog, utils_cog):
     with mock.patch('cogs.ColourRole.ColourRole.calculate_custom_colour_role_position', return_value=2) as mock_calc:
         role = await role_colour_cog.create_custom_colour_role(colour, colour_str, ctx)
         assert role in guild.roles
-        assert re.match("^KoalaBot\[0x([A-F0-9]{6})\]", role.name), role.name
+        assert re.match(ColourRole.COLOUR_ROLE_NAMING, role.name), role.name
         assert role.colour.value == colour.value
         assert role.position == 2
         mock_calc.assert_called_once_with(guild)
@@ -351,7 +351,7 @@ async def test_list_protected_roles(num_total, num_protected):
     elif num_protected == num_total:
         protected = roles.copy()
     else:
-        protected = random.sample(set(roles), 2)
+        protected = random.sample(list(roles), 2)
     for r in protected:
         DBManager.add_guild_protected_colour_role(guild.id, r.id)
 
@@ -376,7 +376,7 @@ async def test_list_custom_colour_allowed_roles(num_total, num_protected):
     elif num_protected == num_total:
         allowed = roles.copy()
     else:
-        allowed = random.sample(set(roles), 2)
+        allowed = random.sample(list(roles), 2)
     for r in allowed:
         DBManager.add_colour_change_role_perms(guild.id, r.id)
 

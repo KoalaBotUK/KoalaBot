@@ -19,11 +19,9 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 
-import logging
-
-logging.basicConfig(filename='KoalaBot.log')
 # Built-in/Generic Imports
 import os
+import logging
 
 # Libs
 import discord
@@ -35,6 +33,7 @@ from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
 
 # Constants
+logging.basicConfig(filename='KoalaBot.log')
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ['BOT_OWNER']

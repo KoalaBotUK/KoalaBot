@@ -17,8 +17,8 @@ import time
 import KoalaBot
 from cogs import BaseCog
 from cogs import TextFilter
-from tests.utils import TestUtilsCog
-from tests.utils.TestUtils import assert_activity
+from tests.utils_testing import LastCtxCog
+from tests.utils_testing.TestUtils import assert_activity
 from utils import KoalaDBManager
 from utils.KoalaColours import *
 from utils.KoalaUtils import is_int
@@ -36,7 +36,7 @@ def se5tup_function():
     base_cog = BaseCog.BaseCog(bot)
     tf_cog = TextFilter.TextFilter(bot)
     tf_cog.tf_database_manager.create_tables()
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(base_cog)
     bot.add_cog(tf_cog)
     bot.add_cog(utils_cog)
@@ -46,7 +46,7 @@ def se5tup_function():
 
 @pytest.fixture(scope="function", autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -185,8 +185,8 @@ async def test_unrecognised_filter_type():
 
 @pytest.mark.asyncio()
 async def test_filter_email_regex(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
-    assertFilteredConfirmation("[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
+    assertFilteredConfirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
     cleanup(dpytest.get_config().guilds[0].id, tf_cog)
 
 @pytest.mark.asyncio()
@@ -205,8 +205,8 @@ async def test_normal_filter_does_not_recognise_regex():
 
 @pytest.mark.asyncio()
 async def test_filter_various_emails_with_regex(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
-    assertFilteredConfirmation("[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
+    assertFilteredConfirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
 
     # Should delete and warn
     await dpytest.message("hey stefan@herts.ac.uk")

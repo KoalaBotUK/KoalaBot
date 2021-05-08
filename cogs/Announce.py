@@ -6,17 +6,17 @@ Created by: Bill Cao
 """
 
 # Built-in/Generic Imports
-import asyncio
+import math
 
 # Libs
-import math
-from typing import Optional, Tuple
-
 import discord
 from discord.ext import commands
 from utils.KoalaUtils import extract_id, wait_for_message
 from utils import KoalaColours
 import time
+
+# Own modules
+import KoalaBot
 
 # constants
 ANNOUNCE_SEPARATION_DAYS = 30
@@ -24,7 +24,7 @@ SECONDS_IN_A_DAY = 86400
 TIMEOUT_TIME = 60.0
 MAX_MESSAGE_LENGTH = 2000
 
-import KoalaBot
+
 
 
 def announce_is_enabled(ctx):
