@@ -95,37 +95,42 @@
     ]
   },
   {
-    "name": "Colour Role",
+    "name": "ColourRole",
     "commands": [
       {
-        "command": "listCustomColourAllowedRoles",
-        "parameters": [],
-        "description": "Lists the roles in a guild which are permitted to have their own custom colours."
+        "command": "customColour",
+        "parameters": ["colour_hexcode/'no'"],
+        "description": "Gives a user a chosen custom colour, or removes the custom colour with 'k!customColour no'"
       },
       {
         "command": "listProtectedRoleColours",
         "parameters": [],
-        "description": "Lists the protected roles, whose colours are protected from being imitated by a custom colour, in a guild."
+        "description": "Lists the protected roles, whose colours are protected from being imitated by a custom colour, in a server"
+      },
+      {
+        "command": "addProtectedRoleColour",
+        "parameters": ["role"],
+        "description": "Adds a role's colour to the list of protected roles"
+      },
+      {
+        "command": "removeProtectedRoleColour",
+        "parameters": ["role"],
+        "description": "Removes a role's colour from the list of protected roles"
+      },
+      {
+        "command": "listCustomColourAllowedRoles",
+        "parameters": [],
+        "description": "Lists the roles in a server whose users are permitted to have their own custom colours"
       },
       {
         "command": "addCustomColourAllowedRole",
         "parameters": ["role"],
-        "description": "Adds a role, via ID, mention or name, to the list of roles allowed to have a custom colour."
-      },
-      {
-        "command": "addProtectedRoleColour",
-        "parameters": ["role_str"],
-        "description": "Adds a role, via ID, mention or name, to the list of protected roles."
+        "description": "Adds a role to the list of roles allowed to have a custom colour"
       },
       {
         "command": "removeCustomColourAllowedRole",
         "parameters": ["role_str"],
-        "description": "Removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour."
-      },
-      {
-        "command": "removeProtectedRoleColour",
-        "parameters": ["role_str"],
-        "description": "Removes a role, via ID, mention or name, from the list of protected roles."
+        "description": "Removes a role from the list of roles allowed to have a custom colour"
       }
     ]
   },
