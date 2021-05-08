@@ -19,7 +19,7 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from cogs import BaseCog
-from tests.utils.TestUtils import assert_activity
+from tests.utils_testing.TestUtils import assert_activity
 
 
 # Constants
