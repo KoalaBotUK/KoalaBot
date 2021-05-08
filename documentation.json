@@ -50,67 +50,47 @@
     ]
   },
   {
-    "name": "Verify",
+    "name": "Announce",
     "commands": [
       {
-        "command": "verifyAdd",
-        "parameters": ["suffix", "role"],
-        "description": "Set up a role and email pair for KoalaBot to verify users with"
-      },
-      {
-        "command": "verifyRemove",
-        "parameters": ["suffix", "role"],
-        "description": "Disable an existing verification listener"
-      },
-      {
-        "command": "reVerify",
-        "parameters": ["role"],
-        "description": "Removes a role from all users who have it and marks them as needing to re-verify before giving it back."
-      },
-      {
-        "command": "verifyList",
-        "parameters": ["channelId"],
-        "description": "List the current verification setup for the server"
-      }
-    ]
-  },
-  {
-    "name": "Twitch Alert",
-    "commands": [
-      {
-        "command": "twitchEditMsg",
-        "parameters": ["channel_id", "default_live_message"],
-        "description": "Edit the default message put in a Twitch Alert Notification"
-      },
-      {
-        "command": "twitchViewMsg",
-        "parameters": ["channel_id"],
-        "description": "Shows the current default message for Twitch Alerts"
-      },
-      {
-        "command": "twitchList",
+        "command": "announce create",
         "parameters": [],
-        "description": "Shows all current users and teams in a Twitch Alert"
+        "description": "Create a new message that will be available for sending"
       },
       {
-        "command": "twitchAdd",
-        "parameters": ["channel_id", "twitch_username", "custom_live_message"],
-        "description": "Add a Twitch user to a Twitch Alert"
+        "command": "changeTitle",
+        "parameters": [],
+        "description": "Change the title of the embedded message"
       },
       {
-        "command": "twitchRemove",
-        "parameters": ["channel_id", "twitch_username"],
-        "description": "Remove a user from a Twitch Alert"
+        "command": "changeContent",
+        "parameters": [],
+        "description": "Change the content of the embedded message"
       },
       {
-        "command": "twitchAddTeam",
-        "parameters": ["channel_id", "team_name", "custom_live_message"],
-        "description": "Add a Twitch team to a Twitch alert"
+        "command": "addRole",
+        "parameters": [],
+        "description": "Add a role to list of people to send the announcement to"
       },
       {
-        "command": "twitchRemoveTeam",
-        "parameters": ["channel_id", "team_name"],
-        "description": "Edit the default message put in a Twitch Alert Notification"
+        "command": "removeRole",
+        "parameters": [],
+        "description": "Remove a role from a list of people to send the announcement to"
+      },
+      {
+        "command": "preview",
+        "parameters": [],
+        "description": "Post a constructed embedded message to the channel where the command is invoked"
+      },
+      {
+        "command": "send",
+        "parameters": [],
+        "description": "Send a pending announcement"
+      },
+      {
+        "command": "cancel",
+        "parameters": [],
+        "description": "Cancel a pending announcement"
       }
     ]
   },
@@ -251,6 +231,86 @@
         "command": "unignore",
         "parameters": ["mention"],
         "description": "Unignore a user/channel that was previously set as ignored."
+      }
+    ]
+  },
+  {
+    "name": "Twitch Alert",
+    "commands": [
+      {
+        "command": "twitchEditMsg",
+        "parameters": ["channel_id", "default_live_message"],
+        "description": "Edit the default message put in a Twitch Alert Notification"
+      },
+      {
+        "command": "twitchViewMsg",
+        "parameters": ["channel_id"],
+        "description": "Shows the current default message for Twitch Alerts"
+      },
+      {
+        "command": "twitchList",
+        "parameters": [],
+        "description": "Shows all current users and teams in a Twitch Alert"
+      },
+      {
+        "command": "twitchAdd",
+        "parameters": ["channel_id", "twitch_username", "custom_live_message"],
+        "description": "Add a Twitch user to a Twitch Alert"
+      },
+      {
+        "command": "twitchRemove",
+        "parameters": ["channel_id", "twitch_username"],
+        "description": "Remove a user from a Twitch Alert"
+      },
+      {
+        "command": "twitchAddTeam",
+        "parameters": ["channel_id", "team_name", "custom_live_message"],
+        "description": "Add a Twitch team to a Twitch alert"
+      },
+      {
+        "command": "twitchRemoveTeam",
+        "parameters": ["channel_id", "team_name"],
+        "description": "Edit the default message put in a Twitch Alert Notification"
+      }
+    ]
+  },
+  {
+    "name": "Verify",
+    "commands": [
+      {
+        "command": "verifyAdd",
+        "parameters": ["suffix", "role"],
+        "description": "Set up a role and email pair for KoalaBot to verify users with"
+      },
+      {
+        "command": "verifyRemove",
+        "parameters": ["suffix", "role"],
+        "description": "Disable an existing verification listener"
+      },
+      {
+        "command": "reVerify",
+        "parameters": ["role"],
+        "description": "Removes a role from all users who have it and marks them as needing to re-verify before giving it back."
+      },
+      {
+        "command": "verifyList",
+        "parameters": ["channelId"],
+        "description": "List the current verification setup for the server"
+      }
+    ]
+  },
+  {
+    "name": "Vote",
+    "commands": [
+      {
+        "command": "",
+        "parameters": [""],
+        "description": ""
+      },
+      {
+        "command": "",
+        "parameters": [""],
+        "description": ""
       }
     ]
   }
