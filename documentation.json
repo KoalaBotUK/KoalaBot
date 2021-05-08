@@ -1,46 +1,51 @@
 [
   {
-    "name": "Base",
+    "name": "KoalaBot",
     "commands": [
+      {
+        "command": "listExt",
+        "parameters": [],
+        "description": "Lists all enabled and disabled Koala Extensions on your server"
+      },
       {
         "command": "enableExt",
         "parameters": ["koala_extension"],
-        "description": "Enable available Koala Extensions"
+        "description": "Enable a Koala Extension on your server"
       },
       {
         "command": "disableExt",
         "parameters": ["koala_extension"],
-        "description": "Disable enabled Koala Extensions"
-      },
-      {
-        "command": "listExt",
-        "parameters": [],
-        "description": "Lists all enabled and disabled Koala Extensions"
+        "description": "Disable a Koala Extension on your server"
       },
       {
         "command": "welcomeUpdateMsg",
         "parameters": [],
-        "description": "Allows admins to change their customisable part of the welcome message of a guild."
+        "description": "Change the customisable part of the welcome message of your server"
       },
       {
         "command": "welcomeSendMsg",
         "parameters": [],
-        "description": "Allows admins to send out their welcome message manually to all members of a guild."
+        "description": "Sends out the welcome message manually to all members of your server"
       },
       {
         "command": "welcomeViewMsg",
         "parameters": [],
-        "description": "Shows the current welcome message"
+        "description": "Shows this server's current welcome message"
       },
       {
         "command": "clear",
         "parameters": ["amount"],
-        "description": "Clears a given number of messages from the given channel."
+        "description": "Clears a given number of messages from the channel."
       },
       {
         "command": "ping",
         "parameters": [],
         "description": "Returns the ping of a bot"
+      },
+      {
+        "command": "support",
+        "parameters": [],
+        "description": "Returns a link to the KoalaBot Support Discord Server"
       }
     ]
   },
