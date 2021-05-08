@@ -24,8 +24,8 @@ from discord.ext.test import factories as dpyfactory
 import KoalaBot
 from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
-from tests.utils import TestUtils as testutils
-from tests.utils import TestUtilsCog
+from tests.utils_testing import TestUtils as testutils
+from tests.utils_testing import LastCtxCog
 from utils import KoalaColours
 from utils.KoalaDBManager import KoalaDBManager
 from utils.KoalaUtils import wait_for_message
@@ -39,7 +39,7 @@ DBManager.create_tables()
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -509,7 +509,7 @@ async def test_wait_for_message_not_none(msg_content, utils_cog, rfr_cog):
     import threading
     t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
     t2.start()
-    fut = wait_for_message(bot, ctx)
+    fut = await wait_for_message(bot, ctx, 0.2)
     t2.join()
     assert fut, dpytest.sent_queue
 
@@ -716,7 +716,7 @@ async def test_rfr_edit_title():
 
 
 @pytest.mark.asyncio
-async def test_rfr_edit_thumbnail_atttach():
+async def test_rfr_edit_thumbnail_attach():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -729,7 +729,7 @@ async def test_rfr_edit_thumbnail_atttach():
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  height=1000,
-                                                                                                 width=1000))
+                                                                                                 width=1000, content_type="image/jpeg"))
     msg_id = message.id
     bad_attach = "something that's not an attachment"
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
@@ -918,7 +918,7 @@ async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
     for i in range(num_roles):
         role = testutils.fake_guild_role(guild)
         r_list.append(role)
-    required = random.sample(set(r_list), num_required)
+    required = random.sample(list(r_list), num_required)
     for r in required:
         DBManager.add_guild_rfr_required_role(guild.id, r.id)
         assert independent_get_guild_rfr_required_role(guild.id, r.id) is not None

@@ -86,7 +86,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
-        error = """Something has gone wrong, your regex may be invalid, this regex may already be filtered
+        error = r"""Something has gone wrong, your regex may be invalid, this regex may already be filtered
                 or you have entered the command incorrectly. Try again with: `k!filterRegex 
                 [filtered_regex] [[risky] or [banned]]`. One example for a regex could be to block emails
                 with: [a-zA-Z0-9\._]+@herts\.ac\.uk where EMAIL is the university type (e.g herts)"""

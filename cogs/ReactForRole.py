@@ -26,8 +26,8 @@ from utils import KoalaDBManager, KoalaColours, KoalaUtils
 
 # Constants
 
-UNICODE_DISCORD_EMOJI_REGEXP: re.Pattern = re.compile("^:(\w+):$")
-CUSTOM_EMOJI_REGEXP: re.Pattern = re.compile("^<a?:(\w+):(\d+)>$")
+UNICODE_DISCORD_EMOJI_REGEXP: re.Pattern = re.compile(r"^:(\w+):$")
+CUSTOM_EMOJI_REGEXP: re.Pattern = re.compile(r"^<a?:(\w+):(\d+)>$")
 UNICODE_EMOJI_REGEXP: re.Pattern = re.compile(emoji.get_emoji_regexp())
 IMAGE_FORMATS = ("image/png", "image/jpeg", "image/gif")
 
@@ -119,7 +119,7 @@ class ReactForRole(commands.Cog):
                     raise e
 
     @staticmethod
-    async def attachment_img_content_type(mime: Optional[str]):
+    def attachment_img_content_type(mime: Optional[str]):
         if not mime:
             return False
         else:
