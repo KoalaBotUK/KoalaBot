@@ -200,62 +200,62 @@
     ]
   },
   {
-    "name": "Text Filter",
+    "name": "TextFilter",
     "commands": [
       {
         "command": "filter",
         "parameters": ["text", "type"],
-        "description": "Filter a word or string of text. Type is defaulted to 'banned' which will delete the message and warn the user. Use type 'risky' to just warn the user."
+        "description": "Filter a word or string of text. Type is defaulted to 'banned' which will delete the message and warn the user. Use type 'risky' to just warn the user"
       },
       {
         "command": "filterRegex",
         "parameters": ["regex", "type"],
-        "description": "Filter a regex string. Type is defaulted to 'banned' which will delete the message and warn the user. Use type 'risky' to just warn the user."
+        "description": "Filter a regex string. Type is defaulted to 'banned' which will delete the message and warn the user. Use type 'risky' to just warn the user"
       },
       {
         "command": "filterList",
         "parameters": [],
-        "description": "Get a list of filtered words in the server."
+        "description": "Get a list of filtered words in the server"
       },
       {
         "command": "modChannelAdd",
         "parameters": ["channelId"],
-        "description": " Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to."
+        "description": " Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to"
       },
       {
         "command": "modChannelRemove",
         "parameters": ["channelId"],
-        "description": "Remove a mod channel from the server."
+        "description": "Remove a mod channel from the server"
       },
       {
         "command": "modChannelList",
         "parameters": [],
-        "description": "See a list of mod channels in the server."
+        "description": "See a list of mod channels in the server"
       },
       {
         "command": "ignoreUser",
         "parameters": ["userMention"],
-        "description": "Add a new ignored user for the server. This users' messages will be ignored by the Text Filter."
+        "description": "Add a new ignored user for the server. This users' messages will be ignored by the Text Filter"
       },
       {
         "command": "ignoreChannel",
         "parameters": ["channelMention"],
-        "description": "Add a new ignored channel for the server. Messages in this channel will be ignored by the Text Filter."
+        "description": "Add a new ignored channel for the server. Messages in this channel will be ignored by the Text Filter"
       },
       {
         "command": "ignoreList",
-        "parameters": [""],
-        "description": "See a list of ignored users/channels in the server."
+        "parameters": [],
+        "description": "See a list of ignored users/channels in the server"
       },
       {
         "command": "unfilter",
         "parameters": ["text"],
-        "description": "Unfilter a word/string/regex of text that was previously filtered."
+        "description": "Unfilter a word/string/regex of text that was previously filtered"
       },
       {
         "command": "unignore",
         "parameters": ["mention"],
-        "description": "Unignore a user/channel that was previously set as ignored."
+        "description": "Unignore a user/channel that was previously set as ignored"
       }
     ]
   },
