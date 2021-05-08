@@ -343,14 +343,74 @@
     "name": "Vote",
     "commands": [
       {
-        "command": "",
-        "parameters": [""],
-        "description": ""
+        "command": "vote create",
+        "parameters": ["title"],
+        "description": "Creates a new vote"
       },
       {
-        "command": "",
-        "parameters": [""],
-        "description": ""
+        "command": "vote addRole",
+        "parameters": ["role"],
+        "description": "Adds a role to the list of roles the vote will be sent to"
+      },
+      {
+        "command": "vote removeRole",
+        "parameters": ["role"],
+        "description": "Removes a role to the list of roles the vote will be sent to"
+      },
+      {
+        "command": "vote setChair",
+        "parameters": ["chair_user"],
+        "description": "Sets the chair of a vote (no chair defaults to message the channel)"
+      },
+      {
+        "command": "vote setChannel",
+        "parameters": ["channel"],
+        "description": "Sets the target voice channel of a vote (Users connected to this channel will receive the vote message)"
+      },
+      {
+        "command": "vote addOption",
+        "parameters": ["option"],
+        "description": "Adds an option to the current vote (separate the title and description with a '+' e.g. option title+option description)"
+      },
+      {
+        "command": "vote removeOption",
+        "parameters": ["index"],
+        "description": "Removes an option from a vote based on it's index"
+      },
+      {
+        "command": "vote setEndTime",
+        "parameters": ["time_string"],
+        "description": "Sets a specific time for the vote to end. Results will be sent to the chair or owner if you use this, not a channel"
+      },
+      {
+        "command": "vote preview",
+        "parameters": [],
+        "description": "Generates a preview of what users will see with the current configuration of the vote"
+      },
+      {
+        "command": "vote cancel",
+        "parameters": ["title"],
+        "description": "Cancels a vote you are setting up or have sent"
+      },
+      {
+        "command": "vote list",
+        "parameters": [],
+        "description": "Return a list of all votes you have in this server"
+      },
+      {
+        "command": "vote send",
+        "parameters": [],
+        "description": "Sends a vote to all users within the restrictions set with the current options added"
+      },
+      {
+        "command": "vote close",
+        "parameters": ["title"],
+        "description": "Ends a vote, and collects the results"
+      },
+      {
+        "command": "vote checkResults",
+        "parameters": ["title"],
+        "description": "Checks the results of a vote without closing it"
       }
     ]
   }
