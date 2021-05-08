@@ -7,6 +7,7 @@ A lot of these commands will only be available to administrators
 - Announce is now enabled successfully
 ### Other
 - KoalaBot can now be started without Twitch or Gmail keys (disabling TwitchAlert and Verify)
+- Owner only commands fall back to bot owner if `BOT_OWNER` is not provided
 
 ## [0.4.0] - 06-04-2021
 ### Announce

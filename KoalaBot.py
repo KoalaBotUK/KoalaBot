@@ -36,7 +36,7 @@ from utils.KoalaUtils import error_embed
 logging.basicConfig(filename='KoalaBot.log')
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
-BOT_OWNER = os.environ['BOT_OWNER']
+BOT_OWNER = os.environ.get('BOT_OWNER')
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 COMMAND_PREFIX = "k!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
@@ -76,8 +76,10 @@ def is_owner(ctx):
     """
     if is_dm_channel(ctx):
         return False
-    else:
+    elif BOT_OWNER is not None:
         return ctx.author.id == int(BOT_OWNER) or is_dpytest
+    else:
+        return client.is_owner(ctx.author) or is_dpytest
 
 
 def is_admin(ctx):
