@@ -210,7 +210,7 @@ class Announce(commands.Cog):
     @announce.command(name="addRole", aliases=["add"])
     async def add_role(self, ctx):
         """
-        Add a tagged role from the tagged list
+        Add a role to list of people to send the announcement to
         :param ctx: The context of the bot
         :return:
         """
@@ -233,7 +233,7 @@ class Announce(commands.Cog):
     @announce.command(name="removeRole", aliases=["remove"])
     async def remove_role(self, ctx):
         """
-        Remove a tagged role from the tagged list
+        Remove a role from a list of people to send the announcement to
         :param ctx: The context of the bot
         :return:
         """

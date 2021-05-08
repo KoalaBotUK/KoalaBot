@@ -327,7 +327,7 @@ class TwitchAlert(commands.Cog):
     @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx, raw_channel_id=None):
         """
-        Shows all current users and teams in a Twitch Alert
+        Shows all current TwitchAlert users and teams in a channel
         :param ctx:
         :param raw_channel_id:
         :return:

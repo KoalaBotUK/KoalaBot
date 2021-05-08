@@ -127,7 +127,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
-    @react_for_role_group.command(name="createMsg", aliases=["create", "createMessage"])
+    @react_for_role_group.command(name="create", aliases=["createMsg", "createMessage"])
     async def rfr_create_message(self, ctx: commands.Context):
         """
         Creates a new rfr message in a channel of user's choice. User is prompted for (in this order)
@@ -201,7 +201,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
-    @react_for_role_group.command(name="deleteMsg", aliases=["delete", "deleteMessage"])
+    @react_for_role_group.command(name="delete", aliases=["deleteMsg", "deleteMessage"])
     async def rfr_delete_message(self, ctx: commands.Context):
         """
         Deletes an existing rfr message. User is prompted for (in this order) channel ID/name/mention, message ID/URL,
