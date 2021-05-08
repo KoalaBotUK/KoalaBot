@@ -182,6 +182,9 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeViewMsg")
     async def view_welcome_message(self, ctx):
+        """
+        Shows this server's current welcome message
+        """
         await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
 
     @update_welcome_message.error
