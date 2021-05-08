@@ -260,23 +260,8 @@
     ]
   },
   {
-    "name": "Twitch Alert",
+    "name": "TwitchAlert",
     "commands": [
-      {
-        "command": "twitchEditMsg",
-        "parameters": ["channel_id", "default_live_message"],
-        "description": "Edit the default message put in a Twitch Alert Notification"
-      },
-      {
-        "command": "twitchViewMsg",
-        "parameters": ["channel_id"],
-        "description": "Shows the current default message for Twitch Alerts"
-      },
-      {
-        "command": "twitchList",
-        "parameters": [],
-        "description": "Shows all current users and teams in a Twitch Alert"
-      },
       {
         "command": "twitchAdd",
         "parameters": ["channel_id", "twitch_username", "custom_live_message"],
@@ -296,6 +281,21 @@
         "command": "twitchRemoveTeam",
         "parameters": ["channel_id", "team_name"],
         "description": "Edit the default message put in a Twitch Alert Notification"
+      },
+      {
+        "command": "twitchEditMsg",
+        "parameters": ["channel", "default_live_message"],
+        "description": "Edit the default message put in a Twitch Alert Notification"
+      },
+      {
+        "command": "twitchViewMsg",
+        "parameters": ["channel"],
+        "description": "Shows the current default message for Twitch Alerts"
+      },
+      {
+        "command": "twitchList",
+        "parameters": ["channel"],
+        "description": "Shows all current TwitchAlert users and teams in a channel"
       }
     ]
   },
