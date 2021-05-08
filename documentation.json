@@ -321,6 +321,21 @@
         "command": "verifyList",
         "parameters": ["channelId"],
         "description": "List the current verification setup for the server"
+      },
+      {
+        "command": "verify",
+        "parameters": ["email"],
+        "description": "Send to KoalaBot in dms to verify an email with our system"
+      },
+      {
+        "command": "unVerify",
+        "parameters": ["email"],
+        "description": "Send to KoalaBot in dms to un-verify an email with our system"
+      },
+      {
+        "command": "confirm",
+        "parameters": ["token"],
+        "description": "Send to KoalaBot in dms to confirm the verification of an email"
       }
     ]
   },
