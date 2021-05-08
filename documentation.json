@@ -135,7 +135,7 @@
     ]
   },
   {
-    "name": "React for Role (RFR)",
+    "name": "ReactForRole (RFR)",
     "commands": [
       {
         "command": "rfr create",
@@ -145,37 +145,57 @@
       {
         "command": "rfr delete",
         "parameters": [],
-        "description": "Delete an existing rfr message."
+        "description": "Delete an existing rfr message"
       },
       {
         "command": "rfr addRequiredRole",
-        "parameters": [],
-        "description": "Add a role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality."
+        "parameters": ["role"],
+        "description": "Add a server-wide role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality"
       },
       {
         "command": "rfr removeRequiredRole",
-        "parameters": [],
-        "description": "Removes a role from the group of roles someone requires to use rfr functionality."
+        "parameters": ["role"],
+        "description": "Removes a server-wide role from the group of roles someone requires to use rfr functionality"
       },
       {
-        "command": "rfr edit addRoles",
+        "command": "rfr listRequiredRoles",
         "parameters": [],
-        "description": "Add emoji/role combos to an existing rfr message."
-      },
-      {
-        "command": "rfr edit removeRoles",
-        "parameters": [],
-        "description": "Remove emoji/role combos from an existing rfr message."
+        "description": "Lists the server-specific role permissions for using rfr functionality"
       },
       {
         "command": "rfr edit description",
         "parameters": [],
-        "description": "Edit the description of an existing rfr message."
+        "description": "Edit the description of an existing rfr message"
       },
       {
         "command": "rfr edit title",
         "parameters": [],
-        "description": "Edit the title of an existing rfr message."
+        "description": "Edit the title of an existing rfr message"
+      },
+      {
+        "command": "rfr edit thumbnail",
+        "parameters": [],
+        "description": "Edit the thumbnail of an existing rfr message"
+      },
+      {
+        "command": "rfr edit inline",
+        "parameters": [],
+        "description": "Edit the inline property of embed fields in rfr embeds"
+      },
+      {
+        "command": "rfr edit addRoles",
+        "parameters": [],
+        "description": "Add emoji/role combos to an existing rfr message"
+      },
+      {
+        "command": "rfr edit removeRoles",
+        "parameters": [],
+        "description": "Remove emoji/role combos from an existing rfr message"
+      },
+      {
+        "command": "rfr edit fixEmbed",
+        "parameters": [],
+        "description": "Cosmetic fix method if the bot ever has a moment and doesn't react with the correct emojis/has duplicates"
       }
     ]
   },
