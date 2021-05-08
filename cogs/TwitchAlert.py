@@ -37,6 +37,10 @@ TWITCH_CLIENT_ID = os.environ.get('TWITCH_TOKEN')
 TWITCH_SECRET = os.environ.get('TWITCH_SECRET')
 TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
 
+LOOP_CHECK_LIVE_DELAY = 1
+TEAMS_LOOP_CHECK_LIVE_DELAY = 1
+REFRESH_TEAMS_DELAY = 5
+
 # Variables
 
 
@@ -386,7 +390,7 @@ class TwitchAlert(commands.Cog):
         self.loop_check_live.cancel()
         self.running = False
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=LOOP_CHECK_LIVE_DELAY)
     async def loop_check_live(self):
         """
         A loop that continually checks the live status of users and
@@ -492,7 +496,7 @@ class TwitchAlert(commands.Cog):
             stream_data.get("game_id"))
         return create_live_embed(stream_data, user_details, game_details, message)
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=REFRESH_TEAMS_DELAY)
     async def loop_update_teams(self):
         start = time.time()
         # logging.info("TwitchAlert: Started Update Teams")
@@ -501,7 +505,7 @@ class TwitchAlert(commands.Cog):
         if time_diff > 5:
             logging.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=TEAMS_LOOP_CHECK_LIVE_DELAY)
     async def loop_check_team_live(self):
         """
         A loop to repeatedly send messages if a member of a team is live, and remove it when they are not
@@ -1031,7 +1035,7 @@ class TwitchAlertDBManager:
         if re.search(TWITCH_USERNAME_REGEX, team_name):
             users = await self.twitch_handler.get_team_users(team_name)
             for user in users:
-                sql_add_user = """INSERT OR REPLACE INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
+                sql_add_user = """INSERT OR IGNORE INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
                                    VALUES(?, ?)"""
                 try:
                     self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("user_login")],
