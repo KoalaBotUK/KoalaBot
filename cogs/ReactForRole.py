@@ -300,7 +300,6 @@ class ReactForRole(commands.Cog):
         image = await self.prompt_for_input(ctx, "image you'd like to use as a thumbnail")
         if not image or image == "":
             await ctx.send("Okay, cancelling command.")
-            return
         if isinstance(image, discord.Attachment) and self.attachment_img_content_type(image.content_type):
             # correct type
             if not image.url:
