@@ -9,11 +9,11 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
-import asyncio
 import time
 import re
 import aiohttp
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(filename='TwitchAlert.log')
 
@@ -26,24 +26,20 @@ from utils import KoalaDBManager
 # Libs
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-"""
-if os.name == 'nt' or not KoalaDBManager.ENCRYPTED_DB:
-    logging.info("Windows Detected: Database Encryption Disabled")
-    import sqlite3
-else:
-    logging.info("Linux Detected: Database Encryption Enabled")
-    from pysqlcipher3 import dbapi2 as sqlite3
-"""
-
+import asyncio
 
 # Constants
 load_dotenv()
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \
               "/128/social-twitch-circle-512.png"
-TWITCH_CLIENT_ID = os.environ['TWITCH_TOKEN']
-TWITCH_SECRET = os.environ['TWITCH_SECRET']
+TWITCH_CLIENT_ID = os.environ.get('TWITCH_TOKEN')
+TWITCH_SECRET = os.environ.get('TWITCH_SECRET')
 TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
+
+LOOP_CHECK_LIVE_DELAY = 1
+TEAMS_LOOP_CHECK_LIVE_DELAY = 1
+REFRESH_TEAMS_DELAY = 5
 
 # Variables
 
@@ -238,7 +234,7 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
-        self.ta_database_manager.remove_user_from_ta(channel_id, twitch_username)
+        await self.ta_database_manager.remove_user_from_ta(channel_id, twitch_username)
         # Response Message
         new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
                                   description=f"Channel: {channel_id}\n"
@@ -322,7 +318,7 @@ class TwitchAlert(commands.Cog):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
 
-        self.ta_database_manager.remove_team_from_ta(channel_id, team_name)
+        await self.ta_database_manager.remove_team_from_ta(channel_id, team_name)
         # Response Message
         new_embed = discord.Embed(title="Removed Team from Twitch Alert", colour=KOALA_GREEN,
                                   description=f"Channel: {channel_id}\n"
@@ -335,7 +331,7 @@ class TwitchAlert(commands.Cog):
     @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx, raw_channel_id=None):
         """
-        Shows all current users and teams in a Twitch Alert
+        Shows all current TwitchAlert users and teams in a channel
         :param ctx:
         :param raw_channel_id:
         :return:
@@ -394,7 +390,7 @@ class TwitchAlert(commands.Cog):
         self.loop_check_live.cancel()
         self.running = False
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=LOOP_CHECK_LIVE_DELAY)
     async def loop_check_live(self):
         """
         A loop that continually checks the live status of users and
@@ -482,7 +478,7 @@ class TwitchAlert(commands.Cog):
                 logging.error(f"TwitchAlert: User Loop error {err}")
 
         # Deals with remaining offline streams
-        self.ta_database_manager.delete_all_offline_streams(False, usernames)
+        await self.ta_database_manager.delete_all_offline_streams(False, usernames)
         time_diff = time.time() - start
         if time_diff > 5:
             logging.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")
@@ -500,7 +496,7 @@ class TwitchAlert(commands.Cog):
             stream_data.get("game_id"))
         return create_live_embed(stream_data, user_details, game_details, message)
 
-    @tasks.loop(minutes=5)
+    @tasks.loop(minutes=REFRESH_TEAMS_DELAY)
     async def loop_update_teams(self):
         start = time.time()
         # logging.info("TwitchAlert: Started Update Teams")
@@ -509,7 +505,7 @@ class TwitchAlert(commands.Cog):
         if time_diff > 5:
             logging.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
 
-    @tasks.loop(minutes=1)
+    @tasks.loop(minutes=TEAMS_LOOP_CHECK_LIVE_DELAY)
     async def loop_check_team_live(self):
         """
         A loop to repeatedly send messages if a member of a team is live, and remove it when they are not
@@ -604,7 +600,7 @@ class TwitchAlert(commands.Cog):
                 logging.error(f"TwitchAlert: Team Loop error {err}")
 
         # Deals with remaining offline streams
-        self.ta_database_manager.delete_all_offline_streams(True, usernames)
+        await self.ta_database_manager.delete_all_offline_streams(True, usernames)
         time_diff = time.time() - start
         if time_diff > 5:
             logging.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
@@ -648,8 +644,6 @@ class TwitchAPIHandler:
         self.params = {'client_id': self.client_id,
                        'client_secret': self.client_secret,
                        'grant_type': 'client_credentials'}
-        timeout = aiohttp.ClientTimeout(total=60)
-        self.aiohttp = aiohttp.ClientSession(timeout=timeout)
         self.token = {}
 
     @property
@@ -664,22 +658,23 @@ class TwitchAPIHandler:
         Get a new OAuth2 token from twitch using client_id and client_secret
         :return: The new OAuth2 token
         """
-        async with self.aiohttp.post('https://id.twitch.tv/oauth2/token', params=self.params) as response:
-            if response.status > 399:
-                logging.critical(f'TwitchAlert: Error {response.status} while getting Oauth token')
-                self.token = {}
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(60)) as client:
+            async with client.post('https://id.twitch.tv/oauth2/token', params=self.params) as response:
+                if response.status > 399:
+                    logging.critical(f'TwitchAlert: Error {response.status} while getting Oauth token')
+                    self.token = {}
 
-            response_json = await response.json()
+                response_json = await response.json()
 
-            try:
-                response_json['expires_in'] += time.time()
-            except KeyError:
-                # probably shouldn't need this, but catch just in case
-                logging.warning('TwitchAlert: Failed to set token expiration time')
+                try:
+                    response_json['expires_in'] += time.time()
+                except KeyError:
+                    # probably shouldn't need this, but catch just in case
+                    logging.warning('TwitchAlert: Failed to set token expiration time')
 
-            self.token = response_json
+                self.token = response_json
 
-            return self.token
+                return self.token
 
     async def requests_get(self, url, headers=None, params=None):
         """
@@ -692,17 +687,18 @@ class TwitchAPIHandler:
         if self.token.get('expires_in', 0) <= time.time() + 1 or not self.token:
             await self.get_new_twitch_oauth()
 
-        async with self.aiohttp.get(url=url, headers=headers if headers else self.base_headers, params=params) as \
-                response:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(60)) as client:
+            async with client.get(url=url, headers=headers if headers else self.base_headers, params=params) as \
+                    response:
 
-            if response.status == 401:
-                logging.info(f"TwitchAlert: {response.status}, getting new oauth and retrying")
-                await self.get_new_twitch_oauth()
-                return await self.requests_get(url, headers, params)
-            elif response.status > 399:
-                logging.warning(f'TwitchAlert: {response.status} while getting requesting URL:{url}')
+                if response.status == 401:
+                    logging.info(f"TwitchAlert: {response.status}, getting new oauth and retrying")
+                    await self.get_new_twitch_oauth()
+                    return await self.requests_get(url, headers, params)
+                elif response.status > 399:
+                    logging.warning(f'TwitchAlert: {response.status} while getting requesting URL:{url}')
 
-            return await response.json()
+                return await response.json()
 
     async def get_streams_data(self, usernames):
         """
@@ -752,11 +748,9 @@ class TwitchAPIHandler:
         :param team_id: The team name of the twitch team
         :return: the JSON information of the users
         """
-        url = 'https://api.twitch.tv/kraken/teams/' + team_id
+        url = 'https://api.twitch.tv/helix/teams?name=' + team_id
         return (
-            await self.requests_get(url,
-                                    headers={'Client-ID': self.client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
-                                    )).get("users")
+            await self.requests_get(url)).get("data")[0].get("users")
 
 
 class TwitchAlertDBManager:
@@ -915,7 +909,7 @@ class TwitchAlertDBManager:
             self.database_manager.db_execute_commit(
                 sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username)])
 
-    def remove_user_from_ta(self, channel_id, twitch_username):
+    async def remove_user_from_ta(self, channel_id, twitch_username):
         """
         Removes a user from a given Twitch Alert
         :param channel_id: The discord channel ID of the twitch Alert
@@ -929,7 +923,7 @@ class TwitchAlertDBManager:
         message_id = self.database_manager.db_execute_select(sql_get_message_id,
                                                              args=[twitch_username, channel_id])[0][0]
         if message_id is not None:
-            asyncio.get_event_loop().create_task(self.delete_message(message_id, channel_id))
+            await self.delete_message(message_id, channel_id)
         sql_remove_entry = """DELETE FROM UserInTwitchAlert 
                                WHERE twitch_username = ? AND channel_id = ?"""
         self.database_manager.db_execute_commit(sql_remove_entry, args=[twitch_username, channel_id])
@@ -942,14 +936,20 @@ class TwitchAlertDBManager:
         :return:
         """
         try:
-            message = await self.bot.get_channel(int(channel_id)).fetch_message(message_id)
+            channel = self.bot.get_channel(int(channel_id))
+            if channel is None:
+                logging.warning(f"TwitchAlert: Channel ID {channel_id} does not exist, removing from database")
+                sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
+                self.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
+                return
+            message = await channel.fetch_message(message_id)
             await message.delete()
         except discord.errors.NotFound as err:
             logging.warning(f"TwitchAlert: Message ID {message_id} does not exist, skipping \nError: {err}")
         except discord.errors.Forbidden as err:
             logging.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
-            self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
+            self.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
 
     def get_users_in_ta(self, channel_id):
         """
@@ -997,7 +997,7 @@ class TwitchAlertDBManager:
             self.database_manager.db_execute_commit(
                 sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team)])
 
-    def remove_team_from_ta(self, channel_id, team_name):
+    async def remove_team_from_ta(self, channel_id, team_name):
         """
         Removes a team from a given twitch alert
         :param channel_id: The channel ID of the Twitch Alert
@@ -1019,7 +1019,7 @@ class TwitchAlertDBManager:
         if message_ids is not None:
             for message_id in message_ids:
                 if message_id[0] is not None:
-                    asyncio.get_event_loop().create_task(self.delete_message(message_id[0], channel_id))
+                    await self.delete_message(message_id[0], channel_id)
         sql_remove_users = """DELETE FROM UserInTwitchTeam WHERE team_twitch_alert_id = ?"""
         sql_remove_team = """DELETE FROM TeamInTwitchAlert WHERE team_twitch_alert_id = ?"""
         self.database_manager.db_execute_commit(sql_remove_users, args=[team_alert_id])
@@ -1035,10 +1035,10 @@ class TwitchAlertDBManager:
         if re.search(TWITCH_USERNAME_REGEX, team_name):
             users = await self.twitch_handler.get_team_users(team_name)
             for user in users:
-                sql_add_user = """INSERT INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
+                sql_add_user = """INSERT OR IGNORE INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
                                    VALUES(?, ?)"""
                 try:
-                    self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("name")],
+                    self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("user_login")],
                                                             pass_errors=True)
                 except KoalaDBManager.sqlite3.IntegrityError as err:
                     logging.error(f"Twitch Alert: 1034: {err}")
@@ -1054,7 +1054,7 @@ class TwitchAlertDBManager:
         for team_info in teams_info:
             await self.update_team_members(team_info[0], team_info[1])
 
-    def delete_all_offline_streams(self, team: bool, usernames):
+    async def delete_all_offline_streams(self, team: bool, usernames):
         """
         A method that deletes all currently offline streams
         :param team: True if the users are from teams, false if individuals
@@ -1090,7 +1090,7 @@ class TwitchAlertDBManager:
             sql_select_offline_streams_with_message_ids, usernames)
 
         for result in results:
-            asyncio.get_event_loop().create_task(self.delete_message(result[1], result[0]))
+            await self.delete_message(result[1], result[0])
         self.database_manager.db_execute_commit(sql_update_offline_streams, usernames)
 
 
@@ -1099,5 +1099,11 @@ def setup(bot: KoalaBot) -> None:
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(TwitchAlert(bot))
-    logging.info("TwitchAlert is ready.")
+    if TWITCH_SECRET is None or TWITCH_CLIENT_ID is None:
+        logging.error("TwitchAlert not started. API keys not found in environment.")
+        print("TwitchAlert not started. API keys not found in environment.")
+        KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, False)
+    else:
+        bot.add_cog(TwitchAlert(bot))
+        logging.info("TwitchAlert is ready.")
+        print("TwitchAlert is ready.")

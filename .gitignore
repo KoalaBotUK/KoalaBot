@@ -138,3 +138,6 @@ dmypy.json
 
 # Databases
 .db
+
+# dat files
+*.dat
