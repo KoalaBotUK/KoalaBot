@@ -464,6 +464,7 @@ def test_receiver_msg(announce_cog):
         guild) == f"You are currently sending to {announce_cog.get_role_names(guild.id, guild.roles)} and there are {str(len(announce_cog.get_receivers(guild.id, guild.roles)))} receivers "
 
 
+@mock.patch("time.time", mock.MagicMock(return_value=1621679835.9347742))
 @pytest.mark.asyncio
 async def test_announce_db_first_creation(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -486,9 +487,10 @@ async def test_announce_db_first_creation(announce_cog):
         for _ in guild.members:
             dpytest.verify_embed()
         dpytest.verify_message("The announcement was made successfully")
-        assert (int(time.time())-1) <= announce_cog.announce_database_manager.get_last_use_date(guild.id) <= int(time.time())
+        assert int(time.time()) == announce_cog.announce_database_manager.get_last_use_date(guild.id)
 
 
+@mock.patch("time.time", mock.MagicMock(return_value=1621679123.9347742))
 @pytest.mark.asyncio
 async def test_announce_db_update_time_from_legal_use(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -516,9 +518,10 @@ async def test_announce_db_update_time_from_legal_use(announce_cog):
         for _ in guild.members:
             dpytest.verify_embed()
         dpytest.verify_message("The announcement was made successfully")
-        assert announce_cog.announce_database_manager.get_last_use_date(guild.id) == int(time.time())
+        assert int(time.time()) == announce_cog.announce_database_manager.get_last_use_date(guild.id)
 
 
+@mock.patch("time.time", mock.MagicMock(return_value=1621679124.9347742))
 @pytest.mark.asyncio
 async def test_announce_db_no_update_time_from_illegal_use(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
