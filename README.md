@@ -34,7 +34,7 @@ All python packages you need can be found in the [requirements.txt](requirements
 Before running the bot you must install these as so:
 
 ```
-pip3 install -r requirements.txt
+> pip3 install -r requirements.txt
 ``` 
 
 
@@ -62,9 +62,9 @@ GMAIL_PASSWORD = example_password123 # password for the same gmail account
 `DISCORD_TOKEN` is the only required environment variable for KoalaBot to be run.
 
 ## Running the tests
-Tests are run using `pytest`
+Tests are run using the pytest library
 ```
-python3 -m pytest tests/
+> pytest
 ```
 
 ## Links
