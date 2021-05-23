@@ -33,10 +33,15 @@ This application uses python 3.8 which you can download [here](https://www.pytho
 All python packages you need can be found in the [requirements.txt](requirements.txt).
 Before running the bot you must install these as so:
 
-```
-> pip3 install -r requirements.txt
+```bash
+$ pip3 install -r requirements.txt
 ``` 
 
+#### Linux
+On linux, database encryption will be enabled. Therefore, further packages are needed.
+```bash
+$ sudo apt install libsqlcipher-dev
+```
 
 ### Environment Variables
 
@@ -63,13 +68,19 @@ GMAIL_PASSWORD = example_password123 # password for the same gmail account
 
 ## Running the tests
 Tests are run using the pytest library
+```bash
+$ pytest
 ```
-> pytest
+
+## Running KoalaBot
+If all prerequisites have been followed, you can start KoalaBot with the following command
+```bash
+$ python3 KoalaBot.py
 ```
 
 ## Links
 * Website & Dashboard: [koalabot.uk](https://koalabot.uk)
-* Support Discord: [discord.koalabot.uk](http://discord.koalabot.uk)
-* Development Documentation: [documents.koalabot.uk](http://documents.koalabot.uk)
-* Developer Roadmap: [development.koalabot.uk](http://development.koalabot.uk)
+* Support Discord: [discord.koalabot.uk](https://discord.koalabot.uk)
+* Development Documentation: [documents.koalabot.uk](https://documents.koalabot.uk)
+* Developer Roadmap: [development.koalabot.uk](https://development.koalabot.uk)
 * Twitter: [twitter.com/KoalaBotUK](https://twitter.com/KoalaBotUK)
