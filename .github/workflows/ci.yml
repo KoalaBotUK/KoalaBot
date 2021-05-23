@@ -55,11 +55,11 @@ jobs:
 
     - name: Test with pytest
       env:
-        BOT_OWNER: ${{secrets.BOT_OWNER}}
-        DISCORD_TOKEN: ${{secrets.DISCORD_TOKEN}}
-        GMAIL_EMAIL: ${{secrets.GMAIL_EMAIL}}
-        GMAIL_PASSWORD: ${{secrets.GMAIL_PASSWORD}}
-        TWITCH_SECRET: ${{secrets.TWITCH_SECRET}}
-        TWITCH_TOKEN: ${{secrets.TWITCH_TOKEN}}
+        BOT_OWNER: ${{ secrets.BOT_OWNER }}
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+        GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        TWITCH_SECRET: ${{ secrets.TWITCH_SECRET }}
+        TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
       run: |
-        python -m pytest
+        pytest
