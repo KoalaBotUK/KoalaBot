@@ -14,7 +14,6 @@ import re
 import aiohttp
 import logging
 import random
-from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(filename='TwitchAlert.log')
 
@@ -757,8 +756,7 @@ class TwitchAPIHandler:
         :return: the JSON information of the users
         """
         url = 'https://api.twitch.tv/helix/teams?name=' + team_id
-        return (
-            await self.requests_get(url)).get("data")[0].get("users")
+        return (await self.requests_get(url)).get("data")[0].get("users")
 
 
 class TwitchAlertDBManager:

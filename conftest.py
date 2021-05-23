@@ -16,6 +16,7 @@ import asyncio
 import KoalaBot
 
 # Constants
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 @pytest.fixture
 async def bot(event_loop):
