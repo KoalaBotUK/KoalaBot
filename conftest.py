@@ -4,7 +4,6 @@ A configuration file for methods useful in all testing with pytest
 # Futures
 
 # Built-in/Generic Imports
-import os
 
 # Libs
 import pytest
@@ -17,8 +16,6 @@ import asyncio
 import KoalaBot
 
 # Constants
-if os.name == 'nt':
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 @pytest.fixture
 async def bot(event_loop):
