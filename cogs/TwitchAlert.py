@@ -13,6 +13,7 @@ import time
 import re
 import aiohttp
 import logging
+import random
 from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(filename='TwitchAlert.log')
@@ -699,6 +700,7 @@ class TwitchAPIHandler:
 
                 if response.status == 401:
                     logging.info(f"TwitchAlert: {response.status}, getting new oauth and retrying")
+                    await asyncio.sleep(random.randint(1, 10)*0.0001)
                     await self.get_new_twitch_oauth()
                     return await self.requests_get(url, headers, params, attempts+1)
                 elif response.status > 399:
