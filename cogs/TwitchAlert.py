@@ -700,7 +700,7 @@ class TwitchAPIHandler:
 
                 if response.status == 401:
                     logging.info(f"TwitchAlert: {response.status}, getting new oauth and retrying")
-                    await asyncio.sleep(random.randint(1, 10)*0.0001)
+                    await asyncio.sleep(random.randint(1, 10)*0.001)
                     await self.get_new_twitch_oauth()
                     return await self.requests_get(url, headers, params, attempts+1)
                 elif response.status > 399:
