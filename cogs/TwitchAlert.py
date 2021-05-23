@@ -676,14 +676,20 @@ class TwitchAPIHandler:
 
                 return self.token
 
-    async def requests_get(self, url, headers=None, params=None):
+    async def requests_get(self, url, headers=None, params=None, attempts=None):
         """
         Gets a response from a curl get request to the given url using headers of this object
         :param headers: the Headers required for the request, will use self.headers by default
         :param url: The URL to send the request to
         :param params: The parameters of the request
+        :param attempts: The count of the number of time this request was attempted
         :return: The response of the request
         """
+        if attempts is None:
+            attempts = 0
+        if attempts >= 5:
+            raise TimeoutError("Twitch API did not respond")
+
         if self.token.get('expires_in', 0) <= time.time() + 1 or not self.token:
             await self.get_new_twitch_oauth()
 
@@ -694,7 +700,7 @@ class TwitchAPIHandler:
                 if response.status == 401:
                     logging.info(f"TwitchAlert: {response.status}, getting new oauth and retrying")
                     await self.get_new_twitch_oauth()
-                    return await self.requests_get(url, headers, params)
+                    return await self.requests_get(url, headers, params, attempts+1)
                 elif response.status > 399:
                     logging.warning(f'TwitchAlert: {response.status} while getting requesting URL:{url}')
 
