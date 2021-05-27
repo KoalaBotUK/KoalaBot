@@ -122,6 +122,7 @@ class Announce(commands.Cog):
             embed.set_thumbnail(url=message.thumbnail)
         return embed
 
+    @commands.check(announce_is_enabled)
     @commands.group(name="announce")
     async def announce(self, ctx):
         """

@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### Announce
+##### Changed
+- Announce is hidden in help when not enabled
 
 ## [0.4.2] - 08-04-2021
 ### TwitchAlert
