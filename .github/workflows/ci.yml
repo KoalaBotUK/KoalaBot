@@ -4,6 +4,7 @@ on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [master, KoalaBotPublic]
+  pull_request:
   pull_request_target:
 
   # Allows you to run this workflow manually from the Actions tab
@@ -13,7 +14,9 @@ jobs:
   test:
 
     runs-on: ${{ matrix.os }}
-
+    if: |
+        (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
+        (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
     strategy:
       fail-fast: false
       matrix:
@@ -25,7 +28,15 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      if: ${{ github.event_name != 'pull_request_target' }}
+      uses: actions/checkout@v2
+
+    - name: Checkout PR
+      if: ${{ github.event_name == 'pull_request_target' }}
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
