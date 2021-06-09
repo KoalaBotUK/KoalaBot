@@ -3,6 +3,76 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### Announce
+##### Changed
+- Announce is hidden in help when not enabled
+
+## [0.4.2] - 08-04-2021
+### TwitchAlert
+- Fix issue of teams having repeated notifications
+
+## [0.4.1] - 08-04-2021
+### Announce
+- Announce is now enabled successfully
+### Other
+- KoalaBot can now be started without Twitch or Gmail keys (disabling TwitchAlert and Verify)
+- Owner only commands fall back to bot owner if `BOT_OWNER` is not provided
+
+## [0.4.0] - 06-04-2021
+### Announce
+##### Added
+- `announce create` Start the creation of an announcement
+- `announce changeTitle` Changes the title of a pending announcement
+- `announce changeContent` Changes the content of a pending announcement
+- `announce addRole` Adds one or more roles to the list of receivers for the announcement
+- `announce removeRole` Remove one or more roles from the list of receivers for the announcement
+- `announce preview` Preview the pending announcement as an embed
+- `announce send` Send the announcement to the receivers, no designated receiver means all members of the guild
+- `announce cancel` Cancel the pending announcement and delete everything related to it
+### Voting
+##### Changed
+- No longer allows users with direct messages disabled to be set as a vote chair.
+- If vote chair, vote owner and guild owner have direct messages disabled vote will not be abandoned but will need to be closed
+manually if a timer is deleted.
+- If vote chair has dms disabled when k!vote is called it outputs results to the channel it is called in.
+### ReactForRole
+#### Added
+- `rfr edit thumbnail` Edit the displayed thumbnail of an RFR message
+- `rfr edit inline` Edit the fields of a specific or all RFR messages on the server
+- `rfr fixEmbed` Try and fix a broken embed automatically without needing to recreate it from scratch
+####Changed
+- Fix issue where KoalaBot would sometimes fail to recognize a message sent in response to a prompt
+- Fix KoalaBot incorrectly overriding too many permissions in a channel when it created an RFR message.
+
+## [0.3.0] - 17-03-2021
+### Voting
+##### Added
+- `vote create <title>` Start the vote creation process
+- `vote addRole <@role>/<role id>` Add a role to the list of roles to send the vote to
+- `vote removeRole <@role>/<role id>` Remove a role from the list of roles to send the vote to
+- `vote setChair <@user>/<user id>` Sets the "chair" of a vote to send the results to
+    -  if not set the results will be sent to the channel vote is ended in
+- `vote setChannel <#voice_channel>/<channel_id>` Sets the voice channel the vote will look for users to send to in
+- `vote addOption <title+description>` Takes a string separated by a + containing the title and the description of an option that can be selected in the vote
+- `vote removeOption <index>` Removes the specified option from the pool
+- `vote preview` Displays a preview of what the vote will look like to users who receive it
+- `vote cancel` Cancel a vote that is being set up
+- `vote send` Send the vote with the current configuration to any users in the constraints
+    - Constraints being "users who have roles specified or are currently in the specified voice channel"
+    - If channel/roles aren't set the vote will be sent to the whole server
+- `vote checkResults` Check the current results of the vote without ending it
+- `vote close` End the vote and send the results to the channel it was called in or DM to the set chair
+### Base
+#### Added
+- `support` Command gives a link to our support server
+- dev: logging saved to files
+#### Changed
+- `clear <amount>` now clears one extra (to include the command used)
+- Koala's activity is refreshed every connection to discord api servers
+### Twitch Alert
+#### Changed
+- TwitchAlert now requires lower case team names and usernames
+- dev: Minor console fixes (removed excess error notifications)
 ### Text Filter
 ##### Changed
 - Add regex validation to ensure valid regex only
@@ -155,6 +225,10 @@ A lot of these commands will only be available to administrators
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.4.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.8...v0.2.0
 [0.1.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.7...v0.1.8
 [0.1.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.6...v0.1.7

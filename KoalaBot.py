@@ -19,9 +19,9 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 
-import logging
 # Built-in/Generic Imports
 import os
+import logging
 
 # Libs
 import discord
@@ -33,9 +33,10 @@ from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
 
 # Constants
+logging.basicConfig(filename='KoalaBot.log')
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
-BOT_OWNER = os.environ['BOT_OWNER']
+BOT_OWNER = os.environ.get('BOT_OWNER')
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 COMMAND_PREFIX = "k!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
@@ -75,8 +76,10 @@ def is_owner(ctx):
     """
     if is_dm_channel(ctx):
         return False
+    elif BOT_OWNER is not None:
+        return ctx.author.id == int(BOT_OWNER) or is_dpytest
     else:
-        return ctx.author.id == int(BOT_OWNER) or (str(ctx.author) == TEST_USER and is_dpytest)
+        return client.is_owner(ctx.author) or is_dpytest
 
 
 def is_admin(ctx):
@@ -89,19 +92,25 @@ def is_admin(ctx):
     if is_dm_channel(ctx):
         return False
     else:
-        return ctx.author.guild_permissions.administrator or (str(ctx.author) == TEST_USER and is_dpytest)
+        return ctx.author.guild_permissions.administrator or is_dpytest
 
 
 def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
 
 
+def is_guild_channel(ctx):
+    return ctx.guild is not None
+
+
 def load_all_cogs():
     """
     Loads all cogs in COGS_DIR into the client
     """
+    UNRELEASED = []
+
     for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py'):
+        if filename.endswith('.py') and filename not in UNRELEASED:
             client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
 
@@ -151,6 +160,8 @@ async def on_command_error(ctx, error):
                                                      f"{str(error.retry_after)}s."))
     else:
         await ctx.send(embed=error_embed(description=error))
+
+
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()

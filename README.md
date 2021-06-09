@@ -1,5 +1,7 @@
 # KoalaBot
-[![Discord Server](https://img.shields.io/discord/523301176309972993.svg?label=Support_Discord)](https://discord.gg/5etEjVd)
+[![Discord Server](https://img.shields.io/discord/729325378681962576.svg?style=flat-square&logo=discord&logoColor=white&labelColor=697EC4&color=7289DA&label=%20)](https://discord.gg/5etEjVd)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/KoalaBotUK/KoalaBot/CI?label=tests&style=flat-square)](https://github.com/KoalaBotUK/KoalaBot/actions/)
+
 
 KoalaBot is a free open source discord bot being developed by students from around the UK. 
 Our aim is to ensure university society committee leaders can access all they need and from one easy to use discord bot 
@@ -8,17 +10,13 @@ to improve their server and society!
 ## Authors
 
 * **Jack Draper** - *Project Manager* - [JayDwee](https://github.com/JayDwee)
-* **Kieran Allinson** - *Project Lead: Backend* - [Kaspiaan](https://github.com/Kaspiaan)
-* **Viraj Shah** - *Project Lead: Frontend* - [VirajShah18](https://github.com/VirajShah18)
+* **Stefan Cooper** - *Senior Developer* - [stefan-cooper](https://github.com/stefan-cooper)
+* **Kieran Allinson** - *Senior Developer* - [Kaspiaan](https://github.com/Kaspiaan)
+* **Viraj Shah** - *Senior Developer* - [VirajShah18](https://github.com/VirajShah18)
 
+All of our other amazing developers can be seen on our website https://koalabot.uk
 
-* **Anan Venkatesh** - *Developer* - [Unknownlocal](https://github.com/Unknownlocal)
-* **Harry Nelson** - *Developer* - [largereptile](https://github.com/largereptile)
-* **Robert Slawik** - *Developer* - [RobertSlawik](https://github.com/RobertSlawik)
-* **Rurda Malik** - *Developer* - [BlahBlahRudra](https://github.com/BlahBlahRudra)
-* **Stefan Cooper** - *Developer* - [3eak](https://github.com/3eak)
-
-See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) who participated in this project.
+See also the list of [current developers](https://github.com/orgs/KoalaBotUK/teams/developers) who are actively participating in this project.
 
 ## License
 
@@ -35,47 +33,54 @@ This application uses python 3.8 which you can download [here](https://www.pytho
 All python packages you need can be found in the [requirements.txt](requirements.txt).
 Before running the bot you must install these as so:
 
-```
-pip3 install -r requirements.txt
+```bash
+$ pip3 install -r requirements.txt
 ``` 
 
+#### Linux
+On linux, database encryption will be enabled. Therefore, further packages are needed.
+```bash
+$ sudo apt install libsqlcipher-dev
+```
 
 ### Environment Variables
 
 Before running the bot you will need to create a `.env` file in the root directory of this project. A template for this can be found here:
 
-```python
+```dotenv
 # Discord Bot
 DISCORD_TOKEN = AdiSc0RdT0k3N # A discord Token taken from the discord developers portal 
-BOT_OWNER = 123456789 # A discord ID for the person who should have access to owner commands
+BOT_OWNER = 123456789 # (optional) A discord ID for the person who should have access to owner commands (will default to bot owner)
 
+# Encryption (optional)
+ENCRIPTION = False # or True (default) for disabling/enabling the database encryption
+SQLITE_KEY = 123EXAMPLE456ENCRYPTION789KEY0 # A custom SQLcipher key
 
-# Twitch Alert
+# Twitch Alert (Required for TwitchAlert Extension)
 TWITCH_TOKEN = tw1tch70k3n # Twitch Token taken from the twitch developers portal
 TWITCH_SECRET = tw1tch53cr3t # Twitch Secret taken from the twitch developers portal
 
-# Verification
+# Verification (Required for Verify Extension)
 GMAIL_EMAIL = example@gmail.com # email for a gmail account
 GMAIL_PASSWORD = example_password123 # password for the same gmail account
 ```
+`DISCORD_TOKEN` is the only required environment variable for KoalaBot to be run.
 
 ## Running the tests
-
-Due to the incompatibility of the `discord.py 1.4` with our testing library `dpytest` you will need to download an
-older version of discord.py for testing.
-```
-pip3 install dpytest==0.0.20
-pip3 install discord.py==1.3.4
+Tests are run using the pytest library
+```bash
+$ pytest
 ```
 
-Tests are run using `pytest`
-```
-python3 -m pytest tests/
+## Running KoalaBot
+If all prerequisites have been followed, you can start KoalaBot with the following command
+```bash
+$ python3 KoalaBot.py
 ```
 
 ## Links
-* Website & Dashboard: [koalabot.uk](http://koalabot.uk)
-* Support Discord: [discord.koalabot.uk](http://discord.koalabot.uk)
-* Development Documentation: [documents.koalabot.uk](http://documents.koalabot.uk)
-* Developer Roadmap: [development.koalabot.uk](http://development.koalabot.uk)
+* Website & Dashboard: [koalabot.uk](https://koalabot.uk)
+* Support Discord: [discord.koalabot.uk](https://discord.koalabot.uk)
+* Development Documentation: [documents.koalabot.uk](https://documents.koalabot.uk)
+* Developer Roadmap: [development.koalabot.uk](https://development.koalabot.uk)
 * Twitter: [twitter.com/KoalaBotUK](https://twitter.com/KoalaBotUK)
