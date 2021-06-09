@@ -8,10 +8,12 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
+
 import os
 import time
 import asyncio
 import concurrent.futures
+import logging
 
 # Libs
 import discord
@@ -58,8 +60,14 @@ class SocialAlert(commands.Cog):
         A discord.py cog for providing social feed updates from Facebook, Instagram and Twitter
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot, database_manager=None):
+        if not database_manager:
+            database_manager = KoalaBot.database_manager
         self.bot = bot
+        database_manager.create_base_tables()
+        database_manager.insert_extension("SocialAlert", 0, True, True)
+        self.sa_database_manager = SocialAlertDBManager(database_manager, bot)
+        self.sa_database_manager.create_tables()
         self.twitter_handler = TwitterAPIHandler(TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET,
                                                  TWITTER_ACCESS_TOKEN, TWITTER_TOKEN_SECRET)
 
@@ -216,44 +224,6 @@ class TweetStreamListener(tweepy.StreamListener):
             return False
 
 
-class FacebookGraphAPIHandler:
-    """
-    A wrapper to interact with the Facebook GraphAPI
-    """
-
-    def __init__(self, client_id: str, client_secret: str, short_token: str):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.short_token = short_token
-        self.oauth_token = self.get_new_facebook_oauth()
-        self.graph = facebook.GraphAPI(self.oauth_token)
-
-    def get_new_facebook_oauth(self):
-        """
-        Get a new long-lived access token from Facebook
-        :return: New long-lived access token
-        """
-        access_token_url = "https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id={}&client_secret={}&fb_exchange_token={}".format(
-            self.client_id, self.client_secret, self.short_token)
-        return requests.get(access_token_url).json()['access_token']
-
-    def get_post_info(self, page_id):
-        """
-        Gets default fields for the most recent post on a page feed
-        :param page_id: ID of the page
-        :return: Dictionary with the post's data
-        """
-        return self.graph.get_connections(page_id, connection_name="feed", limit=1)
-
-    def get_page_info(self, page_id):
-        """
-        Gets default fields (name and id) for a specified page
-        :param page_id: ID of the page
-        :return: Dictionary with the page's data
-        """
-        return self.graph.get_object(page_id)
-
-
 class SocialAlertDBManager:
     """
         A class for interacting with the Koala twitch database
@@ -309,11 +279,9 @@ class SocialAlertDBManager:
                ON DELETE CASCADE 
            );"""
 
-
         # Create Tables
         self.database_manager.db_execute_commit(sql_create_social_alerts_table)
         self.database_manager.db_execute_commit(sql_create_user_in_social_alert_table)
-
 
 
 def setup(bot: KoalaBot) -> None:
@@ -322,4 +290,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(SocialAlert(bot))
-    print("SocialAlert is ready.")
+    logging.info("SocialAlert is ready.")
