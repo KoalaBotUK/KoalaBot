@@ -428,7 +428,10 @@ class TwitchAlert(commands.Cog):
             try:
                 if streams_details.get('type') == "live":
                     current_username = str.lower(streams_details.get("user_login"))
+                    temp = usernames
                     usernames.remove(current_username)
+                    if usernames == temp:
+                        logging.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list {usernames}")
 
                     sql_find_message_id = \
                         "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
@@ -546,7 +549,10 @@ class TwitchAlert(commands.Cog):
             try:
                 if stream_data.get('type') == "live":
                     current_username = str.lower(stream_data.get("user_login"))
+                    temp = usernames
                     usernames.remove(current_username)
+                    if usernames == temp:
+                        logging.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user list {usernames}")
 
                     sql_find_message_id = """
                     SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message, 
