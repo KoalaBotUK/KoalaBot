@@ -14,8 +14,10 @@ import re
 import aiohttp
 import logging
 import random
+import sys
 
 logging.basicConfig(filename='TwitchAlert.log')
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 # Own modules
 import KoalaBot
@@ -425,7 +427,7 @@ class TwitchAlert(commands.Cog):
         for streams_details in user_streams:
             try:
                 if streams_details.get('type') == "live":
-                    current_username = str.lower(streams_details.get("user_name"))
+                    current_username = str.lower(streams_details.get("user_login"))
                     usernames.remove(current_username)
 
                     sql_find_message_id = \
@@ -543,7 +545,7 @@ class TwitchAlert(commands.Cog):
         for stream_data in streams_data:
             try:
                 if stream_data.get('type') == "live":
-                    current_username = str.lower(stream_data.get("user_name"))
+                    current_username = str.lower(stream_data.get("user_login"))
                     usernames.remove(current_username)
 
                     sql_find_message_id = """
@@ -621,7 +623,7 @@ def create_live_embed(stream_info, user_info, game_info, message):
 
     embed.set_author(name=stream_info.get("user_name") + " is now streaming!",
                      icon_url=TWITCH_ICON)
-    embed.title = "https://twitch.tv/" + str.lower(stream_info.get("user_name"))
+    embed.title = "https://twitch.tv/" + str.lower(stream_info.get("user_login"))
 
     embed.add_field(name="Stream Title", value=stream_info.get("title"))
     if game_info is None:
