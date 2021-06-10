@@ -4,8 +4,9 @@ A lot of these commands will only be available to administrators
 
 ## [Unreleased]
 ### Announce
-##### Changed
 - Announce is hidden in help when not enabled
+### TwitchAlert
+- Fixed repetitive notification deletion and creation
 
 ## [0.4.2] - 08-04-2021
 ### TwitchAlert
