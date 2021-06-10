@@ -56,7 +56,7 @@ def test_create_live_embed():
     expected.set_thumbnail(url="http://koalabot.uk")
 
     # Create JSON required to pass to method
-    stream_info = {'user_name': "Test", 'title': "Test Title"}
+    stream_info = {'user_name': "Test", 'user_login': "test", 'title': "Test Title"}
     user_info = {'profile_image_url': "http://koalabot.uk"}
     game_info = {'name': "TestGame"}
 
@@ -74,7 +74,7 @@ def test_create_live_embed_with_message():
     expected.set_thumbnail(url="http://koalabot.uk")
 
     # Create JSON required to pass to method
-    stream_info = {'user_name': "Test", 'title': "Test Title"}
+    stream_info = {'user_name': "Test", 'user_login': "test", 'title': "Test Title"}
     user_info = {'profile_image_url': "http://koalabot.uk"}
     game_info = {'name': "TestGame"}
 
@@ -367,7 +367,7 @@ async def test_loop_check_live(twitch_cog):
 @pytest.mark.asyncio
 async def test_create_alert_embed(twitch_cog):
     stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-                   "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
+                   "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
                    'title': 'Music 24/7'}
 
     assert type(await twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
