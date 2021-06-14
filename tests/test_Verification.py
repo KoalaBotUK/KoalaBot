@@ -66,7 +66,7 @@ def cog(bot):
 @pytest.mark.asyncio
 async def test_member_join_no_verify():
     await dpytest.member_join()
-    dpytest.verify_message(assert_nothing=True)
+    assert dpytest.verify().message().nothing()
 
 
 @pytest.mark.asyncio
@@ -82,7 +82,7 @@ This email is stored so you don't need to verify it multiple times across server
 `{TEST_EMAIL_DOMAIN}` for `@testRole`"""
     await dpytest.member_join(1)
     await asyncio.sleep(0.25)
-    dpytest.verify_message(welcome_message)
+    assert dpytest.verify().message().content(welcome_message)
     db_manager.db_execute_commit("DELETE FROM roles WHERE s_id=1234")
 
 
@@ -102,7 +102,7 @@ async def test_member_join_already_verified(bot):
 Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers.
 `{TEST_EMAIL_DOMAIN}` for `@testRole`"""
-    dpytest.verify_message(welcome_message)
+    assert dpytest.verify().message().content(welcome_message)
     member = guild.get_member(test_user.id)
     assert role in member.roles
     db_manager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=999")
@@ -115,7 +115,7 @@ async def test_enable_verification():
     guild = config.guilds[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} <@&555>")
-    dpytest.verify_message(f"Verification enabled for <@&555> for emails ending with `{TEST_EMAIL_DOMAIN}`")
+    assert dpytest.verify().message().content(f"Verification enabled for <@&555> for emails ending with `{TEST_EMAIL_DOMAIN}`")
     entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                          (guild.id, role.id))
     assert entry
@@ -129,7 +129,7 @@ async def test_disable_verification():
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id}, 555, 'egg.com')")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeVerification egg.com <@&555>")
-    dpytest.verify_message("Emails ending with egg.com no longer give <@&555>")
+    assert dpytest.verify().message().content("Emails ending with egg.com no longer give <@&555>")
     entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                          (guild.id, role.id))
     assert not entry
@@ -142,7 +142,7 @@ async def test_verify():
     member = guild.members[0]
     dm = await member.create_dm()
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-    dpytest.verify_message("Please verify yourself using the command you have been emailed")
+    assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
     entry = db_manager.db_execute_select(f"SELECT * FROM non_verified_emails WHERE u_id={member.id} AND email='{TEST_EMAIL}'")
     assert entry
 
@@ -163,7 +163,7 @@ async def test_confirm():
     assert not exists
     await asyncio.sleep(0.5)
     assert role in member.roles
-    dpytest.verify_message("Your email has been verified, thank you")
+    assert dpytest.verify().message().content("Your email has been verified, thank you")
     db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
     db_manager.db_execute_commit(f"DELETE FROM verified_emails WHERE u_id={member.id}")
 
@@ -179,7 +179,7 @@ async def test_un_verify():
     db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id}, {role.id}, 'egg.com')")
     dm = await member.create_dm()
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "unVerify test@egg.com", dm)
-    dpytest.verify_message("test@egg.com has been un-verified and relevant roles have been removed")
+    assert dpytest.verify().message().content("test@egg.com has been un-verified and relevant roles have been removed")
     entry = db_manager.db_execute_select(f"SELECT * FROM verified_emails WHERE u_id={member.id} AND email='test@egg.com'")
     assert not entry
     assert role not in member.roles
@@ -190,7 +190,7 @@ async def test_un_verify():
 async def test_get_emails():
     db_manager.db_execute_commit(f"INSERT INTO verified_emails VALUES (123, '{TEST_EMAIL}')")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "getEmails 123")
-    dpytest.verify_message(f"""This user has registered with:\n{TEST_EMAIL}""")
+    assert dpytest.verify().message().content(f"""This user has registered with:\n{TEST_EMAIL}""")
     db_manager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=123")
 
 
@@ -207,7 +207,7 @@ async def test_re_verify():
     assert role not in member.roles
     blacklisted = db_manager.db_execute_select(f"SELECT * FROM to_re_verify WHERE u_id={member.id}")
     assert blacklisted
-    dpytest.verify_message("That role has now been removed from all users and they will need to re-verify the associated email.")
+    assert dpytest.verify().message().content("That role has now been removed from all users and they will need to re-verify the associated email.")
     db_manager.db_execute_commit(f"DELETE FROM verified_emails WHERE u_id={member.id}")
     db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
     db_manager.db_execute_commit(f"DELETE FROM to_re_verify WHERE u_id={member.id}")
