@@ -27,8 +27,8 @@ from utils import KoalaDBManager
 
 # Constants
 load_dotenv()
-GMAIL_EMAIL = os.environ['GMAIL_EMAIL']
-GMAIL_PASSWORD = os.environ['GMAIL_PASSWORD']
+GMAIL_EMAIL = os.environ.get('GMAIL_EMAIL')
+GMAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD')
 # Variables
 
 
@@ -53,7 +53,7 @@ class Verification(commands.Cog, name="Verify"):
     def __init__(self, bot, db_manager=None):
         self.bot = bot
         if not db_manager:
-            self.DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+            self.DBManager = KoalaBot.database_manager
             self.set_up_tables()
             self.DBManager.insert_extension("Verify", 0, True, True)
         else:
@@ -506,11 +506,15 @@ This email is stored so you don't need to verify it multiple times across server
             except discord.errors.Forbidden:
                 raise self.VerifyError(f"I do not have permission to assign {role}. Make sure I have permission to give roles and {role} is lower than the KoalaBot role in the hierarchy, then try again.")
 
-
 def setup(bot: KoalaBot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(Verification(bot))
-    print("Verification is ready.")
+    if GMAIL_EMAIL is None or GMAIL_PASSWORD is None:
+        print("Verification not started. API keys not found in environment.")
+        KoalaBot.database_manager.insert_extension("Verify", 0, False, False)
+    else:
+        bot.add_cog(Verification(bot))
+        print("Verification is ready.")
+

@@ -153,6 +153,7 @@ class KoalaDBManager:
 
             self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
 
+
     def extension_enabled(self, guild_id, extension_id):
         sql_select_extension = "SELECT extension_id " \
                                "FROM GuildExtensions " \
@@ -161,7 +162,7 @@ class KoalaDBManager:
         return ("All",) in result or (extension_id,) in result
 
     def give_guild_extension(self, guild_id, extension_id):
-        sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
+        sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ? and available = 1"""
         if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0 or extension_id == "All":
             sql_insert_guild_extension = """
             INSERT INTO GuildExtensions 
@@ -176,7 +177,10 @@ class KoalaDBManager:
         self.db_execute_commit(sql_remove_extension, args=[extension_id, guild_id], pass_errors=True)
 
     def get_enabled_guild_extensions(self, guild_id: int):
-        sql_select_enabled = "SELECT extension_id FROM GuildExtensions WHERE guild_id = ?"
+        sql_select_enabled = "SELECT GuildExtensions.extension_id FROM GuildExtensions, KoalaExtensions " \
+                             "WHERE KoalaExtensions.extension_id = GuildExtensions.extension_id " \
+                             "  AND guild_id = ? " \
+                             "  AND available = 1"
         return self.db_execute_select(sql_select_enabled, args=[guild_id], pass_errors=True)
 
     def get_all_available_guild_extensions(self, guild_id: int):

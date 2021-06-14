@@ -12,6 +12,7 @@ import random
 from typing import *
 
 # Libs
+import aiohttp
 import discord
 import discord.ext.test as dpytest
 import mock
@@ -23,8 +24,9 @@ from discord.ext.test import factories as dpyfactory
 import KoalaBot
 from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
-from tests.utils import TestUtils as utils
-from tests.utils import TestUtilsCog
+from tests.utils_testing import TestUtils as testutils
+from tests.utils_testing import LastCtxCog
+from utils import KoalaColours
 from utils.KoalaDBManager import KoalaDBManager
 from utils.KoalaUtils import wait_for_message
 
@@ -35,23 +37,9 @@ DBManager = ReactForRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
 
-#rfr_cog: ReactForRole.ReactForRole = None
-#utils_cog: TestUtilsCog.TestUtilsCog = None
-def setup_fsnction():
-    """ setup any state specific to the execution of the given module."""
-    global rfr_cog
-    global utils_cog
-    bot: commands.Bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    rfr_cog = ReactForRole.ReactForRole(bot)
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
-    bot.add_cog(rfr_cog)
-    bot.add_cog(utils_cog)
-    dpytest.configure(bot)
-    print("Tests starting")
-
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = TestUtilsCog.TestUtilsCog(bot)
+    utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -88,7 +76,7 @@ def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id
 
 def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, role_id=None) -> List[
     Tuple[int, str, int]]:
-    sql_select_str = "SELECT * FROM RFRMessageEmojiRoles WHERE "
+    sql_select_str = "SELECT emoji_role_id, emoji_raw, role_id FROM RFRMessageEmojiRoles WHERE "
     if emoji_role_id is not None:
         sql_select_str += f"emoji_role_id = {emoji_role_id} AND "
     if emoji_raw is not None:
@@ -205,18 +193,18 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
     expected_full_list: List[Tuple[int, str, int]] = []
     assert independent_get_rfr_message_emoji_role() == expected_full_list
     # 1 unicode, 1 role
-    fake_emoji_1 = utils.fake_unicode_emoji()
+    fake_emoji_1 = testutils.fake_unicode_emoji()
     fake_role_id_1 = dpyfactory.make_id()
     expected_full_list.append((1, fake_emoji_1, fake_role_id_1))
     DBManager.add_rfr_message_emoji_role(
         guild_rfr_message[3], fake_emoji_1, fake_role_id_1)
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
+    assert independent_get_rfr_message_emoji_role() == expected_full_list, DBManager.get_rfr_message_emoji_roles(1)
     assert independent_get_rfr_message_emoji_role(1) == expected_full_list
     assert independent_get_rfr_message_emoji_role(guild_rfr_message[3], fake_emoji_1,
                                                   fake_role_id_1) == [DBManager.get_rfr_reaction_role(
         guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
     # 1 unicode, 1 custom, trying to get same role
-    fake_emoji_2 = utils.fake_custom_emoji_str_rep()
+    fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
     DBManager.add_rfr_message_emoji_role(
         guild_rfr_message[3], fake_emoji_2, fake_role_id_1)
     assert independent_get_rfr_message_emoji_role() == expected_full_list
@@ -235,7 +223,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
         guild_rfr_message[3], fake_emoji_1, fake_role_id_2)] == [None]
 
     # 2 roles, 2 emojis, 1 message. split between them
-    fake_emoji_2 = utils.fake_custom_emoji_str_rep()
+    fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
     fake_role_id_2 = dpyfactory.make_id()
     expected_full_list.append((1, fake_emoji_2, fake_role_id_2))
     DBManager.add_rfr_message_emoji_role(*expected_full_list[1])
@@ -322,7 +310,7 @@ async def test_rfr_db_functions_guild_rfr_required_roles():
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = []
     for i in range(50):
-        role: discord.Role = utils.fake_guild_role(guild)
+        role: discord.Role = testutils.fake_guild_role(guild)
         roles.append(role)
         DBManager.add_guild_rfr_required_role(guild.id, role.id)
         assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], i
@@ -385,14 +373,14 @@ async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
         expected_role_list = []
         for j in range(num_rows):
             fake_emoji = random.choice(
-                [utils.fake_guild_emoji(guild), utils.fake_unicode_emoji()])
+                [testutils.fake_guild_emoji(guild), testutils.fake_unicode_emoji()])
             expected_emoji_list.append(str(fake_emoji))
             if isinstance(fake_emoji, discord.Emoji):
                 fake_emoji_str = random.choice(
                     [fake_emoji.id, fake_emoji.name])
             else:
                 fake_emoji_str = fake_emoji
-            fake_role = utils.fake_guild_role(guild)
+            fake_role = testutils.fake_guild_role(guild)
             expected_role_list.append(fake_role)
             fake_role_str = random.choice([fake_role.id, fake_role.name,
                                            fake_role.mention])
@@ -420,18 +408,18 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
     for j in range(num_rows):
         if random.choice([True, False]):
             if random.choice([True, False]):
-                fake_emoji = utils.fake_emoji_unicode()
+                fake_emoji = testutils.fake_emoji_unicode()
                 input_str += fake_emoji + "\n\r"
                 expected_list.append(fake_emoji)
                 print(f"Unicode emoji {j} in test {num_rows}: {emoji.emojize(fake_emoji)}")
             else:
-                fake_emoji_name = utils.fake_custom_emoji_name_str()
-                fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image=utils.random_image())
+                fake_emoji_name = testutils.fake_custom_emoji_name_str()
+                fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image=testutils.random_image())
                 expected_list.append(fake_emoji)
                 input_str += str(fake_emoji) + "\n\r"
                 print(f"Custom emoji {j} in test {num_rows}: {str(fake_emoji)}")
         else:
-            role_name = utils.fake_custom_emoji_name_str()
+            role_name = testutils.fake_custom_emoji_name_str()
             await guild.create_role(name=role_name, mentionable=True, hoist=True)
             fake_role: discord.Role = discord.utils.get(guild.roles, name=role_name)
             expected_list.append(fake_role)
@@ -448,7 +436,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
 
 @pytest.mark.parametrize("msg_content", [None, "", "something", " "])
 @pytest.mark.asyncio
-async def test_prompt_for_input(msg_content,utils_cog,rfr_cog):
+async def test_prompt_for_input_str(msg_content,utils_cog,rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
@@ -469,6 +457,30 @@ async def test_prompt_for_input(msg_content,utils_cog,rfr_cog):
             result = await rfr_cog.prompt_for_input(ctx, "test")
             dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert result == msg_content
+
+
+@pytest.mark.asyncio
+async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    author: discord.Member = config.members[0]
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    ctx: commands.Context = utils_cog.get_last_ctx()
+    await dpytest.empty_queue()
+    attach: discord.Attachment = discord.Attachment(state=dpytest.back.get_state(),
+                                                    data=dpytest.back.facts.make_attachment_dict("test.jpg", 15112122,
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 height=1000,
+                                                                                                 width=1000))
+    message_dict = dpytest.back.facts.make_message_dict(channel, author, attachments=[attach])
+    message: discord.Message = discord.Message(state=dpytest.back.get_state(), channel=channel, data=message_dict)
+    with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(message, channel))):
+        result = await rfr_cog.prompt_for_input(ctx, "test")
+        dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+        assert isinstance(result, discord.Attachment)
+        assert result.url == attach.url
 
 
 @pytest.mark.asyncio
@@ -497,7 +509,7 @@ async def test_wait_for_message_not_none(msg_content, utils_cog, rfr_cog):
     import threading
     t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
     t2.start()
-    fut = wait_for_message(bot, ctx)
+    fut = await wait_for_message(bot, ctx, 0.2)
     t2.join()
     assert fut, dpytest.sent_queue
 
@@ -569,7 +581,7 @@ async def test_get_first_emoji_from_str():
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
-    guild_emoji = utils.fake_guild_emoji(guild)
+    guild_emoji = testutils.fake_guild_emoji(guild)
     guild_emoji = discord.Emoji(guild=guild, state=None,
                                 data={'name': "AAA", 'image': None, 'id': dpyfactory.make_id(),
                                       'require_colons': True, 'managed': False})
@@ -594,7 +606,6 @@ async def test_rfr_create_message(bot):
     channel: discord.TextChannel = guild.text_channels[0]
     embed_channel: discord.TextChannel = dpytest.back.make_text_channel('EmbedChannel', guild)
     author: discord.Member = config.members[0]
-    from utils import KoalaColours
     test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KoalaColours.KOALA_GREEN)
     test_embed.set_footer(text="ReactForRole")
     test_embed.set_thumbnail(
@@ -616,13 +627,13 @@ async def test_rfr_create_message(bot):
                             "existing ones. Please keep this in mind, or setup another channel entirely for this.")
                         dpytest.verify_message("This should be a thing sent in the right channel.")
                         dpytest.verify_message(
-                            "Okay, what would you like the title of the react for role message to be? Please enter within 30 seconds.")
+                            "Okay, what would you like the title of the react for role message to be? Please enter within 60 seconds.")
                         dpytest.verify_message(
                             "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
                         dpytest.verify_message(
                             "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit commands.")
                         dpytest.verify_message(
-                            "Okay, the title of the message will be \"React for Role\". What do you want the description to be?")
+                            "Okay, the title of the message will be \"React for Role\". What do you want the description to be? I'll wait 60 seconds, don't worry")
                         dpytest.verify_message(
                             "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
                         dpytest.verify_message(
@@ -658,7 +669,6 @@ async def test_rfr_delete_message():
                 assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
 
 
-# @pytest.mark.skip("Not implemented yet.")
 @pytest.mark.asyncio
 async def test_rfr_edit_description():
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -706,6 +716,125 @@ async def test_rfr_edit_title():
 
 
 @pytest.mark.asyncio
+async def test_rfr_edit_thumbnail_attach():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+    message: discord.Message = await dpytest.message("rfr")
+    attach: discord.Attachment = discord.Attachment(state=dpytest.back.get_state(),
+                                                    data=dpytest.back.facts.make_attachment_dict("test.jpg", -1,
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
+                                                                                                 height=1000,
+                                                                                                 width=1000, content_type="image/jpeg"))
+    msg_id = message.id
+    bad_attach = "something that's not an attachment"
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
+                await dpytest.message("k!rfr edit image")
+                assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
+            embed.set_thumbnail(
+                url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+
+
+@pytest.mark.parametrize("attach", ["", "1", "not an attachment", "http://www.google.com", "https://www.google.com",
+                                    "https://cdn.discordapp.com/attachments/734739036564095026/832375039650299954/9-24_EUW1-4321454326_01.webm"])
+@pytest.mark.asyncio
+async def test_rfr_edit_thumbnail_bad_attach(attach):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
+                with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument, commands.CommandInvokeError)) as exc:
+                    await dpytest.message("k!rfr edit thumbnail")
+
+                    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("image_url", [
+    "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg",
+    "https://images-ext-1.discordapp.net/external/to2H6kvblcjDUm5Smwx4rSqwCPTP-UDFdWp1ToEXJQM/https/cdn.weeb.sh/images/Hk9GpT_Pb.png?width=864&height=660",
+    "https://cdn.weeb.sh/images/Hk9GpT_Pb.png",
+    "https://cdn.discordapp.com/attachments/611574654502699010/828026462552457266/unknown.png"])
+async def test_rfr_edit_thumbnail_links(image_url):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    embed.set_thumbnail(
+        url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id = message.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+    with mock.patch('cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=image_url):
+                assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+                await dpytest.message("k!rfr edit image")
+                assert embed.thumbnail.url != "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
+
+
+@pytest.mark.skip("Unsupported API Calls")
+@pytest.mark.parametrize("arg", ["Y", "N"])
+@pytest.mark.asyncio
+async def test_rfr_edit_inline_all(arg):
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed1: discord.Embed = discord.Embed(title="title", description="description")
+    embed1.add_field(name="field1", value="value1", inline=True)
+    embed2: discord.Embed = discord.Embed(title="title2", description="description2")
+    embed2.add_field(name="field2", value="value2", inline=False)
+    message1: discord.Message = await dpytest.message("rfr")
+    message2: discord.Message = await dpytest.message("rfr")
+    msg1_id = message1.id
+    msg2_id = message2.id
+    DBManager.add_rfr_message(guild.id, channel.id, msg1_id)
+    DBManager.add_rfr_message(guild.id, channel.id, msg2_id)
+    await dpytest.sent_queue.empty()
+    calls = [mock.call(0, name="field1", value="value1", inline=(arg == "Y")),
+             mock.call(0, name="field2", value="value2", inline=(arg == "Y"))]
+    with mock.patch("cogs.ReactForRole.ReactForRole.prompt_for_input", side_effects=["all", arg]):
+        with mock.patch("discord.abc.Messageable.fetch_message", side_effects=[message1, message2]):
+            with mock.patch("cogs.ReactForRole.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
+                with mock.patch('discord.Embed.set_field_at') as mock_call:
+                    await dpytest.message("k!rfr edit inline")
+                    dpytest.verify_message()
+                    dpytest.verify_message()
+                    dpytest.verify_message(
+                        "Keep in mind that this process may take a while if you have a lot of RFR messages on your server.")
+                    dpytest.verify_message("Okay, the process should be finished now. Please check.")
+
+
+@pytest.mark.skip("Unsupported API Calls")
+async def test_rfr_edit_inline_specific():
+    assert False
+
+
+@pytest.mark.asyncio
 async def test_rfr_add_roles_to_msg():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
@@ -720,8 +849,8 @@ async def test_rfr_add_roles_to_msg():
     em_list = []
     ro_list = []
     for i in range(5):
-        em = utils.fake_unicode_emoji()
-        ro = utils.fake_guild_role(guild)
+        em = testutils.fake_unicode_emoji()
+        ro = testutils.fake_guild_role(guild)
         input_em_ro_content += f"{str(em)}, {ro.id}\n\r"
         em_list.append(em)
         ro_list.append(ro.mention)
@@ -753,8 +882,8 @@ async def test_rfr_remove_roles_from_msg():
     input_em_ro_content = ""
     em_ro_list = []
     for i in range(5):
-        em = utils.fake_unicode_emoji()
-        ro = utils.fake_guild_role(guild)
+        em = testutils.fake_unicode_emoji()
+        ro = testutils.fake_guild_role(guild)
         x = random.choice([str(em), str(ro.id)])
         input_em_ro_content += f"{x}\n\r"
         em_ro_list.append(x)
@@ -787,9 +916,9 @@ async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
     guild: discord.Guild = config.guilds[0]
     r_list = []
     for i in range(num_roles):
-        role = utils.fake_guild_role(guild)
+        role = testutils.fake_guild_role(guild)
         r_list.append(role)
-    required = random.sample(set(r_list), num_required)
+    required = random.sample(list(r_list), num_required)
     for r in required:
         DBManager.add_guild_rfr_required_role(guild.id, r.id)
         assert independent_get_guild_rfr_required_role(guild.id, r.id) is not None

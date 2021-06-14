@@ -19,6 +19,8 @@ from cogs import Verification
 from utils.KoalaDBManager import KoalaDBManager
 
 # Constants
+TEST_EMAIL = 'verify_test@koalabot.uk'
+TEST_EMAIL_DOMAIN = 'koalabot.uk'
 
 # Variables
 cog = None
@@ -75,11 +77,11 @@ async def test_member_join_verif_enabled():
     guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
     test_config.guilds.append(guild)
     dpytest.back.make_role("testRole", guild, id_num=555)
-    db_manager.db_execute_commit("INSERT INTO roles VALUES (1234, 555, 'test.com')")
+    db_manager.db_execute_commit(f"INSERT INTO roles VALUES (1234, 555, '{TEST_EMAIL_DOMAIN}')")
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
 Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers.
-`test.com` for `@testRole`"""
+`{TEST_EMAIL_DOMAIN}` for `@testRole`"""
     await dpytest.member_join(1)
     await asyncio.sleep(0.25)
     dpytest.verify_message(welcome_message)
@@ -94,14 +96,14 @@ async def test_member_join_already_verified(bot):
 
     test_user = dpytest.back.make_user("TestUser", 1234, id_num=999)
     role = dpytest.back.make_role("testRole", guild, id_num=555)
-    db_manager.db_execute_commit("INSERT INTO verified_emails VALUES (999, 'egg@test.com')")
-    db_manager.db_execute_commit("INSERT INTO roles VALUES (1234, 555, 'test.com')")
+    db_manager.db_execute_commit(f"INSERT INTO verified_emails VALUES (999, 'egg@{TEST_EMAIL_DOMAIN}')")
+    db_manager.db_execute_commit(f"INSERT INTO roles VALUES (1234, 555, '{TEST_EMAIL_DOMAIN}')")
     await dpytest.member_join(guild, test_user)
     await asyncio.sleep(0.25)
     welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
 Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers.
-`test.com` for `@testRole`"""
+`{TEST_EMAIL_DOMAIN}` for `@testRole`"""
     dpytest.verify_message(welcome_message)
     member = guild.get_member(test_user.id)
     assert role in member.roles
@@ -114,8 +116,8 @@ async def test_enable_verification():
     config = dpytest.get_config()
     guild = config.guilds[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "addVerification test.com <@&555>")
-    dpytest.verify_message("Verification enabled for <@&555> for emails ending with `test.com`")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} <@&555>")
+    dpytest.verify_message(f"Verification enabled for <@&555> for emails ending with `{TEST_EMAIL_DOMAIN}`")
     entry = db_manager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
                                          (guild.id, role.id))
     assert entry
@@ -141,9 +143,9 @@ async def test_verify():
     guild = test_config.guilds[0]
     member = guild.members[0]
     dm = await member.create_dm()
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "verify test@test.com", dm)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
     dpytest.verify_message("Please verify yourself using the command you have been emailed")
-    entry = db_manager.db_execute_select(f"SELECT * FROM non_verified_emails WHERE u_id={member.id} AND email='test@test.com'")
+    entry = db_manager.db_execute_select(f"SELECT * FROM non_verified_emails WHERE u_id={member.id} AND email='{TEST_EMAIL}'")
     assert entry
 
 
@@ -188,9 +190,9 @@ async def test_un_verify():
 
 @pytest.mark.asyncio
 async def test_get_emails():
-    db_manager.db_execute_commit("INSERT INTO verified_emails VALUES (123, 'test@test.com')")
+    db_manager.db_execute_commit(f"INSERT INTO verified_emails VALUES (123, '{TEST_EMAIL}')")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "getEmails 123")
-    dpytest.verify_message("""This user has registered with:\ntest@test.com""")
+    dpytest.verify_message(f"""This user has registered with:\n{TEST_EMAIL}""")
     db_manager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=123")
 
 

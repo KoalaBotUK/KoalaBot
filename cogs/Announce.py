@@ -6,17 +6,17 @@ Created by: Bill Cao
 """
 
 # Built-in/Generic Imports
-import asyncio
+import math
 
 # Libs
-import math
-from typing import Optional, Tuple
-
 import discord
 from discord.ext import commands
 from utils.KoalaUtils import extract_id, wait_for_message
 from utils import KoalaColours
 import time
+
+# Own modules
+import KoalaBot
 
 # constants
 ANNOUNCE_SEPARATION_DAYS = 30
@@ -24,7 +24,7 @@ SECONDS_IN_A_DAY = 86400
 TIMEOUT_TIME = 60.0
 MAX_MESSAGE_LENGTH = 2000
 
-import KoalaBot
+
 
 
 def announce_is_enabled(ctx):
@@ -122,6 +122,7 @@ class Announce(commands.Cog):
             embed.set_thumbnail(url=message.thumbnail)
         return embed
 
+    @commands.check(announce_is_enabled)
     @commands.group(name="announce")
     async def announce(self, ctx):
         """
@@ -210,7 +211,7 @@ class Announce(commands.Cog):
     @announce.command(name="addRole", aliases=["add"])
     async def add_role(self, ctx):
         """
-        Add a tagged role from the tagged list
+        Add a role to list of people to send the announcement to
         :param ctx: The context of the bot
         :return:
         """
@@ -233,7 +234,7 @@ class Announce(commands.Cog):
     @announce.command(name="removeRole", aliases=["remove"])
     async def remove_role(self, ctx):
         """
-        Remove a tagged role from the tagged list
+        Remove a role from a list of people to send the announcement to
         :param ctx: The context of the bot
         :return:
         """
