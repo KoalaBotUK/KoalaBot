@@ -448,14 +448,14 @@ async def test_prompt_for_input_str(msg_content,utils_cog,rfr_cog):
         with mock.patch('utils.KoalaUtils.wait_for_message',
                         mock.AsyncMock(return_value=(None, channel))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
-            dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
-            dpytest.verify_message("Okay, I'll cancel the command.")
+            assert dpytest.verify().message().content("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+            assert dpytest.verify().message().content("Okay, I'll cancel the command.")
             assert not result
     else:
         msg: discord.Message = dpytest.back.make_message(content=msg_content, author=author, channel=channel)
         with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(msg, None))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
-            dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+            assert dpytest.verify().message().content("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert result == msg_content
 
 
@@ -478,7 +478,7 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
     message: discord.Message = discord.Message(state=dpytest.back.get_state(), channel=channel, data=message_dict)
     with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(message, channel))):
         result = await rfr_cog.prompt_for_input(ctx, "test")
-        dpytest.verify_message("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+        assert dpytest.verify().message().content("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
         assert isinstance(result, discord.Attachment)
         assert result.url == attach.url
 
@@ -620,27 +620,27 @@ async def test_rfr_create_message(bot):
                     with mock.patch('discord.Message.delete') as mock_delete:
                         await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr createMessage")
                         mock_edit_channel_perms.assert_called_once_with(guild, embed_channel)
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, this will create a new react for role message in a channel of your choice."
                             "\nNote: The channel you specify will have its permissions edited to make it such that the "
                             "@ everyone role is unable to add new reactions to messages, they can only reaction with "
                             "existing ones. Please keep this in mind, or setup another channel entirely for this.")
-                        dpytest.verify_message("This should be a thing sent in the right channel.")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content("This should be a thing sent in the right channel.")
+                        assert dpytest.verify().message().content(
                             "Okay, what would you like the title of the react for role message to be? Please enter within 60 seconds.")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit commands.")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, the title of the message will be \"React for Role\". What do you want the description to be? I'll wait 60 seconds, don't worry")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit command.")
-                        dpytest.verify_message(
+                        assert dpytest.verify().message().content(
                             "Okay, the description of the message will be \"Roles below!\".\n Okay, I'll create the react for role message now.")
-                        dpytest.verify_embed()
+                        assert dpytest.verify().message()
                         msg = dpytest.sent_queue.get_nowait()
                         assert "You can use the other k!rfr subcommands to change the message and add functionality as required." in msg.content
                         mock_delete.assert_called_once()
@@ -661,11 +661,11 @@ async def test_rfr_delete_message():
             with mock.patch('discord.Message.delete') as mock_msg_delete:
                 await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr deleteMessage")
                 mock_msg_delete.assert_called_once()
-                dpytest.verify_message(
+                assert dpytest.verify().message().content(
                     "Okay, this will delete an existing react for role message. I'll need some details first though.")
-                dpytest.verify_message()
-                dpytest.verify_message()
-                dpytest.verify_message()
+                assert dpytest.verify().message()
+                assert dpytest.verify().message()
+                assert dpytest.verify().message()
                 assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
 
 
@@ -687,9 +687,9 @@ async def test_rfr_edit_description():
             with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
                 await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit description")
                 assert embed.description == 'new description'
-                dpytest.verify_message()
-                dpytest.verify_message()
-                dpytest.verify_message()
+                assert dpytest.verify().message()
+                assert dpytest.verify().message()
+                assert dpytest.verify().message()
 
 
 @pytest.mark.asyncio
@@ -710,9 +710,9 @@ async def test_rfr_edit_title():
             with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
                 await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit title")
                 assert embed.title == 'new title'
-                dpytest.verify_message()
-                dpytest.verify_message()
-                dpytest.verify_message()
+                assert dpytest.verify().message()
+                assert dpytest.verify().message()
+                assert dpytest.verify().message()
 
 
 @pytest.mark.asyncio
@@ -822,11 +822,11 @@ async def test_rfr_edit_inline_all(arg):
             with mock.patch("cogs.ReactForRole.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
                 with mock.patch('discord.Embed.set_field_at') as mock_call:
                     await dpytest.message("k!rfr edit inline")
-                    dpytest.verify_message()
-                    dpytest.verify_message()
-                    dpytest.verify_message(
+                    assert dpytest.verify().message()
+                    assert dpytest.verify().message()
+                    assert dpytest.verify().message().content(
                         "Keep in mind that this process may take a while if you have a lot of RFR messages on your server.")
-                    dpytest.verify_message("Okay, the process should be finished now. Please check.")
+                    assert dpytest.verify().message().content("Okay, the process should be finished now. Please check.")
 
 
 @pytest.mark.skip("Unsupported API Calls")

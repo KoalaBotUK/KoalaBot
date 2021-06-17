@@ -34,11 +34,6 @@ def setup_is_dpytest():
     KoalaBot.is_dpytest = False
 
 
-def setup_function():
-    """ setup any state specific to the execution of the given module."""
-    print("Tests starting")
-
-
 # Test TwitchAlert
 @pytest.fixture(scope='function', autouse=True)
 async def base_cog(bot):
@@ -53,21 +48,21 @@ async def base_cog(bot):
 @pytest.mark.asyncio
 async def test_on_ready(base_cog: BaseCog.BaseCog):
     await base_cog.on_ready()
-    dpytest.verify_activity(discord.Activity(type=discord.ActivityType.playing,
+    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing,
                                              name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
 
 
 @pytest.mark.asyncio
 async def test_change_activity():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity watching you")
-    dpytest.verify_activity(discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
-    dpytest.verify_message("I am now watching you")
+    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
+    assert dpytest.verify().message().content("I am now watching you")
 
 
 @pytest.mark.asyncio
 async def test_invalid_change_activity():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity oof you")
-    dpytest.verify_message("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
+    assert dpytest.verify().message().content("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
 
 
 def test_playing_new_discord_activity():
@@ -111,13 +106,13 @@ def test_invalid_new_discord_activity():
 @pytest.mark.asyncio
 async def test_ping(base_cog: BaseCog.BaseCog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "ping")
-    dpytest.verify_message("Pong! 4ms")
+    assert dpytest.verify().message().content("Pong! 4ms")
 
 
 @pytest.mark.asyncio
 async def test_support():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "support")
-    dpytest.verify_message("Join our support server for more help! https://discord.gg/5etEjVd")
+    assert dpytest.verify().message().content("Join our support server for more help! https://discord.gg/5etEjVd")
 
 
 @pytest.mark.asyncio

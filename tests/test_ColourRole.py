@@ -35,19 +35,6 @@ DBManager = ColourRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
 
-def setup_funsction():
-    """ setup any state specific to the execution of the given module."""
-    global role_colour_cog
-    global utils_cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    role_colour_cog = ColourRole.ColourRole(bot)
-    utils_cog = LastCtxCog.LastCtxCog(bot)
-    bot.add_cog(role_colour_cog)
-    bot.add_cog(utils_cog)
-    dpytest.configure(bot)
-    print("Tests starting")
-
-
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
@@ -494,12 +481,12 @@ async def test_custom_colour_check_failure():
     DBManager.add_colour_change_role_perms(guild.id, role.id)
     with pytest.raises(commands.CheckFailure):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour ab1234")
-        await dpytest.verify_message("You don't have the required role to use this command.")
-        await dpytest.verify_message(assert_nothing=True)
+        assert dpytest.verify().message().content("You don't have the required role to use this command.")
+        assert dpytest.verify().message().nothing()
     with pytest.raises(commands.CheckFailure):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour no")
-        await dpytest.verify_message("You don't have the required role to use this command.")
-        await dpytest.verify_message(assert_nothing=True)
+        assert dpytest.verify().message().content("You don't have the required role to use this command.")
+        assert dpytest.verify().message().nothing()
 
 
 @pytest.mark.asyncio
@@ -508,13 +495,13 @@ async def test_custom_colour_no_allowed_role():
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour ab1234")
         assert "KoalaBot[0xAB1234]" not in [role.name for role in dpytest.get_config().guilds[0].roles]
         assert "KoalaBot[0xAB1234]" not in [role.name for role in dpytest.get_config().members[0].roles]
-        await dpytest.verify_message("You don't have the required role to use this command.")
-        await dpytest.verify_message(assert_nothing=True)
+        assert dpytest.verify().message().content("You don't have the required role to use this command.")
+        assert dpytest.verify().message().nothing()
     with pytest.raises(commands.CheckFailure):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour no")
         assert "KoalaBot[0xAB1234]" not in [role.name for role in dpytest.get_config().guilds[0].roles]
-        dpytest.verify_message("You don't have the required role to use this command.")
-        dpytest.verify_message(assert_nothing=True)
+        assert dpytest.verify().message().content("You don't have the required role to use this command.")
+        assert dpytest.verify().message().nothing()
 
 
 @pytest.mark.asyncio
@@ -525,9 +512,9 @@ async def test_custom_colour_no_no_colour_role():
     member: discord.Member = dpytest.get_config().members[0]
     await member.add_roles(role)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour no", member=0)
-    dpytest.verify_message("Okay, removing your old custom colour role then, if you have one.")
-    dpytest.verify_message(f"{member.mention} you don't have any colour roles to remove.")
-    dpytest.verify_message(assert_nothing=True)
+    assert dpytest.verify().message().content("Okay, removing your old custom colour role then, if you have one.")
+    assert dpytest.verify().message().content(f"{member.mention} you don't have any colour roles to remove.")
+    assert dpytest.verify().message().nothing()
 
 
 @pytest.mark.asyncio
@@ -539,7 +526,7 @@ async def test_custom_colour_colour_is_protected():
     await member.add_roles(role)
     fail_colour = discord.Colour.from_rgb(255, 255, 255)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour FEFEFE", member=0)
-    dpytest.verify_message(
+    assert dpytest.verify().message().content(
         f"Colour chosen was too close to an already protected colour {hex(fail_colour.value)}. Please choose a different colour.")
     assert "KoalaBot[0xFEFEFE]" not in [role.name for role in guild.roles]
 
@@ -552,7 +539,7 @@ async def test_custom_colour_invalid_colour_str():
     member: discord.Member = dpytest.get_config().members[0]
     await member.add_roles(role)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour s34a21", member=0)
-    dpytest.verify_message(
+    assert dpytest.verify().message().content(
         f"Invalid colour string specified, make sure it's a valid colour hex.")
     assert len(member.roles) == 2
 
@@ -566,9 +553,9 @@ async def test_custom_colour_valid():
     await member.add_roles(role)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour e34a21", member=0)
     colour_role = discord.utils.get(guild.roles, name=f"KoalaBot[0xE34A21]")
-    dpytest.verify_message(
+    assert dpytest.verify().message().content(
         f"Your new custom role colour is #E34A21, with the role {colour_role.mention}")
-    dpytest.verify_message(assert_nothing=True)
+    assert dpytest.verify().message().nothing()
     assert "KoalaBot[0xE34A21]" in [role.name for role in guild.roles]
     assert "KoalaBot[0xE34A21]" in [role.name for role in member.roles]
 
