@@ -3,9 +3,14 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### Other
+- Testing updated to use builders in dpytest 0.5.0
+
+## [0.4.3] - 14-05-2021
 ### Announce
-##### Changed
 - Announce is hidden in help when not enabled
+### TwitchAlert
+- Fixed repetitive notification deletion and creation
 
 ## [0.4.2] - 08-04-2021
 ### TwitchAlert
@@ -225,6 +230,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.3.0...v0.4.0
