@@ -1056,7 +1056,6 @@ class TwitchAlertDBManager:
                                                             pass_errors=True)
                 except KoalaDBManager.sqlite3.IntegrityError as err:
                     logging.error(f"Twitch Alert: 1034: {err}")
-                    pass
 
     async def update_all_teams_members(self):
         """
