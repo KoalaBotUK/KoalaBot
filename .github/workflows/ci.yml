@@ -74,3 +74,10 @@ jobs:
         TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
       run: |
         pytest
+    - name: "Upload coverage to Codecov"
+      uses: codecov/codecov-action@v1
+      run: |
+        pip install pytest-cov
+        pytest --cov=./
+      with:
+        fail_ci_if_error: true
