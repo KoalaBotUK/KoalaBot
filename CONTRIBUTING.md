@@ -23,7 +23,7 @@ You will then need to clone the repo you've created locally to make your edits. 
 While you make edits, use frequent commits to describe progression, do **not** commit once when complete or when massive changes have been made as this makes it hard to debug.
 
 Things to ensure you do during implementation:
-* Follow PEP-8 for naming and formatting
+* Follow [PEP-8](https://www.python.org/dev/peps/pep-0008/) for naming and formatting
 * Include documentation of each method and class within your code through RestructuredText docstrings
 * If any new bot commands are added, modify `documentation.json`
 * Add tests for any created methods using [pytest](https://docs.pytest.org/) and [dpytest](https://dpytest.readthedocs.io/) (or explain in the pull request why a test is missing)

@@ -9,7 +9,8 @@
 - [ ] This PR is **not** a code change (e.g. documentation, README, ...)
 
 
-- [ ] Have you tested the changes? (pytest & dpytest)
+- [ ] Have you tested the changes? ([pytest](https://docs.pytest.org/) & [dpytest](https://dpytest.readthedocs.io/))
+- [ ] Have you followed [PEP-8](https://www.python.org/dev/peps/pep-0008/) for naming and styling?  
 - [ ] Has your code been properly documented with RestructuredText docstrings?
 - [ ] Have you added your changes to `CHANGELOG.md` under the `[Unreleased]` heading?
 - [ ] If your code added new bot commands, have you updated `documentation.json`?
