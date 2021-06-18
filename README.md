@@ -16,7 +16,7 @@ to improve their server and society!
 
 All of our other amazing developers can be seen on our website https://koalabot.uk
 
-See also the list of [current developers](https://github.com/orgs/KoalaBotUK/teams/developers) who are actively participating in this project.
+See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) to this repo.
 
 ## License
 
