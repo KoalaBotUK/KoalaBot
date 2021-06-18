@@ -23,10 +23,5 @@ A clear and concise description of what you expected to happen.
 ### Screenshots
 If applicable, add screenshots to help explain your problem.
 
-### Contact Information (optional):
- - Server Link: [e.g. discord.gg/abcdefg]
- - Discord Admin: [e.g. JayDwee#4233]
- - Version [e.g. 0.4.0]
-
 ### Additional context
-Add any other context about the problem here.
+Add any other context about the problem here, as well as the version of KoalaBot this affects.
