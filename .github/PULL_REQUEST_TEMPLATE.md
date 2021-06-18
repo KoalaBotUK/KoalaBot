@@ -11,6 +11,7 @@
 
 - [ ] Have you tested the changes? (pytest & dpytest)
 - [ ] Has your code been properly documented with RestructuredText docstrings?
+- [ ] Have you added your changes to `CHANGELOG.md` under the `[Unreleased]` heading?
 - [ ] If your code added new bot commands, have you updated `documentation.json`?
 
 

@@ -23,32 +23,27 @@ You will then need to clone the repo you've created locally to make your edits. 
 While you make edits, use frequent commits to describe progression, do **not** commit once when complete or when massive changes have been made as this makes it hard to debug.
 
 Things to ensure you do during implementation:
+* Follow PEP-8 for naming and formatting
 * Include documentation of each method and class within your code through RestructuredText docstrings
-* Add tests for any created methods using pytest and dpytest (or explain in the pull request why a test is missing)
 * If any new bot commands are added, modify `documentation.json`
+* Add tests for any created methods using [pytest](https://docs.pytest.org/) and [dpytest](https://dpytest.readthedocs.io/) (or explain in the pull request why a test is missing)
 * Look out for and fix common security issues (e.g. sql injection)
-* 
 
 ## 4. Create a Draft Pull Request (optional)
-If you are ever confused while developing, refer to other examples or message us on our support discord. 
+If you are ever confused while developing, refer to other examples or message us on our Support Discord. 
 However, if your question is specific to parts of your code it is a good idea to instead make a pull request (below) and mark as draft. This allows us to answer questions during development and reference your code. 
 
+All KoalaBot Dev Team members must create draft pull requests for their branch. This allows your project lead to monitor progress and offer help when needed.
+
 ## 5. Create a Pull Request
-Once you are ready for a review you will need 
+Once you are ready for a review you will need a pull request for your fork/branch. 
 
+Please follow the instructions in the pull request template provided and check off the applicable checkboxes. A clear summary of your changes with the issue link (using `close #n` where `n` is the issue number) allows quick reviews to be done.
 
+## 6. Review and Merge
+Our senior developers will review all completed open pull requests that have completed all the required checks. Once they have reviewed you may have to make changes if requested, or they will accept your change and merge it to master.
 
+You have now contributed to a great cause, well done!
 
-
-
-
-
-
-
-
-
-
-
-
-
-## Pull Request
+### Joining the Development Team
+If after this experience you feel like you would like to help further with KoalaBot please contact `@JayDwee#4233` on Discord about joining the KoalaBot Development Team.
