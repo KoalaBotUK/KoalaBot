@@ -26,6 +26,7 @@ from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
 from utils import KoalaDBManager
 
 # Libs
+import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import asyncio
@@ -1056,7 +1057,6 @@ class TwitchAlertDBManager:
                                                             pass_errors=True)
                 except KoalaDBManager.sqlite3.IntegrityError as err:
                     logging.error(f"Twitch Alert: 1034: {err}")
-                    pass
 
     async def update_all_teams_members(self):
         """
