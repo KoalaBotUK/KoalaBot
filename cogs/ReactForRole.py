@@ -387,7 +387,6 @@ class ReactForRole(commands.Cog):
                     yes_no = yes_no.lstrip().rstrip().upper()
                     if yes_no not in ["Y", "N"]:
                         await ctx.send("Invalid input, cancelling command")
-                        pass
                     else:
                         await ctx.send("Okay, I'll change it as requested.")
                         length = self.get_number_of_embed_fields(embed)
