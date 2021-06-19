@@ -443,7 +443,6 @@ class Voting(commands.Cog, name="Vote"):
                 await add_reactions(vote, msg)
             except discord.Forbidden:
                 logging.error(f"tried to send vote to user {user.id} but direct messages are turned off.")
-                pass
         await ctx.send(f"Sent vote to {len(users)} users")
 
     @commands.check(vote_is_enabled)
