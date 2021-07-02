@@ -164,41 +164,7 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=error_embed(description=error))
 
 
-def codecov_test_delete_me(a):
-    for i in a:
-        print("hello World"+i)
-    for i in a:
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in a:
-        print("hello World"+i)
-    for i in a:
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-        for i in a:
-            print("hello World" + i)
-        for i in a:
-            print("hello World" + i)
-        for i in "abcdefg":
-            print("hello World" + i)
-        for i in "abcdefg":
-            print("hello World" + i)
-        for i in "abcdefg":
-            print("hello World" + i)
-
-
 if __name__ == "__main__":  # pragma: no cover
-    codecov_test_delete_me("abcd")
     os.system("title " + "KoalaBot")
     database_manager.create_base_tables()
     load_all_cogs()
