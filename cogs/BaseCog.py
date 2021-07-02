@@ -226,17 +226,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 
         await ctx.send(embed=embed)
 
-def codecov_test_delete_me():
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
-    for i in "abcdefg":
-        print("hello World"+i)
 
 def setup(bot: KoalaBot) -> None:
     """
@@ -245,4 +234,3 @@ def setup(bot: KoalaBot) -> None:
     """
     bot.add_cog(BaseCog(bot))
     print("BaseCog is ready.")
-    codecov_test_delete_me()
