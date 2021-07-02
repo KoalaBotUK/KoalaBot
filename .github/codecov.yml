@@ -6,8 +6,8 @@ coverage:
         target: auto
         threshold: 0%
         base: auto
-#        flags:
-#          - unit
+        flags:
+          - unit
 #        paths:
 #          - "src"
         # advanced settings
