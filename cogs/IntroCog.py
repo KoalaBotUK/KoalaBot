@@ -12,7 +12,6 @@ Commented using reStructuredText (reST)
 # Libs
 import asyncio
 import discord
-import os
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -42,7 +41,6 @@ def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -
 
 async def ask_for_confirmation(confirmation: discord.Message, channel: discord.TextChannel):
     if confirmation is None:
-        channel = channel
         await channel.send('Timed out.')
         return False
     else:

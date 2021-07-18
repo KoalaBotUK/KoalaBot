@@ -109,7 +109,7 @@ async def test_dm_single_group_message():
     test_message = 'default message'
     test_member = dpytest.get_config().members[0]
     x = await KoalaBot.dm_group_message([test_member], test_message)
-    dpytest.verify_message(test_message)
+    assert dpytest.verify().message().content(test_message)
     assert x == 1
 
 
@@ -120,8 +120,8 @@ async def test_dm_plural_group_message():
     test_member_2 = await dpytest.member_join()
     await dpytest.empty_queue()
     x = await KoalaBot.dm_group_message([test_member, test_member_2], test_message)
-    dpytest.verify_message(test_message)
-    dpytest.verify_message(test_message)
+    assert dpytest.verify().message().content(test_message)
+    assert dpytest.verify().message().content(test_message)
     assert x == 2
 
 
@@ -129,7 +129,7 @@ async def test_dm_plural_group_message():
 async def test_dm_empty_group_message():
     test_message = 'this should not be sent'
     x = await KoalaBot.dm_group_message([], test_message)
-    dpytest.verify_message(assert_nothing=True)
+    assert dpytest.verify().message().nothing()
     assert x == 0
 
 
