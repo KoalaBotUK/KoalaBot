@@ -32,8 +32,6 @@ GMAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD')
 # Variables
 
 
-
-
 def verify_is_enabled(ctx):
     """
     A command used to check if the guild has enabled verify
@@ -47,6 +45,7 @@ def verify_is_enabled(ctx):
         result = False
 
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
 
 class Verification(commands.Cog, name="Verify"):
 
@@ -129,6 +128,7 @@ class Verification(commands.Cog, name="Verify"):
         html = open("utils/emailtemplate.html").read()
         soup = BeautifulSoup(html, features="html.parser")
         soup.find(id="confirmbuttonbody").string = f"{KoalaBot.COMMAND_PREFIX}confirm {token}"
+        soup.find(id="backup").string = f"Main body not loading? Send this command to the bot: {KoalaBot.COMMAND_PREFIX}confirm {token}"
 
         msg = MIMEMultipart('alternative')
         msg.attach(MIMEText(str(soup), 'html'))
@@ -434,7 +434,10 @@ This email is stored so you don't need to verify it multiple times across server
                 await self.assign_role_to_guild(guild, role, suffix)
             except AttributeError as e:
                 # bot not in guild
-                print(e)
+                KoalaBot.logger.error(e)
+            except self.VerifyError as e:
+                pass
+                KoalaBot.logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles")
 
     async def assign_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
@@ -452,12 +455,14 @@ This email is stored so you don't need to verify it multiple times across server
                 member = guild.get_member(user_id)
                 if not member:
                     member = await guild.fetch_member(user_id)
+                if not member:
+                    raise discord.errors.NotFound
                 await member.add_roles(role)
             except AttributeError as e:
                 # bot not in guild
-                print(e)
+                KoalaBot.logger.error(e)
             except discord.errors.NotFound:
-                print(f"user with id {user_id} not found")
+                KoalaBot.logger.error(f"User with id {user_id} not found")
             except discord.errors.Forbidden:
                 raise self.VerifyError(f"I do not have permission to assign a role. Make sure I have permission to give roles and that is lower than the KoalaBot role in the hierarchy, then try again.")
 
@@ -472,34 +477,37 @@ This email is stored so you don't need to verify it multiple times across server
                 member = guild.get_member(user_id)
                 if not member:
                     member = await guild.fetch_member(user_id)
+                if not member:
+                    raise discord.errors.NotFound
                 await member.remove_roles(role)
             except AttributeError as e:
                 # bot not in guild
-                print(e)
+                KoalaBot.logger.error(e)
             except discord.errors.NotFound:
-                print(f"user with id {user_id} not found in guild with id {g_id}")
+                # user not in guild
+                pass
+                # KoalaBot.logger.error(f"User with id {user_id} not found in guild with id {g_id}")
             except discord.errors.Forbidden:
                 raise self.VerifyError(f"I do not have permission to remove a role. Make sure I have permission to give roles and that role is lower than the KoalaBot role in the hierarchy, then try again.")
 
-
     async def assign_role_to_guild(self, guild, role, suffix):
-        results = self.DBManager.db_execute_select("SELECT u_id, email FROM verified_emails WHERE email LIKE ('%' || ?)",
-                                                   (suffix,))
-        for user_id, email in results:
+        async for member in guild.fetch_members(limit=guild.member_count):
             try:
-                should_re_verify = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
-                                                               (role.id, user_id))
-                blacklisted = self.DBManager.db_execute_select("SELECT * FROM blacklist WHERE u_id=? and r_id=? and ? like ('%' || email)",
-                                                                (user_id, role.id, email))
-                if blacklisted or should_re_verify:
-                    continue
-                member = guild.get_member(user_id)
-                if not member:
-                    member = await guild.fetch_member(user_id)
-                await member.add_roles(role)
+                result = self.DBManager.db_execute_select("SELECT u_id, email FROM verified_emails WHERE email LIKE ('%' || ?) AND u_id=?",
+                                                          (suffix, member.id))
+                if result:
+                    should_re_verify = self.DBManager.db_execute_select(
+                        "SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
+                        (role.id, member.id))
+                    blacklisted = self.DBManager.db_execute_select(
+                        "SELECT * FROM blacklist WHERE u_id=? and r_id=? and ? like ('%' || email)",
+                        (member.id, role.id, result[0][1]))
+                    if blacklisted or should_re_verify:
+                        continue
+                    await member.add_roles(role)
             except AttributeError as e:
+                pass
                 # bot not in guild
-                print(e)
             except discord.errors.NotFound:
                 pass
                 # user not in guild
@@ -507,13 +515,14 @@ This email is stored so you don't need to verify it multiple times across server
             except discord.errors.Forbidden:
                 raise self.VerifyError(f"I do not have permission to assign {role}. Make sure I have permission to give roles and {role} is lower than the KoalaBot role in the hierarchy, then try again.")
 
+
 def setup(bot: KoalaBot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
     if GMAIL_EMAIL is None or GMAIL_PASSWORD is None:
-        print("Verification not started. API keys not found in environment.")
+        KoalaBot.logger.error("Verification not started. API keys not found in environment.")
         KoalaBot.database_manager.insert_extension("Verify", 0, False, False)
     else:
         bot.add_cog(Verification(bot))
