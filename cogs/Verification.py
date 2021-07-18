@@ -103,7 +103,8 @@ class Verification(commands.Cog, name="Verify"):
         CREATE TABLE IF NOT EXISTS blacklist (
         u_id integer NOT NULL,
         r_id integer NOT NULL,
-        email text NOT NULL
+        email text NOT NULL,
+        PRIMARY KEY (U_id, r_id, email)
         )"""
 
         self.DBManager.db_execute_commit(verified_table)
