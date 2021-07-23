@@ -51,6 +51,8 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
+DESCRIPTION = "To enable an extension, use k!enableExt.\nTo disable an extension, use k!disableExt.\n" \
+              "To list all possible extensions to add, use k!listExt." # Can be seen in k!help command
 # Variables
 started = False
 if discord.__version__ != "1.3.4":
@@ -59,10 +61,10 @@ if discord.__version__ != "1.3.4":
     intent.members = True
     intent.guilds = True
     intent.messages = True
-    client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent)
+    client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent, description=DESCRIPTION)
 else:
     logging.info("discord.py v1.3.4: Intents Disabled")
-    client = commands.Bot(command_prefix=COMMAND_PREFIX)
+    client = commands.Bot(command_prefix=COMMAND_PREFIX, description=DESCRIPTION)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
