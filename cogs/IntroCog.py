@@ -89,14 +89,29 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     def __init__(self, bot):
         self.bot = bot
 
+    async def send_setup_message(self, ctx):
+        """
+        On bot joining guild, sends the basic legal information to the server, blocks access to the bot commands until
+        legal terms are agreed
+        :param ctx: Context of the command
+        """
+        # Lock all commands, perhaps change the role of the admin to something else?
+        setup_message = "In order for KoalaBot to store data on this server, you must agree to the Terms & Conditions " \
+                        "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
+                        "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
+                        "Use k!setup to agree"
+        await ctx.send(setup_message)
+
     @commands.Cog.listener()
-    async def on_guild_join(self, guild: discord.Guild):
+    async def on_guild_join(self, ctx, guild: discord.Guild):
         """
         On bot joining guild, add this guild to the database of guild welcome messages.
         :param guild: Guild KoalaBot just joined
+        :param ctx: Context of the command
         """
         DBManager.new_guild_welcome_message(guild.id)
         KoalaBot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
+        await self.send_setup_message(ctx)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -191,6 +206,15 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     async def on_update_error(self, ctx, error):
         if isinstance(error, discord.ext.commands.MissingRequiredArgument):
             await ctx.send('Please put in a welcome message to update to.')
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.command()
+    async def setup(self, ctx):
+        """
+        Allows access to configure the bot, once legal terms are agreed
+        """
+        # Allow access to commands again
+        await ctx.send("Terms and Conditions agreed, you can now configure the bot")
 
 
 def setup(bot: KoalaBot) -> None:
