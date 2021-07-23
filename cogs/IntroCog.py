@@ -13,6 +13,7 @@ Commented using reStructuredText (reST)
 import asyncio
 import discord
 from discord.ext import commands
+from discord.ext.commands import bot
 from dotenv import load_dotenv
 
 # Own modules
@@ -90,7 +91,10 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     """
 
     def __init__(self, bot):
+
         self.bot = bot
+
+    terms_agreed = True
 
     async def send_setup_message(self, ctx):
         """
@@ -98,7 +102,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         legal terms are agreed
         :param ctx: Context of the command
         """
-        # Lock all commands, perhaps change the role of the admin to something else?
+        self.terms_agreed = False
         setup_message = "In order for KoalaBot to store data on this server, you must agree to the Terms & Conditions " \
                         "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
                         "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
@@ -216,8 +220,15 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         """
         Allows access to configure the bot, once legal terms are agreed
         """
-        # Allow access to commands again
+        self.terms_agreed = True
         await ctx.send("Terms and Conditions agreed, you can now configure the bot")
+
+    @bot.check
+    async def terms_agreed(self):
+        """
+        Global check to block access to commands if legal terms aren't agreed with
+        """
+        return self.terms_agreed
 
 
 def setup(bot: KoalaBot) -> None:
