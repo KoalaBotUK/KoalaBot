@@ -74,7 +74,6 @@ def get_guild_welcome_message(guild_id: int):
         msg = DBManager.new_guild_welcome_message(guild_id)
     return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
 
-
 def get_non_bot_members(guild: discord.Guild):
     if KoalaBot.is_dpytest:
         return [member for member in guild.members if not member.bot and str(member) != KoalaBot.TEST_BOT_USER]
@@ -105,8 +104,11 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         On member joining guild, send DM to member with welcome message.
         :param member: Member which just joined guild
         """
-        await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
-        KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
+        if get_guild_welcome_message(member.guild.id) is None:
+            KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. No welcome message set up.")
+        else:
+            await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
+            KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
