@@ -247,7 +247,7 @@ class BaseCog(commands.Cog, name='KoalaBot', description=KoalaBot.DESCRIPTION):
                 message = f"{koala_extension} is not a valid extension."
         else:
             message = f"{koala_extension} is not a valid extension."
-            
+
         embed = discord.Embed(
             title=koala_extension,
             description=message,
@@ -255,7 +255,7 @@ class BaseCog(commands.Cog, name='KoalaBot', description=KoalaBot.DESCRIPTION):
         )
         await ctx.send(embed=embed)
 
-    
+
 
 def setup(bot: KoalaBot) -> None:
     """
