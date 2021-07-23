@@ -62,7 +62,10 @@ def twitch_is_enabled(ctx):
     return result
 
 
-class TwitchAlert(commands.Cog):
+class TwitchAlert(commands.Cog,
+    description = f"Use `{KoalaBot.COMMAND_PREFIX}twitchAdd <channel ID> <username> <live message> to add a Twitch user to the Twitch Alert.\n"
+                  f"Use `{KoalaBot.COMMAND_PREFIX}twitchEditMsg <channel ID> <live message> to edit the default Twitch Alert message when somebody goes live.\n"
+):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """

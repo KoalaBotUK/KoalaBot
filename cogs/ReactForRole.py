@@ -47,7 +47,11 @@ def rfr_is_enabled(ctx):
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 
-class ReactForRole(commands.Cog):
+class ReactForRole(commands.Cog,
+    description = f"Use `{KoalaBot.COMMAND_PREFIX}rfr create` to create a new React for Roles message.\n"
+                  f"Use `{KoalaBot.COMMAND_PREFIX}rfr addRoles` and `{KoalaBot.COMMAND_PREFIX}rfr removeRoles` "
+                  f"to add and remove roles respectively from the reaction message.\n"    
+    ):
     """
     A discord.py cog pertaining to a React for Role system to allow for automation in getting roles.
     """

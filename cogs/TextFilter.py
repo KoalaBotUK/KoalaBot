@@ -38,7 +38,11 @@ def text_filter_is_enabled(ctx):
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 
-class TextFilter(commands.Cog, name="TextFilter"):
+class TextFilter(commands.Cog, name="TextFilter", 
+    description=f"Use `{KoalaBot.COMMAND_PREFIX}filter` to add a word to the filtered text list.\n"
+                f"Use `{KoalaBot.COMMAND_PREFIX}unfilter` to remove a word from the unfiltered text list.\n"
+                f"Use `{KoalaBot.COMMAND_PREFIX}checkFilteredWords` to display the list of filtered words.\n"
+):
     """
     A discord.py cog with commands pertaining to the a Text Filter for admins to monitor their server
     """
