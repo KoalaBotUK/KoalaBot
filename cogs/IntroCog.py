@@ -223,7 +223,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         self.terms_agreed = True
         await ctx.send("Terms and Conditions agreed, you can now configure the bot")
 
-    @bot.check
+    @commands.check
     async def terms_agreed(self):
         """
         Global check to block access to commands if legal terms aren't agreed with

@@ -43,6 +43,7 @@ def utils_cog(bot):
 @pytest.fixture(autouse=True)
 def intro_cog(bot):
     intro_cog = IntroCog.IntroCog(bot)
+    intro_cog.terms_agreed = True
     bot.add_cog(intro_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -341,9 +342,6 @@ def setup_db():
     yield DBManager
 
 
-
-
-
 @pytest.fixture(scope='function', autouse=True)
 async def setup_clean_messages():
     await dpytest.empty_queue()
@@ -359,3 +357,5 @@ async def add_fake_guild_to_db(id=-1):
     DBManager.db_execute_commit(
         f"INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES ({id}, 'fake guild welcome message');")
     return id
+
+

@@ -32,6 +32,7 @@ def setup_is_dpytest():
     KoalaBot.is_dpytest = True
     yield
     KoalaBot.is_dpytest = False
+    KoalaBot
 
 
 # Test TwitchAlert
