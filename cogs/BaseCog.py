@@ -239,12 +239,10 @@ class BaseCog(commands.Cog, name='KoalaBot', description=KoalaBot.DESCRIPTION):
         if not koala_extension or koala_extension == "KoalaBot":
             message = KoalaBot.DESCRIPTION
             failed = False
-        elif (koala_extension,) in all_extensions:
-            message = (cog:= ctx.bot.get_cog(koala_extension)) and (cog.description.strip() + \
-                      f"\n\nSee `{KoalaBot.COMMAND_PREFIX}help {koala_extension}` for more information.")
-            failed = not message
-            if failed:
-                message = f"{koala_extension} is not a valid extension."
+        elif (koala_extension,) in all_extensions and ctx.bot.get_cog(koala_extension):
+            message = ctx.bot.get_cog(koala_extension).description.strip() + \
+                      f"\n\nSee `{KoalaBot.COMMAND_PREFIX}help {koala_extension}` for more information."
+            failed = False
         else:
             message = f"{koala_extension} is not a valid extension."
 
