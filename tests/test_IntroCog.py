@@ -112,12 +112,12 @@ async def test_on_guild_remove(bot):
 
 
 @pytest.mark.parametrize("guild_id, expected",
-                         [(101, f"fake guild welcome message"), (1250, IntroCog.DEFAULT_WELCOME_MESSAGE),
+                         [(1250, IntroCog.DEFAULT_WELCOME_MESSAGE),
                           (9999, IntroCog.DEFAULT_WELCOME_MESSAGE)])
 @pytest.mark.asyncio
 async def test_get_guild_welcome_message(guild_id, expected):
     val = IntroCog.get_guild_welcome_message(guild_id)
-    assert val == f"{expected}\r\n{IntroCog.BASE_LEGAL_MESSAGE}", val
+    assert val == ""
 
 
 @pytest.mark.asyncio
@@ -224,12 +224,13 @@ async def test_confirm_message(msg_content, expected):
 
 @pytest.mark.asyncio
 async def test_send_welcome_message():
+    guild = dpytest.get_config().guilds[0]
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
     assert dpytest.verify().message().content("This will DM 1 people. Are you sure you wish to do this? Y/N")
     assert dpytest.verify().message().content("Okay, sending out the welcome message now.")
-    assert dpytest.verify().message().content(f"{IntroCog.DEFAULT_WELCOME_MESSAGE}\r\n{IntroCog.BASE_LEGAL_MESSAGE}")
+    assert dpytest.verify().message().content("")
 
 
 @pytest.mark.asyncio
