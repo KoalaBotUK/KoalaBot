@@ -46,6 +46,11 @@
         "command": "support",
         "parameters": [],
         "description": "Returns a link to the KoalaBot Support Discord Server"
+      },
+      {
+        "command": "tutorial",
+        "parameters": ["koala_extension"],
+        "description": "Gives a tutorial for a given koala extension, or a generic one if no extension is given."
       }
     ]
   },
