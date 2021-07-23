@@ -153,12 +153,24 @@ async def test_on_member_join():
     await asyncio.sleep(0.25)
     welcome_message = IntroCog.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
-    assert dpytest.verify().message().content(welcome_message)
+    assert dpytest.verify().message().nothing()
     DBManager.update_guild_welcome_message(guild.id, 'This is an updated welcome message.')
     await asyncio.sleep(0.25)
     welcome_message = IntroCog.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
     assert dpytest.verify().message().content(welcome_message)
+
+
+@pytest.mark.asyncio
+async def test_on_member_join_no_message():
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestMemberJoinNoMsg', id_num=1234)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1,client.user)
+    await dpytest.member_join(1)
+    assert dpytest.verify().message().nothing()
+
 
 
 @pytest.mark.asyncio

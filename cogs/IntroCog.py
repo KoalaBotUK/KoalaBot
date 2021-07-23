@@ -25,7 +25,7 @@ load_dotenv()
 BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
 KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
 the following link: http://legal.koalabot.uk/"""
-DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
+DEFAULT_WELCOME_MESSAGE = ""
 # Variables
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
@@ -70,9 +70,12 @@ def get_guild_welcome_message(guild_id: int):
     :return: The particular guild's welcome message : str
     """
     msg = DBManager.fetch_guild_welcome_message(guild_id)
-    if msg is None:
+    if msg is None or msg == "":
         msg = DBManager.new_guild_welcome_message(guild_id)
-    return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
+        return msg
+    else:
+        return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
+
 
 def get_non_bot_members(guild: discord.Guild):
     if KoalaBot.is_dpytest:
@@ -104,7 +107,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         On member joining guild, send DM to member with welcome message.
         :param member: Member which just joined guild
         """
-        if get_guild_welcome_message(member.guild.id) is None:
+        if get_guild_welcome_message(member.guild.id) == "" or get_guild_welcome_message(member.guild.id) is None:
             KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. No welcome message set up.")
         else:
             await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
