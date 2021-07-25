@@ -1,0 +1,11 @@
+.env
+.db
+.git
+.gitignore
+.github
+.gitattributes
+READMETEMPLATE.md
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+Jenkinsfile
