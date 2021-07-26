@@ -12,6 +12,7 @@ import os
 
 # Libs
 from dotenv import load_dotenv
+
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:
@@ -22,6 +23,7 @@ if os.name == 'nt' or not ENCRYPTED_DB:
 else:
     print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
+
 
 # Own modules
 
@@ -129,13 +131,43 @@ class KoalaDBManager:
         welcome_message text
         );"""
 
+        sql_create_guild_setup_table = """
+        CREATE TABLE IF NOT EXISTS GuildSetupStatus(
+        guild_id integer NOT NULL PRIMARY KEY, 
+        accepted_setup boolean
+        );
+        """
+
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
+        self.db_execute_commit(sql_create_guild_setup_table)
+
+    def insert_setup_status(self, guild_id):
+        self.db_execute_commit(
+            "INSERT INTO GuildSetupStatus (guild_id, accepted_setup) VALUES (?, FALSE );",
+            args=[guild_id])
+        return self.fetch_guild_setup_status(guild_id)
+
+    def fetch_guild_setup_status(self, guild_id):
+        return self.db_execute_commit("""
+        SELECT accepted_setup
+        FROM GuildSetupStatus
+        WHERE guild_id = ?
+        """, args=[guild_id])
+
+    def update_guild_setup_status(self, guild_id):
+        sql_update_guild_status ="""
+        UPDATE
+        GuildSetupStatus
+        SET
+        accepted_setup = TRUE
+        WHERE
+        extension_id = ?"""
+        self.db_execute_commit(sql_update_guild_status,args=[guild_id])
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
-
         if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0:
             sql_update_extension = """
             UPDATE KoalaExtensions
@@ -151,7 +183,6 @@ class KoalaDBManager:
             VALUES (?,?,?,?)"""
 
             self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
-
 
     def extension_enabled(self, guild_id, extension_id):
         sql_select_extension = "SELECT extension_id " \

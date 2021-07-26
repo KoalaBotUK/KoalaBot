@@ -88,6 +88,7 @@ def get_non_bot_members(guild: discord.Guild):
 
 
 class IntroCog(commands.Cog, name="KoalaBot"):
+
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
@@ -96,7 +97,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
 
         self.bot = bot
 
-    terms_agreed = True
+    terms_agreed = False
 
     async def send_setup_message(self,guild):
         """
