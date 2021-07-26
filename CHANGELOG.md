@@ -5,6 +5,7 @@ A lot of these commands will only be available to administrators
 ## [Unreleased]
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
+- Databases moved to /config
 
 ## [0.4.3] - 14-05-2021
 ### Announce
