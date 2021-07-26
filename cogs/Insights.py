@@ -5,6 +5,7 @@ Koala Bot Insights Code
 Created by: Samuel Tiongson
 """
 from discord.ext import commands
+
 import KoalaBot
 
 
@@ -33,15 +34,7 @@ class Insights(commands.Cog):
 
         await ctx.send(f"KoalaBot is in {number_of_servers} servers with a member total of {number_of_members}.")
 
-    @commands.check(KoalaBot.is_owner)
-    @commands.command(name="servers", aliases=[])
-    async def servers(self, ctx, *, arg=None):
-        """
-        Returns the names of the servers KoalaBot is in
-
-        :param ctx: The discord context
-        :param arg: Searches for guilds with argument provided
-        """
+    async def get_bot_guilds(self, arg=None):
         # Retrieves AsyncIterator
         guild_list = self.bot.fetch_guilds()
         guild_list_names = []
@@ -55,6 +48,18 @@ class Insights(commands.Cog):
                     guild_list_names.append(guild.name)
             else:
                 guild_list_names.append(guild.name)
+        return guild_list_names
+
+    @commands.check(KoalaBot.is_owner)
+    @commands.command(name="servers", aliases=[])
+    async def servers(self, ctx, *, arg=None):
+        """
+        Returns the names of the servers KoalaBot is in
+
+        :param ctx: The discord context
+        :param arg: Searches for guilds with argument provided
+        """
+        guild_list_names = await self.get_bot_guilds(arg)
 
         # If there are no guilds and no arguments
         if len(guild_list_names) == 0 and arg is None:
