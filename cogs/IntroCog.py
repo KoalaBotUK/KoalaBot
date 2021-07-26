@@ -97,15 +97,13 @@ class IntroCog(commands.Cog, name="KoalaBot"):
 
         self.bot = bot
 
-    terms_agreed = False
-
-    async def send_setup_message(self,guild):
+    async def send_setup_message(self, guild):
         """
         On bot joining guild, sends the basic legal information to the server, blocks access to the bot commands until
         legal terms are agreed
         :param ctx: Context of the command
         """
-        self.terms_agreed = False
+        DBManager.insert_setup_status(guild.id)
         setup_message = "In order for KoalaBot to store data on this server, you must agree to the Terms & Conditions " \
                         "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
                         "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
@@ -226,15 +224,15 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         """
         Allows access to configure the bot, once legal terms are agreed
         """
-        self.terms_agreed = True
+        DBManager.update_guild_setup_status(ctx.message.guild.id)
         await ctx.send("Terms and Conditions agreed, you can now configure the bot")
 
     @commands.check
-    async def terms_agreed(self):
+    async def terms_agreed(self, ctx):
         """
         Global check to block access to commands if legal terms aren't agreed with
         """
-        return self.terms_agreed
+        return DBManager.fetch_guild_setup_status(ctx.message.guild.id)
 
 
 def setup(bot: KoalaBot) -> None:
