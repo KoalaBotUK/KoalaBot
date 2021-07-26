@@ -71,8 +71,10 @@ def get_guild_welcome_message(guild_id: int):
     :return: The particular guild's welcome message : str
     """
     msg = DBManager.fetch_guild_welcome_message(guild_id)
-    if msg is None or msg == "":
+    if msg is None:
         msg = DBManager.new_guild_welcome_message(guild_id)
+        return msg
+    elif msg == "":
         return msg
     else:
         return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
@@ -96,7 +98,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
 
     terms_agreed = True
 
-    async def send_setup_message(self, ctx):
+    async def send_setup_message(self,guild):
         """
         On bot joining guild, sends the basic legal information to the server, blocks access to the bot commands until
         legal terms are agreed
@@ -107,10 +109,13 @@ class IntroCog(commands.Cog, name="KoalaBot"):
                         "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
                         "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
                         "Use k!setup to agree"
-        await ctx.send(setup_message)
+        for channel in guild.text_channels:
+            if channel.permissions_for(guild.me).send_messages:
+                await channel.send(setup_message)
+            break
 
     @commands.Cog.listener()
-    async def on_guild_join(self, ctx, guild: discord.Guild):
+    async def on_guild_join(self, guild: discord.Guild):
         """
         On bot joining guild, add this guild to the database of guild welcome messages.
         :param guild: Guild KoalaBot just joined
@@ -118,7 +123,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         """
         DBManager.new_guild_welcome_message(guild.id)
         KoalaBot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
-        await self.send_setup_message(ctx)
+        await self.send_setup_message(guild)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -172,7 +177,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
-        """
+        """`
         Allows admins to change their customisable part of the welcome message of a guild. Has a 60 second cooldown per
         guild.
 

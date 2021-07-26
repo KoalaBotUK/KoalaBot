@@ -335,6 +335,23 @@ async def test_update_welcome_message_timeout():
     assert dpytest.verify().message().nothing()
     assert DBManager.fetch_guild_welcome_message(guild.id) != new_message
 
+@pytest.mark.asyncio
+async def test_no_setup():
+    IntroCog.terms_agreed = False
+    with pytest.raises(commands.MissingRequiredArgument):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+    assert dpytest.verify().message().content("Please put in a welcome message to update to.")
+
+@pytest.mark.asyncio
+async def test_setup_command():
+    intro_cog.terms_agreed = False
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setup")
+    assert dpytest.verify().message().content("Terms and Conditions agreed, you can now configure the bot")
+    with pytest.raises(commands.MissingRequiredArgument):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+    assert dpytest.verify().message().content("Please put in a welcome message to update to.")
+
+
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
