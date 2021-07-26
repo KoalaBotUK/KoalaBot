@@ -28,7 +28,7 @@ fake_guild_id = 1000
 non_existent_guild_id = 9999
 
 # Variables
-DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.config_dir)
 DBManager.create_base_tables()
 
 

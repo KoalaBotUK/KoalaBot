@@ -280,7 +280,7 @@ async def test_add_mod_channel(tf_cog):
 
 @pytest.fixture
 def text_filter_db_manager():
-    return TextFilter.TextFilterDBManager(KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY), dpytest.get_config())
+    return TextFilter.TextFilterDBManager(KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.config_dir), dpytest.get_config())
 
 
 @pytest.mark.asyncio()

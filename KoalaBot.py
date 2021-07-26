@@ -23,6 +23,7 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 import logging
 import sys
+import argparse
 
 # Libs
 import discord
@@ -46,13 +47,26 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
-DB_DIRECTORY = "/config/"
-DATABASE_PATH = DB_DIRECTORY+"Koala.db"
+DATABASE_PATH = "Koala.db"
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
+
 # Variables
+
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
+    parser.add_argument('--config', help="Config & database directory")
+    return parser.parse_args(args)
+
+
+if __name__ == '__main__':
+    config_dir = vars(parse_args(sys.argv[1:])).get("config")
+else:
+    config_dir = None
+
 started = False
 if discord.__version__ != "1.3.4":
     logging.info("Intents Enabled")
@@ -64,10 +78,11 @@ if discord.__version__ != "1.3.4":
 else:
     logging.info("discord.py v1.3.4: Intents Disabled")
     client = commands.Bot(command_prefix=COMMAND_PREFIX)
-database_manager = DBManager(DATABASE_PATH, DB_KEY)
+database_manager = DBManager(DATABASE_PATH, DB_KEY, config_dir)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
+
 
 
 def is_owner(ctx):

@@ -24,7 +24,7 @@ TEST_EMAIL_DOMAIN = 'koalabot.uk'
 
 # Variables
 cog = None
-db_manager = KoalaDBManager(KoalaBot.DB_DIRECTORY+"verifyTest.db", KoalaBot.DB_KEY)
+db_manager = KoalaDBManager("verifyTest.db", KoalaBot.DB_KEY, KoalaBot.config_dir)
 db_manager.create_base_tables()
 
 

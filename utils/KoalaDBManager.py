@@ -25,24 +25,34 @@ else:
 
 # Own modules
 
-
 # Constants
+
 # Variables
 
 
 class KoalaDBManager:
 
-    def __init__(self, db_file_path, db_secret_key):
-        self.db_file_path = db_file_path
+    def __init__(self, db_file_path, db_secret_key, db_directory=None):
+        if db_directory:
+            db_directory.replace("\\", "/")
+            if db_directory[-1] == "/":
+                db_directory += "/"
+        else:
+            db_directory = ""
+
         if os.name == 'nt' or not ENCRYPTED_DB:
-            self.db_file_path = "windows_" + self.db_file_path
+            self.db_file_path = db_directory + "windows_" + db_file_path
+        else:
+            self.db_file_path = db_directory + db_file_path
         self.db_secret_key = db_secret_key
+        print(self.db_file_path)
 
     def create_connection(self):
         """ Create a database connection to the SQLite3 database specified in db_file_path
 
         :return: Connection object or None
         """
+        print(self.db_file_path)
         conn = None
         try:
             conn = sqlite3.connect(self.db_file_path)
