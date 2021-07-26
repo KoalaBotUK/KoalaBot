@@ -397,6 +397,8 @@ This email is stored so you don't need to verify it multiple times across server
                 print(e)
             except discord.errors.NotFound:
                 print(f"user with id {user_id} not found")
+        
+        #TODO - Advanced Verify roles
 
     async def remove_roles_for_user(self, user_id, email):
         results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
@@ -414,6 +416,8 @@ This email is stored so you don't need to verify it multiple times across server
                 print(e)
             except discord.errors.NotFound:
                 print(f"user with id {user_id} not found in {guild}")
+        
+        #TODO - Advanced Verify roles
 
     async def assign_role_to_guild(self, guild, role, suffix):
         results = self.DBManager.db_execute_select("SELECT u_id FROM verified_emails WHERE email LIKE ('%' || ?)",
