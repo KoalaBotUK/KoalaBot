@@ -142,6 +142,14 @@ class KoalaDBManager:
         enabled boolean NOT NULL
         );"""
 
+        sql_create_guilds_table = """
+        CREATE TABLE IF NOT EXISTS Guilds (
+        guild_id integer NOT NULL,
+        subscription integer NOT NULL DEFAULT=0
+        PRIMARY KEY (guild_id)
+        );
+        """
+
         sql_create_guild_extensions_table = """
         CREATE TABLE IF NOT EXISTS GuildExtensions (
         extension_id text NOT NULL,
@@ -151,6 +159,9 @@ class KoalaDBManager:
             FOREIGN KEY (extension_id) 
             REFERENCES KoalaExtensions (extension_id)
             ON DELETE CASCADE 
+            
+            FOREIGN KEY (guild_id)
+            REFERENCES Guilds (guild_id)
         );"""
 
         sql_create_guild_welcome_messages_table = """

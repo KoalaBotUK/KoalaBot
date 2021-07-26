@@ -534,6 +534,7 @@ class TextFilterDBManager:
         filter_type text NOT NULL,
         is_regex boolean NOT NULL,
         PRIMARY KEY (filtered_text_id)
+        FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         );"""
 
         sql_create_mod_table = """
@@ -541,6 +542,7 @@ class TextFilterDBManager:
         channel_id text NOT NULL,
         guild_id integer NOT NULL,
         PRIMARY KEY (channel_id)
+        FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         );"""
 
         sql_create_ignore_list_table = """
@@ -550,6 +552,7 @@ class TextFilterDBManager:
         ignore_type text NOT NULL,
         ignore integer NOT NULL,
         PRIMARY KEY (ignore_id)
+        FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         );"""
 
         self.database_manager.db_execute_commit(sql_create_text_filter_table)

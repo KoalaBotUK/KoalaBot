@@ -338,7 +338,7 @@ class AnnounceDBManager:
         guild_id integer NOT NULL,
         last_message_epoch_time integer NOT NULL,
         PRIMARY KEY (guild_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );
         """
         self.database_manager.db_execute_commit(sql_create_usage_tables)

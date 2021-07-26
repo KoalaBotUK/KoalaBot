@@ -61,16 +61,16 @@ class Verification(commands.Cog, name="Verify"):
         :return:
         """
         verified_table = """
-        CREATE TABLE IF NOT EXISTS verified_emails (
-        u_id integer NOT NULL,
+        CREATE TABLE IF NOT EXISTS VerifiedEmails (
+        user_id integer NOT NULL,
         email text NOT NULL,
-        PRIMARY KEY (u_id, email)
+        PRIMARY KEY (user_id, email)
         );
         """
 
         non_verified_table = """
-        CREATE TABLE IF NOT EXISTS non_verified_emails (
-        u_id integer NOT NULL,
+        CREATE TABLE IF NOT EXISTS NonVerifiedEmails (
+        user_id integer NOT NULL,
         email text NOT NULL,
         token text NOT NULL,
         PRIMARY KEY (token)
@@ -78,20 +78,20 @@ class Verification(commands.Cog, name="Verify"):
         """
 
         role_table = """
-        CREATE TABLE IF NOT EXISTS roles (
-        s_id integer NOT NULL,
-        r_id integer NOT NULL,
+        CREATE TABLE IF NOT EXISTS Roles (
+        guild_id integer NOT NULL,
+        role_id integer NOT NULL,
         email_suffix text NOT NULL,
-        PRIMARY KEY (s_id, r_id, email_suffix),
-        FOREIGN KEY (s_id) REFERENCES GuildExtensions (guild_id)
+        PRIMARY KEY (guild_id, role_id, email_suffix),
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );
         """
 
         re_verify_table = """
-        CREATE TABLE IF NOT EXISTS to_re_verify (
-        u_id integer NOT NULL,
-        r_id text NOT NULL,
-        PRIMARY KEY (u_id, r_id)
+        CREATE TABLE IF NOT EXISTS ToReVerify (
+        user_id integer NOT NULL,
+        role_id text NOT NULL,
+        PRIMARY KEY (user_id, role_id)
         );
         """
 
@@ -134,7 +134,7 @@ class Verification(commands.Cog, name="Verify"):
         :param member: the member object who just joined a server
         :return:
         """
-        potential_emails = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
+        potential_emails = self.DBManager.db_execute_select("SELECT role_id, email_suffix FROM Roles WHERE guild_id=?",
                                                             (member.guild.id,))
         if potential_emails:
             roles = {}
@@ -142,10 +142,10 @@ class Verification(commands.Cog, name="Verify"):
                 role = discord.utils.get(member.guild.roles, id=role_id)
                 roles[suffix] = role
                 results = self.DBManager.db_execute_select(
-                    "SELECT * FROM verified_emails WHERE email LIKE ('%' || ?) AND u_id=?",
+                    "SELECT * FROM VerifiedEmails WHERE email LIKE ('%' || ?) AND user_id=?",
                     (suffix, member.id))
 
-                blacklisted = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
+                blacklisted = self.DBManager.db_execute_select("SELECT * FROM ToReVerify WHERE role_id=? AND user_id=?",
                                                                (role_id, member.id))
                 if results and not blacklisted:
                     await member.add_roles(role)
@@ -180,12 +180,12 @@ This email is stored so you don't need to verify it multiple times across server
         if not role_valid:
             raise self.InvalidArgumentError("Please mention a role in this guild")
 
-        exists = self.DBManager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
+        exists = self.DBManager.db_execute_select("SELECT * FROM Roles WHERE guild_id=? AND role_id=? AND email_suffix=?",
                                                   (ctx.guild.id, role_id, suffix))
         if exists:
             raise self.VerifyError("Verification is already enabled for that role")
 
-        self.DBManager.db_execute_commit("INSERT INTO roles VALUES (?, ?, ?)",
+        self.DBManager.db_execute_commit("INSERT INTO Roles VALUES (?, ?, ?)",
                                          (ctx.guild.id, role_id, suffix))
 
         await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
@@ -213,7 +213,7 @@ This email is stored so you don't need to verify it multiple times across server
         except TypeError:
             raise self.InvalidArgumentError("Please give a role by @mentioning it")
 
-        self.DBManager.db_execute_commit("DELETE FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
+        self.DBManager.db_execute_commit("DELETE FROM Roles WHERE guild_id=? AND role_id=? AND email_suffix=?",
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
@@ -227,15 +227,15 @@ This email is stored so you don't need to verify it multiple times across server
         :param email: the email you want to verify
         :return:
         """
-        already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE email=?",
+        already_verified = self.DBManager.db_execute_select("SELECT * FROM VerifiedEmails WHERE email=?",
                                                             (email,))
-        in_blacklist = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE u_id=?",
+        in_blacklist = self.DBManager.db_execute_select("SELECT * FROM ToReVerify WHERE user_id=?",
                                                         (ctx.author.id,))
         if already_verified and not in_blacklist:
             raise self.VerifyError("That email is already verified")
 
         verification_code = ''.join(random.choice(string.ascii_letters) for _ in range(8))
-        self.DBManager.db_execute_commit("INSERT INTO non_verified_emails VALUES (?, ?, ?)",
+        self.DBManager.db_execute_commit("INSERT INTO NonVerifiedEmails VALUES (?, ?, ?)",
                                          (ctx.author.id, email, verification_code))
         self.send_email(email, verification_code)
         await ctx.send("Please verify yourself using the command you have been emailed")
@@ -249,12 +249,12 @@ This email is stored so you don't need to verify it multiple times across server
         :param email: the email you want to un-verify
         :return:
         """
-        entry = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
+        entry = self.DBManager.db_execute_select("SELECT * FROM VerifiedEmails WHERE user_id=? AND email=?",
                                                  (ctx.author.id, email))
         if not entry:
             raise self.VerifyError("You have not verified that email")
 
-        self.DBManager.db_execute_commit("DELETE FROM verified_emails WHERE u_id=? AND email=?",
+        self.DBManager.db_execute_commit("DELETE FROM VerifiedEmails WHERE user_id=? AND email=?",
                                          (ctx.author.id, email))
         await self.remove_roles_for_user(ctx.author.id, email)
         await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
@@ -268,23 +268,23 @@ This email is stored so you don't need to verify it multiple times across server
         :param token: the token emailed to you to verify with
         :return:
         """
-        entry = self.DBManager.db_execute_select("SELECT * FROM non_verified_emails WHERE token=?",
+        entry = self.DBManager.db_execute_select("SELECT * FROM NonVerifiedEmails WHERE token=?",
                                                  (token,))
         if not entry:
             raise self.InvalidArgumentError("That is not a valid token")
 
-        already_verified = self.DBManager.db_execute_select("SELECT * FROM verified_emails WHERE u_id=? AND email=?",
+        already_verified = self.DBManager.db_execute_select("SELECT * FROM VerifiedEmails WHERE user_id=? AND email=?",
                                                             (ctx.author.id, entry[0][1]))
         if not already_verified:
-            self.DBManager.db_execute_commit("INSERT INTO verified_emails VALUES (?, ?)",
+            self.DBManager.db_execute_commit("INSERT INTO VerifiedEmails VALUES (?, ?)",
                                              (entry[0][0], entry[0][1]))
-        self.DBManager.db_execute_commit("DELETE FROM non_verified_emails WHERE token=?",
+        self.DBManager.db_execute_commit("DELETE FROM NonVerifiedEmails WHERE token=?",
                                          (token,))
-        potential_roles = self.DBManager.db_execute_select("SELECT r_id FROM roles WHERE ? LIKE ('%' || email_suffix)",
+        potential_roles = self.DBManager.db_execute_select("SELECT role_id FROM roles WHERE ? LIKE ('%' || email_suffix)",
                                                            (entry[0][1],))
         if potential_roles:
             for role_id in potential_roles:
-                self.DBManager.db_execute_commit("DELETE FROM to_re_verify WHERE r_id=? AND u_id=?",
+                self.DBManager.db_execute_commit("DELETE FROM ToReVerify WHERE role_id=? AND user_id=?",
                                                  (role_id[0], ctx.author.id))
         await ctx.send("Your email has been verified, thank you")
         await self.assign_roles_for_user(ctx.author.id, entry[0][1])
@@ -298,7 +298,7 @@ This email is stored so you don't need to verify it multiple times across server
         :param user_id: the id of the user who's emails you want to find
         :return:
         """
-        results = self.DBManager.db_execute_select("SELECT email FROM verified_emails WHERE u_id=?", (user_id,))
+        results = self.DBManager.db_execute_select("SELECT email FROM VerifiedEmails WHERE user_id=?", (user_id,))
         emails = '\n'.join([x[0] for x in results])
         await ctx.send(f"This user has registered with:\n{emails}")
 
@@ -311,7 +311,7 @@ This email is stored so you don't need to verify it multiple times across server
         :return:
         """
         embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
-        roles = self.DBManager.db_execute_select("SELECT r_id, email_suffix FROM roles WHERE s_id=?",
+        roles = self.DBManager.db_execute_select("SELECT role_id, email_suffix FROM Roles WHERE guild_id=?",
                                                  (ctx.guild.id,))
         role_dict = {}
         for role_id, suffix in roles:
@@ -322,7 +322,7 @@ This email is stored so you don't need to verify it multiple times across server
                 else:
                     role_dict[suffix] = ["@" + role.name]
             except AttributeError as e:
-                self.DBManager.db_execute_commit("DELETE FROM roles WHERE r_id=?", (role_id,))
+                self.DBManager.db_execute_commit("DELETE FROM Roles WHERE rrole_id=?", (role_id,))
 
         for suffix, roles in role_dict.items():
             embed.add_field(name=suffix, value='\n'.join(roles))
@@ -346,7 +346,7 @@ This email is stored so you don't need to verify it multiple times across server
         except TypeError:
             raise self.InvalidArgumentError("Please give a role by @mentioning it")
 
-        exists = self.DBManager.db_execute_select("SELECT * FROM roles WHERE s_id=? AND r_id=?",
+        exists = self.DBManager.db_execute_select("SELECT * FROM Roles WHERE guild_id=? AND role_id=?",
                                                   (ctx.guild.id, role_id))
         if not exists:
             raise self.VerifyError("Verification is not enabled for that role")
@@ -354,7 +354,7 @@ This email is stored so you don't need to verify it multiple times across server
         for member in ctx.guild.members:
             if role in member.roles:
                 await member.remove_roles(role)
-                self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
+                self.DBManager.db_execute_commit("INSERT INTO ToReVerify VALUES (?, ?)",
                                                  (member.id, role.id))
         await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
 
@@ -365,7 +365,7 @@ This email is stored so you don't need to verify it multiple times across server
         pass
 
     async def assign_roles_on_startup(self):
-        results = self.DBManager.db_execute_select("SELECT * FROM roles")
+        results = self.DBManager.db_execute_select("SELECT * FROM Roles")
         for g_id, r_id, suffix in results:
             try:
                 guild = self.bot.get_guild(g_id)
@@ -376,10 +376,10 @@ This email is stored so you don't need to verify it multiple times across server
                 print(e)
 
     async def assign_roles_for_user(self, user_id, email):
-        results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
+        results = self.DBManager.db_execute_select("SELECT * FROM Roles WHERE ? like ('%' || email_suffix)",
                                                    (email,))
         for g_id, r_id, suffix in results:
-            blacklisted = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
+            blacklisted = self.DBManager.db_execute_select("SELECT * FROM ToReVerify WHERE role_id=? AND user_id=?",
                                                            (r_id, user_id))
             if blacklisted:
                 continue
@@ -397,7 +397,7 @@ This email is stored so you don't need to verify it multiple times across server
                 print(f"user with id {user_id} not found")
 
     async def remove_roles_for_user(self, user_id, email):
-        results = self.DBManager.db_execute_select("SELECT * FROM roles WHERE ? like ('%' || email_suffix)",
+        results = self.DBManager.db_execute_select("SELECT * FROM Roles WHERE ? like ('%' || email_suffix)",
                                                    (email,))
         for g_id, r_id, suffix in results:
             try:
@@ -414,11 +414,11 @@ This email is stored so you don't need to verify it multiple times across server
                 print(f"user with id {user_id} not found in {guild}")
 
     async def assign_role_to_guild(self, guild, role, suffix):
-        results = self.DBManager.db_execute_select("SELECT u_id FROM verified_emails WHERE email LIKE ('%' || ?)",
+        results = self.DBManager.db_execute_select("SELECT user_id FROM VerifiedEmails WHERE email LIKE ('%' || ?)",
                                                    (suffix,))
         for user_id in results:
             try:
-                blacklisted = self.DBManager.db_execute_select("SELECT * FROM to_re_verify WHERE r_id=? AND u_id=?",
+                blacklisted = self.DBManager.db_execute_select("SELECT * FROM ToReVerify WHERE role_id=? AND user_id=?",
                                                                (role.id, user_id[0]))
                 if blacklisted:
                     continue
