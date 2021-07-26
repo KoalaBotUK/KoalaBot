@@ -567,7 +567,7 @@ class ColourRoleDBManager:
         guild_id integer NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (guild_id, role_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );"""
 
         # GuildInvalidCustomColours
@@ -576,7 +576,7 @@ class ColourRoleDBManager:
         guild_id integer NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (guild_id, role_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );"""
 
         # Create Tables

@@ -611,6 +611,7 @@ class VoteManager:
         chair_id integer,
         voice_id integer,
         end_time float
+        FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         )
         """
 

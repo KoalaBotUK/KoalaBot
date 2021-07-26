@@ -805,7 +805,7 @@ class TwitchAlertDBManager:
         PRIMARY KEY (guild_id, channel_id),
         CONSTRAINT fk_guild
             FOREIGN KEY (guild_id) 
-            REFERENCES GuildExtensions (guild_id)
+            REFERENCES Guilds (guild_id)
             ON DELETE CASCADE 
         );"""
 

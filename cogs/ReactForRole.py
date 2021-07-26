@@ -1054,7 +1054,7 @@ class ReactForRoleDBManager:
         message_id integer NOT NULL,
         emoji_role_id integer,
         PRIMARY KEY (emoji_role_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id),
         UNIQUE (guild_id, channel_id, message_id)
         );
         """
@@ -1074,7 +1074,7 @@ class ReactForRoleDBManager:
         guild_id integer NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (guild_id, role_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id),
         UNIQUE (guild_id, role_id)
         );
         """
