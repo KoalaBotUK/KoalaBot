@@ -46,7 +46,8 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
-DATABASE_PATH = "Koala.db"
+DB_DIRECTORY = "/config/"
+DATABASE_PATH = DB_DIRECTORY+"Koala.db"
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"

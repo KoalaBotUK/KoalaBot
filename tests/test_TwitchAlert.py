@@ -26,7 +26,7 @@ from utils import KoalaDBManager
 from utils.KoalaColours import *
 
 # Constants
-DB_PATH = "KoalaBotTwitchTest.db"
+DB_PATH = KoalaBot.DB_DIRECTORY+"KoalaBotTwitchTest.db"
 
 
 # Variables
