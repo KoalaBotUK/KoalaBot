@@ -164,7 +164,7 @@ class ColourRole(commands.Cog):
         """
         if isinstance(error, commands.CheckFailure):
             await ctx.send("You don't have the required role to use this command.")
-        else:
+        elif not isinstance(error, commands.CommandOnCooldown):
             import time
             KoalaBot.logger.error(f"Unexpected error occurred in Guild {ctx.guild.id}, channel {ctx.channel.id}. "
                                   f"Error was of type {str(type(error))}. Cause was {error.__cause__}.")
