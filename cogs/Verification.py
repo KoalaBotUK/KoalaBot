@@ -157,6 +157,7 @@ This email is stored so you don't need to verify it multiple times across server
             await member.send(
                 content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
     @commands.check(verify_is_enabled)
@@ -193,6 +194,7 @@ This email is stored so you don't need to verify it multiple times across server
         await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
         await self.assign_role_to_guild(ctx.guild, role_valid, suffix)
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
     @commands.check(verify_is_enabled)
@@ -218,7 +220,6 @@ This email is stored so you don't need to verify it multiple times across server
         self.DBManager.db_execute_commit("DELETE FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
-
 
     @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
@@ -304,6 +305,7 @@ This email is stored so you don't need to verify it multiple times across server
         emails = '\n'.join([x[0] for x in results])
         await ctx.send(f"This user has registered with:\n{emails}")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.command(name="verifyList", aliases=["checkVerifications"])
     @commands.check(verify_is_enabled)
     async def check_verifications(self, ctx):
@@ -331,6 +333,7 @@ This email is stored so you don't need to verify it multiple times across server
 
         await ctx.send(embed=embed)
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="reVerify")
     @commands.check(verify_is_enabled)
