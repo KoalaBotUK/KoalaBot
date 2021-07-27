@@ -97,6 +97,16 @@ def is_admin(ctx):
         return ctx.author.guild_permissions.administrator or is_dpytest
 
 
+def terms_agreed(ctx):
+    """
+    Global check to block access to commands if legal terms aren't agreed with
+    """
+    if DBManager.fetch_guild_setup_status(database_manager, ctx.guild.id) == 0:
+        return False
+    else:
+        return True
+
+
 def is_dm_channel(ctx):
     return isinstance(ctx.channel, discord.channel.DMChannel)
 
@@ -160,6 +170,11 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
                                                      f"{str(error.retry_after)}s."))
+    elif isinstance(error, commands.CheckFailure):
+        await ctx.send(embed=error_embed(description="In order to use this command. You must agree to the Terms & Conditions " \
+                        "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
+                        "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
+                        "Use k!setup to agree"))
     else:
         await ctx.send(embed=error_embed(description=error))
 

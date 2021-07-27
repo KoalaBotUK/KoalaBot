@@ -25,8 +25,6 @@ TIMEOUT_TIME = 60.0
 MAX_MESSAGE_LENGTH = 2000
 
 
-
-
 def announce_is_enabled(ctx):
     """
     A command used to check if the guild has enabled announce
@@ -131,6 +129,7 @@ class Announce(commands.Cog):
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help announce` for more information")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="create")
     async def create(self, ctx):
@@ -166,6 +165,7 @@ class Announce(commands.Cog):
             await ctx.send(embed=self.construct_embed(ctx.guild))
             await ctx.send(self.receiver_msg(ctx.guild))
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="changeTitle")
     async def change_title(self, ctx):
@@ -185,6 +185,7 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="changeContent")
     async def change_content(self, ctx):
@@ -207,6 +208,7 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="addRole", aliases=["add"])
     async def add_role(self, ctx):
@@ -216,7 +218,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+            await ctx.send(
+                "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -230,6 +233,7 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="removeRole", aliases=["remove"])
     async def remove_role(self, ctx):
@@ -239,7 +243,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
+            await ctx.send(
+                "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -252,6 +257,7 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="preview")
     async def preview(self, ctx):
@@ -266,6 +272,7 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="send")
     async def send(self, ctx):
@@ -289,6 +296,7 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(announce_is_enabled)
     @announce.command(name="cancel")
     async def cancel(self, ctx):

@@ -134,7 +134,7 @@ class KoalaDBManager:
         sql_create_guild_setup_table = """
         CREATE TABLE IF NOT EXISTS GuildSetupStatus(
         guild_id integer NOT NULL PRIMARY KEY, 
-        accepted_setup boolean
+        accepted_setup BOOLEAN NOT NULL CHECK (accepted_setup IN (0, 1))
         );
         """
 
@@ -145,26 +145,34 @@ class KoalaDBManager:
 
     def insert_setup_status(self, guild_id):
         self.db_execute_commit(
-            "INSERT INTO GuildSetupStatus (guild_id, accepted_setup) VALUES (?, FALSE );",
+            "INSERT INTO GuildSetupStatus VALUES (?, 0 );",
             args=[guild_id])
         return self.fetch_guild_setup_status(guild_id)
 
     def fetch_guild_setup_status(self, guild_id):
-        return self.db_execute_commit("""
+        return ((self.db_execute_select("""
         SELECT accepted_setup
         FROM GuildSetupStatus
         WHERE guild_id = ?
-        """, args=[guild_id])
+        """, args=[guild_id], pass_errors=True)[0][0]))
 
     def update_guild_setup_status(self, guild_id):
         sql_update_guild_status ="""
         UPDATE
-        GuildSetupStatus
+        GuildSetupStatus    
         SET
-        accepted_setup = TRUE
+        accepted_setup = 1
         WHERE
-        extension_id = ?"""
-        self.db_execute_commit(sql_update_guild_status,args=[guild_id])
+        guild_id = ?"""
+        self.db_execute_commit(sql_update_guild_status, args=[guild_id])
+
+    def remove_guild_status(self, guild_id):
+        sql_remove_guild_status = """
+        DELETE FROM GuildSetupStatus 
+        WHERE guild_id = ?
+        """
+        self.db_execute_commit(sql_remove_guild_status, args=[guild_id], pass_errors=True)
+
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
