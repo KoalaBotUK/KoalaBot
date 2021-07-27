@@ -67,6 +67,7 @@ class AdvancedVerification(commands.Cog, name="AdvancedVerify",
             self.DBManager = db_manager
 
         self.add_routes()
+        self.set_up_tables()
 
         self.server_ratelimits = {}
 
