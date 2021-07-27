@@ -62,7 +62,7 @@ class Verification(commands.Cog, name="Verify"):
         """
         verified_table = """
         CREATE TABLE IF NOT EXISTS VerifiedEmails (
-        user_id integer NOT NULL,
+        user_id text NOT NULL,
         email text NOT NULL,
         PRIMARY KEY (user_id, email)
         );
@@ -70,7 +70,7 @@ class Verification(commands.Cog, name="Verify"):
 
         non_verified_table = """
         CREATE TABLE IF NOT EXISTS NonVerifiedEmails (
-        user_id integer NOT NULL,
+        user_id text NOT NULL,
         email text NOT NULL,
         token text NOT NULL,
         PRIMARY KEY (token)
@@ -79,8 +79,8 @@ class Verification(commands.Cog, name="Verify"):
 
         role_table = """
         CREATE TABLE IF NOT EXISTS Roles (
-        guild_id integer NOT NULL,
-        role_id integer NOT NULL,
+        guild_id text NOT NULL,
+        role_id text NOT NULL,
         email_suffix text NOT NULL,
         PRIMARY KEY (guild_id, role_id, email_suffix),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
@@ -89,7 +89,7 @@ class Verification(commands.Cog, name="Verify"):
 
         re_verify_table = """
         CREATE TABLE IF NOT EXISTS ToReVerify (
-        user_id integer NOT NULL,
+        user_id text NOT NULL,
         role_id text NOT NULL,
         PRIMARY KEY (user_id, role_id)
         );
