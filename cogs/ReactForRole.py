@@ -61,6 +61,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_guild_channel)
     @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(rfr_is_enabled)
     @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
@@ -127,6 +128,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @react_for_role_group.command(name="create", aliases=["createMsg", "createMessage"])
     async def rfr_create_message(self, ctx: commands.Context):
         """
@@ -201,6 +203,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @react_for_role_group.command(name="delete", aliases=["deleteMsg", "deleteMessage"])
     async def rfr_delete_message(self, ctx: commands.Context):
         """
@@ -229,6 +232,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="description", aliases=["desc"])
     async def rfr_edit_description(self, ctx: commands.Context):
         """
@@ -255,6 +259,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="title")
     async def rfr_edit_title(self, ctx: commands.Context):
         """
@@ -281,6 +286,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="thumbnail", aliases=["image", "picture"])
     async def rfr_edit_thumbnail(self, ctx: commands.Context):
         """
@@ -321,6 +327,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="inline")
     async def rfr_edit_inline(self, ctx: commands.Context):
         """
@@ -398,6 +405,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="fixEmbed")
     async def rfr_fix_embed(self, ctx: commands.Context):
         """
@@ -442,6 +450,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
         """
@@ -531,6 +540,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @edit_group.command(name="removeRoles")
     async def rfr_remove_roles_from_msg(self, ctx: commands.Context):
         """
@@ -629,6 +639,7 @@ class ReactForRole(commands.Cog):
 
     @commands.Cog.listener()
     @commands.check(KoalaBot.is_guild_channel)
+    @commands.check(KoalaBot.terms_agreed)
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         """
         Event listener for adding a reaction. Doesn't need message to be in loaded cache.
@@ -683,6 +694,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
         """
@@ -722,6 +734,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @react_for_role_group.command("listRequiredRoles")
     async def rfr_list_guild_required_roles(self, ctx: commands.Context):
         """

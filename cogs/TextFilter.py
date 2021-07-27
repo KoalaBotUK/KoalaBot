@@ -55,6 +55,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="filter", aliases=["filter_word"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def filter_new_word(self, ctx, word, filter_type="banned", too_many_arguments=None):
         """
         Adds a new word to the filtered text list
@@ -76,6 +77,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="filterRegex", aliases=["filter_regex"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def filter_new_regex(self, ctx, regex, filter_type="banned", too_many_arguments=None):
         """
         Adds a new regex to the filtered text list
@@ -103,6 +105,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="unfilter", aliases=["unfilter_word"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def unfilter_word(self, ctx, word, too_many_arguments=None):
         """
         Remove an existing word/test from the filter list
@@ -122,6 +125,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="filterList", aliases=["check_filtered_words", "checkFilteredWords"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def check_filtered_words(self, ctx):
         """
         Get a list of filtered words on the current guild.
@@ -137,6 +141,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
                                                      "add_mod_channel", "addModChannel"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def setup_mod_channel(self, ctx, channel_id, too_many_arguments=None):
         """
         Add a mod channel to the current guild
@@ -157,6 +162,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="modChannelRemove", aliases=["remove_mod_channel", "deleteModChannel", "removeModChannel"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def remove_mod_channel(self, ctx, channel_id, too_many_arguments=None):
         """
         Remove a mod channel from the guild
@@ -178,6 +184,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="modChannelList", aliases=["list_mod_channels", "listModChannels"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def list_mod_channels(self, ctx):
         """
         Get a list of filtered mod channels in the guild
@@ -191,6 +198,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="ignoreUser")
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def ignore_user(self, ctx, user, too_many_arguments=None):
         """
         Add a new ignored user to the database
@@ -213,6 +221,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="ignoreChannel")
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def ignore_channel(self, ctx, channel, too_many_arguments=None):
         """
         Add a new ignored channel to the database
@@ -235,6 +244,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="unignore", aliases=["remove_ignore", "removeIgnore"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def remove_ignore(self, ctx, ignore, too_many_arguments=None):
         """
         Remove an ignore from the guild
@@ -257,6 +267,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="ignoreList", aliases=["list_ignored", "listIgnored"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def list_ignored(self, ctx):
         """
         Get a list all ignored users/channels

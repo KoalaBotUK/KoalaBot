@@ -104,6 +104,7 @@ class ColourRole(commands.Cog):
     @commands.cooldown(1, 15, commands.BucketType.member)
     @commands.check(is_allowed_to_change_colour)
     @commands.check(colour_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.command(name="customColour", aliases=["custom_colour", "customColor", "custom_color"])
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
         """
@@ -394,6 +395,7 @@ class ColourRole(commands.Cog):
         return role_name in [role.name for role in guild.roles]
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.terms_agreed())
     @commands.check(colour_is_enabled)
     @commands.command(name="listProtectedRoleColours",
                       aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors",
@@ -414,6 +416,7 @@ class ColourRole(commands.Cog):
         await ctx.send(msg[:-1])
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(colour_is_enabled)
     @commands.command(name="listCustomColourAllowedRoles",
                       aliases=["list_custom_colour_allowed_roles"])
@@ -463,6 +466,7 @@ class ColourRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(colour_is_enabled)
+    @commands.check(KoalaBot.terms_agreed())
     @commands.command(name="addProtectedRoleColour",
                       aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole",
                                "addProtectedRoleColor"])
@@ -483,6 +487,7 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(colour_is_enabled)
     @commands.command(name="removeProtectedRoleColour",
                       aliases=["remove_protected_role_colour", "removeProtectedRoleColor",
@@ -504,6 +509,7 @@ class ColourRole(commands.Cog):
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(colour_is_enabled)
     @commands.command(name="addCustomColourAllowedRole",
                       aliases=["add_custom_colour_allowed_role", "addCustomColorAllowedRole"])
@@ -523,6 +529,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
     @commands.check(KoalaBot.is_admin)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(colour_is_enabled)
     @commands.command(name="removeCustomColourAllowedRole",
                       aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
