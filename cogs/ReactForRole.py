@@ -1049,10 +1049,10 @@ class ReactForRoleDBManager:
         """
         sql_create_guild_rfr_message_ids_table = """
         CREATE TABLE IF NOT EXISTS GuildRFRMessages (
-        guild_id integer NOT NULL,
-        channel_id integer NOT NULL,
-        message_id integer NOT NULL,
-        emoji_role_id integer,
+        guild_id text NOT NULL,
+        channel_id text NOT NULL,
+        message_id text NOT NULL,
+        emoji_role_id text,
         PRIMARY KEY (emoji_role_id),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id),
         UNIQUE (guild_id, channel_id, message_id)
@@ -1060,9 +1060,9 @@ class ReactForRoleDBManager:
         """
         sql_create_rfr_message_emoji_roles_table = """
         CREATE TABLE IF NOT EXISTS RFRMessageEmojiRoles (
-        emoji_role_id integer NOT NULL,
+        emoji_role_id text NOT NULL,
         emoji_raw text NOT NULL,
-        role_id integer NOT NULL,
+        role_id text NOT NULL,
         PRIMARY KEY (emoji_role_id, emoji_raw, role_id),
         FOREIGN KEY (emoji_role_id) REFERENCES GuildRFRMessages(emoji_role_id),
         UNIQUE (emoji_role_id, emoji_raw),
@@ -1071,8 +1071,8 @@ class ReactForRoleDBManager:
         """
         sql_create_rfr_required_roles_table = """
         CREATE TABLE IF NOT EXISTS GuildRFRRequiredRoles (
-        guild_id integer NOT NULL,
-        role_id integer NOT NULL,
+        guild_id text NOT NULL,
+        role_id text NOT NULL,
         PRIMARY KEY (guild_id, role_id),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id),
         UNIQUE (guild_id, role_id)

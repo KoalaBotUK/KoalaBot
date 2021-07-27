@@ -323,8 +323,8 @@ class AnnounceDBManager:
         """
         sql_create_usage_tables = """
         CREATE TABLE IF NOT EXISTS GuildUsage (
-        guild_id integer NOT NULL,
-        last_message_epoch_time integer NOT NULL,
+        guild_id text NOT NULL,
+        last_message_epoch_time text NOT NULL,
         PRIMARY KEY (guild_id),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );

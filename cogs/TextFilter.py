@@ -530,29 +530,29 @@ class TextFilterDBManager:
         sql_create_text_filter_table = """
         CREATE TABLE IF NOT EXISTS TextFilter (
         filtered_text_id text NOT NULL,
-        guild_id integer NOT NULL,
+        guild_id text NOT NULL,
         filtered_text text NOT NULL,
         filter_type text NOT NULL,
         is_regex boolean NOT NULL,
-        PRIMARY KEY (filtered_text_id)
+        PRIMARY KEY (filtered_text_id),
         FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         );"""
 
         sql_create_mod_table = """
         CREATE TABLE IF NOT EXISTS TextFilterModeration (
         channel_id text NOT NULL,
-        guild_id integer NOT NULL,
-        PRIMARY KEY (channel_id)
+        guild_id text NOT NULL,
+        PRIMARY KEY (channel_id),
         FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         );"""
 
         sql_create_ignore_list_table = """
         CREATE TABLE IF NOT EXISTS TextFilterIgnoreList (
         ignore_id text NOT NULL,
-        guild_id integer NOT NULL,
+        guild_id text NOT NULL,
         ignore_type text NOT NULL,
-        ignore integer NOT NULL,
-        PRIMARY KEY (ignore_id)
+        ignore text NOT NULL,
+        PRIMARY KEY (ignore_id),
         FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         );"""
 

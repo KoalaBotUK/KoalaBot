@@ -564,7 +564,7 @@ class ColourRoleDBManager:
         # GuildColourChangePermissions
         sql_create_guild_colour_change_permissions_table = """
         CREATE TABLE IF NOT EXISTS GuildColourChangePermissions (
-        guild_id integer NOT NULL,
+        guild_id text NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (guild_id, role_id),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
@@ -573,7 +573,7 @@ class ColourRoleDBManager:
         # GuildInvalidCustomColours
         sql_create_guild_colour_change_invalid_colours_table = """
         CREATE TABLE IF NOT EXISTS GuildInvalidCustomColourRoles (
-        guild_id integer NOT NULL,
+        guild_id text NOT NULL,
         role_id integer NOT NULL,
         PRIMARY KEY (guild_id, role_id),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)

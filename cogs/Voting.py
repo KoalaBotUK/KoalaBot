@@ -604,36 +604,43 @@ class VoteManager:
     def set_up_tables(self):
         vote_table = """
         CREATE TABLE IF NOT EXISTS Votes (
-        vote_id integer NOT NULL,
-        author_id integer NOT NULL,
-        guild_id integer NOT NULL,
+        vote_id text NOT NULL,
+        author_id text NOT NULL,
+        guild_id text NOT NULL,
         title text NOT NULL,
-        chair_id integer,
-        voice_id integer,
-        end_time float
+        chair_id text,
+        voice_id text,
+        end_time float,
+        PRIMARY KEY author_id,
         FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
         )
         """
 
         role_table = """
         CREATE TABLE IF NOT EXISTS VoteTargetRoles (
-        vote_id integer NOT NULL,
-        role_id integer NOT NULL
+        vote_id text NOT NULL,
+        role_id text NOT NULL,
+        PRIMARY KEY vote_id,
+        FOREIGN KEY vote_id REFERENCES Votes (vote_id)
         )"""
 
         option_table = """
         CREATE TABLE IF NOT EXISTS VoteOptions (
-        vote_id integer NOT NULL,
-        opt_id integer NOT NULL,
+        vote_id text NOT NULL,
+        opt_id text NOT NULL,
         option_title text NOT NULL,
-        option_desc text NOT NULL
+        option_desc text NOT NULL,
+        PRIMARY KEY vote_id,
+        FOREIGN KEY vote_id REFERENCES Votes (vote_id)
         )"""
 
         delivered_table = """
         CREATE TABLE IF NOT EXISTS VoteSent (
-        vote_id integer NOT NULL,
-        vote_receiver_id integer NOT NULL,
-        vote_receiver_message integer NOT NULL
+        vote_id text NOT NULL,
+        vote_receiver_id text NOT NULL,
+        vote_receiver_message text NOT NULL,
+        PRIMARY KEY vote_id,
+        FOREIGN KEY vote_id REFERNCES Votes (vote_id)
         )"""
 
         self.DBManager.db_execute_commit(vote_table)

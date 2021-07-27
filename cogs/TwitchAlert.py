@@ -799,8 +799,8 @@ class TwitchAlertDBManager:
         # TwitchAlerts
         sql_create_twitch_alerts_table = """
         CREATE TABLE IF NOT EXISTS TwitchAlerts (
-        guild_id integer NOT NULL,
-        channel_id integer NOT NULL,
+        guild_id text NOT NULL,
+        channel_id text NOT NULL,
         default_message text NOT NULL,
         PRIMARY KEY (guild_id, channel_id),
         CONSTRAINT fk_guild
@@ -812,10 +812,10 @@ class TwitchAlertDBManager:
         # UserInTwitchAlert
         sql_create_user_in_twitch_alert_table = """
         CREATE TABLE IF NOT EXISTS UserInTwitchAlert (
-        channel_id integer NOT NULL,
+        channel_id text NOT NULL,
         twitch_username text NOT NULL,
         custom_message text,
-        message_id integer,
+        message_id text,
         PRIMARY KEY (channel_id, twitch_username),
         CONSTRAINT fk_channel
             FOREIGN KEY (channel_id) 
@@ -827,7 +827,7 @@ class TwitchAlertDBManager:
         sql_create_team_in_twitch_alert_table = """
         CREATE TABLE IF NOT EXISTS TeamInTwitchAlert (
         team_twitch_alert_id integer PRIMARY KEY AUTOINCREMENT, 
-        channel_id integer NOT NULL,
+        channel_id text NOT NULL,
         twitch_team_name text NOT NULL,
         custom_message text,
         CONSTRAINT fk_channel
@@ -839,9 +839,9 @@ class TwitchAlertDBManager:
         # UserInTwitchTeam
         sql_create_user_in_twitch_team_table = """
         CREATE TABLE IF NOT EXISTS UserInTwitchTeam (
-        team_twitch_alert_id text NOT NULL,
+        team_twitch_alert_id integer NOT NULL,
         twitch_username text NOT NULL,
-        message_id integer,
+        message_id text,
         PRIMARY KEY (team_twitch_alert_id, twitch_username),
         CONSTRAINT fk_twitch_team_alert
             FOREIGN KEY (team_twitch_alert_id) 
