@@ -14,7 +14,7 @@ from tests.utils_testing import LastCtxCog
 
 # Varibales
 KoalaBot.is_dpytest = True
-
+DBManager = KoalaBot.database_manager
 
 
 
@@ -66,8 +66,9 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
     guild: discord.Guild = bot.guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + 'setup')
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
@@ -86,6 +87,8 @@ async def test_create_illegal_message(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     long_content = ""
     for i in range(2001):
         long_content = long_content + "a"
@@ -104,6 +107,8 @@ async def test_create_multiple_message(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
@@ -134,6 +139,8 @@ async def test_create_message_after_send_before_30_days(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
@@ -164,6 +171,8 @@ async def test_create_message_after_send_before_30_days(announce_cog):
 @pytest.mark.asyncio
 async def test_create_message_timeout():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.channels[0]
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=None)):
@@ -186,6 +195,8 @@ async def test_create_message_timeout():
 async def test_other_timeout(command_word, prompt_message, announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=None)):
@@ -203,6 +214,8 @@ async def test_other_timeout(command_word, prompt_message, announce_cog):
 async def test_functions_no_active(command_word):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce ' + command_word,
                           channel=channel)
     assert dpytest.verify().message().content("There is currently no active announcement")
@@ -214,6 +227,8 @@ async def test_change_title(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     assert announce_cog.has_active_msg(guild.id)
     assert announce_cog.messages[guild.id].description == "testMessage"
@@ -235,6 +250,8 @@ async def test_change_message(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     assert announce_cog.has_active_msg(guild.id)
     assert announce_cog.messages[guild.id].description == "testMessage"
@@ -256,6 +273,8 @@ async def test_change_long_message(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     assert announce_cog.has_active_msg(guild.id)
     assert announce_cog.messages[guild.id].description == "testMessage"
@@ -280,6 +299,8 @@ async def test_add_possible_role(number_of_roles, announce_cog):
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
     roles = guild.roles
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     assert announce_cog.roles[guild.id] == []
     role_list = ""
@@ -303,6 +324,8 @@ async def test_add_non_existent_role(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     assert announce_cog.roles[guild.id] == []
     msg_mock: discord.Message = dpytest.back.make_message("12345", author, channel)
@@ -321,6 +344,8 @@ async def test_add_same_role(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     roles = guild.roles
     make_message(guild, announce_cog)
     role_list = str(roles[0].id) + " " + str(roles[0].id)
@@ -341,6 +366,8 @@ async def test_remove_role_from_none(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     roles = guild.roles
     make_message(guild, announce_cog)
     assert announce_cog.roles[guild.id] == []
@@ -371,6 +398,8 @@ async def test_remove_existing_role(announce_cog):
     channel: discord.TextChannel = guild.channels[0]
     roles = guild.roles
     make_message(guild, announce_cog)
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     announce_cog.roles[guild.id] = [roles[0].id]
     assert announce_cog.roles[guild.id] == [roles[0].id]
     msg_mock: discord.Message = dpytest.back.make_message(str(roles[0].id), author, channel)
@@ -389,6 +418,8 @@ async def test_remove_non_existent_role(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     guild.roles.append(await guild.create_role(name="testrole"))
     assert len(guild.roles) == 2
     roles = guild.roles
@@ -432,6 +463,8 @@ def test_embed_consistent_with_url(announce_cog):
 async def test_preview_consistent(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     embed: discord.Embed = announce_cog.construct_embed(guild)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce preview',
@@ -444,6 +477,8 @@ async def test_preview_consistent(announce_cog):
 async def test_cancel(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     channel: discord.TextChannel = guild.channels[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     make_message(guild, announce_cog)
     announce_cog.roles[guild.id] = [123, 234]
     assert guild.id in announce_cog.messages.keys()
@@ -470,6 +505,8 @@ def test_receiver_msg(announce_cog):
 async def test_announce_db_first_creation(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.channels[0]
     assert announce_cog.announce_database_manager.get_last_use_date(guild.id) is None
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
@@ -496,6 +533,8 @@ async def test_announce_db_first_creation(announce_cog):
 async def test_announce_db_update_time_from_legal_use(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.channels[0]
     assert announce_cog.announce_database_manager.get_last_use_date(guild.id) is None
     announce_cog.announce_database_manager.set_last_use_date(guild.id, int(
@@ -527,6 +566,8 @@ async def test_announce_db_update_time_from_legal_use(announce_cog):
 async def test_announce_db_no_update_time_from_illegal_use(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.channels[0]
     assert announce_cog.announce_database_manager.get_last_use_date(guild.id) is None
     current_time = int(time.time())

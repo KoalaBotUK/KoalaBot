@@ -163,8 +163,7 @@ class Verification(commands.Cog, name="Verify"):
             message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
     Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
     This email is stored so you don't need to verify it multiple times across servers."""
-            status = self.DBManager.fetch_dm_email_list_status
-            if status:
+            if self.DBManager.fetch_dm_email_list_status(member.guild.id):
                 await member.send(
                     content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
