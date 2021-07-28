@@ -18,7 +18,6 @@ from dotenv import load_dotenv
 # Own modules
 import KoalaBot
 from KoalaBot import database_manager as DBManager
-from utils import KoalaDBManager
 
 # Constants
 
