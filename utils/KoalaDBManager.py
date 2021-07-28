@@ -9,6 +9,7 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
+from os import name as os_name
 
 # Libs
 from dotenv import load_dotenv
@@ -16,7 +17,7 @@ load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:
     print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
-if os.name == 'nt' or not ENCRYPTED_DB:
+if os_name == 'nt' or not ENCRYPTED_DB:
     print("Database Encryption Disabled")
     import sqlite3
 else:
@@ -40,18 +41,18 @@ def format_db_path(directory: str, filename: str):
     :param filename: The filename of the given database
     """
     if directory:
-        directory.replace("\\", "/")
+        directory = directory.replace("\\", "/")
         if directory[-1] != "/":
             directory += "/"
     else:
         return filename
 
-    if os.name == 'nt' and directory[1] != ":":
+    if os_name == 'nt' and directory[1] != ":":
         if directory[0] == "/":
             directory = directory[1:]
         directory = os.getcwd() + directory
 
-    if os.name == 'nt' or not ENCRYPTED_DB:
+    if os_name == 'nt' or not ENCRYPTED_DB:
         return directory + "windows_" + filename
     else:
         return directory + filename
@@ -78,7 +79,7 @@ class KoalaDBManager:
         try:
             conn = sqlite3.connect(self.db_file_path)
             c = conn.cursor()
-            if not (os.name == 'nt' or not ENCRYPTED_DB):
+            if not (os_name == 'nt' or not ENCRYPTED_DB):
                 c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
 
             return conn, c
