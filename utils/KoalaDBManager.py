@@ -43,13 +43,13 @@ def format_db_path(directory: str, filename: str):
         directory = directory.replace("\\", "/")
         if directory[-1] != "/":
             directory += "/"
-    else:
-        return filename
 
-    if os.name == 'nt' and directory[1] != ":":
-        if directory[0] == "/":
-            directory = directory[1:]
-        directory = os.getcwd() + directory
+        if os.name == 'nt' and directory[1] != ":":
+            if directory[0] == "/":
+                directory = directory[1:]
+            directory = os.getcwd() + directory
+    else:
+        directory = ""
 
     if os.name == 'nt' or not ENCRYPTED_DB:
         return directory + "windows_" + filename
