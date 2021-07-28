@@ -60,7 +60,7 @@ def test_parse_args_config():
 def test_parse_args_invalid():
     with mock.patch.object(argparse.ArgumentParser, 'exit') as mock1:
             KoalaBot.parse_args(["--test", "/test/"])
-    mock1.assert_called_with(2, "_jb_pytest_runner.py: error: unrecognized arguments: --test /test/\n")
+    mock1.assert_called_once()
 
 
 def test_test_user_is_owner(test_ctx):
