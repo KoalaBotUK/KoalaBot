@@ -138,10 +138,18 @@ class KoalaDBManager:
         );
         """
 
+        sql_create_guild_dm_email_list_status_table = """
+        CREATE TABLE IF NOT EXISTS GuildDMEmailListStatus(
+        guild_id integer NOT NULL PRIMARY KEY,
+        dm_email_list_status BOOLEAN NOT NULL CHECK (accepted_setup IN (0, 1))
+        );
+        """
+
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
         self.db_execute_commit(sql_create_guild_setup_table)
+        self.db_execute_commit(sql_create_guild_dm_email_list_status_table)
 
     def insert_setup_status(self, guild_id):
         self.db_execute_commit(
@@ -173,6 +181,35 @@ class KoalaDBManager:
         """
         self.db_execute_commit(sql_remove_guild_status, args=[guild_id], pass_errors=True)
 
+    def insert_email_list_status(self, guild_id):
+        self.db_execute_commit(
+            "INSERT INTO GuildDMEmailListStatus VALUES (?, 1 );",
+            args=[guild_id])
+        return self.fetch_dm_email_list_status(guild_id)
+
+    def fetch_dm_email_list_status(self, guild_id):
+        return ((self.db_execute_select("""
+        SELECT dm_email_list_status
+        FROM GuildDMEmailListStatus
+        WHERE guild_id = ?
+        """, args=[guild_id], pass_errors=True)[0][0]))
+
+    def update_dm_email_list_status(self, guild_id, toggle):
+        sql_update_dm_email_list_status ="""
+        UPDATE
+        GuildDMEmailListStatus    
+        SET
+        dm_email_list_status = toggle
+        WHERE
+        guild_id = ?"""
+        self.db_execute_commit(sql_update_dm_email_list_status, args=[guild_id])
+
+    def remove_dm_email_list_status(self, guild_id):
+        sql_remove_dm_email_list_status = """
+        DELETE FROM GuildDMEmailListStatus 
+        WHERE guild_id = ?
+        """
+        self.db_execute_commit(sql_remove_dm_email_list_status, args=[guild_id], pass_errors=True)
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
