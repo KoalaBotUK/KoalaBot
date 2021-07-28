@@ -37,7 +37,6 @@ VOLUME /config
 
 # Expose port
 # EXPOSE 5000
-RUN /opt/venv/bin/python -m pytest
 
 # run app
 #########
