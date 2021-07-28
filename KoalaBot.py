@@ -101,10 +101,7 @@ def terms_agreed(ctx):
     """
     Global check to block access to commands if legal terms aren't agreed with
     """
-    if DBManager.fetch_guild_setup_status(database_manager, ctx.guild.id) == 0:
-        return False
-    else:
-        return True
+    return DBManager.fetch_guild_setup_status(database_manager, ctx.guild.id) != 0
 
 
 def is_dm_channel(ctx):

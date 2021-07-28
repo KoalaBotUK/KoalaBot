@@ -395,7 +395,7 @@ class ColourRole(commands.Cog):
         return role_name in [role.name for role in guild.roles]
 
     @commands.check(KoalaBot.is_admin)
-    @commands.check(KoalaBot.terms_agreed())
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(colour_is_enabled)
     @commands.command(name="listProtectedRoleColours",
                       aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors",
@@ -466,7 +466,7 @@ class ColourRole(commands.Cog):
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(colour_is_enabled)
-    @commands.check(KoalaBot.terms_agreed())
+    @commands.check(KoalaBot.terms_agreed)
     @commands.command(name="addProtectedRoleColour",
                       aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole",
                                "addProtectedRoleColor"])

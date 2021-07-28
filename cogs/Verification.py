@@ -46,6 +46,7 @@ def verify_is_enabled(ctx):
 
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
+
 class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot, db_manager=None):
@@ -130,6 +131,14 @@ class Verification(commands.Cog, name="Verify"):
         await self.assign_roles_on_startup()
 
     @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        self.DBManager.insert_email_list_status(guild.id)
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        self.DBManager.remove_dm_email_list_status(guild.id)
+
+    @commands.Cog.listener()
     async def on_member_join(self, member):
         """
         Assigns necessary roles to users upon joining a server
@@ -152,9 +161,10 @@ class Verification(commands.Cog, name="Verify"):
                 if results and not blacklisted:
                     await member.add_roles(role)
             message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
-This email is stored so you don't need to verify it multiple times across servers."""
-            if self.DBManager.fetch_dm_email_list_status:
+    Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+    This email is stored so you don't need to verify it multiple times across servers."""
+            status = self.DBManager.fetch_dm_email_list_status
+            if status:
                 await member.send(
                     content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
@@ -163,14 +173,14 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.command(name="verifyDM", aliases=["toggleVerifyDM"])
     @commands.check(verify_is_enabled)
     async def toggle_email_list_dm(self, ctx, toggle):
-        toggle_int = int(toggle == "True")
-        self.DBManager.update_dm_email_list_status(ctx.guild.id, toggle_int)
-        if toggle:
+        if toggle == "True":
+            self.DBManager.update_dm_email_list_status(ctx.guild.id, 1)
             await ctx.send(f"Users in {ctx.guild.name} will be messaged by the bot to verify their email"
                            f" on joining the guild")
         else:
+            self.DBManager.update_dm_email_list_status(ctx.guild.id, 0)
             await ctx.send(f"Users in {ctx.guild.name} will no longer be messaged by the bot to verify their email"
-                       f" on joining the guild")
+                           f" on joining the guild")
 
     @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)

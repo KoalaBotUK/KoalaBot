@@ -67,6 +67,7 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + 'setup')
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',

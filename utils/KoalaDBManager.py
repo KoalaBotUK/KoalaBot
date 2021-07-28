@@ -141,7 +141,7 @@ class KoalaDBManager:
         sql_create_guild_dm_email_list_status_table = """
         CREATE TABLE IF NOT EXISTS GuildDMEmailListStatus(
         guild_id integer NOT NULL PRIMARY KEY,
-        dm_email_list_status BOOLEAN NOT NULL CHECK (accepted_setup IN (0, 1))
+        dm_email_list_status BOOLEAN NOT NULL CHECK (dm_email_list_status IN (0, 1))
         );
         """
 
@@ -192,17 +192,17 @@ class KoalaDBManager:
         SELECT dm_email_list_status
         FROM GuildDMEmailListStatus
         WHERE guild_id = ?
-        """, args=[guild_id], pass_errors=True)[0][0]))
+        """, args=[guild_id], pass_errors=True)[0][0]) != 0)
 
     def update_dm_email_list_status(self, guild_id, toggle):
         sql_update_dm_email_list_status ="""
         UPDATE
         GuildDMEmailListStatus    
         SET
-        dm_email_list_status = toggle
+        dm_email_list_status = ?
         WHERE
         guild_id = ?"""
-        self.db_execute_commit(sql_update_dm_email_list_status, args=[guild_id])
+        self.db_execute_commit(sql_update_dm_email_list_status, args=[toggle, guild_id])
 
     def remove_dm_email_list_status(self, guild_id):
         sql_remove_dm_email_list_status = """

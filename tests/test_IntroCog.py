@@ -260,6 +260,9 @@ async def test_cancel_update_welcome_message():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     msg_mock = dpytest.back.make_message('n', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
+    status = DBManager.fetch_guild_setup_status(guild.id)
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
@@ -277,6 +280,8 @@ async def test_update_welcome_message():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
@@ -295,6 +300,8 @@ async def test_update_welcome_message_too_long():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "".join(random.choice(string.ascii_letters) for _ in range(1800))
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
@@ -305,6 +312,8 @@ async def test_update_welcome_message_too_long():
 
 @pytest.mark.asyncio
 async def test_update_welcome_message_no_args():
+    DBManager.insert_setup_status(guild_id=dpytest.get_config().guilds[0].id)
+    DBManager.update_guild_setup_status(guild_id=dpytest.get_config().guilds[0].id)
     with pytest.raises(commands.MissingRequiredArgument):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
     assert dpytest.verify().message().content("Please put in a welcome message to update to.")
@@ -323,6 +332,8 @@ async def test_update_welcome_message_timeout():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     # msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=None)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
@@ -337,14 +348,14 @@ async def test_update_welcome_message_timeout():
 
 @pytest.mark.asyncio
 async def test_no_setup():
-    IntroCog.terms_agreed = False
-    with pytest.raises(commands.MissingRequiredArgument):
+    DBManager.insert_setup_status(guild_id=dpytest.get_config().guilds[0].id)
+    with pytest.raises(commands.CheckFailure):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
-    assert dpytest.verify().message().content("Please put in a welcome message to update to.")
+    assert dpytest.verify().message().nothing()
 
 @pytest.mark.asyncio
 async def test_setup_command():
-    intro_cog.terms_agreed = False
+    DBManager.insert_setup_status(guild_id=dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "setup")
     assert dpytest.verify().message().content("Terms and Conditions agreed, you can now configure the bot")
     with pytest.raises(commands.MissingRequiredArgument):
