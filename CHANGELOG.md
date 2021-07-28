@@ -5,7 +5,7 @@ A lot of these commands will only be available to administrators
 ## [Unreleased]
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
-- Databases moved to /config
+- Additional option with `--config <path to config>` to choose where databases are stored
 
 ## [0.4.3] - 14-05-2021
 ### Announce
