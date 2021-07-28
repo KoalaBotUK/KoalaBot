@@ -2,9 +2,7 @@ name: Docker Build and Push
 
 on:
   release:
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+    types: [released, prereleased]
 
 jobs:
   build-docker:
@@ -13,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          repository: KoalaBotUK/docker-KoalBot
+          repository: KoalaBotUK/docker-KoalaBot
       - name: Get the version
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
@@ -27,20 +25,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push release
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'release' && github.event.action == 'released' }}
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           tags: |
-            - jaydwee/koalabot:latest
-            - jaydwee/koalabot:${{ steps.get_version.outputs.VERSION }}
-      - name: Build and push release
-        if: ${{ github.event_name == 'prerelease' }}
+            jaydwee/koalabot:latest
+            jaydwee/koalabot:${{ steps.get_version.outputs.VERSION }}
+      - name: Build and push prerelease
+        if: ${{ github.event_name == 'release' && github.event.action == 'prereleased' }}
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           tags: |
-            - jaydwee/koalabot:prerelease
-            - jaydwee/koalabot:${{ steps.get_version.outputs.VERSION }}
+            jaydwee/koalabot:prerelease
+            jaydwee/koalabot:${{ steps.get_version.outputs.VERSION }}
