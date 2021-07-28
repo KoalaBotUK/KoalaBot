@@ -45,14 +45,12 @@ class KoalaDBManager:
         else:
             self.db_file_path = db_directory + db_file_path
         self.db_secret_key = db_secret_key
-        print(self.db_file_path)
 
     def create_connection(self):
         """ Create a database connection to the SQLite3 database specified in db_file_path
 
         :return: Connection object or None
         """
-        print(self.db_file_path)
         conn = None
         try:
             conn = sqlite3.connect(self.db_file_path)

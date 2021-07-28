@@ -8,6 +8,7 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
+import argparse
 
 # Libs
 import discord
@@ -50,6 +51,16 @@ def setup_db():
 async def setup_clean_messages():
     await dpytest.empty_queue()
     yield dpytest
+
+
+def test_parse_args_config():
+    assert "/config/" == vars(KoalaBot.parse_args(["--config", "/config/"])).get("config")
+
+
+def test_parse_args_invalid():
+    with mock.patch.object(argparse.ArgumentParser, 'exit') as mock1:
+            KoalaBot.parse_args(["--test", "/test/"])
+    mock1.assert_called_with(2, "_jb_pytest_runner.py: error: unrecognized arguments: --test /test/\n")
 
 
 def test_test_user_is_owner(test_ctx):
