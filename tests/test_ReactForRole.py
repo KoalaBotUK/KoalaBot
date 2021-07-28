@@ -122,6 +122,8 @@ def get_rfr_reaction_role_by_role_id(emoji_role_id: int, role_id: int) -> Option
 async def test_rfr_db_functions_guild_rfr_messages():
     guild: discord.Guild = dpytest.get_config().guilds[0]
     channel: discord.TextChannel = dpytest.get_config().channels[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     msg_id = dpyfactory.make_id()
     # Test when no messages exist
     expected_full_list: List[Tuple[int, int, int, int]] = []
@@ -186,6 +188,8 @@ async def test_rfr_db_functions_guild_rfr_messages():
 @pytest.mark.asyncio
 async def test_rfr_db_functions_rfr_message_emoji_roles():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = dpytest.get_config().channels[0]
     msg_id = dpyfactory.make_id()
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
@@ -308,6 +312,8 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
 @pytest.mark.asyncio
 async def test_rfr_db_functions_guild_rfr_required_roles():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     roles = []
     for i in range(50):
         role: discord.Role = testutils.fake_guild_role(guild)
@@ -334,6 +340,9 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
     msg: discord.Message = dpytest.back.make_message(".", member, channel)
     channel_id = msg.channel.id
     msg_id = msg.id
+
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
@@ -365,6 +374,8 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
 async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     for i in range(5):
@@ -401,6 +412,8 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
     image = discord.File("utils/discord.png", filename="discord.png")
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     input_str = ""
@@ -440,6 +453,8 @@ async def test_prompt_for_input_str(msg_content,utils_cog,rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
@@ -464,6 +479,8 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
@@ -487,6 +504,8 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
 async def test_overwrite_channel_add_reaction_perms(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     with mock.patch('discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
         for i in range(15):
@@ -506,6 +525,9 @@ async def test_wait_for_message_not_none(msg_content, utils_cog, rfr_cog):
     ctx = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client
+    guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     import threading
     t2 = threading.Timer(interval=0.1, function=dpytest.message, args=(msg_content))
     t2.start()
@@ -520,6 +542,9 @@ async def test_wait_for_message_none(utils_cog, rfr_cog):
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client
+    guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     msg, channel = await wait_for_message(bot, ctx, 0.2)
     assert not msg
     assert channel == ctx.channel
@@ -527,6 +552,9 @@ async def test_wait_for_message_none(utils_cog, rfr_cog):
 
 @pytest.mark.asyncio
 async def test_is_user_alive(utils_cog, rfr_cog):
+    guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     with mock.patch('utils.KoalaUtils.wait_for_message',
@@ -543,6 +571,8 @@ async def test_get_embed_from_message(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
     bot: discord.Client = config.client
@@ -561,6 +591,8 @@ async def test_get_embed_from_message(rfr_cog):
 async def test_get_number_of_embed_fields(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
     bot: discord.Client = config.client
@@ -581,6 +613,8 @@ async def test_get_first_emoji_from_str():
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     guild_emoji = testutils.fake_guild_emoji(guild)
     guild_emoji = discord.Emoji(guild=guild, state=None,
                                 data={'name': "AAA", 'image': None, 'id': dpyfactory.make_id(),
@@ -603,6 +637,8 @@ async def test_get_first_emoji_from_str():
 async def test_rfr_create_message(bot):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed_channel: discord.TextChannel = dpytest.back.make_text_channel('EmbedChannel', guild)
     author: discord.Member = config.members[0]
@@ -650,6 +686,8 @@ async def test_rfr_create_message(bot):
 async def test_rfr_delete_message():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     message: discord.Message = await dpytest.message("rfr")
     msg_id = message.id
@@ -673,6 +711,8 @@ async def test_rfr_delete_message():
 async def test_rfr_edit_description():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     client: discord.Client = config.client
@@ -696,6 +736,8 @@ async def test_rfr_edit_description():
 async def test_rfr_edit_title():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     client: discord.Client = config.client
@@ -719,6 +761,8 @@ async def test_rfr_edit_title():
 async def test_rfr_edit_thumbnail_attach():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     embed.set_thumbnail(
@@ -751,6 +795,8 @@ async def test_rfr_edit_thumbnail_attach():
 async def test_rfr_edit_thumbnail_bad_attach(attach):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     embed.set_thumbnail(
@@ -779,6 +825,8 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
 async def test_rfr_edit_thumbnail_links(image_url):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     embed.set_thumbnail(
@@ -802,7 +850,9 @@ async def test_rfr_edit_thumbnail_links(image_url):
 @pytest.mark.asyncio
 async def test_rfr_edit_inline_all(arg):
     config: dpytest.RunnerConfig = dpytest.get_config()
-    guild: discord.Guild = config.guilds[0]
+    guild: discord.Guild = config.guilds[0]#
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed1: discord.Embed = discord.Embed(title="title", description="description")
     embed1.add_field(name="field1", value="value1", inline=True)
@@ -838,6 +888,8 @@ async def test_rfr_edit_inline_specific():
 async def test_rfr_add_roles_to_msg():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     client: discord.Client = config.client
@@ -872,6 +924,8 @@ async def test_rfr_add_roles_to_msg():
 async def test_rfr_remove_roles_from_msg():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
     embed: discord.Embed = discord.Embed(title="title", description="description")
     client: discord.Client = config.client
@@ -914,6 +968,8 @@ async def test_rfr_remove_roles_from_msg():
 async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     r_list = []
     for i in range(num_roles):
         role = testutils.fake_guild_role(guild)

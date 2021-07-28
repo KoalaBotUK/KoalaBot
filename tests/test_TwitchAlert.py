@@ -104,6 +104,9 @@ async def twitch_cog(bot):
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=1)
 async def test_edit_default_message_default_from_none(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     this_channel = dpytest.get_config().channels[0]
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
@@ -117,6 +120,9 @@ async def test_edit_default_message_default_from_none(twitch_cog):
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=2)
 async def test_edit_default_message_existing(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     this_channel = dpytest.get_config().channels[0]
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
@@ -129,6 +135,9 @@ async def test_edit_default_message_existing(twitch_cog):
 
 @pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     assert_embed = discord.Embed(title="Added User to Twitch Alert",
                                  description=f"Channel: {dpytest.get_config().channels[0].id}\n"
                                              f"User: monstercat\n"
@@ -144,6 +153,8 @@ async def test_add_user_to_twitch_alert(twitch_cog):
 async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
@@ -161,6 +172,8 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog):
     test_custom_message = "We be live gamers!"
 
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -189,6 +202,8 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
 
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -218,6 +233,8 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
 @pytest.mark.asyncio(order=3)
 async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -235,6 +252,8 @@ async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
 async def test_add_team_to_twitch_alert(twitch_cog):
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -255,6 +274,8 @@ async def test_add_team_to_twitch_alert(twitch_cog):
 async def test_add_team_to_twitch_alert_with_message(twitch_cog):
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -275,6 +296,8 @@ async def test_add_team_to_twitch_alert_with_message(twitch_cog):
 async def test_add_team_to_twitch_alert_wrong_guild(twitch_cog):
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -294,6 +317,8 @@ async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
 
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -317,6 +342,8 @@ async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
 @pytest.mark.asyncio(order=3)
 async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -346,6 +373,9 @@ async def test_on_ready(twitch_cog: TwitchAlert.TwitchAlert):
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
 @pytest.mark.asyncio
 async def test_loop_check_live(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     this_channel = dpytest.get_config().channels[0]
     expected_embed = discord.Embed(colour=KoalaBot.KOALA_GREEN,
                                    title="<:twitch:734024383957434489>  Monstercat is now streaming!",

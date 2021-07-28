@@ -9,6 +9,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import asyncio
 # Libs
+import discord
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
@@ -44,6 +45,9 @@ def setup_function():
     db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
     db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
     db_manager.insert_extension("Verify", 0, True, True)
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     print("Tests starting")
 
 @pytest.fixture(autouse=True)
@@ -90,6 +94,8 @@ This email is stored so you don't need to verify it multiple times across server
 async def test_member_join_already_verified(bot):
     test_config = dpytest.get_config()
     guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     bot.guilds.append(guild)
 
     test_user = dpytest.back.make_user("TestUser", 1234, id_num=999)
@@ -113,6 +119,8 @@ This email is stored so you don't need to verify it multiple times across server
 async def test_enable_verification():
     config = dpytest.get_config()
     guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} <@&555>")
     assert dpytest.verify().message().content(f"Verification enabled for <@&555> for emails ending with `{TEST_EMAIL_DOMAIN}`")
@@ -126,6 +134,8 @@ async def test_enable_verification():
 async def test_disable_verification():
     config = dpytest.get_config()
     guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id}, 555, 'egg.com')")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeVerification egg.com <@&555>")
@@ -139,6 +149,8 @@ async def test_disable_verification():
 async def test_verify():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     member = guild.members[0]
     dm = await member.create_dm()
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
@@ -151,6 +163,8 @@ async def test_verify():
 async def test_confirm():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     member = guild.members[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit(f"INSERT INTO roles VALUES ({guild.id}, 555, 'egg.com')")
@@ -172,6 +186,8 @@ async def test_confirm():
 async def test_un_verify():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     member = test_config.members[0]
     await dpytest.add_role(member, role)
@@ -188,6 +204,9 @@ async def test_un_verify():
 
 @pytest.mark.asyncio
 async def test_get_emails():
+    guild: discord.Guild = config.guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     db_manager.db_execute_commit(f"INSERT INTO verified_emails VALUES (123, '{TEST_EMAIL}')")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "getEmails 123")
     assert dpytest.verify().message().content(f"""This user has registered with:\n{TEST_EMAIL}""")
@@ -198,6 +217,7 @@ async def test_get_emails():
 async def test_re_verify():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
+    guild: discord.Guild = dpytest.get_config().guilds[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     member = test_config.members[0]
     await dpytest.add_role(member, role)

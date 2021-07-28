@@ -41,6 +41,9 @@ def se5tup_function():
     bot.add_cog(tf_cog)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaDBManager.insert_setup_status(guild.id)
+    KoalaDBManager.update_guild_setup_status(guild.id)
     print("Tests starting")
     return dpytest.get_config()
 
