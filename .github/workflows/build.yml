@@ -47,14 +47,14 @@ jobs:
           tags: |
             jaydwee/koalabot:prerelease
             jaydwee/koalabot:${{ steps.get_version.outputs.VERSION }}
-      - name: Build and push dev
+      - name: Build and push master
         if: ${{ github.event_name == 'push' }}
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           tags: |
-            jaydwee/koalabot:dev
+            jaydwee/koalabot:master
       - name: Build and push manual test
         if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: docker/build-push-action@v2
