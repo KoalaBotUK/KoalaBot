@@ -22,35 +22,35 @@ from utils import KoalaDBManager
 # Variables
 
 
+@mock.patch("utils.KoalaDBManager.os_name", mock.MagicMock(return_value="nt"))
 def test_format_db_path_windows_absolute_full():
-    os.name = "nt"
     db_path = KoalaDBManager.format_db_path("C:/test_dir/", "test.db")
     assert db_path == "C:/test_dir/windows_test.db"
 
 
+@mock.patch("utils.KoalaDBManager.os_name", mock.MagicMock(return_value="nt"))
 def test_format_db_path_windows_absolute_partial():
-    os.name = "nt"
     db_path = KoalaDBManager.format_db_path("C:/test_dir", "test.db")
     assert db_path == "C:/test_dir/windows_test.db"
 
 
+@mock.patch("utils.KoalaDBManager.os_name", mock.MagicMock(return_value="nt"))
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_format_db_path_windows_relative_full():
-    os.name = "nt"
     db_path = KoalaDBManager.format_db_path("/test_dir/", "test.db")
     assert db_path == "C:/test_dir/windows_test.db"
 
 
+@mock.patch("utils.KoalaDBManager.os_name", mock.MagicMock(return_value="nt"))
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_format_db_path_windows_relative_backslash():
-    os.name = "nt"
     db_path = KoalaDBManager.format_db_path("\\test_dir\\", "test.db")
     assert db_path == "C:/test_dir/windows_test.db"
 
 
+@mock.patch("utils.KoalaDBManager.os_name", mock.MagicMock(return_value="nt"))
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_format_db_path_windows_relative_partial():
-    os.name = "nt"
     db_path = KoalaDBManager.format_db_path("test_dir/", "test.db")
     assert db_path == "C:/test_dir/windows_test.db"
 
