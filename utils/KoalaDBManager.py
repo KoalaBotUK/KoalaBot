@@ -64,9 +64,8 @@ class KoalaDBManager:
 
     def __init__(self, db_filename, db_secret_key, db_directory=None):
         self.db_file_path = format_db_path(db_directory, db_filename)
-
-
         self.db_secret_key = db_secret_key
+        self.create_base_tables()
 
     def create_connection(self):
         """

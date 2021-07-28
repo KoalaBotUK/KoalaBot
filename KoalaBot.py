@@ -182,7 +182,6 @@ async def on_command_error(ctx, error):
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
-    database_manager.create_base_tables()
     load_all_cogs()
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
