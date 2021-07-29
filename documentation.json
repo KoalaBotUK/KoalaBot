@@ -47,6 +47,11 @@
         "parameters": [],
         "description": "Returns a link to the KoalaBot Support Discord Server"
       }
+      {
+	"command": "setup",
+	"parameters": []
+	"description": "Allows access to configure the bot, once legal terms are agreed"
+      }
     ]
   },
   {
@@ -336,7 +341,12 @@
         "command": "confirm",
         "parameters": ["token"],
         "description": "Send to KoalaBot in dms to confirm the verification of an email"
-      }
+      },
+      {
+	"command": "verifyDM",
+	"parameters": ["toggle"]
+	"description" "Toggle the verify DM for a guild, that sends the user a list of emails to verify"
+      }	
     ]
   },
   {
