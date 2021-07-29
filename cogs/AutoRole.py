@@ -12,15 +12,14 @@ import discord
 from discord.ext import commands
 
 
-
 def auto_role_is_enabled(self, s_id: str):
     try:
-        return KoalaBot.database_manager.extension_enabled(s_id, "AutoRole") 
+        return KoalaBot.database_manager.extension_enabled(s_id, "AutoRole")
     except:
         return
 
 
-class AutoRole(commands.Cog, description = ""):
+class AutoRole(commands.Cog, description=""):
 
     def __init__(self, bot: commands.Bot, db_manager=None):
         self.bot = bot
@@ -53,26 +52,55 @@ class AutoRole(commands.Cog, description = ""):
     @commands.group(name="autoRole", aliases=["auto_role"], invoke_without_command=True)
     @commands.has_guild_permissions(administrator=True)
     @commands.check(auto_role_is_enabled)
-    async def auto_role(self, ctx : commands.Context):
+    async def auto_role(self, ctx: commands.Context):
         await ctx.send_help("autoRole")
 
-    @auto_role.command(name="addRequiredRole", aliases = ["add_required_role"])
-    async def add_required_role(self, ctx : commands.Context, role : discord.Role):
+    @auto_role.command(name="addRequiredRole", aliases=["add_required_role"])
+    async def add_required_role(self, ctx: commands.Context, role: discord.Role):
         guild_id = ctx.guild
         role_id = role.id
         self.set_required_role(role_id, guild_id)
-        
+
+    @auto_role.command(name="removeRequiredRole", aliases=["remove_required_role"])
+    async def add_required_role(self, ctx: commands.Context, role: discord.Role):
+        guild_id = ctx.guild
+        role_id = role.id
+        self.remove_required_role(role_id, guild_id)
+
+    @auto_role.command(name="addExemptUser", aliases=["add_exempt_user"])
+    async def add_exempt_user(self, ctx: commands.Context, user : discord.Member):
 
 
+    def remove_required_role(self, role_id: int, guild_id: int):
+        """
+        Makes a role un necessary for users to have in a guild
+        :param role_id: The un necessary role's id
+        :param guild_id: The guild to remove role from the required role list
+        """
+        try:
+            self.DBManager.execute_commit("""
+            DELETE FROM required_roles WHERE role_id = ? AND guild_id = ?
+            """, role_id, guild_id)
+        except:
+            pass
 
-    def set_required_role(self, role_id : int, guild_id : int):
+    def set_required_role(self, role_id: int, guild_id: int):
         """
         Sets the required role that all users in a guild must have
-        :param role: The required role
+        :param role_id: The required role's id
+        :param guild_id: The guild to make this role required
         """
-        pass
-    
-    def ignore_user(self, user : discord.Member):
+        try:
+            self.DBManager.db_execute_commit("""
+            INSERT INTO required_roles (guild_id, role_id)
+            VALUES (?, ?)
+            """, guild_id, role_id)
+        except:
+            pass
+
+
+
+    def ignore_user(self, user: discord.Member):
         """
         Check to see if the user is in the ignore_auto_role list.
         :params user: The discord user to check for.
@@ -80,9 +108,7 @@ class AutoRole(commands.Cog, description = ""):
         """
         pass
 
-    
 
 def setup(bot):
     bot.add_cog(AutoRole(bot))
     print("Auto Role is ready.")
-
