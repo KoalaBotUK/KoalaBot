@@ -39,7 +39,7 @@ class AutoRole(commands.Cog, description=""):
             PRIMARY KEY (guild_id, role_id)
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
             )"""
-        ignore_list = """CREATE TABLE IF NOT EXISTS ignore_users (
+        ignore_list = """CREATE TABLE IF NOT EXISTS exempt_users (
             guild_id integer NOT NULL,
             user_id integer NOT NULL,
             PRIMARY KEY (guild_id, user_id)
@@ -69,7 +69,9 @@ class AutoRole(commands.Cog, description=""):
 
     @auto_role.command(name="addExemptUser", aliases=["add_exempt_user"])
     async def add_exempt_user(self, ctx: commands.Context, user : discord.Member):
-
+        guild_id = ctx.guild
+        user_id = user.id
+        self.add_exempt_user_to_db(self, guild_id, user_id)
 
     def remove_required_role(self, role_id: int, guild_id: int):
         """
@@ -97,6 +99,24 @@ class AutoRole(commands.Cog, description=""):
             """, guild_id, role_id)
         except:
             pass
+
+    def add_exempt_user_to_db(self, guild_id: int, user_id : int):
+        try:
+            self.DBManager.execute_commit("""
+            INSERT INTO exempt_users (guild_id, user_id) VALUES (?, ?)
+            """, guild_id, user_id)
+        except:
+            pass
+
+    def remove_exempt_user_to_db(self, guild_id: int, user_id : int):
+        try:
+            self.DBManager.execute_commit("""
+            DELETE FROM exempt_users WHERE guild_id = ? AND user_id = ?
+            """, guild_id, user_id)
+        except:
+            pass
+
+
 
 
 
