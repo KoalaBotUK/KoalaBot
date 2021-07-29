@@ -31,9 +31,8 @@ DEFAULT_WELCOME_MESSAGE = ""
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
 
-
-
-def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (discord.Message, discord.TextChannel):
+def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (
+discord.Message, discord.TextChannel):
     try:
         confirmation = bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
         return confirmation
@@ -90,7 +89,6 @@ def get_non_bot_members(guild: discord.Guild):
 
 
 class IntroCog(commands.Cog, name="KoalaBot"):
-
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
@@ -118,6 +116,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     async def on_guild_join(self, guild: discord.Guild):
         """
         On bot joining guild, add this guild to the database of guild welcome messages.
+        Also sets up the status of the guild
         :param guild: Guild KoalaBot just joined
         """
         DBManager.new_guild_welcome_message(guild.id)
@@ -128,14 +127,16 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """
-        On member joining guild, send DM to member with welcome message.
+        On member joining guild, send DM to member with welcome message, if the server opts for this option
         :param member: Member which just joined guild
         """
         if get_guild_welcome_message(member.guild.id) == "" or get_guild_welcome_message(member.guild.id) is None:
-            KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. No welcome message set up.")
+            KoalaBot.logger.info(
+                f"New member {member.name} joined guild id {member.guild.id}. No welcome message set up.")
         else:
             await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
-            KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
+            KoalaBot.logger.info(
+                f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -223,7 +224,6 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         if isinstance(error, discord.ext.commands.MissingRequiredArgument):
             await ctx.send('Please put in a welcome message to update to.')
 
-
     @commands.check(KoalaBot.is_admin)
     @commands.command()
     async def setup(self, ctx):
@@ -232,9 +232,6 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         """
         DBManager.update_guild_setup_status(ctx.guild.id)
         await ctx.send("Terms and Conditions agreed, you can now configure the bot")
-
-
-
 
 
 def setup(bot: KoalaBot) -> None:

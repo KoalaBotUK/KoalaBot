@@ -50,7 +50,6 @@ def populate_vote_tables():
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (112, 888, "vote1opt", "vote1body"))
 
 
-
 @pytest.fixture(autouse=True)
 def cog(bot):
     global vote_manager
@@ -66,6 +65,7 @@ def cog(bot):
     print("Tests starting")
     return cog
 
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
     KoalaBot.is_dpytest = True
@@ -80,7 +80,8 @@ async def test_discord_create_vote():
     KoalaBot.database_manager.insert_setup_status(guild.id)
     KoalaBot.database_manager.update_guild_setup_status(guild.id)
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
-    assert dpytest.verify().message().content(f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
+    assert dpytest.verify().message().content(
+        f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     in_db = db_manager.db_execute_select("SELECT * FROM Votes")[0]
     assert in_db
     assert in_db[1] == guild.members[0].id
@@ -93,16 +94,19 @@ async def test_discord_create_vote_wrong():
     guild = config.guilds[0]
     KoalaBot.database_manager.insert_setup_status(guild.id)
     KoalaBot.database_manager.update_guild_setup_status(guild.id)
-    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)", (111, guild.members[0].id, guild.id, "Test Vote", None, None, None))
+    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
+                                 (111, guild.members[0].id, guild.id, "Test Vote", None, None, None))
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote")
     assert dpytest.verify().message().content("You already have a vote with title Test Vote sent!")
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}vote create aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
     assert dpytest.verify().message().content("Title too long")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote 2")
     assert dpytest.verify().message().content(
         f"Vote titled `Test Vote 2` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote create Test Vote 3")
-    assert dpytest.verify().message().content(f"You already have an active vote in {guild.name}. Please send that with `{KoalaBot.COMMAND_PREFIX}vote send` before creating a new one.")
+    assert dpytest.verify().message().content(
+        f"You already have an active vote in {guild.name}. Please send that with `{KoalaBot.COMMAND_PREFIX}vote send` before creating a new one.")
 
 
 @pytest.mark.asyncio
@@ -119,7 +123,8 @@ async def test_discord_vote_add_and_remove_role(cog):
     vote = cog.vote_manager.get_configuring_vote(guild.members[0].id)
     assert guild.roles[0].id in vote.target_roles
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote removeRole {guild.roles[0].id}")
-    assert dpytest.verify().message().content(f"Vote will no longer be sent to those with the {guild.roles[0].name} role")
+    assert dpytest.verify().message().content(
+        f"Vote will no longer be sent to those with the {guild.roles[0].name} role")
     assert guild.roles[0].id not in vote.target_roles
 
 
@@ -137,6 +142,7 @@ async def test_discord_set_chair():
     assert dpytest.verify().message().content(f"Set chair to {guild.members[0].name}")
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}vote setChair")
     assert dpytest.verify().message().content("Results will be sent to the channel vote is closed in")
+
 
 @pytest.mark.asyncio
 async def test_discord_add_remove_option():
@@ -176,7 +182,8 @@ def test_option():
 
 
 def test_votemanager_generate_opt_id():
-    db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (123, 100000000000000001, "test", "option"))
+    db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)",
+                                 (123, 100000000000000001, "test", "option"))
     opt_id = vote_manager.generate_unique_opt_id()
     assert opt_id != 100000000000000001
 

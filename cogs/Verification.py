@@ -22,14 +22,13 @@ from discord.ext import commands
 import KoalaBot
 from utils import KoalaDBManager
 
-
 # Constants
 load_dotenv()
 GMAIL_EMAIL = os.environ.get('GMAIL_EMAIL')
 GMAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD')
+
+
 # Variables
-
-
 
 
 def verify_is_enabled(ctx):
@@ -172,6 +171,11 @@ class Verification(commands.Cog, name="Verify"):
     @commands.command(name="verifyDM", aliases=["toggleVerifyDM"])
     @commands.check(verify_is_enabled)
     async def toggle_email_list_dm(self, ctx, toggle):
+        """
+        Updates the database with the argument that the user of the command supplies
+        :param ctx: this will be the context of the command.
+        :param toggle: boolean, turns DM on or off.
+        """
         if toggle == "True":
             self.DBManager.update_dm_email_list_status(ctx.guild.id, 1)
             await ctx.send(f"Users in {ctx.guild.name} will be messaged by the bot to verify their email"
@@ -194,7 +198,8 @@ class Verification(commands.Cog, name="Verify"):
         :return:
         """
         if not role or not suffix:
-            raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+            raise self.InvalidArgumentError(
+                f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
         try:
             role_id = int(role[3:-1])
@@ -385,7 +390,8 @@ class Verification(commands.Cog, name="Verify"):
                 await member.remove_roles(role)
                 self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
                                                  (member.id, role.id))
-        await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
+        await ctx.send(
+            "That role has now been removed from all users and they will need to re-verify the associated email.")
 
     class InvalidArgumentError(Exception):
         pass
@@ -473,4 +479,3 @@ def setup(bot: KoalaBot) -> None:
     else:
         bot.add_cog(Verification(bot))
         print("Verification is ready.")
-

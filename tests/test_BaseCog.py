@@ -21,20 +21,18 @@ import KoalaBot
 from cogs import BaseCog
 from tests.utils_testing.TestUtils import assert_activity
 
-
 # Constants
 
 # Variables
 
 DBManager = KoalaBot.database_manager
 
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
     KoalaBot.is_dpytest = True
     yield
     KoalaBot.is_dpytest = False
-
-
 
 
 # Test TwitchAlert
@@ -52,7 +50,7 @@ async def base_cog(bot):
 async def test_on_ready(base_cog: BaseCog.BaseCog):
     await base_cog.on_ready()
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing,
-                                             name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
+                                                                name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
 
 
 @pytest.mark.asyncio
@@ -61,7 +59,8 @@ async def test_change_activity():
     DBManager.insert_setup_status(guild.id)
     DBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity watching you")
-    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
+    assert dpytest.verify().activity().matches(
+        discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
     assert dpytest.verify().message().content("I am now watching you")
 
 

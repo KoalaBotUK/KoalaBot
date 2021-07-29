@@ -29,8 +29,8 @@ from utils.KoalaDBManager import KoalaDBManager
 # Constants
 
 # Variables
-#role_colour_cog: ColourRole.ColourRole = None
-#utils_cog: TestUtilsCog.TestUtilsCog = None
+# role_colour_cog: ColourRole.ColourRole = None
+# utils_cog: TestUtilsCog.TestUtilsCog = None
 kDBManager = KoalaBot.database_manager
 DBManager = ColourRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
@@ -44,6 +44,7 @@ def utils_cog(bot):
     print("Tests starting")
     return utils_cog
 
+
 @pytest.fixture(autouse=True)
 def role_colour_cog(bot):
     role_colour_cog = ColourRole.ColourRole(bot)
@@ -51,6 +52,7 @@ def role_colour_cog(bot):
     dpytest.configure(bot)
     print("Tests starting")
     return role_colour_cog
+
 
 async def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
     arr: List[discord.Role] = []

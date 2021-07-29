@@ -57,7 +57,7 @@ def test_test_user_is_owner(test_ctx):
 
 
 def test_invalid_test_user_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER)+1)
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER) + 1)
     KoalaBot.is_dpytest = False
     assert not KoalaBot.is_owner(test_ctx)
     KoalaBot.is_dpytest = True
@@ -76,7 +76,7 @@ def test_invalid_test_user_is_admin(test_ctx):
     guild = dpytest.get_config().guilds[0]
     DBManager.insert_setup_status(guild.id)
     DBManager.update_guild_setup_status(guild.id)
-    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER)+2)
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER) + 2)
     KoalaBot.is_dpytest = False
     assert not KoalaBot.is_admin(test_ctx)
     KoalaBot.is_dpytest = True

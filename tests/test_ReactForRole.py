@@ -36,6 +36,7 @@ from utils.KoalaUtils import wait_for_message
 DBManager = ReactForRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
+
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
@@ -43,6 +44,7 @@ def utils_cog(bot):
     dpytest.configure(bot)
     print("Tests starting")
     return utils_cog
+
 
 @pytest.fixture(autouse=True)
 def rfr_cog(bot):
@@ -448,7 +450,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows):
 
 @pytest.mark.parametrize("msg_content", [None, "", "something", " "])
 @pytest.mark.asyncio
-async def test_prompt_for_input_str(msg_content,utils_cog,rfr_cog):
+async def test_prompt_for_input_str(msg_content, utils_cog, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
@@ -462,14 +464,16 @@ async def test_prompt_for_input_str(msg_content,utils_cog,rfr_cog):
         with mock.patch('utils.KoalaUtils.wait_for_message',
                         mock.AsyncMock(return_value=(None, channel))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
-            assert dpytest.verify().message().content("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+            assert dpytest.verify().message().content(
+                "Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert dpytest.verify().message().content("Okay, I'll cancel the command.")
             assert not result
     else:
         msg: discord.Message = dpytest.back.make_message(content=msg_content, author=author, channel=channel)
         with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(msg, None))):
             result = await rfr_cog.prompt_for_input(ctx, "test")
-            assert dpytest.verify().message().content("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+            assert dpytest.verify().message().content(
+                "Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
             assert result == msg_content
 
 
@@ -494,7 +498,8 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
     message: discord.Message = discord.Message(state=dpytest.back.get_state(), channel=channel, data=message_dict)
     with mock.patch('utils.KoalaUtils.wait_for_message', mock.AsyncMock(return_value=(message, channel))):
         result = await rfr_cog.prompt_for_input(ctx, "test")
-        assert dpytest.verify().message().content("Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
+        assert dpytest.verify().message().content(
+            "Please enter test so I can progress further. I'll wait 60 seconds, don't worry.")
         assert isinstance(result, discord.Attachment)
         assert result.url == attach.url
 
@@ -772,7 +777,8 @@ async def test_rfr_edit_thumbnail_attach():
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  "https://media.discordapp.net/attachments/some_number/random_number/test.jpg",
                                                                                                  height=1000,
-                                                                                                 width=1000, content_type="image/jpeg"))
+                                                                                                 width=1000,
+                                                                                                 content_type="image/jpeg"))
     msg_id = message.id
     bad_attach = "something that's not an attachment"
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
@@ -809,7 +815,8 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
             with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
-                with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument, commands.CommandInvokeError)) as exc:
+                with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument,
+                                    commands.CommandInvokeError)) as exc:
                     await dpytest.message("k!rfr edit thumbnail")
 
                     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
@@ -849,7 +856,7 @@ async def test_rfr_edit_thumbnail_links(image_url):
 @pytest.mark.asyncio
 async def test_rfr_edit_inline_all(arg):
     config: dpytest.RunnerConfig = dpytest.get_config()
-    guild: discord.Guild = config.guilds[0]#
+    guild: discord.Guild = config.guilds[0]  #
     KoalaBot.database_manager.insert_setup_status(guild.id)
     KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel: discord.TextChannel = guild.text_channels[0]
