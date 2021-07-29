@@ -13,6 +13,7 @@ from pathlib import PurePath
 
 # Libs
 from dotenv import load_dotenv
+
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:
@@ -23,6 +24,7 @@ if os.name == 'nt' or not ENCRYPTED_DB:
 else:
     print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
+
 
 # Own modules
 
@@ -175,6 +177,8 @@ class KoalaDBManager:
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
+        self.db_execute_commit(sql_create_guilds_table)
+
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         """
@@ -206,6 +210,7 @@ class KoalaDBManager:
 
             self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
 
+<<<<<<< HEAD
     def extension_enabled(self, guild_id, extension_id: str):
         """
         Check if a given extension is enabled in a specific guild
@@ -213,6 +218,9 @@ class KoalaDBManager:
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
         """
+=======
+    def extension_enabled(self, guild_id, extension_id):
+>>>>>>> b7f4089 (Created update database script, needs docstrings and testing)
         sql_select_extension = "SELECT extension_id " \
                                "FROM GuildExtensions " \
                                "WHERE guild_id = ?"
