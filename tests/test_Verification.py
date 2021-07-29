@@ -77,6 +77,8 @@ async def test_member_join_no_verify():
 async def test_member_join_verif_enabled():
     test_config = dpytest.get_config()
     guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     test_config.guilds.append(guild)
     dpytest.back.make_role("testRole", guild, id_num=555)
     db_manager.db_execute_commit(f"INSERT INTO roles VALUES (1234, 555, '{TEST_EMAIL_DOMAIN}')")
@@ -218,6 +220,8 @@ async def test_re_verify():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     role = dpytest.back.make_role("testRole", guild, id_num=555)
     member = test_config.members[0]
     await dpytest.add_role(member, role)
