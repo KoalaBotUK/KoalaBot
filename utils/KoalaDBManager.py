@@ -12,6 +12,7 @@ import os
 
 # Libs
 from dotenv import load_dotenv
+
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:
@@ -22,6 +23,7 @@ if os.name == 'nt' or not ENCRYPTED_DB:
 else:
     print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
+
 
 # Own modules
 
@@ -104,6 +106,7 @@ class KoalaDBManager:
                 print(e)
 
     def create_base_tables(self):
+
         sql_create_koala_extensions_table = """
         CREATE TABLE IF NOT EXISTS KoalaExtensions (
         extension_id text NOT NULL PRIMARY KEY,
@@ -145,6 +148,8 @@ class KoalaDBManager:
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
+        self.db_execute_commit(sql_create_guilds_table)
+
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
@@ -164,7 +169,6 @@ class KoalaDBManager:
             VALUES (?,?,?,?)"""
 
             self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
-
 
     def extension_enabled(self, guild_id, extension_id):
         sql_select_extension = "SELECT extension_id " \
