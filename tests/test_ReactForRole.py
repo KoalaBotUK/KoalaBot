@@ -36,7 +36,6 @@ from utils.KoalaUtils import wait_for_message
 DBManager = ReactForRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
-
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
