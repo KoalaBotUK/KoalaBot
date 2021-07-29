@@ -69,7 +69,7 @@ class AutoRole(commands.Cog, description=""):
         :param ctx: The discord context of the command.
         :param role: The role to be made required by all users.
         """
-        guild_id = ctx.guild
+        guild_id = ctx.guild.id
         role_id = role.id
         self.set_required_role(role_id, guild_id)
 
@@ -80,7 +80,7 @@ class AutoRole(commands.Cog, description=""):
         :param ctx: The discord context of the command.
         :param role: The role to be made required by all users.
         """
-        guild_id = ctx.guild
+        guild_id = ctx.guild.id
         role_id = role.id
         self.remove_required_role(role_id, guild_id)
 
@@ -91,7 +91,7 @@ class AutoRole(commands.Cog, description=""):
         :param ctx: The discord context of the command.
         :param user: The user to be made exempt.
         """
-        guild_id = ctx.guild
+        guild_id = ctx.guild.id
         user_id = user.id
         self.add_exempt_user_to_db(self, guild_id, user_id)
 
@@ -102,7 +102,7 @@ class AutoRole(commands.Cog, description=""):
         :param ctx: The discord context of the command.
         :param user: The user to be made subject to auto role.
         """
-        guild_id = ctx.guild
+        guild_id = ctx.guild.id
         user_id = user.id
         self.remove_exempt_user_to_db(self, guild_id, user_id)
 
@@ -159,13 +159,40 @@ class AutoRole(commands.Cog, description=""):
         except:
             pass
 
-    def ignore_user(self, user: discord.Member):
+    @auto_role.command(name="addExemptRole", aliases=["add_exempt_role"])
+    async def add_exempt_role(self, ctx: commands.Contextm, role: discord.Role):
+        guild_id = ctx.guild.id
+        for member in role.members:
+            self.add_exempt_user_to_db(guild_id, member.id)
+
+    @auto_role.command(name="removeExemptRole", aliases=["remove_exempt_role"])
+    async def remove_exempt_role(self, ctx: commands.Contextm, role: discord.Role):
+        guild_id = ctx.guild.id
+        for member in role.members:
+            self.remove_exempt_user_to_db(guild_id, member.id)
+
+    def remove_required_role(self, role_id: int, guild_id: int):
+        """
+        Makes a role un necessary for users to have in a guild.
+        :param role_id: The un necessary role's id.
+        :param guild_id: The guild to remove role from the required role list.
+        """
+        try:
+            self.DBManager.execute_commit("""
+            DELETE FROM required_roles WHERE role_id = ? AND guild_id = ?
+            """, role_id, guild_id)
+        except:
+            pass
+
+    def ignore_user(self, user_id: int, guild_id: int):
         """
         Check to see if the user is in the ignore_auto_role list.
         :params user: The discord user to check for.
         :return: True if user is in the ignore_auto_role list, false otherwise
         """
-        pass
+        if self.DBManager.db_execute_select("""SELECT user_id FROM exempt_users WHERE guild_id = ? AND user_id = ?""", guild_id, user_id):
+            return True
+        return False
 
 
 def setup(bot):
