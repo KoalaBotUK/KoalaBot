@@ -42,8 +42,8 @@ def se5tup_function():
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    KoalaDBManager.insert_setup_status(guild.id)
-    KoalaDBManager.update_guild_setup_status(guild.id)
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     print("Tests starting")
     return dpytest.get_config()
 
@@ -155,6 +155,8 @@ def cleanup(guildId, tf_cog):
 
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_database(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';"))
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no", channel=dpytest.get_config().guilds[0].channels[0])
     assertFilteredConfirmation("no","banned")
@@ -163,16 +165,22 @@ async def test_filter_new_word_correct_database(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_filter_empty_word():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word")
 
 @pytest.mark.asyncio()
 async def test_filter_too_many_arguments():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word a b c d e f g")
 
 @pytest.mark.asyncio()
 async def test_filter_risky_word(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
     assertFilteredConfirmation("yup","risky")
 
@@ -183,23 +191,31 @@ async def test_filter_risky_word(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_unrecognised_filter_type():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word testy unknown")
 
 @pytest.mark.asyncio()
 async def test_filter_email_regex(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
     assertFilteredConfirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
     cleanup(dpytest.get_config().guilds[0].id, tf_cog)
 
 @pytest.mark.asyncio()
 async def test_invalid_regex(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [")
     cleanup(dpytest.get_config().guilds[0].id, tf_cog)
 
 @pytest.mark.asyncio()
 async def test_normal_filter_does_not_recognise_regex():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter \"^verify [a-zA-Z0-9]+@soton.ac.uk$\"")
     assertFilteredConfirmation("^verify [a-zA-Z0-9]+@soton.ac.uk$", "banned")
 
@@ -208,6 +224,8 @@ async def test_normal_filter_does_not_recognise_regex():
     
 @pytest.mark.asyncio()
 async def test_filter_various_emails_with_regex(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
     assertFilteredConfirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]","banned")
 
@@ -231,6 +249,8 @@ async def test_filter_various_emails_with_regex(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_unfilter_word_correct_database(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
     assertFilteredConfirmation("unfilterboi","banned")
     
@@ -243,16 +263,22 @@ async def test_unfilter_word_correct_database(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_unfilter_empty():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word")
 
 @pytest.mark.asyncio()
 async def test_unfilter_too_many_arguments():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word a b c d e")
 
 @pytest.mark.asyncio()
 async def test_list_filtered_words(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing1")
     assertFilteredConfirmation("listing1","banned")
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing2 risky")
@@ -265,6 +291,8 @@ async def test_list_filtered_words(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_list_filtered_words_empty(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "check_filtered_words")
     assert_embed = filteredWordsEmbed([],[],[])
     assert dpytest.verify().message().embed(embed=assert_embed)
@@ -272,6 +300,8 @@ async def test_list_filtered_words_empty(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
     dpytest.get_config().channels.append(channel)
 
@@ -283,11 +313,15 @@ async def test_add_mod_channel(tf_cog):
 
 @pytest.fixture
 def text_filter_db_manager():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     return TextFilter.TextFilterDBManager(KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY), dpytest.get_config())
 
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel_tag(text_filter_db_manager, tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
     dpytest.get_config().channels.append(channel)
 
@@ -301,16 +335,22 @@ async def test_add_mod_channel_tag(text_filter_db_manager, tf_cog):
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel_empty():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel")
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel_unrecognised_channel():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel 123")
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel_too_many_arguments():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
     dpytest.get_config().channels.append(channel)
     with pytest.raises(Exception):
@@ -318,6 +358,8 @@ async def test_add_mod_channel_too_many_arguments():
 
 @pytest.mark.asyncio()
 async def test_remove_mod_channel(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
     channelId = str(channel.id)
     dpytest.get_config().channels.append(channel)
@@ -333,21 +375,29 @@ async def test_remove_mod_channel(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_remove_mod_channel_empty():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeModChannel")
 
 @pytest.mark.asyncio()
 async def test_remove_mod_channel_too_many_arguments():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeModChannel 123 a b c d e")
 
 @pytest.mark.asyncio()
 async def test_remove_mod_channel_unrecognised_channel():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeModChannel 123 a b c d e")
 
 @pytest.mark.asyncio()
 async def test_list_channels(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
     dpytest.get_config().channels.append(channel)
 
@@ -362,6 +412,8 @@ async def test_list_channels(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_list_multiple_channels(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel1 = dpytest.backend.make_text_channel(name="TestChannel1", guild=dpytest.get_config().guilds[0])
     channel2 = dpytest.backend.make_text_channel(name="TestChannel2", guild=dpytest.get_config().guilds[0])
     dpytest.get_config().channels.append(channel1)
@@ -382,6 +434,8 @@ async def test_list_multiple_channels(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_ignore_channel(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     channel1 = dpytest.backend.make_text_channel(name="TestChannel1", guild=dpytest.get_config().guilds[0])
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreme")
@@ -401,6 +455,8 @@ async def test_ignore_channel(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_ignore_user(tf_cog):
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
     assertFilteredConfirmation("ignoreuser","banned")
 
@@ -417,11 +473,15 @@ async def test_ignore_user(tf_cog):
 
 @pytest.mark.asyncio()
 async def test_ignore_empty_user():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     with pytest.raises(Exception):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser")
 
 @pytest.mark.asyncio()
 async def test_unignore_channel():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
     assertFilteredConfirmation("ignoreuser","banned")
 
@@ -440,6 +500,8 @@ async def test_unignore_channel():
 
 @pytest.mark.asyncio()
 async def test_list_ignored():
+    KoalaBot.database_manager.insert_setup_status(dpytest.get_config().guilds[0].id)
+    KoalaBot.database_manager.update_guild_setup_status(dpytest.get_config().guilds[0].id)
     mes = await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + dpytest.get_config().guilds[0].channels[0].mention)
     assertNewIgnore(dpytest.get_config().guilds[0].channels[0].mention)
 
