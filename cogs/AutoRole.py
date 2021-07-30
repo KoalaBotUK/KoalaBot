@@ -15,6 +15,8 @@ from discord.ext import commands
 import KoalaBot
 
 
+GUEST_ROLE_ID = 0 #I do not know what this is yet
+
 def auto_role_is_enabled(self, s_id: str):
     """
     Determines whether the AutoRole extension is enabled in a server
@@ -55,6 +57,11 @@ class AutoRole(commands.Cog, description=""):
         """
         self.DBManager.db_execute_commit(required_roles)
         self.DBManager.db_execute_commit(ignore_list)
+
+    @self.bot.event
+    async def on_member_join(member):
+        role = get(member.guild.roles, id=GUEST_ROLE_ID)
+        await  member.add_roles(role)
 
     @commands.group(name="autoRole", aliases=["auto_role"], invoke_without_command=True)
     @commands.has_guild_permissions(administrator=True)
