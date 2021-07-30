@@ -166,10 +166,10 @@ class Verification(commands.Cog, name="Verify"):
                 await member.send(
                     content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
-    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyDM", aliases=["toggleVerifyDM"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def toggle_email_list_dm(self, ctx, toggle):
         """
         Updates the database with the argument that the user of the command supplies
@@ -185,10 +185,10 @@ class Verification(commands.Cog, name="Verify"):
             await ctx.send(f"Users in {ctx.guild.name} will no longer be messaged by the bot to verify their email"
                            f" on joining the guild")
 
-    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def enable_verification(self, ctx, suffix=None, role=None):
         """
         Set up a role and email pair for KoalaBot to verify users with
@@ -223,10 +223,11 @@ class Verification(commands.Cog, name="Verify"):
         await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
         await self.assign_role_to_guild(ctx.guild, role_valid, suffix)
 
-    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
+
     async def disable_verification(self, ctx, suffix=None, role=None):
         """
         Disable an existing verification listener
@@ -334,9 +335,9 @@ class Verification(commands.Cog, name="Verify"):
         emails = '\n'.join([x[0] for x in results])
         await ctx.send(f"This user has registered with:\n{emails}")
 
-    @commands.check(KoalaBot.terms_agreed)
     @commands.command(name="verifyList", aliases=["checkVerifications"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def check_verifications(self, ctx):
         """
         List the current verification setup for the server
@@ -362,10 +363,10 @@ class Verification(commands.Cog, name="Verify"):
 
         await ctx.send(embed=embed)
 
-    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="reVerify")
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def re_verify(self, ctx, role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
