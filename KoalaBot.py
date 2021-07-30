@@ -32,8 +32,11 @@ from dotenv import load_dotenv
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
+from utils.MigrateData import MigrateData
 
 # Constants
+
+
 logging.basicConfig(filename='KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
@@ -64,6 +67,7 @@ else:
     logging.info("discord.py v1.3.4: Intents Disabled")
     client = commands.Bot(command_prefix=COMMAND_PREFIX)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
+update_database = MigrateData(database_manager)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
@@ -166,6 +170,7 @@ async def on_command_error(ctx, error):
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
+    update_database.execute_update()
     database_manager.create_base_tables()
     load_all_cogs()
     # Starts bot using the given BOT_ID
