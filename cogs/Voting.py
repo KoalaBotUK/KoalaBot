@@ -611,8 +611,8 @@ class VoteManager:
         chair_id text,
         voice_id text,
         end_time float,
-        PRIMARY KEY author_id,
-        FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
+        PRIMARY KEY (author_id),
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         )
         """
 
@@ -620,8 +620,8 @@ class VoteManager:
         CREATE TABLE IF NOT EXISTS VoteTargetRoles (
         vote_id text NOT NULL,
         role_id text NOT NULL,
-        PRIMARY KEY vote_id,
-        FOREIGN KEY vote_id REFERENCES Votes (vote_id)
+        PRIMARY KEY (vote_id),
+        FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
         )"""
 
         option_table = """
@@ -630,8 +630,8 @@ class VoteManager:
         opt_id text NOT NULL,
         option_title text NOT NULL,
         option_desc text NOT NULL,
-        PRIMARY KEY vote_id,
-        FOREIGN KEY vote_id REFERENCES Votes (vote_id)
+        PRIMARY KEY (vote_id),
+        FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
         )"""
 
         delivered_table = """
@@ -639,8 +639,8 @@ class VoteManager:
         vote_id text NOT NULL,
         vote_receiver_id text NOT NULL,
         vote_receiver_message text NOT NULL,
-        PRIMARY KEY vote_id,
-        FOREIGN KEY vote_id REFERNCES Votes (vote_id)
+        PRIMARY KEY (vote_id),
+        FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
         )"""
 
         self.DBManager.db_execute_commit(vote_table)
