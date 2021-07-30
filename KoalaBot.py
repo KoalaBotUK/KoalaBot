@@ -34,6 +34,7 @@ from dotenv import load_dotenv
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
+from utils.MigrateData import MigrateData
 
 # Constants
 def parse_args(args):
@@ -98,6 +99,7 @@ intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 database_manager = DBManager(DATABASE_PATH, DB_KEY, CONFIG_DIR)
+update_database = MigrateData(database_manager)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
@@ -201,6 +203,8 @@ async def on_command_error(ctx, error):
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
+    update_database.execute_update()
+    database_manager.create_base_tables()
     load_all_cogs()
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)

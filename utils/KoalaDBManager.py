@@ -147,7 +147,7 @@ class KoalaDBManager:
         sql_create_guilds_table = """
         CREATE TABLE IF NOT EXISTS Guilds (
         guild_id text NOT NULL,
-        subscription integer NOT NULL DEFAULT=0
+        subscription integer NOT NULL DEFAULT 0,
         PRIMARY KEY (guild_id)
         );
         """
@@ -160,7 +160,7 @@ class KoalaDBManager:
         CONSTRAINT fk_extensions
             FOREIGN KEY (extension_id) 
             REFERENCES KoalaExtensions (extension_id)
-            ON DELETE CASCADE 
+            ON DELETE CASCADE, 
             
             FOREIGN KEY (guild_id)
             REFERENCES Guilds (guild_id)
@@ -170,8 +170,7 @@ class KoalaDBManager:
         CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
         guild_id text NOT NULL PRIMARY KEY,
         welcome_message text,
-        PRIMARY KEY guild_id,
-        FOREIGN KEY guild_id REFERENCES Guilds (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );"""
 
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
