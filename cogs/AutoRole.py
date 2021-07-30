@@ -78,8 +78,8 @@ class AutoRole(commands.Cog, description=""):
         for (guild_id, role_id) in all_guilds_and_guest_roles:
             guild = self.bot.get_guild(int(guild_id))
             role = guild.get_role(int(role_id))
-            for user in [u for u in guild.users if guest_role in u.roles]:
-                #remove roles
+            for user in [u for u in guild.users if self.has_required_role(guild_id, u)]:
+                self.remove_roles(guild_id, user)
 
 
     @commands.Cog.listener()
@@ -92,7 +92,8 @@ class AutoRole(commands.Cog, description=""):
             role = discord.utils.get(member.guild.roles, id=int(guest_role[0][0]))
             await member.add_roles(role)
         else:
-            
+            pass
+
 
     @commands.group(name="autoRole", aliases=["auto_role"], invoke_without_command=True)
     @commands.has_guild_permissions(administrator=True)
@@ -127,7 +128,7 @@ class AutoRole(commands.Cog, description=""):
         """
         Sets the guest role for the server.
         :param ctx: The discord context of the command:
-        :param role: The role to be made the guest role.        
+        :param role: The role to be made the guest role.
         """
         guild_id = ctx.guild.id
         role_id = role.id
@@ -196,7 +197,7 @@ class AutoRole(commands.Cog, description=""):
         :param role_id: = The id of the role to be made the guest role
         """
         self.DBManager.db.execute_commit("""
-        INSERT INTO guest_roles (guild_id, role_id) 
+        INSERT INTO guest_roles (guild_id, role_id)
         VALUES (?, ?)
         """, guild_id, role_id)
 
@@ -223,7 +224,7 @@ class AutoRole(commands.Cog, description=""):
     def remove_required_role(self, role_id: str, guild_id: str):
         """
         Makes a role un necessary for users to have in a guild.
-        :param role_id: The un necessary role's id.
+        :param role_id: The un necessary role's id.Member
         :param guild_id: The guild to remove role from the required role list.
         """
         self.DBManager.execute_commit("""
@@ -248,15 +249,31 @@ class AutoRole(commands.Cog, description=""):
         """)
         return all_guilds_and_roles
 
-    def remove_roles(self, guild : discord.Guild, user : discord.Member):
+    async def remove_roles(self, guild_id : int, user : discord.Member):
         """
         Removes all the specified roles from the user.
         :param guild: The server that specifies the roles to be removed.
         :param user: The user to remove roles from.
         """
-        guild_id = str(guild.id)
-        roles_to_remove = self.DBManager.gb_execute_select("""SELECT role_id FROM roles_to_remove WHERE guild_id = ?
+        roles_to_remove = self.DBManager.db_execute_select("""SELECT role_id FROM roles_to_remove WHERE guild_id = ?
         """, guild_id)
+        for (role_id,) in roles_to_remove:
+            role = self.bot.get_role(int(role_id))
+            await user.remove_roles(role_id)
+
+    def has_required_role(self, guild_id : int, user : discord.Member):
+        """
+        Checks to see if a user has any of a server's required roles.
+        :param user: The user to check.
+        :guild_id: The server id the user is a part of.
+        :return: True if the user has any of the guilds required roles, false otherwise.
+        """
+        required_roles = self.DBManager.db_execute_select("""SELECT role_id FROM required_roles WHERE guild_id = ?""", str(guild_id))
+        for (role_id,) in required_roles:
+            role = bot.get_role(int(role_id))
+            if role in user.roles:
+                return True
+        return False
 
 
 def setup(bot):
