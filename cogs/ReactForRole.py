@@ -1097,7 +1097,7 @@ class ReactForRoleDBManager:
         :return:
         """
         self.database_manager.db_execute_commit(
-            "INSERT INTO GuildRFRMessages  (guild_id, channel_id, message_id) VALUES (?, ?, ?);",
+            "INSERT INTO GuildRFRMessages (guild_id, channel_id, message_id) VALUES (?, ?, ?);",
             args=[guild_id, channel_id, message_id])
 
     def add_rfr_message_emoji_role(self, emoji_role_id: int, emoji_raw: str, role_id: int):
@@ -1285,3 +1285,4 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(ReactForRole(bot))
+    print("ReactForRole is ready.")
