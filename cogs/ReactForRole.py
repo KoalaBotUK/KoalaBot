@@ -212,8 +212,11 @@ class ReactForRole(commands.Cog):
             length = self.get_number_of_embed_fields(embed)
             for i in range(length):
                 field = embed.fields[i]
-                embed.set_field_at(i, name=field.name, value=field.value,
-                                   inline=self.rfr_database_manager.get_guild_inline_status(ctx.guild.id) == "Y")
+                #TODO get this line below to work as length = 0 atm
+                embed.set_field_at(0, name=field.name, value=field.value,
+                                   inline=self.rfr_database_manager.get_guild_inline_status(ctx.guild.id)[0] == 'Y')
+            await ctx.send(self.rfr_database_manager.get_guild_inline_status(ctx.guild.id))
+            await ctx.send(self.rfr_database_manager.get_guild_inline_status(ctx.guild.id)[0] == 'Y')
             rfr_msg: discord.Message = await channel.send(embed=embed)
             self.rfr_database_manager.add_rfr_message(ctx.guild.id, channel.id, rfr_msg.id)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
@@ -385,6 +388,7 @@ class ReactForRole(commands.Cog):
                     text_channels: List[discord.TextChannel] = guild.text_channels
                     guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
                     self.rfr_database_manager.update_guild_inline_status(guild.id, change_all)
+                    await ctx.send(change_all)
                     for rfr_message in guild_rfr_messages:
                         channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
                         msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
@@ -1106,9 +1110,9 @@ class ReactForRoleDBManager:
         CREATE TABLE IF NOT EXISTS InlineAllStatus (
         guild_id integer NOT NULL,
         inline_status text,
-        PRIMARY KEY guild_id
-        FOREIGN KEY guild_id REFERENCES GuildExtensions(guild_id),
-        UNIQUE guild_id
+        PRIMARY KEY (guild_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
+        UNIQUE (guild_id)
         );
         """
         self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
@@ -1322,8 +1326,8 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         :param status: inline all status "Y" or "N"
         """
-        self.db_execute_commit(
-            "UPDATE InlineAllStatus SET inline_status = ? WHERE guild_id = ?;", args=[guild_id, status])
+        self.database_manager.db_execute_commit(
+            "UPDATE InlineAllStatus SET inline_status = ? WHERE guild_id = ?;", args=[status, guild_id])
 
     def get_guild_inline_status(self, guild_id):
         """
@@ -1331,8 +1335,8 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         :return: Inline All Status for that guild
         """
-        return self.database_manager.db_execute_select("SELECT * FROM InlineALlStatus WHERE guild_id = ?",
-                                                       args=[guild_id])
+        return self.database_manager.db_execute_select("SELECT inline_status FROM InlineALlStatus WHERE guild_id = ?",
+                                                       args=[guild_id])[0]
 
     def remove_guild_inline_status(self, guild_id):
         """
@@ -1341,8 +1345,6 @@ class ReactForRoleDBManager:
         """
         self.database_manager.db_execute_commit("DELETE FROM InlineALlStatus WHERE guild_id = ?",
                                                 args=[guild_id])
-
-
 
 
 def setup(bot: KoalaBot) -> None:
