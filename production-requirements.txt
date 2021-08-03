@@ -7,8 +7,8 @@ chardet==4.0.0
 colorama==0.4.4
 discord.py==1.7.3
 dpytest==0.5.3
-emoji==1.2.0
-idna==2.10
+emoji==1.4.2
+idna==3.2
 iniconfig==1.1.1
 mock==4.0.3
 more-itertools==8.8.0
@@ -23,7 +23,7 @@ pytest==6.2.4
 pytest-asyncio==0.15.1
 pytest-ordering==0.6
 python-dotenv==0.18.0
-requests==2.25.1
+requests==2.26.0
 six==1.16.0
 toml==0.10.2
 urllib3==1.26.6
