@@ -5,6 +5,7 @@ A lot of these commands will only be available to administrators
 ## [Unreleased]
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
+### Colour Role
 - Colour strings can now be prefixed with a #
 
 ## [0.4.3] - 14-05-2021
