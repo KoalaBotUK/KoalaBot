@@ -1000,6 +1000,11 @@ class ReactForRole(commands.Cog):
         return len(embed.fields)
 
     async def set_inline(self, ctx, embed):
+        """
+        Sets the inline of all fields in an embed
+        :param ctx: Context of the embed
+        :param embed: The embed to be edited
+        """
         length = self.get_number_of_embed_fields(embed)
         if length > 0:
             for i in range(length):
