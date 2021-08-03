@@ -17,8 +17,6 @@ import aiohttp
 import discord
 import emoji
 from discord.ext import commands
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPM
 
 # Own modules
 import KoalaBot
@@ -67,6 +65,7 @@ class ReactForRole(commands.Cog):
         On bot joining guild, add this guild to the database of inline statuses.
         :param guild: Guild KoalaBot just joined
         """
+        self.rfr_database_manager.create_tables()
         self.rfr_database_manager.add_guild_inline_status(guild.id)
 
     @commands.Cog.listener()
@@ -209,14 +208,7 @@ class ReactForRole(commands.Cog):
             embed.set_footer(text="ReactForRole")
             embed.set_thumbnail(
                 url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
-            length = self.get_number_of_embed_fields(embed)
-            for i in range(length):
-                field = embed.fields[i]
-                #TODO get this line below to work as length = 0 atm
-                embed.set_field_at(0, name=field.name, value=field.value,
-                                   inline=self.rfr_database_manager.get_guild_inline_status(ctx.guild.id)[0] == 'Y')
-            await ctx.send(self.rfr_database_manager.get_guild_inline_status(ctx.guild.id))
-            await ctx.send(self.rfr_database_manager.get_guild_inline_status(ctx.guild.id)[0] == 'Y')
+            await self.set_inline(ctx, embed)
             rfr_msg: discord.Message = await channel.send(embed=embed)
             self.rfr_database_manager.add_rfr_message(ctx.guild.id, channel.id, rfr_msg.id)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
@@ -388,7 +380,6 @@ class ReactForRole(commands.Cog):
                     text_channels: List[discord.TextChannel] = guild.text_channels
                     guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
                     self.rfr_database_manager.update_guild_inline_status(guild.id, change_all)
-                    await ctx.send(change_all)
                     for rfr_message in guild_rfr_messages:
                         channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
                         msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
@@ -553,7 +544,7 @@ class ReactForRole(commands.Cog):
                     KoalaBot.logger.info(
                         f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
                         f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji.id}.")
-
+        await self.set_inline(ctx, embed=rfr_embed)
         await msg.edit(embed=rfr_embed)
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
@@ -1007,6 +998,14 @@ class ReactForRole(commands.Cog):
         :return: Number of embed fields.
         """
         return len(embed.fields)
+
+    async def set_inline(self, ctx, embed):
+        length = self.get_number_of_embed_fields(embed)
+        if length > 0:
+            for i in range(length):
+                field = embed.fields[i]
+                embed.set_field_at(i, name=field.name, value=field.value,
+                                  inline=self.rfr_database_manager.get_guild_inline_status(ctx.guild.id)[0] == 'Y')
 
     async def get_first_emoji_from_str(self, ctx: commands.Context, content: str) -> Optional[
         Union[discord.Emoji, str]]:
