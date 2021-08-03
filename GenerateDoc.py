@@ -1,9 +1,5 @@
-from cogs.Announce import Announce
-from os import listdir
-import os
-import importlib
-from inspect import getmembers, isfunction, ismethod, isclass
-import glob
+from os import listdir, path
+from inspect import getmembers, isclass
 import re
 import json
 
@@ -11,7 +7,6 @@ import json
 KoalaBot utility function for generating bot command docs
 Created By: Charlie Bowe, Aqeel Little 
 """
-
 
 class DocumentationEntry:
     """Class for storing documentation entries for bot commands
@@ -31,39 +26,56 @@ class CogDocumentation:
     name = None
     docs = []
 
+    #Dictionary of cogs that have different names in the doc
+    docNameChanges = {
+        'BaseCog': 'KoalaBot',
+        'ReactForRole': 'ReactForRole (RFR)',
+        'Verification': 'Verify',
+        'Voting': 'Vote'
+    }
+
     def __init__(self,name: str, docs):
-        #Change BaseCog to KoalaBot
-        if name == 'BaseCog':
-            self.name = 'KoalaBot'
+        
+        if name in self.docNameChanges.keys():
+            self.name = self.docNameChanges.get(name)
         else:    
             self.name = name
         self.docs = docs
+    
+def add_cog_to_cog(add,to,docList):
+    addCog = None
+    toCog = None
 
-docList = []
+    for doc in docList:
+        if doc.name == add:
+            addCog = doc
+        elif doc.name == to:
+            toCog = doc
 
-
-#Get the directory of the cogs folder
-dir = os.path.join(os.path.dirname(os.path.realpath(__file__)),'cogs')
-#Grab the names of all the .py files in the cogs folder
-modules = [ fl for fl in listdir(dir) if fl.endswith('.py') ]
-
-cogs = []
-#for i in range 0 to amount of cogs
-
-def get_decorators(function):
-  # If we have no func_closure, it means we are not wrapping any other functions.
-  if not function.func_closure:
-    return [function]
-  decorators = []
-  # Otherwise, we want to collect all of the recursive results for every closure we have.
-  for closure in function.func_closure:
-    decorators.extend(get_decorators(closure.cell_contents))
-  return [function] + decorators
+    if(addCog != None) and (toCog != None):
+        docList.remove(addCog)
+        toCog.docs.extend(addCog.docs)
+    
+    return docList
 
 def get_cog_docs():
+    """Imports all cogs in directory cogs and stores the name, params and 
+    docstring description of bot commands
+    :return: CogDocumentation[]
+    """
+    docList = []
+    #Get the directory of the cogs folder
+    dir = path.join(path.dirname(path.realpath(__file__)),'cogs')
+    #Grab the names of all the .py files in the cogs folder
+    modules = []
+    modules = [ fl for fl in listdir(dir) if fl.endswith('.py') ]
+    cogs = []
+
+    #for i in range 0 to amount of cogs
     for i in range (0,len(modules)):
-        #Cut off the .py extension
-        modules[i] = modules[i][:-3]
+        if modules[i].endswith('.py'):
+            modules[i] = modules[i][:-3]
+
         #Import the library and store it in cogs
         cogs.append(__import__('cogs.'+modules[i]))
 
@@ -73,26 +85,26 @@ def get_cog_docs():
 
         #Store all of the classes of the cog in classes
         classes = [ obj for obj in getmembers(currentLib) if isclass(obj[1]) ]
-        #print(f'Current classes: {classes} \n') 
 
+        #list of DocumentationEntry for each class
         docs = []
         for cls in classes:
-            if cls[0] != modules[i]:
-                print(f'{cls[0]} is not {modules[i]}')
-
             #Store the functions of each classes in class_funcs
             class_funcs = [ obj for obj in getmembers(cls[1]) ]
 
             for obj in class_funcs:
                 try:
+                    #Get the docstring of the function
                     text = getattr(getattr(currentLib,modules[i]),str(obj[0])).help.splitlines()
                 except AttributeError:
+                    #On attribute error, function has no docstring
                     pass
                     continue
                 except:
                     print("Unexpected error")
                     continue
                     
+                #Get the name of the command object
                 name = getattr(getattr(currentLib,modules[i]),str(obj[0])).name
 
                 if getattr(getattr(currentLib,modules[i]),str(obj[0])).parent != None:
@@ -101,31 +113,26 @@ def get_cog_docs():
                 desc = ""
                 params = []
                 for line in text:
-                    matchObj = re.match( r':param (.*): (.*)', line, re.M|re.I)
+                    matchObj = re.match( r':(.*) (.*): (.*)', line, re.M|re.I)
 
-                    if matchObj:
-                        if matchObj.group(1) == 'ctx':
+                    if matchObj and (matchObj.group(1) == 'param'):
+                        if matchObj.group(2) == 'ctx':
                             continue
-                        params.append(matchObj.group(1))
+                        params.append(matchObj.group(2))
                     else:
                         desc += line
-                docs.append(DocumentationEntry(name,params,desc))
-                
-            
+                docs.append(DocumentationEntry(name,params,desc)) 
+
         docList.append(CogDocumentation(modules[i],docs))
+
+    docList = add_cog_to_cog('IntroCog','KoalaBot',docList)
+
     return docList
 
-docList = get_cog_docs()
-
-for cogDoc in docList:
-    print(f'-= {cogDoc.name} =-')
-    for doc in cogDoc.docs:
-        print(doc.name)
-
-def parse_docs(docList, filename):
-    """Pass a list of CogDocumentation objects into a json file
-    :param docList: List of CogDocumentation
-    :param filename: filename of json file
+def doc_list_to_json(docList):
+    """Converts a list of CogDocumentation into a json string
+    :param docList: List fo CogDocumentation
+    :return: JSON string
     """
     data = []
     for cogDoc in docList:
@@ -140,9 +147,17 @@ def parse_docs(docList, filename):
             commands.append(entry)
         cog['commands'] = commands
         data.append(cog)
+    return data
 
+def parse_docs(docList, filename):
+    """Pass a list of CogDocumentation objects into a json file
+    :param docList: List of CogDocumentation
+    :param filename: filename of json file
+    """
+    data = doc_list_to_json(docList)
     file = open(filename, "w")
     file.write(json.dumps(data, indent=2))
     file.close()
 
-parse_docs(docList,'test.json')
+docList = get_cog_docs()
+parse_docs(docList,'documentation.json')
