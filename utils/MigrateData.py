@@ -22,7 +22,6 @@ def reset_db():
     os.remove(os.getcwd() + '\\Koala.db')
     shutil.copy(last_db, os.getcwd())
 
-
 class MigrateData:
 
     def __init__(self, database_manager):
@@ -47,7 +46,13 @@ class MigrateData:
                     reset_db()
                     break
 
+
     def remake_guilds(self):
+        """
+        Copies data from Guilds table if it doesn't exist, re-created the table with a given scheme, and inserts the
+        data into the new table.
+        :return:
+        """
         sql_create_guilds_table = """
         CREATE TABLE IF NOT EXISTS Guilds (
         guild_id text NOT NULL,
@@ -66,7 +71,7 @@ class MigrateData:
                 self.database_manager.db_execute_commit(sql_create_guilds_table)
                 for i in data:
                     self.database_manager.db_execute_commit(
-                        """INSERT INTO  (guild_id, subscription) VALUES (?, ?);""",
+                        """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
                         args=[i, 0])
             else:
                 data = self.database_manager.db_execute_select("""SELECT * FROM Guilds;""")
@@ -74,10 +79,15 @@ class MigrateData:
                 self.database_manager.db_execute_commit(sql_create_guilds_table)
                 for i in data:
                     self.database_manager.db_execute_commit(
-                        """INSERT INTO (guild_id, subscription) VALUES (?, ?);""",
+                        """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
                         args=list(i))
 
     def remake_guild_extensions(self):
+        """
+        Copies data from GuildExtensions table if it doesn't exist, re-created the table with a given scheme,
+        and inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'""")
         if count[0][0] == 1:
@@ -104,6 +114,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_guild_welcome_messages(self):
+        """
+        Copies data from GuildWelcomeMessage table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildWelcomeMessages'""")
         if count[0][0] == 1:
@@ -123,6 +138,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_votes(self):
+        """
+        Copies data from Votes table if it doesn't exist, re-created the table with a given scheme, and inserts the data
+        into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Votes'""")
         if count[0][0] == 1:
@@ -144,10 +164,15 @@ class MigrateData:
             self.database_manager.db_execute_commit(vote_table)
             for i in data:
                 self.database_manager.db_execute_commit(
-                    """INSERT INTO  (vote_id, author_id, guild_id, title, chair_id, voice_id, end_time) VALUES (?, ?, ?, ?, ?, ?, ?);""",
+                    """INSERT INTO Votes (vote_id, author_id, guild_id, title, chair_id, voice_id, end_time) VALUES (?, ?, ?, ?, ?, ?, ?);""",
                     args=list(i))
 
     def remake_vote_sent(self):
+        """
+        Copies data from VoteSent table if it doesn't exist, re-created the table with a given scheme, and inserts the
+        data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteSent'""")
         if count[0][0] == 1:
@@ -169,6 +194,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_vote_options(self):
+        """
+        Copies data from VoteOptions table if it doesn't exist, re-created the table with a given scheme, and inserts
+        the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteOptions'""")
         if count[0][0] == 1:
@@ -191,6 +221,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_vote_target_roles(self):
+        """
+        Copies data from VoteTargetRoles table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteTargetRoles'""")
         if count[0][0] == 1:
@@ -211,6 +246,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_verified_emails(self):
+        """
+        Copies data from VerifiedEmails table if it doesn't exist, re-created the table with a given scheme, and inserts
+        the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VerifiedEmails'""")
         if count[0][0] == 1:
@@ -230,6 +270,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_not_verified_emails(self):
+        """
+        Copies data from NonVerifiedEmails table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='NonVerifiedEmails'""")
         if count[0][0] == 1:
@@ -250,6 +295,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_role_table(self):
+        """
+        Copies data from Roles table if it doesn't exist, re-created the table with a given scheme, and inserts the data
+        into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Roles'""")
         if count[0][0] == 1:
@@ -271,6 +321,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_to_re_verify(self):
+        """
+        Copies data from ToReVerify table if it doesn't exist, re-created the table with a given scheme, and inserts the
+        data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='ToReVerify'""")
         if count[0][0] == 1:
@@ -290,6 +345,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_twitch_alerts(self):
+        """
+        Copies data from TwitchAlerts table if it doesn't exist, re-created the table with a given scheme, and inserts
+        the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TwitchAlerts'""")
         if count[0][0] == 1:
@@ -310,10 +370,15 @@ class MigrateData:
             self.database_manager.db_execute_commit(sql_create_twitch_alerts_table)
             for i in data:
                 self.database_manager.db_execute_commit(
-                    """INSERT INTO TextTable (guild_id, channel_id, default_message) VALUES (?, ?, ?);""",
+                    """INSERT INTO TwitchAlerts (guild_id, channel_id, default_message) VALUES (?, ?, ?);""",
                     args=list(i))
 
     def remake_user_in_twitch_alert(self):
+        """
+        Copies data from UserInTwitchAlert table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchAlert'""")
         if count[0][0] == 1:
@@ -335,10 +400,15 @@ class MigrateData:
             self.database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
             for i in data:
                 self.database_manager.db_execute_commit(
-                    """INSERT INTO UserInTwitchAlert (chanel_id, twitch_username, custom_message, message_id) VALUES (?, ?, ? ,?);""",
+                    """INSERT INTO UserInTwitchAlert (channel_id, twitch_username, custom_message, message_id) VALUES (?, ?, ? ,?);""",
                     args=list(i))
 
     def remake_team_in_twitch_alert(self):
+        """
+        Copies data from TeamInTwitchAlert table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TeamInTwitchAlert'""")
         if count[0][0] == 1:
@@ -363,6 +433,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_user_in_twitch_team(self):
+        """
+        Copies data from UserInTwitchTeam table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchTeam'""")
         if count[0][0] == 1:
@@ -383,10 +458,15 @@ class MigrateData:
             self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
             for i in data:
                 self.database_manager.db_execute_commit(
-                    """INSERT INTO UserInTwitchTeam (team_twitch_alert_id, twitch_username, meaage_id) VALUES (?, ?, ?);""",
+                    """INSERT INTO UserInTwitchTeam (team_twitch_alert_id, twitch_username, message_id) VALUES (?, ?, ?);""",
                     args=list(i))
 
     def remake_text_filter(self):
+        """
+        Copies data from TextFilter table if it doesn't exist, re-created the table with a given scheme, and inserts the
+        data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilter'""")
         if count[0][0] == 1:
@@ -410,6 +490,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_text_filter_moderation(self):
+        """
+        Copies data from TextFilterModeration table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilterModeration'""")
         if count[0][0] == 1:
@@ -426,10 +511,15 @@ class MigrateData:
             self.database_manager.db_execute_commit(sql_create_mod_table)
             for i in data:
                 self.database_manager.db_execute_commit(
-                    """INSERT INTO TextFilterModeration (chanel_id, guild_id) VALUES (?, ?);""",
+                    """INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?, ?);""",
                     args=list(i))
 
     def remake_text_filter_ignore_list(self):
+        """
+        Copies data from TextFilterIgnoreList table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilterIgnoreList'""")
         if count[0][0] == 1:
@@ -452,6 +542,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_guild_rf_messages(self):
+        """
+        Copies data from GuildRFRMessages table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildRFRMessages'""")
         if count[0][0] == 1:
@@ -475,6 +570,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_rfr_message_emoji_roles(self):
+        """
+        Copies data from RFRMessageEmojiRoles table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='RFRMessageEmojiRoles'""")
         if count[0][0] == 1:
@@ -498,6 +598,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_guild_rfr_required_roles(self):
+        """
+        Copies data from GuildRFRRequiredRoles table if it doesn't exist, re-created the table with a given scheme, and
+        inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildRFRRequiredRoles'""")
         if count[0][0] == 1:
@@ -515,10 +620,15 @@ class MigrateData:
             self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
             for i in data:
                 self.database_manager.db_execute_commit(
-                    """INSERT INTO GuildRFRRequiredRoles (guild_id, role_id) VALUES (?, ?, ?);""",
+                    """INSERT INTO GuildRFRRequiredRoles (guild_id, role_id) VALUES (?, ?);""",
                     args=list(i))
 
     def remake_guild_colour_change_permissions(self):
+        """
+        Copies data from GuildColourChangePermissions table if it doesn't exist, re-created the table with a given
+        scheme, and inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildColourChangePermissions'""")
         if count[0][0] == 1:
@@ -539,6 +649,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_guild_invalid_custom_colour_roles(self):
+        """
+        Copies data from GuildInvalidCustomColourRoles table if it doesn't exist, re-created the table with a given
+        scheme, and inserts the data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildInvalidCustomColourRoles'""")
         if count[0][0] == 1:
@@ -559,6 +674,11 @@ class MigrateData:
                     args=list(i))
 
     def remake_guild_usage(self):
+        """
+        Copies data from GuildUsage table if it doesn't exist, re-created the table with a given scheme, and inserts the
+        data into the new table.
+        :return:
+        """
         count = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildUsage'""")
         if count[0][0] == 1:
