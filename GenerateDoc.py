@@ -183,4 +183,5 @@ def generate_doc():
     parse_docs(docList,'documentation.json')
 
 if __name__ == "__main__":
+    print('Generating document.json')
     generate_doc()
