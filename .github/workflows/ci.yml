@@ -100,6 +100,7 @@ jobs:
       - name: pip
         run: |
           pip install discord
+          pip install python-dotenv
       - name: Create new json documentation
         run: |
           pwd
