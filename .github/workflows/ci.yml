@@ -89,12 +89,13 @@ jobs:
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
       
-  name: Create new json documentation
-  runs-on: ${{ matrix.os }}
-  if: |
-        (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
-        (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
-  steps:
-    - run: 
-      from GenerateDoc import generate_doc
-      generate_doc()
+  documentation:
+    runs-on: ${{ matrix.os }}
+    if: |
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
+      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
+    steps:
+      - name: Create new json documentation
+        run: 
+        from GenerateDoc import generate_doc
+        generate_doc()
