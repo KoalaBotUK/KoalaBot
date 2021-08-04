@@ -246,6 +246,38 @@ async def test_re_verify():
     db_manager.db_execute_commit(f"DELETE FROM to_re_verify WHERE u_id={member.id}")
 
 
+@pytest.mark.asyncio
+async def test_on_guild_leave():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    client = test_config.client
+    bot_member = test_config.guilds[0].get_member(client.user.id)
+    dpytest.backend.delete_member(bot_member)
+    with pytest.raises(IndexError):
+        db_manager.fetch_dm_email_list_status(guild.id)
+
+
+@pytest.mark.asyncio
+async def test_toggle_on_DM_List():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
+    KoalaBot.database_manager.insert_email_list_status(guild.id)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyDM True")
+    assert KoalaBot.database_manager.fetch_dm_email_list_status(guild.id)
+    assert dpytest.verify().message().contains().content(f"Users in {guild.name} will be messaged by the bot to verify their email")
+
+
+@pytest.mark.asyncio
+async def test_toggle_off_DM_List():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
+    KoalaBot.database_manager.insert_email_list_status(guild.id)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyDM False")
+    f = KoalaBot.database_manager.fetch_dm_email_list_status(guild.id)
+    assert dpytest.verify().message().contains().content(f"Users in {guild.name} will no longer be messaged by the bot to verify their email")
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
     KoalaBot.is_dpytest = True

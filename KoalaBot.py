@@ -168,10 +168,15 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
                                                      f"{str(error.retry_after)}s."))
     elif isinstance(error, commands.CheckFailure):
-        await ctx.send(embed=error_embed(description="In order to use this command. You must agree to the Terms & Conditions " \
+        if database_manager.fetch_guild_setup_status(ctx.guild.id) == 0:
+            await ctx.send(embed=error_embed(description="In order to use this command. You must agree to the Terms & Conditions " \
                         "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
                         "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
-                        "Use k!setup to agree"))
+                        "Use k!setup to agree."))
+        elif not is_admin(ctx):
+            await ctx.send(embed=error_embed(description="You do not have access to this command as you must be an admin"))
+        else:
+            await ctx.send(embed=error_embed(description="Have you enabled the extension"))
     else:
         await ctx.send(embed=error_embed(description=error))
 

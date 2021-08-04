@@ -110,6 +110,8 @@ async def test_on_guild_remove(bot):
     bot_member = test_config.guilds[0].get_member(client.user.id)
     dpytest.backend.delete_member(bot_member)
     val = DBManager.fetch_guild_welcome_message(guild.id)
+    with pytest.raises(IndexError):
+        status = DBManager.fetch_guild_setup_status(guild.id)
     assert val is None
 
 
@@ -332,6 +334,14 @@ async def test_view_welcome_message():
 
 
 @pytest.mark.asyncio
+async def test_check_failure_error():
+    guild_id = dpytest.get_config().guilds[0].id
+    KoalaBot.database_manager.insert_setup_status(guild_id)
+    with pytest.raises(commands.CheckFailure):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+
+
+@pytest.mark.asyncio
 async def test_update_welcome_message_timeout():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)
@@ -368,6 +378,17 @@ async def test_setup_command():
     with pytest.raises(commands.MissingRequiredArgument):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
     assert dpytest.verify().message().content("Please put in a welcome message to update to.")
+
+
+@pytest.mark.asyncio
+async def test_intro_message():
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestGuildJoin', id_num=1250)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1, client.user)
+    await asyncio.sleep(0.3)
+
 
 
 @pytest.fixture(scope='session', autouse=True)

@@ -117,6 +117,14 @@ async def test_dm_single_group_message():
 
 
 @pytest.mark.asyncio
+async def test_terms_agreed(test_ctx):
+    guild_id = test_ctx.guild.id
+    KoalaBot.database_manager.insert_setup_status(guild_id)
+    KoalaBot.database_manager.update_guild_setup_status(guild_id)
+    assert KoalaBot.terms_agreed(test_ctx)
+
+
+@pytest.mark.asyncio
 async def test_dm_plural_group_message():
     test_message = 'default message'
     test_member = dpytest.get_config().members[0]

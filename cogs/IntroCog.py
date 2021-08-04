@@ -177,7 +177,8 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             return False
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
-    @commands.check(KoalaBot.is_admin and KoalaBot.terms_agreed)
+    @commands.check(KoalaBot.terms_agreed)
+    @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
         """`
