@@ -43,27 +43,27 @@ class AutoRole(commands.Cog, description=""):
         required_roles = """CREATE TABLE IF NOT EXISTS required_roles (
             guild_id text NOT NULL,
             role_id text NOT NULL,
-            PRIMARY KEY (guild_id, role_id)
+            PRIMARY KEY (guild_id, role_id),
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
             )"""
         ignore_list = """CREATE TABLE IF NOT EXISTS exempt_users (
             guild_id text NOT NULL,
             user_id text NOT NULL,
-            PRIMARY KEY (guild_id, user_id)
+            PRIMARY KEY (guild_id, user_id),
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
         )
         """
         guest_role = """CREATE TABLE IF NOT EXISTS guest_roles (
             guild_id text NOT NULL,
             role_id text NOT NULL,
-            PRIMARY KEY (guild_id, role_id)
+            PRIMARY KEY (guild_id, role_id),
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
         )
         """
         roles_to_remove = """CREATE TABLE IF NOT EXISTS roles_to_remove (
-            guild_id text NOT NULL
-            role_id text NOT NULL
-            PRIMARY KEY (guild_id, role_id)
+            guild_id text NOT NULL,
+            role_id text NOT NULL,
+            PRIMARY KEY (guild_id, role_id),
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
         )
         """
@@ -72,8 +72,12 @@ class AutoRole(commands.Cog, description=""):
         self.DBManager.db_execute_commit(ignore_list)
         self.DBManager.db_execute_commit(guest_role)
 
-    @commands.Bot.event
+    @commands.Cog.listener()
     async def on_ready(self):
+        """
+        Removes all roles from all users without a required role.
+        """
+        self.set_up_tables()
         all_guilds_and_guest_roles = self.get_all_guilds_and_guest_roles()
         for (guild_id, role_id) in all_guilds_and_guest_roles:
             guild = self.bot.get_guild(int(guild_id))
@@ -81,28 +85,34 @@ class AutoRole(commands.Cog, description=""):
             for user in [u for u in guild.users if self.has_required_role(guild_id, u)]:
                 self.remove_roles(guild_id, user)
 
-
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        """
+        Gives newly joined users the server's specified "guest role"
+        :param member: The new user that joined.
+        """
         guild_id = member.guild.id
         guest_role = self.DBManager.db_execute_select("""
         SELECT role_id FROM  guest_roles WHERE guild_id = ?
         """, guild_id)
         if guest_role:
-            role = discord.utils.get(member.guild.roles, id=int(guest_role[0][0]))
+            role = discord.utils.get(
+                member.guild.roles, id=int(guest_role[0][0]))
             await member.add_roles(role)
         else:
             pass
-
 
     @commands.group(name="autoRole", aliases=["auto_role"], invoke_without_command=True)
     @commands.has_guild_permissions(administrator=True)
     @commands.check(auto_role_is_enabled)
     async def auto_role(self, ctx: commands.Context):
+        """
+        Generic extension help command.
+        """
         await ctx.send_help("autoRole")
 
     @auto_role.command(name="addRequiredRole", aliases=["add_required_role"])
-    async def add_required_role(self, ctx: commands.Context, role: discord.Role):
+    async def add_required_role(self, ctx: commands.Context, role):
         """
         Adds a role that all users must have.
         :param ctx: The discord context of the command.
@@ -110,7 +120,7 @@ class AutoRole(commands.Cog, description=""):
         """
         guild_id = ctx.guild.id
         role_id = role.id
-        self.add_required_role_to_db(role_id, guild_id)
+        self.add_required_role_to_db(guild_id, role_id)
 
     @auto_role.command(name="removeRequiredRole", aliases=["remove_required_role"])
     async def remove_required_role(self, ctx: commands.Context, role: discord.Role):
@@ -121,10 +131,10 @@ class AutoRole(commands.Cog, description=""):
         """
         guild_id = ctx.guild.id
         role_id = role.id
-        self.remove_required_role_from_db(role_id, guild_id)
+        self.remove_required_role_from_db(guild_id, role_id)
 
     @auto_role.command(name="setGuestRole", aliases=["set_guest_role"])
-    async def set_required_role(self, ctx : commands.Context, role : discord.Role):
+    async def set_required_role(self, ctx: commands.Context, role: discord.Role):
         """
         Sets the guest role for the server.
         :param ctx: The discord context of the command:
@@ -133,7 +143,6 @@ class AutoRole(commands.Cog, description=""):
         guild_id = ctx.guild.id
         role_id = role.id
         self.add_required_role_to_db(guild_id, role_id)
-
 
     @auto_role.command(name="addExemptUser", aliases=["add_exempt_user"])
     async def add_exempt_user(self, ctx: commands.Context, user: discord.Member):
@@ -144,7 +153,7 @@ class AutoRole(commands.Cog, description=""):
         """
         guild_id = ctx.guild.id
         user_id = user.id
-        self.add_exempt_user_to_db(self, guild_id, user_id)
+        self.add_exempt_user_to_db(guild_id, user_id)
 
     @auto_role.command(name="removeExemptUser", aliases=["remove_exempt_user"])
     async def remove_exempt_user(self, ctx: commands.Context, user: discord.Member):
@@ -158,18 +167,28 @@ class AutoRole(commands.Cog, description=""):
         self.remove_exempt_user_to_db(self, guild_id, user_id)
 
     @auto_role.command(name="addExemptRole", aliases=["add_exempt_role"])
-    async def add_exempt_role(self, ctx: commands.Contextm, role: discord.Role):
+    async def add_exempt_role(self, ctx: commands.Context, role: discord.Role):
+        """
+        Adds an entire role to the exempt users list.
+        :param ctx: The discord context of the command.
+        :param role: The role to be made exempt from the auto role extension.
+        """
         guild_id = ctx.guild.id
         for member in role.members:
             self.add_exempt_user_to_db(guild_id, member.id)
 
     @auto_role.command(name="removeExemptRole", aliases=["remove_exempt_role"])
-    async def remove_exempt_role(self, ctx: commands.Contextm, role: discord.Role):
+    async def remove_exempt_role(self, ctx: commands.Context, role: discord.Role):
+        """
+        Makes a role liable to the auto role extension.
+        :param ctx: The discord context of the command.
+        :param role: The role to be made liable to the auto role extension.
+        """
         guild_id = ctx.guild.id
         for member in role.members:
             self.remove_exempt_user_to_db(guild_id, member.id)
 
-    def remove_required_role_from_db(self, role_id: str, guild_id: str):
+    def remove_required_role_from_db(self, guild_id: str, role_id: str):
         """
         Makes a role un necessary for users to have in a guild.
         :param role_id: The un necessary role's id.
@@ -179,7 +198,7 @@ class AutoRole(commands.Cog, description=""):
         DELETE FROM required_roles WHERE role_id = ? AND guild_id = ?
         """, role_id, guild_id)
 
-    def add_required_role_to_db(self, role_id: str, guild_id: str):
+    def add_required_role_to_db(self, guild_id: str, role_id: str):
         """
         Sets the required role that all users in a guild must have.
         :param role_id: The required role's id.
@@ -221,7 +240,7 @@ class AutoRole(commands.Cog, description=""):
         DELETE FROM exempt_users WHERE guild_id = ? AND user_id = ?
         """, guild_id, user_id)
 
-    def remove_required_role(self, role_id: str, guild_id: str):
+    def remove_required_role(self, guild_id: str, role_id: str):
         """
         Makes a role un necessary for users to have in a guild.
         :param role_id: The un necessary role's id.Member
@@ -231,7 +250,7 @@ class AutoRole(commands.Cog, description=""):
         DELETE FROM required_roles WHERE role_id = ? AND guild_id = ?
         """, role_id, guild_id)
 
-    def ignore_user(self, user_id: str, guild_id: str):
+    def ignore_user(self, guild_id: str, user_id: str):
         """
         Check to see if the user is in the ignore_auto_role list.
         :params user: The discord user to check for.
@@ -243,13 +262,13 @@ class AutoRole(commands.Cog, description=""):
 
     def get_all_guilds_and_guest_roles(self):
         """
-        Gets all guilds AutoRole is enabled on
+        Gets all guilds with AutoRole enabled
         """
         all_guilds_and_roles = self.DBManager.db_execute_select("""SELECT guild_id, role_id FROM guest_roles
         """)
         return all_guilds_and_roles
 
-    async def remove_roles(self, guild_id : int, user : discord.Member):
+    async def remove_roles(self, guild_id: int, user: discord.Member):
         """
         Removes all the specified roles from the user.
         :param guild: The server that specifies the roles to be removed.
@@ -261,14 +280,15 @@ class AutoRole(commands.Cog, description=""):
             role = self.bot.get_role(int(role_id))
             await user.remove_roles(role_id)
 
-    def has_required_role(self, guild_id : int, user : discord.Member):
+    def has_required_role(self, guild_id: int, user: discord.Member):
         """
         Checks to see if a user has any of a server's required roles.
         :param user: The user to check.
         :guild_id: The server id the user is a part of.
         :return: True if the user has any of the guilds required roles, false otherwise.
         """
-        required_roles = self.DBManager.db_execute_select("""SELECT role_id FROM required_roles WHERE guild_id = ?""", str(guild_id))
+        required_roles = self.DBManager.db_execute_select(
+            """SELECT role_id FROM required_roles WHERE guild_id = ?""", str(guild_id))
         for (role_id,) in required_roles:
             role = bot.get_role(int(role_id))
             if role in user.roles:
