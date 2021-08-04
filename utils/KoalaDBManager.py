@@ -152,12 +152,21 @@ class KoalaDBManager:
         self.db_execute_commit(sql_create_guild_dm_email_list_status_table)
 
     def insert_setup_status(self, guild_id):
+        """
+        Adds a default setup status of 0 (false) for a guild
+        :param guild_id: guild ID
+        """
         self.db_execute_commit(
             "INSERT INTO GuildSetupStatus VALUES (?, 0 );",
             args=[guild_id])
         return self.fetch_guild_setup_status(guild_id)
 
     def fetch_guild_setup_status(self, guild_id):
+        """
+        Gets the setup status for a guild
+        :param guild_id: guild ID
+        return: the guild setup status
+        """
         return ((self.db_execute_select("""
         SELECT accepted_setup
         FROM GuildSetupStatus
@@ -165,6 +174,10 @@ class KoalaDBManager:
         """, args=[guild_id], pass_errors=True)[0][0]))
 
     def update_guild_setup_status(self, guild_id):
+        """
+        Sets the guild setup status from 0 (false) to 1 (true)
+        :param guild_id: guild ID
+        """
         sql_update_guild_status ="""
         UPDATE
         GuildSetupStatus    
@@ -175,6 +188,10 @@ class KoalaDBManager:
         self.db_execute_commit(sql_update_guild_status, args=[guild_id])
 
     def remove_guild_status(self, guild_id):
+        """
+        Removes a guild from the GuildSetupStatus table
+        :param guild_id: guild ID
+        """
         sql_remove_guild_status = """
         DELETE FROM GuildSetupStatus 
         WHERE guild_id = ?
@@ -182,19 +199,33 @@ class KoalaDBManager:
         self.db_execute_commit(sql_remove_guild_status, args=[guild_id], pass_errors=True)
 
     def insert_email_list_status(self, guild_id):
+        """
+        Adds a default email list status of 1 (true) for a guild
+        :param guild_id: guild ID
+        """
         self.db_execute_commit(
             "INSERT INTO GuildDMEmailListStatus VALUES (?, 1 );",
             args=[guild_id])
         return self.fetch_dm_email_list_status(guild_id)
 
     def fetch_dm_email_list_status(self, guild_id):
-        return ((self.db_execute_select("""
+        """
+        Gets the email list status for a guild
+        :param guild_id: guild ID
+        :return: the email list status (boolean)
+        """
+        return (self.db_execute_select("""
         SELECT dm_email_list_status
         FROM GuildDMEmailListStatus
         WHERE guild_id = ?
-        """, args=[guild_id], pass_errors=True)[0][0]) != 0)
+        """, args=[guild_id], pass_errors=True)[0][0]) != 0
 
     def update_dm_email_list_status(self, guild_id, toggle):
+        """
+        Sets the guild email list status to the value of toggle
+        :param guild_id: guild ID
+        :param toggle: The value to set the email list status to (0 or 1)
+        """
         sql_update_dm_email_list_status ="""
         UPDATE
         GuildDMEmailListStatus    
@@ -205,6 +236,10 @@ class KoalaDBManager:
         self.db_execute_commit(sql_update_dm_email_list_status, args=[toggle, guild_id])
 
     def remove_dm_email_list_status(self, guild_id):
+        """
+        Removes a guild from the GuildDMEmailListStatus table
+        :param guild_id: guild ID
+        """
         sql_remove_dm_email_list_status = """
         DELETE FROM GuildDMEmailListStatus 
         WHERE guild_id = ?
