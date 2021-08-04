@@ -4,7 +4,7 @@ import re
 import json
 
 """
-KoalaBot utility function for generating bot command docs
+KoalaBot utility function for auto generating bot command docs
 Created By: Charlie Bowe, Aqeel Little 
 """
 
@@ -26,7 +26,7 @@ class CogDocumentation:
     name = None
     docs = []
 
-    #Dictionary of cogs that have different names in the doc
+    #Dictionary of cogs that have different names in the doc for clarity
     docNameChanges = {
         'BaseCog': 'KoalaBot',
         'ReactForRole': 'ReactForRole (RFR)',
@@ -35,14 +35,21 @@ class CogDocumentation:
     }
 
     def __init__(self,name: str, docs):
-        
+        #If name of the cog is not the name that should be in the doc
         if name in self.docNameChanges.keys():
+            #change it
             self.name = self.docNameChanges.get(name)
         else:    
             self.name = name
         self.docs = docs
     
 def add_cog_to_cog(add,to,docList):
+    """Add all DocumentationEntry of one CogDocumentation to another
+    :param add: CogDocumentation to move and destroy
+    :param to: CogDocumentation to add to
+    :param docList: list of CogDocumentation that add and to are in
+    :return: new list of CogDocumentation
+    """
     addCog = None
     toCog = None
 
@@ -61,8 +68,9 @@ def add_cog_to_cog(add,to,docList):
 def get_cog_docs():
     """Imports all cogs in directory cogs and stores the name, params and 
     docstring description of bot commands
-    :return: CogDocumentation[]
+    :return: list of CogDocumentation
     """
+    #List fo Cogdocumentation
     docList = []
     #Get the directory of the cogs folder
     dir = path.join(path.dirname(path.realpath(__file__)),'cogs')
@@ -100,31 +108,39 @@ def get_cog_docs():
                     #On attribute error, function has no docstring
                     pass
                     continue
-                except:
-                    print("Unexpected error")
+                except Exception:
+                    print(f'Error {Exception} when reading docstring of {obj} in {modules[i]}')
                     continue
                     
                 #Get the name of the command object
                 name = getattr(getattr(currentLib,modules[i]),str(obj[0])).name
 
+                #If function is nested, append its nested commadn to its font
+                #E.g. announce create
                 if getattr(getattr(currentLib,modules[i]),str(obj[0])).parent != None:
                     name = f'{getattr(getattr(currentLib,modules[i]),str(obj[0])).parent} {name}'
                 
                 desc = ""
                 params = []
                 for line in text:
+                    #Match each line to regex for checking for parameter descriptions
                     matchObj = re.match( r':(.*) (.*): (.*)', line, re.M|re.I)
 
+                    #If its a parameter
                     if matchObj and (matchObj.group(1) == 'param'):
+                        #Do not add it if its a ctx, as that is not useful for the doc
                         if matchObj.group(2) == 'ctx':
                             continue
                         params.append(matchObj.group(2))
                     else:
+                        #Else, its a description of the command, so add it to desc
                         desc += line
+                #Create a new Documentation entry for the command
                 docs.append(DocumentationEntry(name,params,desc)) 
 
         docList.append(CogDocumentation(modules[i],docs))
 
+    #Add everything in IntroCog to KoalaBot for clarity
     docList = add_cog_to_cog('IntroCog','KoalaBot',docList)
 
     return docList
@@ -159,5 +175,9 @@ def parse_docs(docList, filename):
     file.write(json.dumps(data, indent=2))
     file.close()
 
-docList = get_cog_docs()
-parse_docs(docList,'documentation.json')
+def generate_doc():
+    """Runs the script that will automatically generate documentation.json using the docstrings
+    of cogs in directory cogs
+    """
+    docList = get_cog_docs()
+    parse_docs(docList,'documentation.json')
