@@ -96,6 +96,7 @@ jobs:
       (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
     steps:
       - name: Create new json documentation
-        run: 
+        run:
+        python 
         from GenerateDoc import generate_doc
         generate_doc()

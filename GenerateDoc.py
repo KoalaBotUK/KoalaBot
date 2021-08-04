@@ -181,3 +181,6 @@ def generate_doc():
     """
     docList = get_cog_docs()
     parse_docs(docList,'documentation.json')
+
+if __name__ == "__main__":
+    generate_doc()
