@@ -15,7 +15,7 @@ def open__as_json(filename):
     autoDocString = doc_list_to_json(get_cog_docs())
     return correctDocString, autoDocString
 
-@pytest.mark.parametrize("filename", ['Documentation.json'])
+@pytest.mark.parametrize("filename", ['tests/TestDocumentation.json'])
 def test_compare_cog_names(filename):
     correctDocString, autoDocString = open__as_json(filename)
     assert(len(correctDocString) == len(autoDocString))
@@ -25,7 +25,7 @@ def test_compare_cog_names(filename):
 
 
 """
-@pytest.mark.parametrize("filename", ['Documentation.json'])
+@pytest.mark.parametrize("filename", ['tests/TestDocumentation.json'])
 def test_compare_cog_command(filename):
     correctDocString, autoDocString = open__as_json(filename)
     assert(len(correctDocString) == len(autoDocString))
@@ -34,7 +34,7 @@ def test_compare_cog_command(filename):
             assert(correctDocString[i]['commands'][j] == autoDocString[i]['commands'][j])
 """
 
-@pytest.mark.parametrize("filename", ['Documentation.json'])
+@pytest.mark.parametrize("filename", ['tests/TestDocumentation.json'])
 def test_compare_cog_command_name(filename):
     correctDocString, autoDocString = open__as_json(filename)
 
@@ -44,7 +44,7 @@ def test_compare_cog_command_name(filename):
         for command in autoDocString[i]['commands']:
             assert(command['command'] in commandNames) 
 
-@pytest.mark.parametrize("filename", ['Documentation.json'])
+@pytest.mark.parametrize("filename", ['tests/TestDocumentation.json'])
 def test_compare_cog_command_parameters(filename):
     correctDocString, autoDocString = open__as_json(filename)
 
@@ -54,7 +54,7 @@ def test_compare_cog_command_parameters(filename):
         for command in autoDocString[i]['commands']:
             assert(command['parameters'] in params) 
 
-@pytest.mark.parametrize("filename", ['Documentation.json'])
+@pytest.mark.parametrize("filename", ['tests/TestDocumentation.json'])
 def test_compare_cog_command_description(filename):
     correctDocString, autoDocString = open__as_json(filename)
 
