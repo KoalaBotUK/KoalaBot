@@ -20,8 +20,6 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from utils import KoalaDBManager
-
 
 # Constants
 load_dotenv()
