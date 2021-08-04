@@ -97,10 +97,12 @@ jobs:
     steps:
       - name: checkout repo content
         uses: actions/checkout@v2
-      - name: pip
+      - name: Install dependencies
         run: |
-          pip install discord
-          pip install python-dotenv
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          pip install pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Create new json documentation
         run: |
           pwd
