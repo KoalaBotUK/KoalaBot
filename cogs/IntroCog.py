@@ -82,7 +82,7 @@ def get_non_bot_members(guild: discord.Guild):
         return [member for member in guild.members if not member.bot]
 
 
-class IntroCog(commands.Cog, name="KoalaBot"):
+class IntroCog(commands.Cog, name="KoalaBot", description=KoalaBot.DESCRIPTION):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """

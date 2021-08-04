@@ -79,7 +79,7 @@ def list_ext_embed(guild_id):
     return embed
 
 
-class BaseCog(commands.Cog, name='KoalaBot'):
+class BaseCog(commands.Cog, name='KoalaBot', description=KoalaBot.DESCRIPTION):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
@@ -225,6 +225,34 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         embed = list_ext_embed(guild_id)
 
         await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.guild_only()
+    async def tutorial(self, ctx, koala_extension = None):
+        """
+        Gives a tutorial for a given koala extension, or a generic one if no extension is given.
+        :param ctx: Context of the command
+        :param koala_extension: The name of the koala
+        """
+        failed = True
+        all_extensions = KoalaBot.database_manager.get_all_available_guild_extensions(ctx.guild.id)
+        if not koala_extension or koala_extension == "KoalaBot":
+            message = KoalaBot.DESCRIPTION
+            failed = False
+        elif (koala_extension,) in all_extensions and ctx.bot.get_cog(koala_extension):
+            message = ctx.bot.get_cog(koala_extension).description.strip() + \
+                      f"\n\nSee `{KoalaBot.COMMAND_PREFIX}help {koala_extension}` for more information."
+            failed = False
+        else:
+            message = f"{koala_extension} is not a valid extension."
+
+        embed = discord.Embed(
+            title=koala_extension,
+            description=message,
+            colour=KOALA_GREEN if not failed else ERROR_RED
+        )
+        await ctx.send(embed=embed)
+
 
 
 def setup(bot: KoalaBot) -> None:

@@ -30,7 +30,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-This application uses python 3.8 which you can download [here](https://www.python.org/downloads/)
+This application supports Python 3.7-3.9 which you can download [here](https://www.python.org/downloads/)
 
 All python packages you need can be found in the [requirements.txt](requirements.txt).
 Before running the bot you must install these as so:

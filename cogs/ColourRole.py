@@ -56,7 +56,10 @@ def colour_is_enabled(ctx):
 
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
-class ColourRole(commands.Cog):
+class ColourRole(commands.Cog,
+    description=f"Use `{KoalaBot.COMMAND_PREFIX}customColour <hex code>` to change your display colour.\n"
+                f"and `{KoalaBot.COMMAND_PREFIX}listCustomColourAllowedRoles` to list all roles permitted to have custom colours.\n"
+    ):
     """
         A discord.py cog with commands to allow server members to change their display name colours to something of their choosing.
     """

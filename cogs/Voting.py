@@ -128,7 +128,13 @@ async def get_results(bot, vote):
     return results
 
 
-class Voting(commands.Cog, name="Vote"):
+class Voting(commands.Cog, name="Vote",
+    description=f"Use `{KoalaBot.COMMAND_PREFIX}create <title>` to create a new vote.\n"
+    f"Use `{KoalaBot.COMMAND_PREFIX}setEndTime <time>` to set a time for the vote to end.\n"
+    f"Use `{KoalaBot.COMMAND_PREFIX}cancel <title>` to cancel a vote.\n"
+    f"Use `{KoalaBot.COMMAND_PREFIX}list` to list all votes.\n"
+    f"Use `{KoalaBot.COMMAND_PREFIX}close <title>` to close a specified vote.\n"
+):
     def __init__(self, bot, db_manager=None):
         """
         discord cog to manage the voting interface

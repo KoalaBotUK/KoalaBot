@@ -3,6 +3,12 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### KoalaBot
+#### Added
+- `tutorial` View a tutorial of a specific extension or the bot as a whole if not specified
+#### Changed
+- `help` Include a small tutorial on adding and removing extensions.
+- `help <extension>` Include a small tutorial on how to use the extension.
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
 ### Colour Role

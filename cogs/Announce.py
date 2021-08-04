@@ -43,7 +43,10 @@ def announce_is_enabled(ctx):
     return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 
-class Announce(commands.Cog):
+class Announce(commands.Cog, 
+    description=f"Use `{KoalaBot.COMMAND_PREFIX}announce create` to create an announcement\n"
+                f"Use `{KoalaBot.COMMAND_PREFIX}announce send` to send it.\n"
+    ):
     """
         Send DM announcements to certain roles and people.
     """

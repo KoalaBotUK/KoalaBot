@@ -44,7 +44,10 @@ def verify_is_enabled(ctx):
 
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
-class Verification(commands.Cog, name="Verify"):
+class Verification(commands.Cog, name="Verify",
+    description=f"Use `{KoalaBot.COMMAND_PREFIX}verify <email>` to verify your email in order to get a verified role.\n"
+                f"Use `{KoalaBot.COMMAND_PREFIX}verifyAdd <domain> <@role>` to setup the verification system and assign a specific domain to a role."
+):
 
     def __init__(self, bot, db_manager=None):
         self.bot = bot
