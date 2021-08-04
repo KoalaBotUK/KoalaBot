@@ -121,6 +121,5 @@ jobs:
           python ./GenerateDoc.py
       - name: commit changes
         uses: EndBug/add-and-commit@v7 # You can change this to use a specific version
-      - name: git push
-        run: |
-          git push
+        with:
+          push: true
