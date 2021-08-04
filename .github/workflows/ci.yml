@@ -97,6 +97,9 @@ jobs:
     steps:
       - name: checkout repo content
         uses: actions/checkout@v2
+      - name: pip
+        run: |
+          pip install discord
       - name: Create new json documentation
         run: |
           pwd
