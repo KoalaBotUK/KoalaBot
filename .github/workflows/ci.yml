@@ -95,8 +95,12 @@ jobs:
       (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
       (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
     steps:
+      - name: setup python
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.8
       - name: Create new json documentation
         run: |
           pwd
           ls
-          py ./GenerateDoc.py
+          python ./GenerateDoc.py
