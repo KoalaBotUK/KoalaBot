@@ -97,4 +97,4 @@ jobs:
     steps:
       - name: Create new json documentation
         run: |
-        python GenerateDocOther.py
+          python GenerateDoc.py
