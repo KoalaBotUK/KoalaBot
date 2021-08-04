@@ -98,4 +98,4 @@ jobs:
       - name: Create new json documentation
         run: |
           pwd
-          python ../GenerateDoc.py
+          python ./GenerateDoc.py
