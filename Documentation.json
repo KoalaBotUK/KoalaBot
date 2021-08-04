@@ -1,0 +1,417 @@
+[
+  {
+    "name": "KoalaBot",
+    "commands": [
+      {
+        "command": "listExt",
+        "parameters": [],
+        "description": "Lists all enabled and disabled Koala Extensions on your server"
+      },
+      {
+        "command": "enableExt",
+        "parameters": ["koala_extension"],
+        "description": "Enable a Koala Extension on your server"
+      },
+      {
+        "command": "disableExt",
+        "parameters": ["koala_extension"],
+        "description": "Disable a Koala Extension on your server"
+      },
+      {
+        "command": "welcomeUpdateMsg",
+        "parameters": [],
+        "description": "Change the customisable part of the welcome message of your server"
+      },
+      {
+        "command": "welcomeSendMsg",
+        "parameters": [],
+        "description": "Sends out the welcome message manually to all members of your server"
+      },
+      {
+        "command": "welcomeViewMsg",
+        "parameters": [],
+        "description": "Shows this server's current welcome message"
+      },
+      {
+        "command": "clear",
+        "parameters": ["amount"],
+        "description": "Clears a given number of messages from the channel."
+      },
+      {
+        "command": "ping",
+        "parameters": [],
+        "description": "Returns the ping of a bot"
+      },
+      {
+        "command": "support",
+        "parameters": [],
+        "description": "Returns a link to the KoalaBot Support Discord Server"
+      }
+    ]
+  },
+  {
+    "name": "Announce",
+    "commands": [
+      {
+        "command": "announce create",
+        "parameters": [],
+        "description": "Create a new message that will be available for sending"
+      },
+      {
+        "command": "changeTitle",
+        "parameters": [],
+        "description": "Change the title of the embedded message"
+      },
+      {
+        "command": "changeContent",
+        "parameters": [],
+        "description": "Change the content of the embedded message"
+      },
+      {
+        "command": "addRole",
+        "parameters": [],
+        "description": "Add a role to list of people to send the announcement to"
+      },
+      {
+        "command": "removeRole",
+        "parameters": [],
+        "description": "Remove a role from a list of people to send the announcement to"
+      },
+      {
+        "command": "preview",
+        "parameters": [],
+        "description": "Post a constructed embedded message to the channel where the command is invoked"
+      },
+      {
+        "command": "send",
+        "parameters": [],
+        "description": "Send a pending announcement"
+      },
+      {
+        "command": "cancel",
+        "parameters": [],
+        "description": "Cancel a pending announcement"
+      }
+    ]
+  },
+  {
+    "name": "ColourRole",
+    "commands": [
+      {
+        "command": "customColour",
+        "parameters": ["colour_hexcode/'no'"],
+        "description": "Gives a user a chosen custom colour, or removes the custom colour with 'k!customColour no'"
+      },
+      {
+        "command": "listProtectedRoleColours",
+        "parameters": [],
+        "description": "Lists the protected roles, whose colours are protected from being imitated by a custom colour, in a server"
+      },
+      {
+        "command": "addProtectedRoleColour",
+        "parameters": ["role"],
+        "description": "Adds a role's colour to the list of protected roles"
+      },
+      {
+        "command": "removeProtectedRoleColour",
+        "parameters": ["role"],
+        "description": "Removes a role's colour from the list of protected roles"
+      },
+      {
+        "command": "listCustomColourAllowedRoles",
+        "parameters": [],
+        "description": "Lists the roles in a server whose users are permitted to have their own custom colours"
+      },
+      {
+        "command": "addCustomColourAllowedRole",
+        "parameters": ["role"],
+        "description": "Adds a role to the list of roles allowed to have a custom colour"
+      },
+      {
+        "command": "removeCustomColourAllowedRole",
+        "parameters": ["role_str"],
+        "description": "Removes a role from the list of roles allowed to have a custom colour"
+      }
+    ]
+  },
+  {
+    "name": "ReactForRole (RFR)",
+    "commands": [
+      {
+        "command": "rfr create",
+        "parameters": [],
+        "description": "Create a new, blank rfr message. Default title is React for Role. Default description is Roles below!"
+      },
+      {
+        "command": "rfr delete",
+        "parameters": [],
+        "description": "Delete an existing rfr message"
+      },
+      {
+        "command": "rfr addRequiredRole",
+        "parameters": ["role"],
+        "description": "Add a server-wide role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality"
+      },
+      {
+        "command": "rfr removeRequiredRole",
+        "parameters": ["role"],
+        "description": "Removes a server-wide role from the group of roles someone requires to use rfr functionality"
+      },
+      {
+        "command": "rfr listRequiredRoles",
+        "parameters": [],
+        "description": "Lists the server-specific role permissions for using rfr functionality"
+      },
+      {
+        "command": "rfr edit description",
+        "parameters": [],
+        "description": "Edit the description of an existing rfr message"
+      },
+      {
+        "command": "rfr edit title",
+        "parameters": [],
+        "description": "Edit the title of an existing rfr message"
+      },
+      {
+        "command": "rfr edit thumbnail",
+        "parameters": [],
+        "description": "Edit the thumbnail of an existing rfr message"
+      },
+      {
+        "command": "rfr edit inline",
+        "parameters": [],
+        "description": "Edit the inline property of embed fields in rfr embeds"
+      },
+      {
+        "command": "rfr edit addRoles",
+        "parameters": [],
+        "description": "Add emoji/role combos to an existing rfr message"
+      },
+      {
+        "command": "rfr edit removeRoles",
+        "parameters": [],
+        "description": "Remove emoji/role combos from an existing rfr message"
+      },
+      {
+        "command": "rfr edit fixEmbed",
+        "parameters": [],
+        "description": "Cosmetic fix method if the bot ever has a moment and doesn't react with the correct emojis/has duplicates"
+      }
+    ]
+  },
+  {
+    "name": "TextFilter",
+    "commands": [
+      {
+        "command": "filter",
+        "parameters": ["text", "type"],
+        "description": "Filter a word or string of text. Type is defaulted to 'banned' which will delete the message and warn the user. Use type 'risky' to just warn the user"
+      },
+      {
+        "command": "filterRegex",
+        "parameters": ["regex", "type"],
+        "description": "Filter a regex string. Type is defaulted to 'banned' which will delete the message and warn the user. Use type 'risky' to just warn the user"
+      },
+      {
+        "command": "filterList",
+        "parameters": [],
+        "description": "Get a list of filtered words in the server"
+      },
+      {
+        "command": "modChannelAdd",
+        "parameters": ["channelId"],
+        "description": " Add a mod channel for receiving filtered message information (User, Timestamp, Message) to be sent to"
+      },
+      {
+        "command": "modChannelRemove",
+        "parameters": ["channelId"],
+        "description": "Remove a mod channel from the server"
+      },
+      {
+        "command": "modChannelList",
+        "parameters": [],
+        "description": "See a list of mod channels in the server"
+      },
+      {
+        "command": "ignoreUser",
+        "parameters": ["userMention"],
+        "description": "Add a new ignored user for the server. This users' messages will be ignored by the Text Filter"
+      },
+      {
+        "command": "ignoreChannel",
+        "parameters": ["channelMention"],
+        "description": "Add a new ignored channel for the server. Messages in this channel will be ignored by the Text Filter"
+      },
+      {
+        "command": "ignoreList",
+        "parameters": [],
+        "description": "See a list of ignored users/channels in the server"
+      },
+      {
+        "command": "unfilter",
+        "parameters": ["text"],
+        "description": "Unfilter a word/string/regex of text that was previously filtered"
+      },
+      {
+        "command": "unignore",
+        "parameters": ["mention"],
+        "description": "Unignore a user/channel that was previously set as ignored"
+      }
+    ]
+  },
+  {
+    "name": "TwitchAlert",
+    "commands": [
+      {
+        "command": "twitchAdd",
+        "parameters": ["channel_id", "twitch_username", "custom_live_message"],
+        "description": "Add a Twitch user to a Twitch Alert"
+      },
+      {
+        "command": "twitchRemove",
+        "parameters": ["channel_id", "twitch_username"],
+        "description": "Remove a user from a Twitch Alert"
+      },
+      {
+        "command": "twitchAddTeam",
+        "parameters": ["channel_id", "team_name", "custom_live_message"],
+        "description": "Add a Twitch team to a Twitch alert"
+      },
+      {
+        "command": "twitchRemoveTeam",
+        "parameters": ["channel_id", "team_name"],
+        "description": "Edit the default message put in a Twitch Alert Notification"
+      },
+      {
+        "command": "twitchEditMsg",
+        "parameters": ["channel", "default_live_message"],
+        "description": "Edit the default message put in a Twitch Alert Notification"
+      },
+      {
+        "command": "twitchViewMsg",
+        "parameters": ["channel"],
+        "description": "Shows the current default message for Twitch Alerts"
+      },
+      {
+        "command": "twitchList",
+        "parameters": ["channel"],
+        "description": "Shows all current TwitchAlert users and teams in a channel"
+      }
+    ]
+  },
+  {
+    "name": "Verify",
+    "commands": [
+      {
+        "command": "verifyAdd",
+        "parameters": ["suffix", "role"],
+        "description": "Set up a role and email pair for KoalaBot to verify users with"
+      },
+      {
+        "command": "verifyRemove",
+        "parameters": ["suffix", "role"],
+        "description": "Disable an existing verification listener"
+      },
+      {
+        "command": "reVerify",
+        "parameters": ["role"],
+        "description": "Removes a role from all users who have it and marks them as needing to re-verify before giving it back."
+      },
+      {
+        "command": "verifyList",
+        "parameters": ["channelId"],
+        "description": "List the current verification setup for the server"
+      },
+      {
+        "command": "verify",
+        "parameters": ["email"],
+        "description": "Send to KoalaBot in dms to verify an email with our system"
+      },
+      {
+        "command": "unVerify",
+        "parameters": ["email"],
+        "description": "Send to KoalaBot in dms to un-verify an email with our system"
+      },
+      {
+        "command": "confirm",
+        "parameters": ["token"],
+        "description": "Send to KoalaBot in dms to confirm the verification of an email"
+      }
+    ]
+  },
+  {
+    "name": "Vote",
+    "commands": [
+      {
+        "command": "vote create",
+        "parameters": ["title"],
+        "description": "Creates a new vote"
+      },
+      {
+        "command": "vote addRole",
+        "parameters": ["role"],
+        "description": "Adds a role to the list of roles the vote will be sent to"
+      },
+      {
+        "command": "vote removeRole",
+        "parameters": ["role"],
+        "description": "Removes a role to the list of roles the vote will be sent to"
+      },
+      {
+        "command": "vote setChair",
+        "parameters": ["chair_user"],
+        "description": "Sets the chair of a vote (no chair defaults to message the channel)"
+      },
+      {
+        "command": "vote setChannel",
+        "parameters": ["channel"],
+        "description": "Sets the target voice channel of a vote (Users connected to this channel will receive the vote message)"
+      },
+      {
+        "command": "vote addOption",
+        "parameters": ["option"],
+        "description": "Adds an option to the current vote (separate the title and description with a '+' e.g. option title+option description)"
+      },
+      {
+        "command": "vote removeOption",
+        "parameters": ["index"],
+        "description": "Removes an option from a vote based on it's index"
+      },
+      {
+        "command": "vote setEndTime",
+        "parameters": ["time_string"],
+        "description": "Sets a specific time for the vote to end. Results will be sent to the chair or owner if you use this, not a channel"
+      },
+      {
+        "command": "vote preview",
+        "parameters": [],
+        "description": "Generates a preview of what users will see with the current configuration of the vote"
+      },
+      {
+        "command": "vote cancel",
+        "parameters": ["title"],
+        "description": "Cancels a vote you are setting up or have sent"
+      },
+      {
+        "command": "vote list",
+        "parameters": [],
+        "description": "Return a list of all votes you have in this server"
+      },
+      {
+        "command": "vote send",
+        "parameters": [],
+        "description": "Sends a vote to all users within the restrictions set with the current options added"
+      },
+      {
+        "command": "vote close",
+        "parameters": ["title"],
+        "description": "Ends a vote, and collects the results"
+      },
+      {
+        "command": "vote checkResults",
+        "parameters": ["title"],
+        "description": "Checks the results of a vote without closing it"
+      }
+    ]
+  }
+]
