@@ -258,7 +258,7 @@ async def test_on_guild_leave():
 
 
 @pytest.mark.asyncio
-async def test_toggle_on_DM_List():
+async def test_toggle_on_dm_list():
     guild = dpytest.get_config().guilds[0]
     KoalaBot.database_manager.insert_setup_status(guild.id)
     KoalaBot.database_manager.update_guild_setup_status(guild.id)
@@ -269,7 +269,7 @@ async def test_toggle_on_DM_List():
 
 
 @pytest.mark.asyncio
-async def test_toggle_off_DM_List():
+async def test_toggle_off_dm_list():
     guild = dpytest.get_config().guilds[0]
     KoalaBot.database_manager.insert_setup_status(guild.id)
     KoalaBot.database_manager.update_guild_setup_status(guild.id)
@@ -277,6 +277,55 @@ async def test_toggle_off_DM_List():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyDM False")
     f = KoalaBot.database_manager.fetch_dm_email_list_status(guild.id)
     assert dpytest.verify().message().contains().content(f"Users in {guild.name} will no longer be messaged by the bot to verify their email")
+
+
+@pytest.mark.asyncio
+async def test_fetch_dm_email_list_status():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_email_list_status(guild.id)
+    assert KoalaBot.database_manager.fetch_dm_email_list_status(guild.id) == 1
+
+
+@pytest.mark.asyncio
+async def test_update_dm_email_list_status():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_email_list_status(guild.id)
+    KoalaBot.database_manager.update_dm_email_list_status(guild.id, 0)
+    assert KoalaBot.database_manager.fetch_dm_email_list_status(guild.id) == 0
+
+
+@pytest.mark.asyncio
+async def test_remove_dm_email_list_status():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_email_list_status(guild.id)
+    KoalaBot.database_manager.remove_dm_email_list_status(guild.id)
+    with pytest.raises(IndexError):
+        (KoalaBot.database_manager.fetch_dm_email_list_status(guild.id))
+
+
+@pytest.mark.asyncio
+async def test_fetch_guild_setup_status():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    assert KoalaBot.database_manager.fetch_guild_setup_status(guild.id) == 0
+
+
+@pytest.mark.asyncio
+async def test_update_guild_setup_status():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
+    assert KoalaBot.database_manager.fetch_guild_setup_status(guild.id) == 1
+
+
+@pytest.mark.asyncio
+async def test_remove_guild_setup_status():
+    guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.remove_guild_status(guild.id)
+    with pytest.raises(IndexError):
+        (KoalaBot.database_manager.fetch_guild_setup_status(guild.id))
+
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
