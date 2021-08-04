@@ -99,10 +99,10 @@ jobs:
         uses: actions/checkout@v2
       - name: Install dependencies
         run: |
+          pip install pysqlcipher3
           python -m pip install --upgrade pip
           pip install flake8 pytest
           pip install pytest-cov
-          pip install pysqlcipher3
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Create new json documentation
         run: |
