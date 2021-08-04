@@ -96,9 +96,14 @@ class ColourRole(commands.Cog):
         :param colour_str: Hex string of colour
         :return: Colour from colour_str
         """
-        r = int(colour_str[:2], 16)
-        g = int(colour_str[2:4], 16)
-        b = int(colour_str[-2:], 16)
+        if colour_str[0] == '#':
+            r = int(colour_str[1:3], 16)
+            g = int(colour_str[3:5], 16)
+            b = int(colour_str[-2:], 16)
+        else:
+            r = int(colour_str[:2], 16)
+            g = int(colour_str[2:4], 16)
+            b = int(colour_str[-2:], 16)
         return discord.Colour.from_rgb(r, g, b)
 
     @commands.cooldown(1, 15, commands.BucketType.member)
@@ -316,7 +321,7 @@ class ColourRole(commands.Cog):
         :param colour_str: String to check
         :return: True if a valid colour hex string, false otherwise
         """
-        if re.match("^([A-Fa-f0-9]{6})$", colour_str):
+        if re.match("^(#?[A-Fa-f0-9]{6})$", colour_str):
             return True
         return False
 
