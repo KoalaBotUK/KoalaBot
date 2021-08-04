@@ -33,6 +33,8 @@ from dotenv import load_dotenv
 from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
 
+from GenerateDoc import generate_doc
+
 # Constants
 logging.basicConfig(filename='KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
@@ -110,6 +112,9 @@ def load_all_cogs():
     Loads all cogs in COGS_DIR into the client
     """
     UNRELEASED = []
+    
+    #Auto generate documentation.json
+    generate_doc()
 
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py') and filename not in UNRELEASED:

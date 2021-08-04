@@ -88,3 +88,38 @@ jobs:
         fail_ci_if_error: true
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
+      
+  documentation:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
+      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
+        run: |
+          pip install pysqlcipher3
+          python -m pip install --upgrade pip
+          pip install flake8 pytest
+          pip install pytest-cov
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Create new json documentation
+        env:
+          ENCRYPTED: "False"
+          BOT_OWNER: ${{ secrets.BOT_OWNER }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          GMAIL_EMAIL: ${{ secrets.GMAIL_EMAIL }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+          TWITCH_SECRET: ${{ secrets.TWITCH_SECRET }}
+          TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
+        run: |
+          python ./GenerateDoc.py
+      - name: commit changes
+        uses: EndBug/add-and-commit@v7 # You can change this to use a specific version
+        with:
+          push: true
