@@ -16,9 +16,6 @@ import logging
 import random
 import sys
 
-logging.basicConfig(filename='TwitchAlert.log')
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
@@ -32,6 +29,8 @@ from dotenv import load_dotenv
 import asyncio
 
 # Constants
+logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'TwitchAlert.log')
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \

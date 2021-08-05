@@ -8,6 +8,7 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
+import argparse
 
 # Libs
 import discord
@@ -26,7 +27,7 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 utils_cog = None
-DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
+DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
 DBManager.create_base_tables()
 
 
@@ -50,6 +51,56 @@ def setup_db():
 async def setup_clean_messages():
     await dpytest.empty_queue()
     yield dpytest
+
+
+def test_parse_args_config():
+    assert "/config/" == vars(KoalaBot.parse_args(["--config", "/config/"])).get("config")
+
+
+def test_parse_args_invalid():
+    with mock.patch.object(argparse.ArgumentParser, 'exit') as mock1:
+            KoalaBot.parse_args(["--test", "/test/"])
+    mock1.assert_called_once()
+
+
+@mock.patch("os.name", "posix")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
+def test_get_config_from_argv_linux():
+    assert KoalaBot.get_config_from_argv() == "/config/"
+
+
+@mock.patch("os.name", "posix")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config"])
+def test_get_config_from_argv_linux_partial():
+    assert KoalaBot.get_config_from_argv() == "/config/"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_relative():
+    assert KoalaBot.get_config_from_argv() == "C:/config/"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_relative_partial():
+    assert KoalaBot.get_config_from_argv() == "C:/config/"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "\\config\\"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_relative_backslash():
+    assert KoalaBot.get_config_from_argv() == "C:/config/"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "D:/test/config/"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_absolute():
+    assert KoalaBot.get_config_from_argv() == "D:/test/config/"
 
 
 def test_test_user_is_owner(test_ctx):
