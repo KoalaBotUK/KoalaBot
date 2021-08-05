@@ -439,7 +439,7 @@ class TwitchAlert(commands.Cog):
                     temp = usernames
                     usernames.remove(current_username)
                     if usernames == temp:
-                        logging.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list {usernames}")
+                        logging.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list")
 
                     sql_find_message_id = \
                         "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
@@ -560,7 +560,7 @@ class TwitchAlert(commands.Cog):
                     temp = usernames
                     usernames.remove(current_username)
                     if usernames == temp:
-                        logging.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user list {usernames}")
+                        logging.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user teams list")
 
                     sql_find_message_id = """
                     SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message, 
@@ -719,7 +719,7 @@ class TwitchAPIHandler:
                     await self.get_new_twitch_oauth()
                     return await self.requests_get(url, headers, params, attempts+1)
                 elif response.status > 399:
-                    logging.warning(f'TwitchAlert: {response.status} while getting requesting URL:{url}')
+                    logging.warning(f'TwitchAlert: {response.status} while getting requested URL')
 
                 return await response.json()
 
