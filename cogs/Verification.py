@@ -53,9 +53,9 @@ class Verification(commands.Cog, name="Verify"):
             self.DBManager = KoalaBot.database_manager
             self.set_up_tables()
             self.DBManager.insert_extension("Verify", 0, True, True)
+            self.insert_university_csv()
         else:
             self.DBManager = db_manager
-        self.insert_university_csv()
 
     def set_up_tables(self):
         """
@@ -374,17 +374,17 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.command(name="verifyAddUni")
     async def add_uni_command(self, ctx, university):
         sql_select_uni_statement = ("""
-        SELECT email_suffix FROM Universities where name = ?""", university)
-        university_address = self.DBManager.db_execute_select(sql_select_uni_statement)
-        await ctx.send(university_address[0])
+        SELECT email_suffix FROM Universities where name = ?""")
+        university_address = self.DBManager.db_execute_select(sql_select_uni_statement,args=[university])
+        await ctx.send(university_address[0][0])
 
     def insert_university_csv(self):
         f = open("./utils/fake_uni_list.csv")
         rows = csv.reader(f)
-        insert_universities = ("""
-        INSERT INTO Universities VALUES (?,?)
-        """, rows)
-        self.DBManager.db_execute_commit(insert_universities)
+        for row in list(rows):
+            print(row[0])
+            insert_universities = "INSERT INTO Universities VALUES (?,?)"
+            self.DBManager.db_execute_commit(insert_universities, args=row)
 
     class InvalidArgumentError(Exception):
         pass
