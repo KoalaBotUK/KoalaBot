@@ -7,6 +7,7 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
+import csv
 import random
 import string
 import smtplib
@@ -54,6 +55,7 @@ class Verification(commands.Cog, name="Verify"):
             self.DBManager.insert_extension("Verify", 0, True, True)
         else:
             self.DBManager = db_manager
+        self.insert_university_csv()
 
     def set_up_tables(self):
         """
@@ -95,10 +97,19 @@ class Verification(commands.Cog, name="Verify"):
         );
         """
 
+        sql_create_universities_table = """
+        CREATE TABLE IF NOT EXISTS Universities(
+        name text NOT NULL,
+        email_suffix text NOT NULL,
+        PRIMARY KEY (name)
+        );
+        """
+
         self.DBManager.db_execute_commit(verified_table)
         self.DBManager.db_execute_commit(non_verified_table)
         self.DBManager.db_execute_commit(role_table)
         self.DBManager.db_execute_commit(re_verify_table)
+        self.DBManager.db_execute_commit(sql_create_universities_table)
 
     @staticmethod
     def send_email(email, token):
@@ -357,6 +368,23 @@ This email is stored so you don't need to verify it multiple times across server
                 self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
                                                  (member.id, role.id))
         await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(verify_is_enabled)
+    @commands.command(name="verifyAddUni")
+    async def add_uni_command(self, ctx, university):
+        sql_select_uni_statement = ("""
+        SELECT email_suffix FROM Universities where name = ?""", university)
+        university_address = self.DBManager.db_execute_select(sql_select_uni_statement)
+        await ctx.send(university_address[0])
+
+    def insert_university_csv(self):
+        f = open("./utils/fake_uni_list.csv")
+        rows = csv.reader(f)
+        insert_universities = ("""
+        INSERT INTO Universities VALUES (?,?)
+        """, rows)
+        self.DBManager.db_execute_commit(insert_universities)
 
     class InvalidArgumentError(Exception):
         pass
