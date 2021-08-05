@@ -428,7 +428,7 @@ async def test_get_team_users(twitch_api_handler):
 # Test TwitchAlertDBManager
 @pytest.fixture
 def twitch_alert_db_manager(twitch_cog):
-    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY, KoalaBot.config_dir), twitch_cog.bot)
+    return TwitchAlert.TwitchAlertDBManager(KoalaDBManager.KoalaDBManager(DB_PATH, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR), twitch_cog.bot)
 
 
 @pytest.fixture

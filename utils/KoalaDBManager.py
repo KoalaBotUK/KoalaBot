@@ -29,7 +29,6 @@ else:
 
 # Variables
 
-
 def format_db_path(directory: str, filename: str):
     """
     Format the path to be used by the database.
@@ -39,16 +38,7 @@ def format_db_path(directory: str, filename: str):
     :param directory: The directory for the database file
     :param filename: The filename of the given database
     """
-    if directory:
-        directory = directory.replace("\\", "/")
-        if directory[-1] != "/":
-            directory += "/"
-
-        if os.name == 'nt' and directory[1] != ":":
-            if directory[0] == "/":
-                directory = directory[1:]
-            directory = os.getcwd() + directory
-    else:
+    if not directory:
         directory = ""
 
     if os.name == 'nt' or not ENCRYPTED_DB:

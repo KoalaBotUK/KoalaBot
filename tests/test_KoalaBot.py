@@ -27,7 +27,7 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 utils_cog = None
-DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.config_dir)
+DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
 DBManager.create_base_tables()
 
 

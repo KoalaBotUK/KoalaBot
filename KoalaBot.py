@@ -35,6 +35,42 @@ from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
 
 # Constants
+def parse_args(args):
+    """
+    Uses argparse to return a parser of all given arguments when running KoalaBot.py
+
+    :param args: sys.argv[1:]
+    :return: parsed argparse
+    """
+    parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
+    parser.add_argument('--config', help="Config & database directory")
+    return parser.parse_args(args)
+
+
+def get_config_from_argv():
+    """
+    Gets config directory if given from arguments when running KoalaBot.py
+
+    :return: Valid config dir
+    """
+    config_dir = vars(parse_args(sys.argv[1:])).get("config")
+    if config_dir:
+        config_dir = config_dir.replace("\\", "/")
+        if config_dir[-1] != "/":
+            config_dir += "/"
+
+        if os.name == 'nt' and config_dir[1] != ":":
+            if config_dir[0] == "/":
+                config_dir = config_dir[1:]
+            config_dir = os.getcwd() + config_dir
+    return config_dir
+
+
+if __name__ == '__main__':
+    CONFIG_DIR = get_config_from_argv()
+else:
+    CONFIG_DIR = None
+
 logging.basicConfig(filename='KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
@@ -54,19 +90,6 @@ PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to 
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 
 # Variables
-
-
-def parse_args(args):
-    parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
-    parser.add_argument('--config', help="Config & database directory")
-    return parser.parse_args(args)
-
-
-if __name__ == '__main__':
-    config_dir = vars(parse_args(sys.argv[1:])).get("config")
-else:
-    config_dir = None
-
 started = False
 if discord.__version__ != "1.3.4":
     logging.info("Intents Enabled")
@@ -78,7 +101,7 @@ if discord.__version__ != "1.3.4":
 else:
     logging.info("discord.py v1.3.4: Intents Disabled")
     client = commands.Bot(command_prefix=COMMAND_PREFIX)
-database_manager = DBManager(DATABASE_PATH, DB_KEY, config_dir)
+database_manager = DBManager(DATABASE_PATH, DB_KEY, CONFIG_DIR)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
