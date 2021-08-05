@@ -55,7 +55,7 @@ DISCORD_TOKEN = AdiSc0RdT0k3N # A discord Token taken from the discord developer
 BOT_OWNER = 123456789 # (optional) A discord ID for the person who should have access to owner commands (will default to bot owner)
 
 # Encryption (optional)
-ENCRIPTION = False # or True (default) for disabling/enabling the database encryption
+ENCRYPTED = False # or True (default) for disabling/enabling the database encryption
 SQLITE_KEY = 123EXAMPLE456ENCRYPTION789KEY0 # A custom SQLcipher key
 
 # Twitch Alert (Required for TwitchAlert Extension)
@@ -94,7 +94,7 @@ services:
     environment:
       - DISCORD_TOKEN = bot_token
       - BOT_OWNER = owner_user_id #optional
-      - ENCRIPTION = boolean #optional
+      - ENCRYPTED = boolean #optional
       - SQLITE_KEY = key #optional
       - TWITCH_TOKEN = twitch_application_token #optional (TwitchAlert)
       - TWITCH_SECRET = twitch_application_secret #optional (TwitchAlert)
@@ -112,7 +112,7 @@ docker run \
   --name=Koala \
   -e DISCORD_TOKEN=bot_token \
   -e BOT_OWNER=owner_user_id `#optional` \
-  -e ENCRIPTION=boolean `#optional` \
+  -e ENCRYPTED=boolean `#optional` \
   -e SQLITE_KEY=key `#optional` \
   -e TWITCH_TOKEN=twitch_application_token `#optional (TwitchAlert)` \
   -e TWITCH_SECRET=twitch_application_secret `#optional (TwitchAlert)` \
