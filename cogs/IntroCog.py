@@ -13,7 +13,6 @@ Commented using reStructuredText (reST)
 import asyncio
 import discord
 from discord.ext import commands
-from discord.ext.commands import bot
 from dotenv import load_dotenv
 
 # Own modules
