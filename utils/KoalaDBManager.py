@@ -209,7 +209,6 @@ class KoalaDBManager:
 
             self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
 
-<<<<<<< HEAD
     def extension_enabled(self, guild_id, extension_id: str):
         """
         Check if a given extension is enabled in a specific guild
@@ -217,9 +216,6 @@ class KoalaDBManager:
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
         """
-=======
-    def extension_enabled(self, guild_id, extension_id):
->>>>>>> b7f4089 (Created update database script, needs docstrings and testing)
         sql_select_extension = "SELECT extension_id " \
                                "FROM GuildExtensions " \
                                "WHERE guild_id = ?"

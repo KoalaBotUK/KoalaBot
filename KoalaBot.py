@@ -203,6 +203,7 @@ async def on_command_error(ctx, error):
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
+    update_database = MigrateData(database_manager)
     update_database.execute_update()
     database_manager.create_base_tables()
     load_all_cogs()

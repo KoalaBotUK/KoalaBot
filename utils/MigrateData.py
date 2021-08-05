@@ -1,45 +1,51 @@
-# Own modules
 import os
-import sqlite3
+import shutil
 
-from dotenv import load_dotenv
 
-# Variables
-from utils.KoalaDBManager import KoalaDBManager
+def backup_data():
+    try:
+        size = len(os.listdir(os.getcwd() + '\\KoalaDBBackups'))
+        if not os.path.exists('KoalaDBBackups\\backup_' + str(size)):
+            os.makedirs('KoalaDBBackups\\backup_' + str(size))
+        des = os.getcwd() + '\\KoalaDBBackups\\backup_' + str(size)
+        src = os.path.join(os.getcwd(), 'Koala.db')
+        shutil.copy(src, des)
+        return True
+    except Exception as e:
+        print(e)
+        return False
 
-load_dotenv()
+
+def reset_db():
+    src = os.getcwd() + '\\KoalaDBBackups'
+    last_db = src + '\\' + os.listdir(src)[-1] + '\\Koala.db'
+    os.remove(os.getcwd() + '\\Koala.db')
+    shutil.copy(last_db, os.getcwd())
+
 
 class MigrateData:
 
     def __init__(self, database_manager):
         self.database_manager = database_manager
-        self.execute_update()
 
     def execute_update(self):
-        self.remake_guilds()
-        self.remake_guild_extensions()
-        self.remake_guild_welcome_messages()
-        self.remake_votes()
-        self.remake_vote_sent()
-        self.remake_vote_options()
-        self.remake_vote_target_roles()
-        self.remake_verified_emails()
-        self.remake_not_verified_emails()
-        self.remake_role_table()
-        self.remake_to_re_verify()
-        self.remake_twitch_alerts()
-        self.remake_user_in_twitch_alert()
-        self.remake_team_in_twitch_alert()
-        self.remake_user_in_twitch_team()
-        self.remake_text_filter()
-        self.remake_text_filter_moderation()
-        self.remake_text_filter_ignore_list()
-        self.remake_guild_rf_messages()
-        self.remake_rfr_message_emoji_roles()
-        self.remake_guild_rfr_required_roles()
-        self.remake_guild_colour_change_permissions()
-        self.remake_guild_invalid_custom_colour_roles()
-        self.remake_guild_usage()
+        if backup_data():
+            funcs = [self.remake_guilds, self.remake_guild_extensions, self.remake_guild_welcome_messages,
+                     self.remake_votes, self.remake_vote_sent, self.remake_vote_options, self.remake_vote_target_roles,
+                     self.remake_verified_emails, self.remake_not_verified_emails, self.remake_role_table,
+                     self.remake_to_re_verify, self.remake_twitch_alerts, self.remake_user_in_twitch_alert,
+                     self.remake_team_in_twitch_alert, self.remake_user_in_twitch_team, self.remake_text_filter,
+                     self.remake_text_filter_moderation, self.remake_text_filter_ignore_list,
+                     self.remake_guild_rf_messages, self.remake_rfr_message_emoji_roles,
+                     self.remake_guild_rfr_required_roles, self.remake_guild_colour_change_permissions,
+                     self.remake_guild_invalid_custom_colour_roles, self.remake_guild_usage]
+            for func in funcs:
+                try:
+                    func()
+                except Exception as e:
+                    print(e)
+                    reset_db()
+                    break
 
     def remake_guilds(self):
         sql_create_guilds_table = """
@@ -70,7 +76,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO (guild_id, subscription) VALUES (?, ?);""",
                         args=list(i))
-
 
     def remake_guild_extensions(self):
         count = self.database_manager.db_execute_select(
@@ -118,7 +123,8 @@ class MigrateData:
                     args=list(i))
 
     def remake_votes(self):
-        count = self.database_manager.db_execute_select("""SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Votes'""")
+        count = self.database_manager.db_execute_select(
+            """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Votes'""")
         if count[0][0] == 1:
             vote_table = """
             CREATE TABLE IF NOT EXISTS Votes (
@@ -142,7 +148,8 @@ class MigrateData:
                     args=list(i))
 
     def remake_vote_sent(self):
-        count = self.database_manager.db_execute_select("""SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteSent'""")
+        count = self.database_manager.db_execute_select(
+            """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteSent'""")
         if count[0][0] == 1:
             delivered_table = """
             CREATE TABLE IF NOT EXISTS VoteSent (
