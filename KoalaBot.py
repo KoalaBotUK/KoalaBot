@@ -71,7 +71,7 @@ if __name__ == '__main__':
 else:
     CONFIG_DIR = None
 
-logging.basicConfig(filename='KoalaBot.log')
+logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
