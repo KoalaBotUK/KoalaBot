@@ -10,10 +10,15 @@ import math
 
 # Libs
 import discord
+import logging
+import sys
 from discord.ext import commands
 from utils.KoalaUtils import extract_id, wait_for_message
 from utils import KoalaColours
 import time
+
+logging.basicConfig(filename='Announce.log')
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 # Own modules
 import KoalaBot
@@ -61,12 +66,9 @@ class Announce(commands.Cog):
         Check if enough days have passed for the user to use the announce function
         :return:
         """
-
-        """
         if self.announce_database_manager.get_last_use_date(guild_id):
             return int(time.time()) - self.announce_database_manager.get_last_use_date(
                 guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
-        """
         return True
 
     def has_active_msg(self, guild_id):
@@ -281,21 +283,17 @@ class Announce(commands.Cog):
             embed = self.construct_embed(ctx.guild)
             if self.roles[ctx.guild.id]:
                 for receiver in self.get_receivers(ctx.guild.id, ctx.guild.roles):
-                    print(f'{receiver.name} {type(receiver)}')
-                    if receiver.bot == False:
-                        try:
-                            await receiver.send(embed=embed)
-                        except discord.Forbidden:
-                            print(f'{receiver.name} cannot recieve dms')
+                    try:
+                        await receiver.send(embed=embed)
+                    except (discord.Forbidden, AttributeError, discord.HTTPException) as e:
+                        logging.error(f'User {receiver.id} cannot recieve dms')
             else:
                 for receiver in ctx.guild.members:
-                    print("No roles")
-                    print(f'{receiver.name} {type(receiver)}')
-                    if receiver.bot == False:
-                        try:
-                            await receiver.send(embed=embed)
-                        except discord.Forbidden:
-                            print(f'{receiver.name} cannot recieve dms')
+                    try:
+                        await receiver.send(embed=embed)
+                    except (discord.Forbidden, AttributeError, discord.HTTPException) as e:
+                        logging.error(f'User {receiver.id} cannot recieve dms')
+
             self.messages.pop(ctx.guild.id)
             self.roles.pop(ctx.guild.id)
             self.announce_database_manager.set_last_use_date(ctx.guild.id, int(time.time()))
