@@ -69,7 +69,7 @@ def get_config_from_argv():
 if __name__ == '__main__':
     CONFIG_DIR = get_config_from_argv()
 else:
-    CONFIG_DIR = None
+    CONFIG_DIR = ""
 
 logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
