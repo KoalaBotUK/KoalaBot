@@ -72,7 +72,7 @@ class Announce(commands.Cog):
         :param guild_id: The id of the guild of the command
         :return: Boolean of whether there is an active announcement or not
         """
-        return guild_id in self.messages.keys()
+        return str(guild_id) in self.messages.keys()
 
     def get_role_names(self, guild_id, roles):
         """
