@@ -21,10 +21,11 @@ import KoalaBot
 from cogs import BaseCog
 from tests.utils_testing.TestUtils import assert_activity
 
-
 # Constants
 
 # Variables
+
+DBManager = KoalaBot.database_manager
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -49,18 +50,25 @@ async def base_cog(bot):
 async def test_on_ready(base_cog: BaseCog.BaseCog):
     await base_cog.on_ready()
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing,
-                                             name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
+                                                                name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
 
 
 @pytest.mark.asyncio
 async def test_change_activity():
+    guild = dpytest.get_config().guilds[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity watching you")
-    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
+    assert dpytest.verify().activity().matches(
+        discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
     assert dpytest.verify().message().content("I am now watching you")
 
 
 @pytest.mark.asyncio
 async def test_invalid_change_activity():
+    guild = dpytest.get_config().guilds[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity oof you")
     assert dpytest.verify().message().content("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
 

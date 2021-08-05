@@ -25,9 +25,9 @@ import KoalaBot
 load_dotenv()
 GMAIL_EMAIL = os.environ.get('GMAIL_EMAIL')
 GMAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD')
+
+
 # Variables
-
-
 
 
 def verify_is_enabled(ctx):
@@ -43,6 +43,7 @@ def verify_is_enabled(ctx):
         result = False
 
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+
 
 class Verification(commands.Cog, name="Verify"):
 
@@ -128,6 +129,14 @@ class Verification(commands.Cog, name="Verify"):
         await self.assign_roles_on_startup()
 
     @commands.Cog.listener()
+    async def on_guild_join(self, guild):
+        self.DBManager.insert_email_list_status(guild.id)
+
+    @commands.Cog.listener()
+    async def on_guild_remove(self, guild: discord.Guild):
+        self.DBManager.remove_dm_email_list_status(guild.id)
+
+    @commands.Cog.listener()
     async def on_member_join(self, member):
         """
         Assigns necessary roles to users upon joining a server
@@ -150,14 +159,35 @@ class Verification(commands.Cog, name="Verify"):
                 if results and not blacklisted:
                     await member.add_roles(role)
             message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
-This email is stored so you don't need to verify it multiple times across servers."""
-            await member.send(
-                content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
+    Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+    This email is stored so you don't need to verify it multiple times across servers."""
+            if self.DBManager.fetch_dm_email_list_status(member.guild.id):
+                await member.send(
+                    content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.command(name="verifyDM", aliases=["toggleVerifyDM"])
+    @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
+    async def toggle_email_list_dm(self, ctx, toggle):
+        """
+        Updates the database with the argument that the user of the command supplies
+        :param ctx: this will be the context of the command.
+        :param toggle: boolean, turns DM on or off.
+        """
+        if toggle == "True":
+            self.DBManager.update_dm_email_list_status(ctx.guild.id, 1)
+            await ctx.send(f"Users in {ctx.guild.name} will be messaged by the bot to verify their email"
+                           f" on joining the guild")
+        else:
+            self.DBManager.update_dm_email_list_status(ctx.guild.id, 0)
+            await ctx.send(f"Users in {ctx.guild.name} will no longer be messaged by the bot to verify their email"
+                           f" on joining the guild")
 
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def enable_verification(self, ctx, suffix=None, role=None):
         """
         Set up a role and email pair for KoalaBot to verify users with
@@ -167,7 +197,8 @@ This email is stored so you don't need to verify it multiple times across server
         :return:
         """
         if not role or not suffix:
-            raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+            raise self.InvalidArgumentError(
+                f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
         try:
             role_id = int(role[3:-1])
@@ -194,6 +225,8 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
+
     async def disable_verification(self, ctx, suffix=None, role=None):
         """
         Disable an existing verification listener
@@ -216,7 +249,6 @@ This email is stored so you don't need to verify it multiple times across server
         self.DBManager.db_execute_commit("DELETE FROM roles WHERE s_id=? AND r_id=? AND email_suffix=?",
                                          (ctx.guild.id, role_id, suffix))
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
-
 
     @commands.check(KoalaBot.is_dm_channel)
     @commands.command(name="verify")
@@ -304,6 +336,7 @@ This email is stored so you don't need to verify it multiple times across server
 
     @commands.command(name="verifyList", aliases=["checkVerifications"])
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def check_verifications(self, ctx):
         """
         List the current verification setup for the server
@@ -332,6 +365,7 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="reVerify")
     @commands.check(verify_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     async def re_verify(self, ctx, role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
@@ -356,7 +390,8 @@ This email is stored so you don't need to verify it multiple times across server
                 await member.remove_roles(role)
                 self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
                                                  (member.id, role.id))
-        await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
+        await ctx.send(
+            "That role has now been removed from all users and they will need to re-verify the associated email.")
 
     class InvalidArgumentError(Exception):
         pass
@@ -444,4 +479,3 @@ def setup(bot: KoalaBot) -> None:
     else:
         bot.add_cog(Verification(bot))
         print("Verification is ready.")
-

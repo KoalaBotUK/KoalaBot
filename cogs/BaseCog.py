@@ -171,6 +171,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             await ctx.send(f'{extension} Cog Unloaded')
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     async def enable_koala_ext(self, ctx, koala_extension):
         """
@@ -195,6 +196,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(embed=embed)
 
     @commands.command(name="disableExt", aliases=["disable_koala_ext"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     async def disable_koala_ext(self, ctx, koala_extension):
         """
@@ -215,6 +217,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(embed=embed)
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     async def list_koala_ext(self, ctx):
         """

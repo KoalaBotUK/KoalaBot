@@ -86,6 +86,7 @@ class TwitchAlert(commands.Cog):
         self.stop_loop = False
 
     @commands.command(name="twitchEditMsg", aliases=["edit_default_message"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def edit_default_message(self, ctx, raw_channel_id, *default_live_message):
@@ -130,6 +131,7 @@ class TwitchAlert(commands.Cog):
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchViewMsg", aliases=["view_default_message"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def view_default_message(self, ctx, raw_channel_id=None):
@@ -161,6 +163,7 @@ class TwitchAlert(commands.Cog):
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchAdd", aliases=['add_user_to_twitch_alert'])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def add_user_to_twitch_alert(self, ctx, raw_channel_id, twitch_username=None, *custom_live_message):
@@ -213,6 +216,7 @@ class TwitchAlert(commands.Cog):
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchRemove", aliases=['remove_user_from_twitch_alert'])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def remove_user_from_twitch_alert(self, ctx, raw_channel_id, twitch_username=None):
@@ -246,6 +250,7 @@ class TwitchAlert(commands.Cog):
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchAddTeam", aliases=["add_team_to_twitch_alert"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def add_team_to_twitch_alert(self, ctx, raw_channel_id, team_name=None, *custom_live_message):
@@ -297,6 +302,7 @@ class TwitchAlert(commands.Cog):
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchRemoveTeam", aliases=["remove_team_from_twitch_alert"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def remove_team_from_twitch_alert(self, ctx, raw_channel_id, team_name=None):
@@ -330,6 +336,7 @@ class TwitchAlert(commands.Cog):
         await ctx.send(embed=new_embed)
 
     @commands.command(name="twitchList", aliases=["list_twitch_alert"])
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx, raw_channel_id=None):

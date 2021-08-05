@@ -35,10 +35,10 @@ DB_PATH = "KoalaBotTwitchTest.db"
 def setup_module():
     try:
         if os.name == 'nt':
-            print("Windows Detected: Deleting windows_"+DB_PATH)
-            os.remove("windows_"+DB_PATH)
+            print("Windows Detected: Deleting windows_" + DB_PATH)
+            os.remove("windows_" + DB_PATH)
         else:
-            print("Windows Not Detected: Deleting "+DB_PATH)
+            print("Windows Not Detected: Deleting " + DB_PATH)
             os.remove(DB_PATH)
         KoalaBot.is_dpytest = True
     except FileNotFoundError:
@@ -104,6 +104,9 @@ async def twitch_cog(bot):
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=1)
 async def test_edit_default_message_default_from_none(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     this_channel = dpytest.get_config().channels[0]
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
@@ -117,6 +120,9 @@ async def test_edit_default_message_default_from_none(twitch_cog):
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=2)
 async def test_edit_default_message_existing(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     this_channel = dpytest.get_config().channels[0]
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
@@ -129,6 +135,9 @@ async def test_edit_default_message_existing(twitch_cog):
 
 @pytest.mark.asyncio(order=3)
 async def test_add_user_to_twitch_alert(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     assert_embed = discord.Embed(title="Added User to Twitch Alert",
                                  description=f"Channel: {dpytest.get_config().channels[0].id}\n"
                                              f"User: monstercat\n"
@@ -144,6 +153,8 @@ async def test_add_user_to_twitch_alert(twitch_cog):
 async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
@@ -161,6 +172,8 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog):
     test_custom_message = "We be live gamers!"
 
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -189,6 +202,8 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
 
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -218,6 +233,8 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
 @pytest.mark.asyncio(order=3)
 async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -235,6 +252,8 @@ async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
 async def test_add_team_to_twitch_alert(twitch_cog):
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -255,6 +274,8 @@ async def test_add_team_to_twitch_alert(twitch_cog):
 async def test_add_team_to_twitch_alert_with_message(twitch_cog):
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -275,6 +296,8 @@ async def test_add_team_to_twitch_alert_with_message(twitch_cog):
 async def test_add_team_to_twitch_alert_wrong_guild(twitch_cog):
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -294,6 +317,8 @@ async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
 
     # Creates guild and channels and adds user and bot
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -317,6 +342,8 @@ async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
 @pytest.mark.asyncio(order=3)
 async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
     dpytest.get_config().channels.append(channel)
@@ -346,6 +373,9 @@ async def test_on_ready(twitch_cog: TwitchAlert.TwitchAlert):
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
 @pytest.mark.asyncio
 async def test_loop_check_live(twitch_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    KoalaBot.database_manager.insert_setup_status(guild.id)
+    KoalaBot.database_manager.update_guild_setup_status(guild.id)
     this_channel = dpytest.get_config().channels[0]
     expected_embed = discord.Embed(colour=KoalaBot.KOALA_GREEN,
                                    title="<:twitch:734024383957434489>  Monstercat is now streaming!",
@@ -394,7 +424,7 @@ async def test_get_new_twitch_oauth(twitch_api_handler):
 @pytest.mark.asyncio
 async def test_requests_get(twitch_api_handler):
     assert (await twitch_api_handler.requests_get("https://api.twitch.tv/helix/streams?",
-                                           params=(('user_login', 'monstercat'),))).get("data") is not None
+                                                  params=(('user_login', 'monstercat'),))).get("data") is not None
 
 
 @pytest.mark.asyncio
@@ -542,6 +572,7 @@ def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_i
     assert twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_select(sql_select_team) == \
            [("Message here",)]
 
+
 @pytest.mark.asyncio()
 async def test_remove_team_from_ta(twitch_alert_db_manager_tables):
     test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_id=590, guild_id=591)
@@ -603,7 +634,7 @@ async def test_update_all_teams_members(twitch_alert_db_manager_tables):
 
 @pytest.mark.asyncio()
 async def test_delete_all_offline_streams(twitch_alert_db_manager_tables, bot: discord.ext.commands.Bot):
-    message_id = (await dpytest.message("test_msg",bot.guilds[0].channels[0])).id
+    message_id = (await dpytest.message("test_msg", bot.guilds[0].channels[0])).id
     sql_add_message = "INSERT INTO UserInTwitchAlert(channel_id, twitch_username, custom_message, message_id) " \
                       f"VALUES({bot.guilds[0].channels[0].id},'monstercat',Null,{message_id}) "
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)

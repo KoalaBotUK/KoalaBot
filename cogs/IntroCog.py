@@ -25,12 +25,13 @@ load_dotenv()
 BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
 KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
 the following link: http://legal.koalabot.uk/"""
-DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
+DEFAULT_WELCOME_MESSAGE = ""
 # Variables
 DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
 
-def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (discord.Message, discord.TextChannel):
+def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (
+discord.Message, discord.TextChannel):
     try:
         confirmation = bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
         return confirmation
@@ -72,7 +73,11 @@ def get_guild_welcome_message(guild_id: int):
     msg = DBManager.fetch_guild_welcome_message(guild_id)
     if msg is None:
         msg = DBManager.new_guild_welcome_message(guild_id)
-    return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
+        return msg
+    elif msg == "":
+        return msg
+    else:
+        return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
 
 
 def get_non_bot_members(guild: discord.Guild):
@@ -88,25 +93,49 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     """
 
     def __init__(self, bot):
+
         self.bot = bot
+
+    async def send_setup_message(self, guild):
+        """
+        On bot joining guild, sends the basic legal information to the server, blocks access to the bot commands until
+        legal terms are agreed
+        :param guild: Guild object of the guild you are sending the setup message to.
+        """
+        setup_message = "In order for KoalaBot to store data on this server, you must agree to the Terms & Conditions " \
+                        "of KoalaBot and confirm you have read and understand our Privacy Policy. " \
+                        "For legal documents relating to this, please view the following link: http://legal.koalabot.uk/ " \
+                        "Use k!setup to agree"
+        for channel in guild.text_channels:
+            if channel.permissions_for(guild.me).send_messages:
+                await channel.send(setup_message)
+            break
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         """
         On bot joining guild, add this guild to the database of guild welcome messages.
+        Also sets up the status of the guild
         :param guild: Guild KoalaBot just joined
         """
         DBManager.new_guild_welcome_message(guild.id)
+        DBManager.insert_setup_status(guild.id)
         KoalaBot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
+        await self.send_setup_message(guild)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         """
-        On member joining guild, send DM to member with welcome message.
+        On member joining guild, send DM to member with welcome message, if the server opts for this option
         :param member: Member which just joined guild
         """
-        await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
-        KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
+        if get_guild_welcome_message(member.guild.id) == "" or get_guild_welcome_message(member.guild.id) is None:
+            KoalaBot.logger.info(
+                f"New member {member.name} joined guild id {member.guild.id}. No welcome message set up.")
+        else:
+            await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
+            KoalaBot.logger.info(
+                f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -114,9 +143,11 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         On bot leaving guild, remove the guild from the database of guild welcome messages
         :param guild: Guild KoalaBot just left
         """
+        DBManager.remove_guild_status(guild.id)
         count = DBManager.remove_guild_welcome_message(guild.id)
         KoalaBot.logger.info(
-            f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
+            f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages"
+            f"Removed guild status for id = {guild.id}")
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
     @commands.check(KoalaBot.is_admin)
@@ -145,12 +176,14 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             return False
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
-        """
+        """`
         Allows admins to change their customisable part of the welcome message of a guild. Has a 60 second cooldown per
         guild.
+
 
         :param ctx: Context of the command
         :param new_message: New customised part of the welcome message
@@ -175,6 +208,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
                 except None:
                     await ctx.send("Something went wrong, please contact the bot developers for support.")
             else:
+
                 await ctx.send("Okay, I won't update the welcome message then.")
 
     @commands.check(KoalaBot.is_admin)
@@ -189,6 +223,15 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     async def on_update_error(self, ctx, error):
         if isinstance(error, discord.ext.commands.MissingRequiredArgument):
             await ctx.send('Please put in a welcome message to update to.')
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.command()
+    async def setup(self, ctx):
+        """
+        Allows access to configure the bot, once legal terms are agreed
+        """
+        DBManager.update_guild_setup_status(ctx.guild.id)
+        await ctx.send("Terms and Conditions agreed, you can now configure the bot")
 
 
 def setup(bot: KoalaBot) -> None:

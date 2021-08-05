@@ -220,6 +220,7 @@ class Voting(commands.Cog, name="Vote"):
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
 
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(KoalaBot.is_admin)
     @commands.check(vote_is_enabled)
     @vote.command(name="create")
@@ -245,6 +246,7 @@ class Voting(commands.Cog, name="Vote"):
         self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title)
         await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
 
+    @commands.check(KoalaBot.terms_agreed)
     @currently_configuring()
     @commands.check(vote_is_enabled)
     @vote.command(name="addRole")
@@ -259,6 +261,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Vote will be sent to those with the {role.name} role")
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(vote_is_enabled)
     @vote.command(name="removeRole")
     async def remove_role(self, ctx, *, role: discord.Role):
@@ -292,6 +295,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(f"Results will be sent to the channel vote is closed in")
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(vote_is_enabled)
     @vote.command(name="setChannel")
     async def set_channel(self, ctx, *, channel: discord.VoiceChannel = None):
@@ -309,6 +313,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send("Removed channel restriction on vote")
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(vote_is_enabled)
     @vote.command(name="addOption")
     async def add_option(self, ctx, *, option_string):
@@ -333,6 +338,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Option {header} with description {body} added to vote")
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(vote_is_enabled)
     @vote.command(name="removeOption")
     async def remove_option(self, ctx, index: int):
@@ -345,6 +351,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Option number {index} removed")
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(vote_is_enabled)
     @vote.command(name="setEndTime")
     async def set_end_time(self, ctx, *, time_string):
@@ -369,6 +376,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC")
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @commands.check(vote_is_enabled)
     @vote.command(name="preview")
     async def preview_vote(self, ctx):
@@ -380,6 +388,7 @@ class Voting(commands.Cog, name="Vote"):
         await add_reactions(vote, msg)
 
     @commands.check(vote_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @has_current_votes()
     @vote.command(name="cancel")
     async def cancel_vote(self, ctx, *, title):
@@ -395,6 +404,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Vote {title} has been cancelled.")
 
     @commands.check(vote_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @has_current_votes()
     @vote.command("list", aliases=["currentVotes"])
     async def check_current_votes(self, ctx):
@@ -411,6 +421,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(embed=embed)
 
     @currently_configuring()
+    @commands.check(KoalaBot.terms_agreed)
     @vote.command(name="send")
     async def send_vote(self, ctx):
         """
@@ -446,6 +457,7 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Sent vote to {len(users)} users")
 
     @commands.check(vote_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @has_current_votes()
     @vote.command(name="close")
     async def close(self, ctx, *, title):
@@ -476,6 +488,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(embed=embed)
 
     @commands.check(vote_is_enabled)
+    @commands.check(KoalaBot.terms_agreed)
     @has_current_votes()
     @vote.command(name="checkResults")
     async def check_results(self, ctx,  *, title):

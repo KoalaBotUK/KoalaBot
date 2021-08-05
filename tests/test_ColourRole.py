@@ -29,8 +29,9 @@ from utils.KoalaDBManager import KoalaDBManager
 # Constants
 
 # Variables
-#role_colour_cog: ColourRole.ColourRole = None
-#utils_cog: TestUtilsCog.TestUtilsCog = None
+# role_colour_cog: ColourRole.ColourRole = None
+# utils_cog: TestUtilsCog.TestUtilsCog = None
+kDBManager = KoalaBot.database_manager
 DBManager = ColourRoleDBManager(KoalaBot.database_manager)
 DBManager.create_tables()
 
@@ -43,6 +44,7 @@ def utils_cog(bot):
     print("Tests starting")
     return utils_cog
 
+
 @pytest.fixture(autouse=True)
 def role_colour_cog(bot):
     role_colour_cog = ColourRole.ColourRole(bot)
@@ -50,6 +52,7 @@ def role_colour_cog(bot):
     dpytest.configure(bot)
     print("Tests starting")
     return role_colour_cog
+
 
 async def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.Role]:
     arr: List[discord.Role] = []
@@ -332,6 +335,8 @@ async def test_get_guild_protected_colours(num_roles, utils_cog, role_colour_cog
 async def test_list_protected_roles(num_total, num_protected):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = await make_list_of_roles(guild, num_total)
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     expected = "Roles whose colour is protected are:\r"
     if num_total == 0 or num_protected == 0:
         protected = []
@@ -357,6 +362,8 @@ async def test_list_protected_roles(num_total, num_protected):
 async def test_list_custom_colour_allowed_roles(num_total, num_protected):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = await make_list_of_roles(guild, num_total)
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     expected = "Roles allowed to have a custom colour are:\r"
     if num_total == 0 or num_protected == 0:
         allowed = []
@@ -439,6 +446,8 @@ async def test_prune_member_old_colour_roles(num_members, role_colour_cog):
 async def test_add_protected_role_colour():
     guild: discord.Guild = dpytest.get_config().guilds[0]
     role = await make_list_of_roles(guild, 1)
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     assert independent_get_protected_colours(guild.id) == []
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "add_protected_role_colour " + str(role[0].id))
     assert independent_get_protected_colours(guild.id) == [role[0].id]
@@ -447,6 +456,8 @@ async def test_add_protected_role_colour():
 @pytest.mark.asyncio
 async def test_add_custom_colour_allowed_role():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = await make_list_of_roles(guild, 1)
     assert independent_get_colour_change_roles(guild.id) == []
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "add_custom_colour_allowed_role " + str(role[0].id))
@@ -456,6 +467,8 @@ async def test_add_custom_colour_allowed_role():
 @pytest.mark.asyncio
 async def test_remove_protected_role_colour():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     assert independent_get_protected_colours(guild.id) == []
     DBManager.add_guild_protected_colour_role(guild.id, role.id)
@@ -467,6 +480,8 @@ async def test_remove_protected_role_colour():
 @pytest.mark.asyncio
 async def test_remove_custom_colour_allowed_role():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     assert independent_get_colour_change_roles(guild.id) == []
     DBManager.add_colour_change_role_perms(guild.id, role.id)
@@ -478,6 +493,8 @@ async def test_remove_custom_colour_allowed_role():
 @pytest.mark.asyncio
 async def test_custom_colour_check_failure():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     DBManager.add_colour_change_role_perms(guild.id, role.id)
     with pytest.raises(commands.CheckFailure):
@@ -492,6 +509,9 @@ async def test_custom_colour_check_failure():
 
 @pytest.mark.asyncio
 async def test_custom_colour_no_allowed_role():
+    guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     with pytest.raises(commands.CheckFailure):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "custom_colour ab1234")
         assert "KoalaBot[0xAB1234]" not in [role.name for role in dpytest.get_config().guilds[0].roles]
@@ -508,6 +528,8 @@ async def test_custom_colour_no_allowed_role():
 @pytest.mark.asyncio
 async def test_custom_colour_no_no_colour_role():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     DBManager.add_colour_change_role_perms(guild.id, role.id)
     member: discord.Member = dpytest.get_config().members[0]
@@ -521,6 +543,8 @@ async def test_custom_colour_no_no_colour_role():
 @pytest.mark.asyncio
 async def test_custom_colour_colour_is_protected():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     DBManager.add_colour_change_role_perms(guild.id, role.id)
     member: discord.Member = dpytest.get_config().members[0]
@@ -535,6 +559,8 @@ async def test_custom_colour_colour_is_protected():
 @pytest.mark.asyncio
 async def test_custom_colour_invalid_colour_str():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     DBManager.add_colour_change_role_perms(guild.id, role.id)
     member: discord.Member = dpytest.get_config().members[0]
@@ -548,6 +574,8 @@ async def test_custom_colour_invalid_colour_str():
 @pytest.mark.asyncio
 async def test_custom_colour_valid():
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    kDBManager.insert_setup_status(guild.id)
+    kDBManager.update_guild_setup_status(guild.id)
     role = (await make_list_of_roles(guild, 1))[0]
     DBManager.add_colour_change_role_perms(guild.id, role.id)
     member: discord.Member = dpytest.get_config().members[0]

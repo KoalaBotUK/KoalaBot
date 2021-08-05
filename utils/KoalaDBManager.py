@@ -12,6 +12,7 @@ import os
 
 # Libs
 from dotenv import load_dotenv
+
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:
@@ -22,6 +23,7 @@ if os.name == 'nt' or not ENCRYPTED_DB:
 else:
     print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
+
 
 # Own modules
 
@@ -129,13 +131,123 @@ class KoalaDBManager:
         welcome_message text
         );"""
 
+        sql_create_guild_setup_table = """
+        CREATE TABLE IF NOT EXISTS GuildSetupStatus(
+        guild_id integer NOT NULL PRIMARY KEY, 
+        accepted_setup BOOLEAN NOT NULL CHECK (accepted_setup IN (0, 1))
+        );
+        """
+
+        sql_create_guild_dm_email_list_status_table = """
+        CREATE TABLE IF NOT EXISTS GuildDMEmailListStatus(
+        guild_id integer NOT NULL PRIMARY KEY,
+        dm_email_list_status BOOLEAN NOT NULL CHECK (dm_email_list_status IN (0, 1))
+        );
+        """
+
         self.db_execute_commit(sql_create_guild_welcome_messages_table)
         self.db_execute_commit(sql_create_koala_extensions_table)
         self.db_execute_commit(sql_create_guild_extensions_table)
+        self.db_execute_commit(sql_create_guild_setup_table)
+        self.db_execute_commit(sql_create_guild_dm_email_list_status_table)
+
+    def insert_setup_status(self, guild_id):
+        """
+        Adds a default setup status of 0 (false) for a guild
+        :param guild_id: guild ID
+        """
+        self.db_execute_commit(
+            "INSERT INTO GuildSetupStatus VALUES (?, 0 );",
+            args=[guild_id])
+        return self.fetch_guild_setup_status(guild_id)
+
+    def fetch_guild_setup_status(self, guild_id):
+        """
+        Gets the setup status for a guild
+        :param guild_id: guild ID
+        return: the guild setup status
+        """
+        return ((self.db_execute_select("""
+        SELECT accepted_setup
+        FROM GuildSetupStatus
+        WHERE guild_id = ?
+        """, args=[guild_id], pass_errors=True)[0][0]))
+
+    def update_guild_setup_status(self, guild_id):
+        """
+        Sets the guild setup status from 0 (false) to 1 (true)
+        :param guild_id: guild ID
+        """
+        sql_update_guild_status ="""
+        UPDATE
+        GuildSetupStatus    
+        SET
+        accepted_setup = 1
+        WHERE
+        guild_id = ?"""
+        self.db_execute_commit(sql_update_guild_status, args=[guild_id])
+
+    def remove_guild_status(self, guild_id):
+        """
+        Removes a guild from the GuildSetupStatus table
+        :param guild_id: guild ID
+        """
+        sql_remove_guild_status = """
+        DELETE FROM GuildSetupStatus 
+        WHERE guild_id = ?
+        """
+        self.db_execute_commit(sql_remove_guild_status, args=[guild_id], pass_errors=True)
+
+    def insert_email_list_status(self, guild_id):
+        """
+        Adds a default email list status of 1 (true) for a guild
+        :param guild_id: guild ID
+        """
+        self.db_execute_commit(
+            "INSERT INTO GuildDMEmailListStatus VALUES (?, 1 );",
+            args=[guild_id])
+        return self.fetch_dm_email_list_status(guild_id)
+
+    def fetch_dm_email_list_status(self, guild_id):
+        """
+        Gets the email list status for a guild
+        :param guild_id: guild ID
+        :return: the email list status (boolean)
+        """
+        return (self.db_execute_select("""
+        SELECT dm_email_list_status
+        FROM GuildDMEmailListStatus
+        WHERE guild_id = ?
+        """, args=[guild_id], pass_errors=True)[0][0]) != 0
+
+    def update_dm_email_list_status(self, guild_id, toggle):
+        """
+        Sets the guild email list status to the value of toggle
+        :param guild_id: guild ID
+        :param toggle: The value to set the email list status to (0 or 1)
+        """
+        sql_update_dm_email_list_status ="""
+        UPDATE
+        GuildDMEmailListStatus    
+        SET
+        dm_email_list_status = ?
+        WHERE
+        guild_id = ?"""
+        self.db_execute_commit(sql_update_dm_email_list_status, args=[toggle, guild_id])
+
+    def remove_dm_email_list_status(self, guild_id):
+        """
+        Removes a guild from the GuildDMEmailListStatus table
+        :param guild_id: guild ID
+        """
+        sql_remove_dm_email_list_status = """
+        DELETE FROM GuildDMEmailListStatus 
+        WHERE guild_id = ?
+        """
+        self.db_execute_commit(sql_remove_dm_email_list_status, args=[guild_id], pass_errors=True)
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
-
         if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0:
             sql_update_extension = """
             UPDATE KoalaExtensions
@@ -151,7 +263,6 @@ class KoalaDBManager:
             VALUES (?,?,?,?)"""
 
             self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
-
 
     def extension_enabled(self, guild_id, extension_id):
         sql_select_extension = "SELECT extension_id " \

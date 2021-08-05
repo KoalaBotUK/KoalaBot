@@ -57,7 +57,7 @@ def test_test_user_is_owner(test_ctx):
 
 
 def test_invalid_test_user_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER)+1)
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER) + 1)
     KoalaBot.is_dpytest = False
     assert not KoalaBot.is_owner(test_ctx)
     KoalaBot.is_dpytest = True
@@ -73,7 +73,10 @@ def test_test_user_is_admin(test_ctx):
 
 
 def test_invalid_test_user_is_admin(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER)+2)
+    guild = dpytest.get_config().guilds[0]
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
+    test_ctx.author = FakeAuthor(id=int(KoalaBot.BOT_OWNER) + 2)
     KoalaBot.is_dpytest = False
     assert not KoalaBot.is_admin(test_ctx)
     KoalaBot.is_dpytest = True
@@ -111,6 +114,14 @@ async def test_dm_single_group_message():
     x = await KoalaBot.dm_group_message([test_member], test_message)
     assert dpytest.verify().message().content(test_message)
     assert x == 1
+
+
+@pytest.mark.asyncio
+async def test_terms_agreed(test_ctx):
+    guild_id = test_ctx.guild.id
+    KoalaBot.database_manager.insert_setup_status(guild_id)
+    KoalaBot.database_manager.update_guild_setup_status(guild_id)
+    assert KoalaBot.terms_agreed(test_ctx)
 
 
 @pytest.mark.asyncio

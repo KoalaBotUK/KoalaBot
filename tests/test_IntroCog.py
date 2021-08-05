@@ -40,9 +40,11 @@ def utils_cog(bot):
     print("Tests starting")
     return utils_cog
 
+
 @pytest.fixture(autouse=True)
 def intro_cog(bot):
     intro_cog = IntroCog.IntroCog(bot)
+    intro_cog.terms_agreed = True
     bot.add_cog(intro_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -108,16 +110,18 @@ async def test_on_guild_remove(bot):
     bot_member = test_config.guilds[0].get_member(client.user.id)
     dpytest.backend.delete_member(bot_member)
     val = DBManager.fetch_guild_welcome_message(guild.id)
+    with pytest.raises(IndexError):
+        status = DBManager.fetch_guild_setup_status(guild.id)
     assert val is None
 
 
 @pytest.mark.parametrize("guild_id, expected",
-                         [(101, f"fake guild welcome message"), (1250, IntroCog.DEFAULT_WELCOME_MESSAGE),
+                         [(1250, IntroCog.DEFAULT_WELCOME_MESSAGE),
                           (9999, IntroCog.DEFAULT_WELCOME_MESSAGE)])
 @pytest.mark.asyncio
 async def test_get_guild_welcome_message(guild_id, expected):
     val = IntroCog.get_guild_welcome_message(guild_id)
-    assert val == f"{expected}\r\n{IntroCog.BASE_LEGAL_MESSAGE}", val
+    assert val == ""
 
 
 @pytest.mark.asyncio
@@ -153,12 +157,23 @@ async def test_on_member_join():
     await asyncio.sleep(0.25)
     welcome_message = IntroCog.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
-    assert dpytest.verify().message().content(welcome_message)
+    assert dpytest.verify().message().nothing()
     DBManager.update_guild_welcome_message(guild.id, 'This is an updated welcome message.')
     await asyncio.sleep(0.25)
     welcome_message = IntroCog.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
     assert dpytest.verify().message().content(welcome_message)
+
+
+@pytest.mark.asyncio
+async def test_on_member_join_no_message():
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestMemberJoinNoMsg', id_num=1234)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1, client.user)
+    await dpytest.member_join(1)
+    assert dpytest.verify().message().nothing()
 
 
 @pytest.mark.asyncio
@@ -212,12 +227,13 @@ async def test_confirm_message(msg_content, expected):
 
 @pytest.mark.asyncio
 async def test_send_welcome_message():
+    guild = dpytest.get_config().guilds[0]
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "send_welcome_message")
     assert dpytest.verify().message().content("This will DM 1 people. Are you sure you wish to do this? Y/N")
     assert dpytest.verify().message().content("Okay, sending out the welcome message now.")
-    assert dpytest.verify().message().content(f"{IntroCog.DEFAULT_WELCOME_MESSAGE}\r\n{IntroCog.BASE_LEGAL_MESSAGE}")
+    assert dpytest.verify().message().content("")
 
 
 @pytest.mark.asyncio
@@ -246,12 +262,16 @@ async def test_cancel_update_welcome_message():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     msg_mock = dpytest.back.make_message('n', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
+    status = DBManager.fetch_guild_setup_status(guild.id)
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
     assert dpytest.verify().message().content(f"""Your current welcome message is:\n\r{old_message}""")
-    assert dpytest.verify().message().content(f"""Your new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}""" +
-                           """\n\rWould you like to update the message? Y/N?""")
+    assert dpytest.verify().message().content(
+        f"""Your new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}""" +
+        """\n\rWould you like to update the message? Y/N?""")
     assert dpytest.verify().message().content("Okay, I won't update the welcome message then.")
     assert dpytest.verify().message().nothing()
     assert DBManager.fetch_guild_welcome_message(guild.id) != new_message
@@ -263,14 +283,18 @@ async def test_update_welcome_message():
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
     assert dpytest.verify().message().content(f"""Your current welcome message is:\n\r{old_message}""")
-    assert dpytest.verify().message().content(f"""Your new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}""" +
-                           """\n\rWould you like to update the message? Y/N?""")
+    assert dpytest.verify().message().content(
+        f"""Your new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}""" +
+        """\n\rWould you like to update the message? Y/N?""")
     assert dpytest.verify().message().content("Okay, updating the welcome message of the guild in the database now.")
-    assert dpytest.verify().message().content("Updated in the database, your new welcome message is this is a non default message.")
+    assert dpytest.verify().message().content(
+        "Updated in the database, your new welcome message is this is a non default message.")
     assert dpytest.verify().message().nothing()
     assert DBManager.fetch_guild_welcome_message(guild.id) == new_message
 
@@ -281,16 +305,21 @@ async def test_update_welcome_message_too_long():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "".join(random.choice(string.ascii_letters) for _ in range(1800))
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
-    assert dpytest.verify().message().content("Your welcome message is too long to send, sorry. The maximum character limit is 1600.")
+    assert dpytest.verify().message().content(
+        "Your welcome message is too long to send, sorry. The maximum character limit is 1600.")
     assert dpytest.verify().message().nothing()
     assert DBManager.fetch_guild_welcome_message(guild.id) != new_message
 
 
 @pytest.mark.asyncio
 async def test_update_welcome_message_no_args():
+    DBManager.insert_setup_status(guild_id=dpytest.get_config().guilds[0].id)
+    DBManager.update_guild_setup_status(guild_id=dpytest.get_config().guilds[0].id)
     with pytest.raises(commands.MissingRequiredArgument):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
     assert dpytest.verify().message().content("Please put in a welcome message to update to.")
@@ -305,30 +334,67 @@ async def test_view_welcome_message():
 
 
 @pytest.mark.asyncio
+async def test_check_failure_error():
+    guild_id = dpytest.get_config().guilds[0].id
+    KoalaBot.database_manager.insert_setup_status(guild_id)
+    with pytest.raises(commands.CheckFailure):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+
+
+@pytest.mark.asyncio
 async def test_update_welcome_message_timeout():
     guild = dpytest.get_config().guilds[0]
     old_message = IntroCog.get_guild_welcome_message(guild.id)
     new_message = "this is a non default message"
+    DBManager.insert_setup_status(guild.id)
+    DBManager.update_guild_setup_status(guild.id)
     # msg_mock = dpytest.back.make_message('y', dpytest.get_config().members[0], dpytest.get_config().channels[0])
     with mock.patch('cogs.IntroCog.wait_for_message', mock.AsyncMock(return_value=None)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message " + new_message)
 
     assert dpytest.verify().message().content(f"""Your current welcome message is:\n\r{old_message}""")
-    assert dpytest.verify().message().content(f"""Your new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}""" +
-                           """\n\rWould you like to update the message? Y/N?""")
+    assert dpytest.verify().message().content(
+        f"""Your new welcome message will be:\n\r{new_message}\n\r{IntroCog.BASE_LEGAL_MESSAGE}""" +
+        """\n\rWould you like to update the message? Y/N?""")
     assert dpytest.verify().message().content("Timed out.")
     assert dpytest.verify().message().content("Okay, I won't update the welcome message then.")
     assert dpytest.verify().message().nothing()
     assert DBManager.fetch_guild_welcome_message(guild.id) != new_message
 
 
+@pytest.mark.asyncio
+async def test_no_setup():
+    DBManager.insert_setup_status(guild_id=dpytest.get_config().guilds[0].id)
+    with pytest.raises(commands.CheckFailure):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+    assert dpytest.verify().message().nothing()
+
+
+@pytest.mark.asyncio
+async def test_setup_command():
+    DBManager.insert_setup_status(guild_id=dpytest.get_config().guilds[0].id)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setup")
+    assert dpytest.verify().message().content("Terms and Conditions agreed, you can now configure the bot")
+    with pytest.raises(commands.MissingRequiredArgument):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "update_welcome_message")
+    assert dpytest.verify().message().content("Please put in a welcome message to update to.")
+
+
+@pytest.mark.asyncio
+async def test_intro_message():
+    test_config = dpytest.get_config()
+    client = test_config.client
+    guild = dpytest.back.make_guild('TestGuildJoin', id_num=1250)
+    test_config.guilds.append(guild)
+    await dpytest.member_join(1, client.user)
+    await asyncio.sleep(0.3)
+
+
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
     DBManager.clear_all_tables(DBManager.fetch_all_tables())
     yield DBManager
-
-
-
 
 
 @pytest.fixture(scope='function', autouse=True)

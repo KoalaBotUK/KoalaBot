@@ -3,6 +3,12 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### 29-07-2021
+Added new default behaviour for welcome messages, they do not happen by default unless one is updated with a welcome message.
+
+`k!setup` This blocks all possible sensitive commands until the command is called in the guild by an admin
+
+`k!verifyDM <Bool>` This toggles between having the verification welcome DM on or off
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
 ### Colour Role
