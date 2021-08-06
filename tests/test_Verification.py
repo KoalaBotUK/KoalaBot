@@ -264,11 +264,12 @@ async def test_role_exists():
     assert Verification.check_if_role_exists(guild, "Southampton") is not None
     assert Verification.check_if_role_exists(guild, "TesterRole") is None
 
-
+"""
 @pytest.mark.asyncio
 async def test_insert_university_csv():
     Verification.insert_university_csv()
     assert Verification.get_email_suffix("Southampton") == 'soton.ac.uk'
+"""
 
 
 @pytest.fixture(scope='session', autouse=True)
