@@ -65,6 +65,8 @@ def get_config_from_argv():
             if config_dir[0] == "/":
                 config_dir = config_dir[1:]
             config_dir = os.getcwd() + config_dir
+    else:
+        config_dir=""
     return config_dir
 
 

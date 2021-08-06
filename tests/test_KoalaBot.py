@@ -74,6 +74,11 @@ def test_get_config_from_argv_linux():
 def test_get_config_from_argv_linux_partial():
     assert KoalaBot.get_config_from_argv() == "/config/"
 
+@mock.patch("os.name", "posix")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", ""])
+def test_get_config_from_argv_linux_empty():
+    assert KoalaBot.get_config_from_argv() == ""
+
 
 @mock.patch("os.name", "nt")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
