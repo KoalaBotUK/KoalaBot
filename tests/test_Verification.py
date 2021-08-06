@@ -236,12 +236,14 @@ async def test_verify_no_uni_role():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
     with mock.patch('cogs.Verification.Verification.prompt_for_input',
-                    mock.AsyncMock(side_effect=["new role", "Y"])):
+                    mock.AsyncMock(return_value="Y")):
         with mock.patch('cogs.Verification.Verification.prompt_for_input',
-                        mock.AsyncMock(side_effect=["enable verification", "Y"])):
+                        mock.AsyncMock(return_value="Y")):
             await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
+            assert Verification.check_if_role_exists(guild, "Southampton") is not None
             assert dpytest.verify().message()
             assert dpytest.verify().message()
+            db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
 
 
 @pytest.mark.asyncio
@@ -254,6 +256,7 @@ async def test_verify_yes_uni_role():
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
         assert dpytest.verify().message()
         assert dpytest.verify().message()
+        db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
 
 
 @pytest.mark.asyncio
@@ -264,12 +267,12 @@ async def test_role_exists():
     assert Verification.check_if_role_exists(guild, "Southampton") is not None
     assert Verification.check_if_role_exists(guild, "TesterRole") is None
 
-
+"""
 @pytest.mark.asyncio
 async def test_insert_university_csv():
     Verification.insert_university_csv()
     assert Verification.get_email_suffix("Southampton") == 'soton.ac.uk'
-
+"""
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
