@@ -245,7 +245,7 @@ async def test_verify_no_uni_role():
 
 
 @pytest.mark.asyncio
-async def test_verify_no_uni_role():
+async def test_verify_yes_uni_role():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
     await guild.create_role(name="Southampton")
@@ -253,6 +253,15 @@ async def test_verify_no_uni_role():
                     mock.AsyncMock(side_effect=["enable verification", "Y"])):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
         assert dpytest.verify().message()
+
+
+@pytest.mark.asyncio
+async def test_role_exists():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    await guild.create_role(name="Southampton")
+    assert Verification.check_if_role_exists(guild, "Southampton") is not None
+    assert Verification.check_if_role_exists(guild, "TesterRole") is None
 
 
 @pytest.fixture(scope='session', autouse=True)

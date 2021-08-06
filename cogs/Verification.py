@@ -51,9 +51,8 @@ def verify_is_enabled(ctx):
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
 
-def check_if_role_exists(ctx, university):
-    guild = ctx.guild
-    for role in ctx.guild.roles:
+def check_if_role_exists(guild, university):
+    for role in guild.roles:
         if role.name == university:
             return role
 
@@ -441,7 +440,7 @@ This email is stored so you don't need to verify it multiple times across server
         :param university: The name of the university to enable verification for
         """
         email_suffix = self.get_email_suffix(university)
-        role = check_if_role_exists(ctx, university)
+        role = check_if_role_exists(ctx.guild, university)
         if role is None:
             await ctx.send(f"This will make a new role: {university}. Please confirm that you'd like this change.")
             if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
