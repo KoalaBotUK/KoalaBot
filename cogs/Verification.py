@@ -57,27 +57,6 @@ def check_if_role_exists(guild, university):
             return role
 
 
-def insert_university_csv():
-    """Inserts the universities from the university csv into the SQL database"""
-    f = open(UNI_LIST_CSV)
-    rows = csv.reader(f)
-    for row in list(rows):
-        print(row[0])
-        insert_universities = "INSERT INTO Universities VALUES (?,?)"
-        KoalaBot.database_manager.db_execute_commit(insert_universities, args=row)
-
-
-def get_email_suffix(university):
-    """
-    Gets email address from the sql database using the university name
-    :param university: University name to query the database with.
-    """
-    sql_select_uni_statement = ("""
-    SELECT email_suffix FROM Universities where name = ?""")
-    university_address = KoalaBot.database_manager.db_execute_select(sql_select_uni_statement, args=[university])
-    return university_address[0][0]
-
-
 class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot, db_manager=None):
@@ -86,7 +65,7 @@ class Verification(commands.Cog, name="Verify"):
             self.DBManager = KoalaBot.database_manager
             self.set_up_tables()
             self.DBManager.insert_extension("Verify", 0, True, True)
-            insert_university_csv()
+            self.insert_university_csv()
         else:
             self.DBManager = db_manager
 
@@ -440,6 +419,16 @@ This email is stored so you don't need to verify it multiple times across server
         else:
             return msg.content
 
+    def get_email_suffix(self, university):
+        """
+        Gets email address from the sql database using the university name
+        :param university: University name to query the database with.
+        """
+        sql_select_uni_statement = ("""
+        SELECT email_suffix FROM Universities where name = ?""")
+        university_address = self.DBManager.db_execute_select(sql_select_uni_statement, args=[university])
+        return university_address[0][0]
+
     @commands.check(KoalaBot.is_admin)
     @commands.check(verify_is_enabled)
     @commands.command(name="verifyAddUni")
@@ -450,7 +439,7 @@ This email is stored so you don't need to verify it multiple times across server
         :param ctx: Context of the discord message
         :param university: The name of the university to enable verification for
         """
-        email_suffix = get_email_suffix(university)
+        email_suffix = self.get_email_suffix(university)
         role = check_if_role_exists(ctx.guild, university)
         if role is None:
             await ctx.send(f"This will make a new role: {university}. Please confirm that you'd like this change.")
@@ -464,6 +453,15 @@ This email is stored so you don't need to verify it multiple times across server
         else:
             role_id = f"<@&{str(role.id)}>"
             await self.verify_university(ctx, email_suffix, role_id, university)
+
+    def insert_university_csv(self):
+        """Inserts the universities from the university csv into the SQL database"""
+        f = open(UNI_LIST_CSV)
+        rows = csv.reader(f)
+        for row in list(rows):
+            print(row[0])
+            insert_universities = "INSERT INTO Universities VALUES (?,?)"
+            self.DBManager.db_execute_commit(insert_universities, args=row)
 
     class InvalidArgumentError(Exception):
         pass
