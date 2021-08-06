@@ -122,6 +122,8 @@ class Verification(commands.Cog, name="Verify"):
         self.DBManager.db_execute_commit(non_verified_table)
         self.DBManager.db_execute_commit(role_table)
         self.DBManager.db_execute_commit(re_verify_table)
+        drop_universities = "DROP TABLE Universities"
+        self.DBManager.db_execute_commit(drop_universities)
         self.DBManager.db_execute_commit(sql_create_universities_table)
 
     @staticmethod
