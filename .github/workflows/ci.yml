@@ -88,6 +88,7 @@ jobs:
         fail_ci_if_error: true
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
+<<<<<<< HEAD
       
   documentation:
     runs-on: ubuntu-latest
@@ -123,3 +124,19 @@ jobs:
         uses: EndBug/add-and-commit@v7 # You can change this to use a specific version
         with:
           push: true
+=======
+  test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: false
+>>>>>>> 57f57c8bd89620354821aec78e814cbd365b3da9

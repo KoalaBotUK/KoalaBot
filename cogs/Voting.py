@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from random import randint
 import time
 import logging
-logging.basicConfig(filename='Vote.log')
 
 # Libs
 import discord
@@ -20,6 +19,7 @@ import parsedatetime.parsedatetime
 import KoalaBot
 
 # Constants
+logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'Vote.log')
 load_dotenv()
 MIN_ID_VALUE = 100000000000000000
 MAX_ID_VALUE = 999999999999999999

@@ -6,19 +6,16 @@ Created by: Stefan Cooper
 """
 
 # Built-in/Generic Imports
-import os
-import asyncio
-import time
 import re
 
 # Libs
-from discord.ext import commands, tasks
+from discord.ext import commands
 import discord
 
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
-from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
+from utils.KoalaUtils import extract_id
 from utils.KoalaDBManager import KoalaDBManager
 
 

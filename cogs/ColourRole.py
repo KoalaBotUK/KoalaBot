@@ -67,7 +67,6 @@ class ColourRole(commands.Cog):
         :param bot: The bot client for this cog
         """
         self.bot = bot
-        KoalaBot.database_manager.create_base_tables()
         KoalaBot.database_manager.insert_extension("ColourRole", 0, True, True)
         self.cr_database_manager = ColourRoleDBManager(KoalaBot.database_manager)
         self.cr_database_manager.create_tables()
