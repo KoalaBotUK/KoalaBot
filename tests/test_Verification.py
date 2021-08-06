@@ -10,7 +10,6 @@ Commented using reStructuredText (reST)
 import asyncio
 # Libs
 import csv
-import time
 from unittest import mock
 
 import discord.ext.test as dpytest
@@ -236,11 +235,12 @@ async def test_re_verify():
 async def test_verify_no_uni_role():
     test_config = dpytest.get_config()
     guild = test_config.guilds[0]
-    with mock.patch('cogs.ReactForRole.ReactForRole.prompt_for_input',
+    with mock.patch('cogs.Verification.Verification.prompt_for_input',
                     mock.AsyncMock(side_effect=["new role", "Y"])):
         with mock.patch('cogs.Verification.Verification.prompt_for_input',
                         mock.AsyncMock(side_effect=["enable verification", "Y"])):
             await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
+            assert dpytest.verify().message()
             assert dpytest.verify().message()
 
 
@@ -252,6 +252,7 @@ async def test_verify_yes_uni_role():
     with mock.patch('cogs.Verification.Verification.prompt_for_input',
                     mock.AsyncMock(side_effect=["enable verification", "Y"])):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
+        assert dpytest.verify().message()
         assert dpytest.verify().message()
 
 
