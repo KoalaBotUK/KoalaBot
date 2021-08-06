@@ -274,6 +274,7 @@ async def test_insert_university_csv():
     assert Verification.get_email_suffix("Southampton") == 'soton.ac.uk'
 """
 
+
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
     KoalaBot.is_dpytest = True
