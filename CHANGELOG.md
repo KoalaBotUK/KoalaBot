@@ -4,8 +4,12 @@ A lot of these commands will only be available to administrators
 
 ## [Unreleased]
 - Fixed issues with permissions for a text channel resetting when a react for role is created.
+
+### Colour Role
+- Colour strings can now be prefixed with a #
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
+- Additional option with `--config <path to config>` to choose where databases are stored
 
 ## [0.4.3] - 14-05-2021
 ### Announce
@@ -106,13 +110,13 @@ manually if a timer is deleted.
 
 ### React For Role (RFR)
 ##### Added
-- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`. 
-- `rfr delete` Delete an existing rfr message. 
+- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`.
+- `rfr delete` Delete an existing rfr message.
 - `rfr addRequiredRole` Add a role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality.
-- `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality 
+- `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality
 
-- `rfr edit addRoles` Add emoji/role combos to an existing rfr message. 
-- `rfr edit removeRoles` Remove emoji/role combos from an existing rfr message. 
+- `rfr edit addRoles` Add emoji/role combos to an existing rfr message.
+- `rfr edit removeRoles` Remove emoji/role combos from an existing rfr message.
 - `rfr edit description` Edit the description of an existing rfr message  
 - `rfr edit title` Edit the title of an existing rfr message.
 
@@ -148,13 +152,13 @@ manually if a timer is deleted.
 ### Verification
 ##### Changed
 - Fix bot erroring on startup if it had left any guilds with verification enabled
-#### Twitch Alert 
+#### Twitch Alert
 ##### Changed
 - Fix use of full URLs in twitch alerts
 - Fix oauth not updating
 
 ## [0.1.4] - 10-10-2020
-#### Twitch Alert 
+#### Twitch Alert
 ##### Changed
 - Fix TwitchAlert loops crashing
 - Fix repeat on_ready

@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 # Own modules
 import KoalaBot
-from utils import KoalaDBManager
+from KoalaBot import database_manager as DBManager
 
 # Constants
 
@@ -27,7 +27,6 @@ KoalaBot and confirm you have read and understand our Privacy Policy. For legal 
 the following link: http://legal.koalabot.uk/"""
 DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
 # Variables
-DBManager = KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
 
 
 def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (discord.Message, discord.TextChannel):
