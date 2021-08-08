@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file.
 A lot of these commands will only be available to administrators
 
 ## [Unreleased]
+### ColourRole
+- Fix unexpected error due to cooldown
 ### Other
 - Testing updated to use builders in dpytest 0.5.0
 
