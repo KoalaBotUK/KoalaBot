@@ -79,6 +79,24 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
         assert announce_cog.messages[guild.id].description == "testMessage"
         assert announce_cog.messages[guild.id].title == ""
 
+#tets dm guild with members who cannot recieve dm's
+@pytest.mark.asyncio
+async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
+    guild: discord.Guild = bot.guilds[0]
+    author: discord.ClientUser = guild.members[0]
+    channel: discord.TextChannel = guild.channels[0]
+    msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
+    with mock.patch('discord.client.Client.wait_for',
+                    mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
+                              channel=channel)
+        assert dpytest.verify().message().content("Please enter a message, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(f"An announcement has been created for guild {guild.name}")
+        assert dpytest.verify().message()
+        assert dpytest.verify().message()
+        assert announce_cog.has_active_msg(guild.id)
+        assert announce_cog.messages[guild.id].description == "testMessage"
+        assert announce_cog.messages[guild.id].title == ""
 
 @pytest.mark.asyncio
 async def test_create_illegal_message(announce_cog):
@@ -158,7 +176,6 @@ async def test_create_message_after_send_before_30_days(announce_cog):
                                   channel=channel)
             assert dpytest.verify().message().content("You have recently sent an announcement and cannot use this function for 30 days")
             assert not announce_cog.has_active_msg(guild.id)
-
 
 @pytest.mark.asyncio
 async def test_create_message_timeout():
