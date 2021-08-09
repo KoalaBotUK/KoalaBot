@@ -15,14 +15,11 @@ from tests.utils_testing import LastCtxCog
 # Varibales
 KoalaBot.is_dpytest = True
 
-
-
-
 @pytest.fixture(autouse=True)
 def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
-    dpytest.configure(bot)
+    dpytest.configure(bot, 2, 1, 2)
     print("Tests starting")
     return utils_cog
 
@@ -30,7 +27,7 @@ def utils_cog(bot: discord.ext.commands.Bot):
 def announce_cog(bot: discord.ext.commands.Bot):
     announce_cog = Announce.Announce(bot)
     bot.add_cog(announce_cog)
-    dpytest.configure(bot)
+    dpytest.configure(bot, 2, 1, 2)
     print("Tests starting")
     return announce_cog
 
@@ -82,10 +79,11 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
 #tets dm guild with members who cannot recieve dm's
 @pytest.mark.asyncio
 async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
-    guild: discord.Guild = bot.guilds[0]
-    author: discord.ClientUser = guild.members[0]
+    guild: discord.Guild = bot.guilds[1]
+    author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
+
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
@@ -97,6 +95,13 @@ async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.messages[guild.id].description == "testMessage"
         assert announce_cog.messages[guild.id].title == ""
+        # sending the message
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
+                              channel=channel)
+        for _ in guild.members:
+            assert dpytest.verify().message()
+        assert dpytest.verify().message().content("The announcement was made successfully")
+
 
 @pytest.mark.asyncio
 async def test_create_illegal_message(announce_cog):
@@ -312,6 +317,64 @@ async def test_add_possible_role(number_of_roles, announce_cog):
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == role_id_list
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("number_of_roles", [0, 1])
+async def test_send_announce_roles(bot: discord.Client, number_of_roles, announce_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    channel: discord.TextChannel = guild.channels[0]
+    roles = guild.roles
+    make_message(guild, announce_cog)
+    assert announce_cog.roles[guild.id] == []
+    role_list = ""
+    role_id_list = []
+    for i in range(number_of_roles):
+        role_list = role_list + str(roles[i].id) + " "
+        role_id_list.append(roles[i].id)
+    msg_mock: discord.Message = dpytest.back.make_message(role_list, author, channel)
+    with mock.patch('discord.client.Client.wait_for',
+                    mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
+                              channel=channel)
+        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message()
+        assert announce_cog.has_active_msg(guild.id)
+        assert announce_cog.roles[guild.id] == role_id_list
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
+                              channel=channel)
+        for _ in guild.members:
+            assert dpytest.verify().message()
+        assert dpytest.verify().message().content("The announcement was made successfully")
+        
+@pytest.mark.asyncio
+@pytest.mark.parametrize("number_of_roles", [0, 1])
+async def test_send_announce_roles_with_no_dm_user(bot: discord.Client, number_of_roles, announce_cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[1]
+    channel: discord.TextChannel = guild.channels[0]
+    roles = guild.roles
+    make_message(guild, announce_cog)
+    assert announce_cog.roles[guild.id] == []
+    role_list = ""
+    role_id_list = []
+    for i in range(number_of_roles):
+        role_list = role_list + str(roles[i].id) + " "
+        role_id_list.append(roles[i].id)
+    msg_mock: discord.Message = dpytest.back.make_message(role_list, author, channel)
+    with mock.patch('discord.client.Client.wait_for',
+                    mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
+                              channel=channel)
+        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message()
+        assert announce_cog.has_active_msg(guild.id)
+        assert announce_cog.roles[guild.id] == role_id_list
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
+                              channel=channel)
+        for _ in guild.members:
+            assert dpytest.verify().message()
+        assert dpytest.verify().message().content("The announcement was made successfully")
 
 
 @pytest.mark.asyncio
