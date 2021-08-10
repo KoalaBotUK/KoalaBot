@@ -19,7 +19,7 @@ KoalaBot.is_dpytest = True
 def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
-    dpytest.configure(bot, 2, 1, 2)
+    dpytest.configure(bot)
     print("Tests starting")
     return utils_cog
 
@@ -79,7 +79,7 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
 #tets dm guild with members who cannot recieve dm's
 @pytest.mark.asyncio
 async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
-    guild: discord.Guild = bot.guilds[1]
+    guild: discord.Guild = bot.guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
@@ -350,7 +350,7 @@ async def test_send_announce_roles(bot: discord.Client, number_of_roles, announc
 @pytest.mark.parametrize("number_of_roles", [0, 1])
 async def test_send_announce_roles_with_no_dm_user(bot: discord.Client, number_of_roles, announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    author: discord.Member = guild.members[1]
+    author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
     roles = guild.roles
     make_message(guild, announce_cog)
