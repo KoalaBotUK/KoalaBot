@@ -374,7 +374,6 @@ async def test_send_announce_roles_with_no_dm_user(bot: discord.Client, number_o
                     mock.Mock(side_effect=Exception('AttributeError'))):
             with pytest.raises(discord.ext.commands.errors.CommandInvokeError) as e_info:
                 await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',channel=channel)
-        assert dpytest.verify().message().content("The announcement was made successfully")
 
 
 @pytest.mark.asyncio
