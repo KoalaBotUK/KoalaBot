@@ -1321,7 +1321,7 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         """
         self.database_manager.db_execute_commit(
-            "INSERT INTO InlineALlStatus (guild_id, inline_status) VALUES (?, ?);",
+            "INSERT INTO InlineAllStatus (guild_id, inline_status) VALUES (?, ?);",
             args=[guild_id, "N"])
 
     def update_guild_inline_status(self, guild_id, status):
@@ -1339,7 +1339,7 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         :return: Inline All Status for that guild
         """
-        return self.database_manager.db_execute_select("SELECT inline_status FROM InlineALlStatus WHERE guild_id = ?",
+        return self.database_manager.db_execute_select("SELECT inline_status FROM InlineAllStatus WHERE guild_id = ?",
                                                        args=[guild_id])[0]
 
     def remove_guild_inline_status(self, guild_id):
@@ -1347,7 +1347,7 @@ class ReactForRoleDBManager:
         Removes the guild's inline status from the database
         :param guild_id: guild ID
         """
-        self.database_manager.db_execute_commit("DELETE FROM InlineALlStatus WHERE guild_id = ?",
+        self.database_manager.db_execute_commit("DELETE FROM InlineAllStatus WHERE guild_id = ?",
                                                 args=[guild_id])
 
 
