@@ -96,11 +96,10 @@ async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
         assert announce_cog.messages[guild.id].description == "testMessage"
         assert announce_cog.messages[guild.id].title == ""
         # sending the message
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
-                              channel=channel)
-        for _ in guild.members:
-            assert dpytest.verify().message()
-        assert dpytest.verify().message().content("The announcement was made successfully")
+        with mock.patch('discord.Member.send',
+                    mock.Mock(side_effect=Exception('AttributeError'))):
+            with pytest.raises(discord.ext.commands.errors.CommandInvokeError) as e_info:
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',channel=channel)
 
 
 @pytest.mark.asyncio
@@ -370,10 +369,11 @@ async def test_send_announce_roles_with_no_dm_user(bot: discord.Client, number_o
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == role_id_list
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
-                              channel=channel)
-        for _ in guild.members:
-            assert dpytest.verify().message()
+        # sending the message
+        with mock.patch('discord.Member.send',
+                    mock.Mock(side_effect=Exception('AttributeError'))):
+            with pytest.raises(discord.ext.commands.errors.CommandInvokeError) as e_info:
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',channel=channel)
         assert dpytest.verify().message().content("The announcement was made successfully")
 
 
