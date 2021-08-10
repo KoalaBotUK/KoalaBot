@@ -66,7 +66,7 @@ class ReactForRole(commands.Cog):
         :param guild: Guild KoalaBot just joined
         """
         self.rfr_database_manager.create_tables()
-        self.rfr_database_manager.add_guild_inline_status(guild.id)
+        self.rfr_database_manager.add_guild_inline_status(str(guild.id))
 
     @commands.Cog.listener()
     async def on_guild_leave(self, guild: discord.Guild):
@@ -74,7 +74,7 @@ class ReactForRole(commands.Cog):
         On bot leaving guild, remove this guild from the database of inline statuses.
         :param guild: Guild KoalaBot just left
         """
-        self.rfr_database_manager.remove_guild_inline_status(guild.id)
+        self.rfr_database_manager.remove_guild_inline_status(str(guild.id))
 
     @commands.check(KoalaBot.is_guild_channel)
     @commands.check(KoalaBot.is_admin)
@@ -1112,7 +1112,7 @@ class ReactForRoleDBManager:
         """
         sql_create_inline_all_status_table = """
         CREATE TABLE IF NOT EXISTS InlineAllStatus (
-        guild_id integer NOT NULL,
+        guild_id text NOT NULL,
         inline_status text,
         PRIMARY KEY (guild_id),
         FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
@@ -1322,7 +1322,7 @@ class ReactForRoleDBManager:
         """
         self.database_manager.db_execute_commit(
             "INSERT INTO InlineAllStatus (guild_id, inline_status) VALUES (?, ?);",
-            args=[guild_id, "N"])
+            args=[str(guild_id), "N"])
 
     def update_guild_inline_status(self, guild_id, status):
         """
@@ -1331,7 +1331,7 @@ class ReactForRoleDBManager:
         :param status: inline all status "Y" or "N"
         """
         self.database_manager.db_execute_commit(
-            "UPDATE InlineAllStatus SET inline_status = ? WHERE guild_id = ?;", args=[status, guild_id])
+            "UPDATE InlineAllStatus SET inline_status = ? WHERE guild_id = ?;", args=[status, str(guild_id)])
 
     def get_guild_inline_status(self, guild_id):
         """
@@ -1340,7 +1340,7 @@ class ReactForRoleDBManager:
         :return: Inline All Status for that guild
         """
         return self.database_manager.db_execute_select("SELECT inline_status FROM InlineAllStatus WHERE guild_id = ?",
-                                                       args=[guild_id])[0]
+                                                       args=[str(guild_id)])[0]
 
     def remove_guild_inline_status(self, guild_id):
         """
@@ -1348,7 +1348,7 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         """
         self.database_manager.db_execute_commit("DELETE FROM InlineAllStatus WHERE guild_id = ?",
-                                                args=[guild_id])
+                                                args=[str(guild_id)])
 
 
 def setup(bot: KoalaBot) -> None:
