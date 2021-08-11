@@ -62,8 +62,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.announce_database_manager.get_last_use_date(guild_id):
-            return int(time.time()) - self.announce_database_manager.get_last_use_date(
-                guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
+            return int(time.time()) - int(self.announce_database_manager.get_last_use_date(
+                guild_id)) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
         return True
 
     def has_active_msg(self, guild_id):
@@ -72,7 +72,7 @@ class Announce(commands.Cog):
         :param guild_id: The id of the guild of the command
         :return: Boolean of whether there is an active announcement or not
         """
-        return str(guild_id) in self.messages.keys()
+        return int(guild_id) in self.messages.keys()
 
     def get_role_names(self, guild_id, roles):
         """
@@ -341,7 +341,7 @@ class AnnounceDBManager:
             """SELECT * FROM GuildUsage WHERE guild_id = ?""", args=[guild_id])
         if not row:
             return
-        return row[0][1]
+        return int(row[0][1])
 
     def set_last_use_date(self, guild_id: int, last_time: int):
         """

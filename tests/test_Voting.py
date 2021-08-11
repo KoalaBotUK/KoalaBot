@@ -81,8 +81,8 @@ async def test_discord_create_vote():
     assert dpytest.verify().message().content(f"Vote titled `Test Vote` created for guild {guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
     in_db = db_manager.db_execute_select("SELECT * FROM Votes")[0]
     assert in_db
-    assert in_db[1] == guild.members[0].id
-    assert in_db[2] == guild.id
+    assert int(in_db[1]) == guild.members[0].id
+    assert int(in_db[2]) == guild.id
 
 
 @pytest.mark.asyncio
@@ -172,21 +172,22 @@ def test_votemanager_generate_opt_id():
 def test_votemanager_load_from_db():
     populate_vote_tables()
     vote_manager.load_from_db()
-    assert vote_manager.vote_lookup[(222, "Test Vote 1")] == 111
-    vote = vote_manager.sent_votes[111]
-    assert vote.target_roles == [999]
-    assert vote.options[0].id == 888
+    print(vote_manager.vote_lookup)
+    assert vote_manager.vote_lookup[("222", "Test Vote 1")] == "111"
+    vote = vote_manager.sent_votes["111"]
+    assert vote.target_roles == ["999"]
+    assert vote.options[0].id == "888"
     assert vote.options[0].head == "vote1opt"
     assert vote.options[0].body == "vote1body"
-    assert vote.sent_to[777] == 666
+    assert vote.sent_to["777"] == "666"
 
 
 def test_votemanager_get_vote_from_id():
     populate_vote_tables()
     vote_manager.load_from_db()
     vote = vote_manager.get_vote_from_id(111)
-    assert vote.id == 111
-    assert vote.options[0].id == 888
+    assert vote.id == "111"
+    assert vote.options[0].id == "888"
     assert vote.title == "Test Vote 1"
 
 
@@ -214,8 +215,8 @@ def test_votemanager_cancel_sent_vote():
     populate_vote_tables()
     vote_manager.load_from_db()
     vote_manager.cancel_sent_vote(111)
-    assert 111 not in vote_manager.sent_votes.keys()
-    in_db = db_manager.db_execute_select("SELECT * FROM Votes WHERE vote_id=?", (111,))
+    assert "111" not in vote_manager.sent_votes.keys()
+    in_db = db_manager.db_execute_select("SELECT * FROM Votes WHERE vote_id=?", ("111",))
     assert not in_db
 
 
