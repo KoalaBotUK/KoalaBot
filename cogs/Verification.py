@@ -226,7 +226,6 @@ class Verification(commands.Cog, name="Verify"):
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
     @commands.check(verify_is_enabled)
     @commands.check(KoalaBot.terms_agreed)
-
     async def disable_verification(self, ctx, suffix=None, role=None):
         """
         Disable an existing verification listener
