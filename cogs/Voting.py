@@ -611,7 +611,7 @@ class VoteManager:
         chair_id text,
         voice_id text,
         end_time float,
-        PRIMARY KEY (author_id),
+        PRIMARY KEY (vote_id),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         )
         """
@@ -630,7 +630,6 @@ class VoteManager:
         opt_id text NOT NULL,
         option_title text NOT NULL,
         option_desc text NOT NULL,
-        PRIMARY KEY (vote_id),
         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
         )"""
 
@@ -650,29 +649,29 @@ class VoteManager:
 
     def load_from_db(self):
         existing_votes = self.DBManager.db_execute_select("SELECT * FROM Votes")
-        for v_id, a_id, g_id, title, chair_id, voice_id, end_time in existing_votes:
-            vote = Vote(v_id, title, a_id, g_id, self.DBManager)
+        for vote_id, author_id, guild_id, title, chair_id, voice_id, end_time in existing_votes:
+            vote = Vote(vote_id, title, author_id, guild_id, self.DBManager)
             vote.set_chair(chair_id)
             vote.set_vc(voice_id)
-            self.vote_lookup[(a_id, title)] = v_id
+            self.vote_lookup[(author_id, title)] = vote_id
 
-            target_roles = self.DBManager.db_execute_select("SELECT * FROM VoteTargetRoles WHERE vote_id=?", (v_id,))
+            target_roles = self.DBManager.db_execute_select("SELECT * FROM VoteTargetRoles WHERE vote_id=?", (vote_id,))
             if target_roles:
                 for _, r_id in target_roles:
                     vote.add_role(r_id)
 
-            options = self.DBManager.db_execute_select("SELECT * FROM VoteOptions WHERE vote_id=?", (v_id,))
+            options = self.DBManager.db_execute_select("SELECT * FROM VoteOptions WHERE vote_id=?", (vote_id,))
             if options:
                 for _, o_id, o_title, o_desc in options:
                     vote.add_option(Option(o_title, o_desc, opt_id=o_id))
 
-            delivered = self.DBManager.db_execute_select("SELECT * FROM VoteSent WHERE vote_id=?", (v_id,))
+            delivered = self.DBManager.db_execute_select("SELECT * FROM VoteSent WHERE vote_id=?", (vote_id,))
             if delivered:
-                self.sent_votes[v_id] = vote
+                self.sent_votes[vote_id] = vote
                 for _, rec_id, msg_id in delivered:
                     vote.register_sent(rec_id, msg_id)
             else:
-                self.configuring_votes[a_id] = vote
+                self.configuring_votes[vote_id] = vote
 
     def get_vote_from_id(self, v_id):
         """
@@ -680,10 +679,10 @@ class VoteManager:
         :param v_id: id of the vote
         :return: Relevant vote object
         """
-        return self.sent_votes[v_id]
+        return self.sent_votes[str(v_id)]
 
     def get_configuring_vote(self, author_id):
-        return self.configuring_votes[author_id]
+        return self.configuring_votes[str(author_id)]
 
     def has_active_vote(self, author_id):
         """
@@ -691,7 +690,7 @@ class VoteManager:
         :param author_id: id of the author
         :return: True if they have an existing vote, otherwise False
         """
-        return author_id in self.configuring_votes.keys()
+        return str(author_id) in self.configuring_votes.keys()
 
     def create_vote(self, author_id, guild_id, title):
         """
@@ -715,7 +714,7 @@ class VoteManager:
         :param v_id: the vote id
         :return: None
         """
-        vote = self.sent_votes.pop(v_id)
+        vote = self.sent_votes.pop(str(v_id))
         self.cancel_vote(vote)
 
     def cancel_configuring_vote(self, author_id):
@@ -736,7 +735,7 @@ class VoteManager:
         :return: the relevant vote for the message, if there is one
         """
         for vote in self.sent_votes.values():
-            if msg_id in vote.sent_to.values():
+            if str(msg_id) in vote.sent_to.values():
                 return vote
         return None
 

@@ -155,7 +155,7 @@ class MigrateData:
             chair_id text,
             voice_id text,
             end_time float,
-            PRIMARY KEY (author_id),
+            PRIMARY KEY (vote_id),
             FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
             );"""
 
