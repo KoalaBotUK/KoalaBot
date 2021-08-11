@@ -828,7 +828,10 @@ class ReactForRole(commands.Cog):
         embed: discord.Embed = self.get_embed_from_message(message)
 
         if emoji_reacted.is_unicode_emoji():
-            rep = emoji.demojize(emoji_reacted.name)
+            rep = emoji.emojize(emoji_reacted.name)
+            if not rep:
+                rep = emoji.emojize(emoji_reacted.name, use_aliases=True)
+
             field = await self.get_field_by_emoji(embed, rep)
             if not field:
                 return
