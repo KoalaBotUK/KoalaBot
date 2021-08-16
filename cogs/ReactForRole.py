@@ -101,7 +101,8 @@ class ReactForRole(commands.Cog):
                 if response.status != 200:
                     KoalaBot.logger.error(
                         "RFR: HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
-                    raise aiohttp.ClientError("HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
+                    raise aiohttp.ClientError(
+                        "HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
                 image_bytes = await response.read()
                 data = BytesIO(image_bytes)
                 ftype: str = await file_type_from_hdr(response)
@@ -753,6 +754,7 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened.
         :return:
         """
+
         if payload.guild_id is not None:
             rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
                                                                     payload.message_id)
@@ -763,6 +765,8 @@ class ReactForRole(commands.Cog):
                                                           payload.message_id, payload.user_id)
             if not member_role or member_role[0].bot:
                 return
+            await self.bot.get_user(payload.user_id).send(
+                f"trying to remove \\{member_role[1]} from your roles because you reacted with \\{payload.emoji}")
             await member_role[0].remove_roles(member_role[1])
 
     def can_have_rfr_role(self, member: discord.Member) -> bool:
@@ -848,6 +852,7 @@ class ReactForRole(commands.Cog):
                 return
             role_str = field
             role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
+            print(f"emoji identified {emoji_reacted} and linked to {role}")
         else:
             KoalaBot.logger.error(
                 f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
