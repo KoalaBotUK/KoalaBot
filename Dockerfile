@@ -4,6 +4,8 @@
 # This stage is to support development.
 FROM ubuntu:latest AS base
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 # install prerequisits
 ######################
 RUN \
