@@ -17,7 +17,7 @@ RUN \
     python3-pip \
     python3-venv
 
-RUN apt-get install software-properties-common && \
+RUN apt-get install -y software-properties-common && \
   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
   apt-get update
 
