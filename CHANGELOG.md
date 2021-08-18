@@ -1,29 +1,19 @@
 # Changelog
-
 All notable changes to KoalaBot will be documented in this file. A lot of these commands will only be available to
 administrators
 
 ## [Unreleased]
-
 ### ReactForRole
-
 - Fix bug where reacting with a unicode emoji broke the whole message
-
 ### Colour Role
-
 - Colour strings can now be prefixed with a #
-
 ### Other
-
 - Testing updated to use builders in dpytest 0.5.0
 - Additional option with `--config <path to config>` to choose where databases are stored
 
 ## [0.4.3] - 14-05-2021
-
 ### Announce
-
 - Announce is hidden in help when not enabled
-
 ### TwitchAlert
 - Fixed repetitive notification deletion and creation
 
