@@ -765,8 +765,6 @@ class ReactForRole(commands.Cog):
                                                           payload.message_id, payload.user_id)
             if not member_role or member_role[0].bot:
                 return
-            await self.bot.get_user(payload.user_id).send(
-                f"trying to remove \\{member_role[1]} from your roles because you reacted with \\{payload.emoji}")
             await member_role[0].remove_roles(member_role[1])
 
     def can_have_rfr_role(self, member: discord.Member) -> bool:
@@ -852,7 +850,6 @@ class ReactForRole(commands.Cog):
                 return
             role_str = field
             role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
-            print(f"emoji identified {emoji_reacted} and linked to {role}")
         else:
             KoalaBot.logger.error(
                 f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
