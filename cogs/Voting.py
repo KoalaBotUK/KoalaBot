@@ -218,7 +218,7 @@ class Voting(commands.Cog, name="Vote"):
         Use k!vote create <title> to create a vote!
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
+            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX[0]}help vote` for more information")
 
     @commands.check(KoalaBot.is_admin)
     @commands.check(vote_is_enabled)
@@ -230,7 +230,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         if self.vote_manager.has_active_vote(ctx.author.id):
             guild_name = self.bot.get_guild(self.vote_manager.get_configuring_vote(ctx.author.id).guild)
-            await ctx.send(f"You already have an active vote in {guild_name}. Please send that with `{KoalaBot.COMMAND_PREFIX}vote send` before creating a new one.")
+            await ctx.send(f"You already have an active vote in {guild_name}. Please send that with `{KoalaBot.COMMAND_PREFIX[0]}vote send` before creating a new one.")
             return
 
         in_db = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE title=? AND author_id=?", (title, ctx.author.id))
@@ -243,7 +243,7 @@ class Voting(commands.Cog, name="Vote"):
             return
 
         self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title)
-        await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
+        await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{KoalaBot.COMMAND_PREFIX[0]}help vote` to see how to configure it.")
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -455,7 +455,7 @@ class Voting(commands.Cog, name="Vote"):
         vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
-                await ctx.send(f"That vote has not been sent yet. Please send it to your audience with {KoalaBot.COMMAND_PREFIX}vote send {title}")
+                await ctx.send(f"That vote has not been sent yet. Please send it to your audience with {KoalaBot.COMMAND_PREFIX[0]}vote send {title}")
             else:
                 await ctx.send("You have no votes of that title to close")
             return
@@ -486,7 +486,7 @@ class Voting(commands.Cog, name="Vote"):
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
                 await ctx.send(
-                    f"That vote has not been sent yet. Please send it to your audience with {KoalaBot.COMMAND_PREFIX}vote send {title}")
+                    f"That vote has not been sent yet. Please send it to your audience with {KoalaBot.COMMAND_PREFIX[0]}vote send {title}")
             else:
                 await ctx.send("You have no votes of that title to check")
             return

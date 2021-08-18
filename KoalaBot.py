@@ -79,7 +79,7 @@ load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ.get('BOT_OWNER')
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
-COMMAND_PREFIX = "k!"
+COMMAND_PREFIX = ["k!", "K!"]
 STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
