@@ -100,7 +100,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Ran after all cogs have been started and bot is ready
         """
         #if not self.started:  # Used to prevent changing activity every time the bot connects to discord servers
-        await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX[0]}help"))
+        await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
         self.started = True
         print("Bot is ready.")
 

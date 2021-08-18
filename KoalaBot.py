@@ -79,7 +79,8 @@ load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ.get('BOT_OWNER')
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
-COMMAND_PREFIX = ["k!", "K!"]
+COMMAND_PREFIX = "k!"
+OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
@@ -99,10 +100,10 @@ if discord.__version__ != "1.3.4":
     intent.members = True
     intent.guilds = True
     intent.messages = True
-    client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent)
+    client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 else:
     logging.info("discord.py v1.3.4: Intents Disabled")
-    client = commands.Bot(command_prefix=COMMAND_PREFIX)
+    client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX])
 database_manager = DBManager(DATABASE_PATH, DB_KEY, CONFIG_DIR)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')

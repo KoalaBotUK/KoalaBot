@@ -129,7 +129,7 @@ class Announce(commands.Cog):
         Use k!announce create to create an announcement
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX[0]}help announce` for more information")
+            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help announce` for more information")
 
     @commands.check(announce_is_enabled)
     @announce.command(name="create")

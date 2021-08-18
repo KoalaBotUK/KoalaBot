@@ -114,7 +114,7 @@ class Verification(commands.Cog, name="Verify"):
         password = GMAIL_PASSWORD
 
         msg = EmailMessage()
-        msg.set_content(f"Please send the bot the command:\n\n{KoalaBot.COMMAND_PREFIX[0]}confirm {token}")
+        msg.set_content(f"Please send the bot the command:\n\n{KoalaBot.COMMAND_PREFIX}confirm {token}")
         msg['Subject'] = "Koalabot Verification"
         msg['From'] = username
         msg['To'] = email
@@ -150,7 +150,7 @@ class Verification(commands.Cog, name="Verify"):
                 if results and not blacklisted:
                     await member.add_roles(role)
             message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX[0]}verify your_email@example.com`.
+Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers."""
             await member.send(
                 content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
@@ -167,7 +167,7 @@ This email is stored so you don't need to verify it multiple times across server
         :return:
         """
         if not role or not suffix:
-            raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX[0]}enable_verification <domain> <@role>`")
+            raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
         try:
             role_id = int(role[3:-1])
@@ -204,7 +204,7 @@ This email is stored so you don't need to verify it multiple times across server
         """
         if not role or not suffix:
             raise self.InvalidArgumentError(
-                f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX[0]}enable_verification <domain> <@role>`")
+                f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
         try:
             role_id = int(role[3:-1])

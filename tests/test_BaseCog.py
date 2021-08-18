@@ -49,19 +49,19 @@ async def base_cog(bot):
 async def test_on_ready(base_cog: BaseCog.BaseCog):
     await base_cog.on_ready()
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing,
-                                             name=KoalaBot.COMMAND_PREFIX[0] + "help" + KoalaBot.KOALA_PLUG))
+                                             name=KoalaBot.COMMAND_PREFIX + "help" + KoalaBot.KOALA_PLUG))
 
 
 @pytest.mark.asyncio
 async def test_change_activity():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "change_activity watching you")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity watching you")
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you" + KoalaBot.KOALA_PLUG))
     assert dpytest.verify().message().content("I am now watching you")
 
 
 @pytest.mark.asyncio
 async def test_invalid_change_activity():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "change_activity oof you")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "change_activity oof you")
     assert dpytest.verify().message().content("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
 
 
@@ -105,27 +105,27 @@ def test_invalid_new_discord_activity():
 @mock.patch("builtins.round", mock.MagicMock(return_value=4))
 @pytest.mark.asyncio
 async def test_ping(base_cog: BaseCog.BaseCog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "ping")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ping")
     assert dpytest.verify().message().content("Pong! 4ms")
 
 
 @pytest.mark.asyncio
 async def test_support():
-    await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "support")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "support")
     assert dpytest.verify().message().content("Join our support server for more help! https://discord.gg/5etEjVd")
 
 
 @pytest.mark.asyncio
 async def test_default_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "clear")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear")
     mock1.assert_called_with(limit=2)
 
 
 @pytest.mark.asyncio
 async def test_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "clear 4")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear 4")
     mock1.assert_called_with(limit=5)
 
 
@@ -133,13 +133,13 @@ async def test_clear():
 async def test_invalid_clear(base_cog: BaseCog.BaseCog):
     with pytest.raises(discord.ext.commands.errors.BadArgument,
                        match="Converting to \"int\" failed for parameter \"amount\"."):
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "clear a")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "clear a")
 
 
 @pytest.mark.asyncio
 async def test_load_cog(base_cog: BaseCog.BaseCog):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "load_cog BaseCog")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog BaseCog")
     mock1.assert_called_with('cogs.BaseCog')
 
 
@@ -147,13 +147,13 @@ async def test_load_cog(base_cog: BaseCog.BaseCog):
 async def test_invalid_load_cog(base_cog: BaseCog.BaseCog):
     with pytest.raises(discord.ext.commands.errors.CommandInvokeError,
                        match=r".* Extension 'cogs.FakeCog' could not be loaded."):
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "load_cog FakeCog")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog FakeCog")
 
 
 @pytest.mark.asyncio
 async def test_unload_base_cog(base_cog: BaseCog.BaseCog):
     with mock.patch.object(discord.ext.commands.Context, 'send') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "unload_cog BaseCog")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog BaseCog")
     mock1.assert_called_with("Sorry, you can't unload the base cog")
 
 
@@ -161,7 +161,7 @@ async def test_unload_base_cog(base_cog: BaseCog.BaseCog):
 async def test_load_valid_cog(base_cog: BaseCog.BaseCog):
     base_cog.COGS_DIR = "tests/fake_load_all_cogs"
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "load_cog Greetings")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog Greetings")
     mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
 
 
@@ -169,11 +169,11 @@ async def test_load_valid_cog(base_cog: BaseCog.BaseCog):
 async def test_load_and_unload_valid_cog(base_cog: BaseCog.BaseCog):
     base_cog.COGS_DIR = "tests/fake_load_all_cogs"
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "load_cog Greetings")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "load_cog Greetings")
     mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
 
     with mock.patch.object(discord.ext.commands.bot.Bot, 'unload_extension') as mock1:
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "unload_cog Greetings")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog Greetings")
     mock1.assert_called_with('tests.fake_load_all_cogs.Greetings')
 
 
@@ -182,7 +182,7 @@ async def test_invalid_unload_cog(base_cog: BaseCog.BaseCog):
     with pytest.raises(discord.ext.commands.errors.CommandInvokeError,
                        match="Command raised an exception: ExtensionNotLoaded:"
                              " Extension 'cogs.FakeCog' has not been loaded."):
-        await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "unload_cog FakeCog")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unload_cog FakeCog")
 
 
 @pytest.mark.asyncio

@@ -37,7 +37,7 @@ async def test_ctx(bot):
     utils_cog = LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
-    await dpytest.message(KoalaBot.COMMAND_PREFIX[0] + "store_ctx")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     return utils_cog.get_last_ctx()
 
 
