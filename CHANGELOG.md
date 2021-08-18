@@ -9,7 +9,7 @@ A lot of these commands will only be available to administrators
 - Testing updated to use builders in dpytest 0.5.0
 - Additional option with `--config <path to config>` to choose where databases are stored
 - Added command prefix K!
-- Removed check for Discord.py = 1.3.4
+- Officially removed support for Discord.py 1.3.4
 
 ## [0.4.3] - 14-05-2021
 ### Announce
