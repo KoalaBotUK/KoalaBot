@@ -6,7 +6,8 @@ FROM ubuntu:latest AS base
 
 # install prerequisits
 ######################
-RUN add-apt-repository -y ppa:linuxgndu/sqlitebrowser
+RUN apt-get install software-properties-common && \
+  add-apt-repository -y ppa:linuxgndu/sqlitebrowser
 
 RUN \
   echo "install packages" && \
