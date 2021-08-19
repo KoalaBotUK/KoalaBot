@@ -682,7 +682,7 @@ class VoteManager:
         return self.sent_votes[str(v_id)]
 
     def get_configuring_vote(self, author_id):
-        return self.configuring_votes[str(author_id)]
+        return self.configuring_votes[int(author_id)]
 
     def has_active_vote(self, author_id):
         """
