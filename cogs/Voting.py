@@ -671,7 +671,7 @@ class VoteManager:
                 for _, rec_id, msg_id in delivered:
                     vote.register_sent(rec_id, msg_id)
             else:
-                self.configuring_votes[vote_id] = vote
+                self.configuring_votes[author_id] = vote
 
     def get_vote_from_id(self, v_id):
         """
@@ -682,7 +682,8 @@ class VoteManager:
         return self.sent_votes[str(v_id)]
 
     def get_configuring_vote(self, author_id):
-        return self.configuring_votes[int(author_id)]
+        print(self.configuring_votes.keys())
+        return self.configuring_votes[author_id]
 
     def has_active_vote(self, author_id):
         """
@@ -690,7 +691,7 @@ class VoteManager:
         :param author_id: id of the author
         :return: True if they have an existing vote, otherwise False
         """
-        return str(author_id) in self.configuring_votes.keys()
+        return author_id in self.configuring_votes.keys()
 
     def create_vote(self, author_id, guild_id, title):
         """
