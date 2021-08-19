@@ -3,6 +3,11 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### TwitchAlert
+- TwitchAlert completely reworked
+- TwitchAlert commands have been altered (e.g. `k!twitchAddTeam` to `k!twitch addTeam`) see https://koalabot.uk/documentation for new syntax
+- Previously optional `channel_id` arguments are now required
+- Internal API library changed, may increase delays in twitch API responses
 
 ## [0.4.4] - 19-08-2021
 ### ReactForRole
