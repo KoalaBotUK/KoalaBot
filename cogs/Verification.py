@@ -322,7 +322,7 @@ This email is stored so you don't need to verify it multiple times across server
                 else:
                     role_dict[suffix] = ["@" + role.name]
             except AttributeError as e:
-                self.DBManager.db_execute_commit("DELETE FROM Roles WHERE rrole_id=?", (role_id,))
+                self.DBManager.db_execute_commit("DELETE FROM Roles WHERE role_id=?", (role_id,))
 
         for suffix, roles in role_dict.items():
             embed.add_field(name=suffix, value='\n'.join(roles))
@@ -444,4 +444,3 @@ def setup(bot: KoalaBot) -> None:
     else:
         bot.add_cog(Verification(bot))
         print("Verification is ready.")
-

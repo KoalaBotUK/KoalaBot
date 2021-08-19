@@ -462,7 +462,7 @@ def test_new_ta(twitch_alert_db_manager_tables):
     assert TwitchAlert.DEFAULT_MESSAGE == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=2345)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-           [(1234, TwitchAlert.DEFAULT_MESSAGE)]
+           [('1234', TwitchAlert.DEFAULT_MESSAGE)]
 
 
 def test_new_ta_message(twitch_alert_db_manager_tables):
@@ -471,7 +471,7 @@ def test_new_ta_message(twitch_alert_db_manager_tables):
                                                                  default_message=test_message)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 23456"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-           [(12345, test_message,)]
+           [('12345', test_message,)]
 
 
 def test_new_ta_replace(twitch_alert_db_manager_tables):
@@ -481,7 +481,7 @@ def test_new_ta_replace(twitch_alert_db_manager_tables):
                                                                  default_message=test_message, replace=True)
     sql_check_db_updated = f"SELECT guild_id,default_message FROM TwitchAlerts WHERE channel_id = 2345"
     assert twitch_alert_db_manager_tables.database_manager.db_execute_select(sql_check_db_updated) == \
-           [(1234, test_message)]
+           [('1234', test_message)]
     pass
 
 
