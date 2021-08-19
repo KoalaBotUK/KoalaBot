@@ -11,9 +11,7 @@ Commented using reStructuredText (reST)
 import os
 import time
 import re
-import aiohttp
 import logging
-import random
 import sys
 
 # Own modules
@@ -36,8 +34,9 @@ load_dotenv()
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \
               "/128/social-twitch-circle-512.png"
-TWITCH_CLIENT_ID = os.environ.get('TWITCH_TOKEN')
+TWITCH_KEY = os.environ.get('TWITCH_TOKEN')
 TWITCH_SECRET = os.environ.get('TWITCH_SECRET')
+
 TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
 
 LOOP_CHECK_LIVE_DELAY = 1
@@ -648,73 +647,7 @@ class TwitchAPIHandler:
     """
 
     def __init__(self, client_id: str, client_secret: str):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.params = {'client_id': self.client_id,
-                       'client_secret': self.client_secret,
-                       'grant_type': 'client_credentials'}
-        self.token = {}
-
-    @property
-    def base_headers(self):
-        return {
-            'Authorization': f'Bearer {self.token.get("access_token")}',
-            'Client-ID': self.client_id
-        }
-
-    async def get_new_twitch_oauth(self):
-        """
-        Get a new OAuth2 token from twitch using client_id and client_secret
-        :return: The new OAuth2 token
-        """
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(60)) as client:
-            async with client.post('https://id.twitch.tv/oauth2/token', params=self.params) as response:
-                if response.status > 399:
-                    logging.critical(f'TwitchAlert: Error {response.status} while getting Oauth token')
-                    self.token = {}
-
-                response_json = await response.json()
-
-                try:
-                    response_json['expires_in'] += time.time()
-                except KeyError:
-                    # probably shouldn't need this, but catch just in case
-                    logging.warning('TwitchAlert: Failed to set token expiration time')
-
-                self.token = response_json
-
-                return self.token
-
-    async def requests_get(self, url, headers=None, params=None, attempts=None):
-        """
-        Gets a response from a curl get request to the given url using headers of this object
-        :param headers: the Headers required for the request, will use self.headers by default
-        :param url: The URL to send the request to
-        :param params: The parameters of the request
-        :param attempts: The count of the number of time this request was attempted
-        :return: The response of the request
-        """
-        if attempts is None:
-            attempts = 0
-        if attempts >= 5:
-            raise TimeoutError("Twitch API did not respond")
-
-        if self.token.get('expires_in', 0) <= time.time() + 1 or not self.token:
-            await self.get_new_twitch_oauth()
-
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(60)) as client:
-            async with client.get(url=url, headers=headers if headers else self.base_headers, params=params) as \
-                    response:
-
-                if response.status == 401:
-                    logging.info(f"TwitchAlert: {response.status}, getting new oauth and retrying")
-                    await asyncio.sleep(random.randint(1, 100)*0.0001)
-                    await self.get_new_twitch_oauth()
-                    return await self.requests_get(url, headers, params, attempts+1)
-                elif response.status > 399:
-                    logging.warning(f'TwitchAlert: {response.status} while getting requested URL')
-
-                return await response.json()
+        self.twitch = Twitch(client_id, client_secret)
 
     async def get_streams_data(self, usernames):
         """
@@ -722,17 +655,7 @@ class TwitchAPIHandler:
         :param usernames: The list of usernames
         :return: The JSON data of the request
         """
-        url = 'https://api.twitch.tv/helix/streams?'
-
-        next_hundred_users = usernames[:100]
-        usernames = usernames[100:]
-        result = (await self.requests_get(url + "user_login=" + "&user_login=".join(next_hundred_users))).get("data")
-
-        while usernames:
-            next_hundred_users = usernames[:100]
-            usernames = usernames[100:]
-            result += (await self.requests_get(url + "user_login=" + "&user_login=".join(next_hundred_users))).get(
-                "data")
+        result = self.twitch.get_streams(user_id=usernames)
 
         return result
 
@@ -742,8 +665,7 @@ class TwitchAPIHandler:
         :param username: The display twitch username of the user
         :return: The JSON information of the user's data
         """
-        url = 'https://api.twitch.tv/helix/users?login=' + username
-        return (await self.requests_get(url)).get("data")[0]
+        return self.twitch.get_users(logins=username).get("data")[0]
 
     async def get_game_data(self, game_id):
         """
@@ -752,8 +674,7 @@ class TwitchAPIHandler:
         :return: The JSON information of the game's data
         """
         if game_id != "":
-            url = 'https://api.twitch.tv/helix/games?id=' + game_id
-            game_data = await self.requests_get(url)
+            game_data = self.twitch.get_games(game_ids=game_id)
             return game_data.get("data")[0]
         else:
             return None
@@ -764,8 +685,7 @@ class TwitchAPIHandler:
         :param team_id: The team name of the twitch team
         :return: the JSON information of the users
         """
-        url = 'https://api.twitch.tv/helix/teams?name=' + team_id
-        return (await self.requests_get(url)).get("data")[0].get("users")
+        return (self.twitch.get_teams(name=team_id)).get("data")[0].get("users")
 
 
 class TwitchAlertDBManager:
@@ -780,7 +700,7 @@ class TwitchAlertDBManager:
         :param bot_client:
         """
         self.database_manager = database_manager
-        self.twitch_handler = TwitchAPIHandler(TWITCH_CLIENT_ID, TWITCH_SECRET)
+        self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client
 
     def get_parent_database_manager(self):
@@ -1113,7 +1033,7 @@ def setup(bot: KoalaBot) -> None:
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    if TWITCH_SECRET is None or TWITCH_CLIENT_ID is None:
+    if TWITCH_SECRET is None or TWITCH_KEY is None:
         logging.error("TwitchAlert not started. API keys not found in environment.")
         print("TwitchAlert not started. API keys not found in environment.")
         KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, False)

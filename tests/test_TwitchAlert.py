@@ -383,18 +383,7 @@ async def test_loop_check_team_live(twitch_cog):
 
 @pytest.fixture
 def twitch_api_handler():
-    return TwitchAlert.TwitchAPIHandler(TwitchAlert.TWITCH_CLIENT_ID, TwitchAlert.TWITCH_SECRET)
-
-
-@pytest.mark.asyncio
-async def test_get_new_twitch_oauth(twitch_api_handler):
-    assert await twitch_api_handler.get_new_twitch_oauth() is not None
-
-
-@pytest.mark.asyncio
-async def test_requests_get(twitch_api_handler):
-    assert (await twitch_api_handler.requests_get("https://api.twitch.tv/helix/streams?",
-                                           params=(('user_login', 'monstercat'),))).get("data") is not None
+    return TwitchAlert.TwitchAPIHandler(TwitchAlert.TWITCH_KEY, TwitchAlert.TWITCH_SECRET)
 
 
 @pytest.mark.asyncio
