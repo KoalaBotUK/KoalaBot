@@ -32,21 +32,6 @@ DB_PATH = "Koala.db"
 # Variables
 
 
-def setup_module():
-    try:
-        if os.name == 'nt':
-            print("Windows Detected: Deleting windows_"+DB_PATH)
-            os.remove("windows_"+DB_PATH)
-        else:
-            print("Windows Not Detected: Deleting "+DB_PATH)
-            os.remove(DB_PATH)
-        KoalaBot.is_dpytest = True
-    except FileNotFoundError:
-        print("Database Doesn't Exist, Continuing")
-    finally:
-        print("Setup Module")
-
-
 def test_create_live_embed():
     # Create the expected embed with information required
     expected = discord.Embed(colour=KOALA_GREEN, title="https://twitch.tv/test")
@@ -426,13 +411,6 @@ def twitch_alert_db_manager_tables(twitch_alert_db_manager):
 
 def test_get_parent_database_manager(twitch_alert_db_manager):
     assert isinstance(twitch_alert_db_manager, KoalaDBManager.KoalaDBManager)
-
-
-@pytest.mark.first
-def test_before_create_tables():
-    setup_module()
-    sql_check_table_exists = """SELECT name FROM sqlite_master WHERE type='table' AND name='TwitchAlerts';"""
-    assert KoalaBot.database_manager.db_execute_select(sql_check_table_exists) == []
 
 
 def test_create_tables(twitch_alert_db_manager):
