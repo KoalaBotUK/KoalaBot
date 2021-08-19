@@ -27,6 +27,7 @@ import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import asyncio
+from twitchAPI.twitch import Twitch
 
 # Constants
 logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'TwitchAlert.log')
