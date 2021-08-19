@@ -39,14 +39,12 @@ vote_manager = None
 
 
 def populate_vote_tables():
-    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                 (111, 222, 333, "Test Vote 1", None, None, None))
+    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)", (111, 222, 333, "Test Vote 1", None, None, None))
     db_manager.db_execute_commit("INSERT INTO VoteTargetRoles VALUES (?, ?)", (111, 999))
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (111, 888, "vote1opt", "vote1body"))
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (111, 887, "vote1opt2", "vote1body"))
     db_manager.db_execute_commit("INSERT INTO VoteSent VALUES (?, ?, ?)", (111, 777, 666))
-    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                 (112, 223, 334, "Test Vote 2", 555, 666, None))
+    db_manager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)", (112, 223, 334, "Test Vote 2", 555, 666, None))
     db_manager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (112, 888, "vote1opt", "vote1body"))
 
 
@@ -172,7 +170,6 @@ def test_votemanager_generate_opt_id():
 def test_votemanager_load_from_db():
     populate_vote_tables()
     vote_manager.load_from_db()
-    print(vote_manager.vote_lookup)
     assert vote_manager.vote_lookup[("222", "Test Vote 1")] == "111"
     vote = vote_manager.sent_votes["111"]
     assert vote.target_roles == ["999"]
@@ -194,14 +191,14 @@ def test_votemanager_get_vote_from_id():
 def test_votemanager_get_configuring_vote():
     populate_vote_tables()
     vote_manager.load_from_db()
-    vote = vote_manager.get_configuring_vote(223)
+    vote = vote_manager.get_configuring_vote("223")
     assert vote.title == "Test Vote 2"
 
 
 def test_votemanager_has_active_vote():
     populate_vote_tables()
     vote_manager.load_from_db()
-    assert vote_manager.has_active_vote(223)
+    assert vote_manager.has_active_vote("223")
 
 
 def test_votemanager_create_vote():
@@ -223,7 +220,7 @@ def test_votemanager_cancel_sent_vote():
 def test_votemanager_cancel_configuring_vote():
     populate_vote_tables()
     vote_manager.load_from_db()
-    vote_manager.cancel_configuring_vote(223)
+    vote_manager.cancel_configuring_vote("223")
     assert 223 not in vote_manager.configuring_votes.keys()
     in_db = db_manager.db_execute_select("SELECT * FROM Votes WHERE vote_id=?", (112,))
     assert not in_db
