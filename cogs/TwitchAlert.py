@@ -24,7 +24,6 @@ from utils import KoalaDBManager
 import discord
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
-import asyncio
 from twitchAPI.twitch import Twitch
 
 # Constants
@@ -77,7 +76,7 @@ class TwitchAlert(commands.Cog):
         self.bot = bot
         database_manager.create_base_tables()
         database_manager.insert_extension("TwitchAlert", 0, True, True)
-        self.ta_database_manager = TwitchAlertDBManager(database_manager, bot)
+        self.ta_database_manager = TwitchAlertDBManager(bot)
         self.ta_database_manager.create_tables()
         self.loop_thread = None
         self.loop_team_thread = None
@@ -406,12 +405,12 @@ class TwitchAlert(commands.Cog):
                          "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
                          "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
                          "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
-        users = self.ta_database_manager.database_manager.db_execute_select(sql_find_users)
+        users = self.ta_database_manager.db_execute_select(sql_find_users)
         usernames = []
         for user in users:
             if not re.search(TWITCH_USERNAME_REGEX, user[0]):
                 sql_remove_invalid_user = "DELETE FROM UserInTwitchAlert WHERE twitch_username = ?"
-                self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_user, args=[user[0]])
+                self.ta_database_manager.db_execute_commit(sql_remove_invalid_user, args=[user[0]])
             else:
                 usernames.append(user[0])
 
@@ -442,7 +441,7 @@ class TwitchAlert(commands.Cog):
                         "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
                         "WHERE twitch_username = ?;"
 
-                    results = self.ta_database_manager.database_manager.db_execute_select(
+                    results = self.ta_database_manager.db_execute_select(
                         sql_find_message_id, args=[current_username])
 
                     new_message_embed = None
@@ -472,12 +471,12 @@ class TwitchAlert(commands.Cog):
                                     SET message_id = ? 
                                     WHERE channel_id = ? 
                                         AND twitch_username = ?"""
-                                    self.ta_database_manager.database_manager.db_execute_commit(
+                                    self.ta_database_manager.db_execute_commit(
                                         sql_update_message_id, args=[new_message.id, result[0], current_username])
                         except discord.errors.Forbidden as err:
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
-                            self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel,
+                            self.ta_database_manager.db_execute_commit(sql_remove_invalid_channel,
                                                                                         args=[channel.id])
             except Exception as err:
                 logging.error(f"TwitchAlert: User Loop error {err}")
@@ -528,12 +527,12 @@ class TwitchAlert(commands.Cog):
                                 "WHERE extension_id = 'TwitchAlert' " \
                                 "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
 
-        users_and_teams = self.ta_database_manager.database_manager.db_execute_select(sql_select_team_users)
+        users_and_teams = self.ta_database_manager.db_execute_select(sql_select_team_users)
         usernames = []
         for user in users_and_teams:
             if not re.search(TWITCH_USERNAME_REGEX, user[1]):
                 sql_remove_invalid_user = "DELETE FROM TeamInTwitchAlert WHERE twitch_team_name = ?"
-                self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_user, args=[user[1]])
+                self.ta_database_manager.db_execute_commit(sql_remove_invalid_user, args=[user[1]])
             else:
                 usernames.append(user[0])
 
@@ -565,7 +564,7 @@ class TwitchAlert(commands.Cog):
                           WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE ON TA.guild_id = GE.guild_id 
                     WHERE twitch_username = ?"""
 
-                    results = self.ta_database_manager.database_manager.db_execute_select(
+                    results = self.ta_database_manager.db_execute_select(
                         sql_find_message_id, args=[current_username])
 
                     new_message_embed = None
@@ -596,13 +595,13 @@ class TwitchAlert(commands.Cog):
                                     SET message_id = ?
                                     WHERE team_twitch_alert_id = ?
                                     AND twitch_username = ?"""
-                                    self.ta_database_manager.database_manager.db_execute_commit(
+                                    self.ta_database_manager.db_execute_commit(
                                         sql_update_message_id,
                                         args=[new_message.id, team_twitch_alert_id, current_username])
                         except discord.errors.Forbidden as err:
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
-                            self.ta_database_manager.database_manager.db_execute_commit(sql_remove_invalid_channel,
+                            self.ta_database_manager.db_execute_commit(sql_remove_invalid_channel,
                                                                                         args=[channel.id])
             except Exception as err:
                 logging.error(f"TwitchAlert: Team Loop error {err}")
@@ -688,34 +687,29 @@ class TwitchAPIHandler:
         return (self.twitch.get_teams(name=team_id)).get("data")[0].get("users")
 
 
-class TwitchAlertDBManager:
+class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
     """
     A class for interacting with the Koala twitch database
     """
 
-    def __init__(self, database_manager: KoalaDBManager.KoalaDBManager, bot_client: discord.client):
+    def __init__(self, bot_client: discord.client, database_path=None):
         """
         Initialises local variables
-        :param database_manager:
         :param bot_client:
         """
-        self.database_manager = database_manager
+        if not database_path:
+            database_path = KoalaBot.DATABASE_PATH
+
+        super().__init__(database_path, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
         self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client
 
-    def get_parent_database_manager(self):
-        """
-        A getter for the database manager of this object
-        :return:
-        """
-        return self.database_manager
 
     def create_tables(self):
         """
         Creates all the tables associated with the twitch alert extension
         :return:
         """
-
         # TwitchAlerts
         sql_create_twitch_alerts_table = """
         CREATE TABLE IF NOT EXISTS TwitchAlerts (
@@ -770,10 +764,10 @@ class TwitchAlertDBManager:
         );"""
 
         # Create Tables
-        self.database_manager.db_execute_commit(sql_create_twitch_alerts_table)
-        self.database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
-        self.database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
-        self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
+        self.db_execute_commit(sql_create_twitch_alerts_table)
+        self.db_execute_commit(sql_create_user_in_twitch_alert_table)
+        self.db_execute_commit(sql_create_team_in_twitch_alert_table)
+        self.db_execute_commit(sql_create_user_in_twitch_team_table)
 
     def new_ta(self, guild_id, channel_id, default_message=None, replace=False):
         """
@@ -785,7 +779,7 @@ class TwitchAlertDBManager:
         :return: The new default_message
         """
         sql_find_ta = "SELECT default_message FROM TwitchAlerts WHERE channel_id=?"
-        message = self.database_manager.db_execute_select(sql_find_ta, args=[channel_id])
+        message = self.db_execute_select(sql_find_ta, args=[channel_id])
         if message and not replace:
             return message[0][0]
 
@@ -804,7 +798,7 @@ class TwitchAlertDBManager:
             INSERT INTO TwitchAlerts(guild_id, channel_id, default_message) 
             VALUES(?,?,?)
             """
-        self.database_manager.db_execute_commit(sql_insert_twitch_alert, args=[guild_id, channel_id, default_message])
+        self.db_execute_commit(sql_insert_twitch_alert, args=[guild_id, channel_id, default_message])
         return default_message
 
     def get_default_message(self, channel_id):
@@ -814,7 +808,7 @@ class TwitchAlertDBManager:
         :return: The current default_message
         """
         sql_find_ta = "SELECT default_message FROM TwitchAlerts WHERE channel_id= ?"
-        return self.database_manager.db_execute_select(sql_find_ta, args=[channel_id])
+        return self.db_execute_select(sql_find_ta, args=[channel_id])
 
     def add_user_to_ta(self, channel_id, twitch_username, custom_message, guild_id=None):
         """
@@ -834,14 +828,14 @@ class TwitchAlertDBManager:
             INSERT INTO UserInTwitchAlert(channel_id, twitch_username, custom_message) 
             VALUES(?, ?, ?)
             """
-            self.database_manager.db_execute_commit(
+            self.db_execute_commit(
                 sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username), custom_message])
         else:
             sql_insert_user_twitch_alert = """
             INSERT INTO UserInTwitchAlert(channel_id, twitch_username) 
             VALUES(?, ?)
             """
-            self.database_manager.db_execute_commit(
+            self.db_execute_commit(
                 sql_insert_user_twitch_alert, args=[channel_id, str.lower(twitch_username)])
 
     async def remove_user_from_ta(self, channel_id, twitch_username):
@@ -855,13 +849,13 @@ class TwitchAlertDBManager:
                              "FROM UserInTwitchAlert " \
                              "WHERE twitch_username = ? " \
                              "AND channel_id = ? "
-        message_id = self.database_manager.db_execute_select(sql_get_message_id,
+        message_id = self.db_execute_select(sql_get_message_id,
                                                              args=[twitch_username, channel_id])[0][0]
         if message_id is not None:
             await self.delete_message(message_id, channel_id)
         sql_remove_entry = """DELETE FROM UserInTwitchAlert 
                                WHERE twitch_username = ? AND channel_id = ?"""
-        self.database_manager.db_execute_commit(sql_remove_entry, args=[twitch_username, channel_id])
+        self.db_execute_commit(sql_remove_entry, args=[twitch_username, channel_id])
 
     async def delete_message(self, message_id, channel_id):
         """
@@ -875,7 +869,7 @@ class TwitchAlertDBManager:
             if channel is None:
                 logging.warning(f"TwitchAlert: Channel ID {channel_id} does not exist, removing from database")
                 sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
-                self.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
+                self.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
                 return
             message = await channel.fetch_message(message_id)
             await message.delete()
@@ -884,7 +878,7 @@ class TwitchAlertDBManager:
         except discord.errors.Forbidden as err:
             logging.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
-            self.database_manager.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
+            self.db_execute_commit(sql_remove_invalid_channel, args=[channel_id])
 
     def get_users_in_ta(self, channel_id):
         """
@@ -893,7 +887,7 @@ class TwitchAlertDBManager:
         :return: The sql results of the users
         """
         sql_get_users = "SELECT twitch_username FROM UserInTwitchAlert WHERE channel_id = ?"
-        return self.database_manager.db_execute_select(sql_get_users, args=[channel_id])
+        return self.db_execute_select(sql_get_users, args=[channel_id])
 
     def get_teams_in_ta(self, channel_id):
         """
@@ -902,7 +896,7 @@ class TwitchAlertDBManager:
         :return: The sql results of the teams
         """
         sql_get_teams = "SELECT twitch_team_name FROM TeamInTwitchAlert WHERE channel_id = ?"
-        return self.database_manager.db_execute_select(sql_get_teams, args=[channel_id])
+        return self.db_execute_select(sql_get_teams, args=[channel_id])
 
     def add_team_to_ta(self, channel_id, twitch_team, custom_message, guild_id=None):
         """
@@ -922,14 +916,14 @@ class TwitchAlertDBManager:
             INSERT INTO TeamInTwitchAlert(channel_id, twitch_team_name, custom_message) 
             VALUES(?, ?, ?)
             """
-            self.database_manager.db_execute_commit(
+            self.db_execute_commit(
                 sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team), custom_message])
         else:
             sql_insert_team_twitch_alert = """
             INSERT INTO TeamInTwitchAlert(channel_id, twitch_team_name) 
             VALUES(?, ?)
             """
-            self.database_manager.db_execute_commit(
+            self.db_execute_commit(
                 sql_insert_team_twitch_alert, args=[channel_id, str.lower(twitch_team)])
 
     async def remove_team_from_ta(self, channel_id, team_name):
@@ -943,22 +937,22 @@ class TwitchAlertDBManager:
                                 "FROM TeamInTwitchAlert " \
                                 "WHERE twitch_team_name = ? " \
                                 " AND channel_id = ?"
-        result = self.database_manager.db_execute_select(sql_get_team_alert_id, args=[team_name, channel_id])
+        result = self.db_execute_select(sql_get_team_alert_id, args=[team_name, channel_id])
         if not result:
             raise AttributeError("Team name not found")
         team_alert_id = result[0][0]
         sql_get_message_id = """SELECT UserInTwitchTeam.message_id
                                  FROM UserInTwitchTeam
                                  WHERE team_twitch_alert_id = ?"""
-        message_ids = self.database_manager.db_execute_select(sql_get_message_id, args=[team_alert_id])
+        message_ids = self.db_execute_select(sql_get_message_id, args=[team_alert_id])
         if message_ids is not None:
             for message_id in message_ids:
                 if message_id[0] is not None:
                     await self.delete_message(message_id[0], channel_id)
         sql_remove_users = """DELETE FROM UserInTwitchTeam WHERE team_twitch_alert_id = ?"""
         sql_remove_team = """DELETE FROM TeamInTwitchAlert WHERE team_twitch_alert_id = ?"""
-        self.database_manager.db_execute_commit(sql_remove_users, args=[team_alert_id])
-        self.database_manager.db_execute_commit(sql_remove_team, args=[team_alert_id])
+        self.db_execute_commit(sql_remove_users, args=[team_alert_id])
+        self.db_execute_commit(sql_remove_team, args=[team_alert_id])
 
     async def update_team_members(self, twitch_team_id, team_name):
         """
@@ -973,7 +967,7 @@ class TwitchAlertDBManager:
                 sql_add_user = """INSERT OR IGNORE INTO UserInTwitchTeam(team_twitch_alert_id, twitch_username) 
                                    VALUES(?, ?)"""
                 try:
-                    self.database_manager.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("user_login")],
+                    self.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("user_login")],
                                                             pass_errors=True)
                 except KoalaDBManager.sqlite3.IntegrityError as err:
                     logging.error(f"Twitch Alert: 1034: {err}")
@@ -984,7 +978,7 @@ class TwitchAlertDBManager:
         :return:
         """
         sql_get_teams = """SELECT team_twitch_alert_id, twitch_team_name FROM TeamInTwitchAlert"""
-        teams_info = self.database_manager.db_execute_select(sql_get_teams)
+        teams_info = self.db_execute_select(sql_get_teams)
         for team_info in teams_info:
             await self.update_team_members(team_info[0], team_info[1])
 
@@ -1020,12 +1014,12 @@ class TwitchAlertDBManager:
             SET message_id = NULL
             WHERE twitch_username in ({','.join(['?'] * len(usernames))})"""
 
-        results = self.database_manager.db_execute_select(
+        results = self.db_execute_select(
             sql_select_offline_streams_with_message_ids, usernames)
 
         for result in results:
             await self.delete_message(result[1], result[0])
-        self.database_manager.db_execute_commit(sql_update_offline_streams, usernames)
+        self.db_execute_commit(sql_update_offline_streams, usernames)
 
 
 def setup(bot: KoalaBot) -> None:
