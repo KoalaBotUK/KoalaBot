@@ -33,7 +33,7 @@ ctx = Fake()
 ctx.author.id = 1234
 ctx.guild.id = 4567
 cog = None
-db_manager = KoalaDBManager.KoalaDBManager("votingTest.db", KoalaBot.DB_KEY)
+db_manager = KoalaDBManager.KoalaDBManager("votingTest.db", KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
 db_manager.create_base_tables()
 vote_manager = None
 
