@@ -4,9 +4,10 @@
 # This stage is to support development.
 FROM ubuntu:latest AS base
 
+ARG DEBIAN_FRONTEND=noninteractive
+
 # install prerequisits
 ######################
-
 RUN \
   echo "install packages" && \
   apt-get update && \
@@ -17,6 +18,10 @@ RUN \
     python3 \
     python3-pip \
     python3-venv
+
+RUN apt-get install -y software-properties-common && \
+  add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
+  apt-get update
 
 RUN apt-get install -y sqlcipher libsqlcipher-dev
 

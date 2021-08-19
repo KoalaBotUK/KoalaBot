@@ -275,7 +275,9 @@ class TextFilter(commands.Cog, name="TextFilter"):
         if message.author.bot:
             return
         if message.content.startswith(KoalaBot.COMMAND_PREFIX+"filter") or \
-                message.content.startswith(KoalaBot.COMMAND_PREFIX+"unfilter"):
+                message.content.startswith(KoalaBot.COMMAND_PREFIX+"unfilter") or \
+                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX+"filter") or \
+                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX+"unfilter"):
             return
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
