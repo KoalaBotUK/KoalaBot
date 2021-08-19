@@ -3,14 +3,16 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+
+## [0.4.4] - 19-08-2021
 ### ReactForRole
 - Fix bug where reacting with a unicode emoji broke the whole message
 ### Colour Role
 - Colour strings can now be prefixed with a #
 ### Other
+- Added command prefix K!
 - Testing updated to use builders in dpytest 0.5.0
 - Additional option with `--config <path to config>` to choose where databases are stored
-- Added command prefix K!
 - Officially removed support for Discord.py 1.3.4
 
 ## [0.4.3] - 14-05-2021
@@ -232,6 +234,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.0...v0.4.1
