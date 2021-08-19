@@ -1,8 +1,10 @@
 # Changelog
-All notable changes to KoalaBot will be documented in this file.
-A lot of these commands will only be available to administrators
+All notable changes to KoalaBot will be documented in this file. A lot of these commands will only be available to
+administrators
 
 ## [Unreleased]
+### ReactForRole
+- Fix bug where reacting with a unicode emoji broke the whole message
 ### Colour Role
 - Colour strings can now be prefixed with a #
 ### Other
