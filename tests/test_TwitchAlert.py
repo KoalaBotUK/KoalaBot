@@ -121,12 +121,12 @@ async def test_add_user_to_twitch_alert(twitch_cog):
                                  colour=KOALA_GREEN)
 
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch add {dpytest.get_config().channels[0].id} monstercat")
+        f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {dpytest.get_config().channels[0].id}")
     assert dpytest.verify().message().embed(embed=assert_embed)
 
 
 @pytest.mark.asyncio(order=3)
-async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
+async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: TwitchAlert.TwitchAlert):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
@@ -135,7 +135,7 @@ async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog):
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch add {dpytest.get_config().channels[0].id} monstercat",
+        f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {dpytest.get_config().channels[0].id}",
         channel=-1, member=member)
     assert dpytest.verify().message().embed(
         embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -159,7 +159,7 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog):
                                  colour=KOALA_GREEN)
 
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch add {channel.id} monstercat {test_custom_message}", channel=-1,
+        f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {channel.id} {test_custom_message}", channel=-1,
         member=member)
     assert dpytest.verify().message().embed(embed=assert_embed)
 
@@ -182,7 +182,7 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
 
     # Creates Twitch Alert
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch add {channel.id} monstercat {test_custom_message}", channel=-1,
+        f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {channel.id} {test_custom_message}", channel=-1,
         member=member)
 
     sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
@@ -190,7 +190,7 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog):
         (test_custom_message,)]
     await dpytest.empty_queue()
     # Removes Twitch Alert
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch remove {channel.id} monstercat", channel=-1,
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch remove monstercat {channel.id}", channel=-1,
                           member=member)
     new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
                               description=f"Channel: {channel.id}\n"
@@ -210,7 +210,7 @@ async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch remove {dpytest.get_config().channels[0].id} monstercat",
+        f"{KoalaBot.COMMAND_PREFIX}twitch remove monstercat {dpytest.get_config().channels[0].id}",
         channel=-1, member=member)
     assert dpytest.verify().message().embed(
         embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -231,7 +231,7 @@ async def test_add_team_to_twitch_alert(twitch_cog):
                                              f"Message: {TwitchAlert.DEFAULT_MESSAGE}",
                                  colour=KOALA_GREEN)
     # Creates Twitch Alert
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam {channel.id} faze", channel=-1,
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {channel.id}", channel=-1,
                           member=member)
     assert dpytest.verify().message().embed(assert_embed)
 
@@ -251,7 +251,7 @@ async def test_add_team_to_twitch_alert_with_message(twitch_cog):
                                              f"Message: wooo message",
                                  colour=KOALA_GREEN)
     # Creates Twitch Alert
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam {channel.id} faze wooo message",
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {channel.id} wooo message",
                           channel=-1, member=member)
     assert dpytest.verify().message().embed(assert_embed)
 
@@ -267,7 +267,7 @@ async def test_add_team_to_twitch_alert_wrong_guild(twitch_cog):
     await dpytest.member_join(-1, dpytest.get_config().client.user)
     # Creates Twitch Alert
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch addTeam {dpytest.get_config().channels[0].id} faze ", channel=-1,
+        f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {dpytest.get_config().channels[0].id} ", channel=-1,
         member=member)
     assert dpytest.verify().message().embed(
         embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -286,11 +286,11 @@ async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
     await dpytest.member_join(-1, dpytest.get_config().client.user)
 
     # Creates Twitch Alert
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam {channel.id} faze {test_custom_message}",
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {channel.id} {test_custom_message}",
                           channel=-1, member=member)
     await dpytest.empty_queue()
     # Removes Twitch Alert
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch removeTeam {channel.id} faze", channel=-1,
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch removeTeam faze {channel.id}", channel=-1,
                           member=member)
     new_embed = discord.Embed(title="Removed Team from Twitch Alert", colour=KOALA_GREEN,
                               description=f"Channel: {channel.id}\n"
@@ -309,7 +309,7 @@ async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
     await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch removeTeam {dpytest.get_config().channels[0].id} monstercat",
+        f"{KoalaBot.COMMAND_PREFIX}twitch removeTeam monstercat {dpytest.get_config().channels[0].id}",
         channel=-1, member=member)
     assert dpytest.verify().message().embed(
         embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -340,7 +340,7 @@ async def test_loop_check_live(twitch_cog):
     expected_embed.set_thumbnail(url="https://static-cdn.jtvnw.net/jtv_user_pictures/"
                                      "monstercat-profile_image-3e109d75f8413319-300x300.jpeg")
 
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch add 7363 monstercat")
+    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat 7363")
     await dpytest.empty_queue()
     twitch_cog.start_loop()
     await asyncio.sleep(10)

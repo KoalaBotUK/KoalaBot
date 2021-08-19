@@ -6,7 +6,8 @@ administrators
 ### TwitchAlert
 - TwitchAlert completely reworked
 - TwitchAlert commands have been altered (e.g. `k!twitchAddTeam` to `k!twitch addTeam`) see https://koalabot.uk/documentation for new syntax
-- Previously optional `channel_id` arguments are now required
+- Positioning of the `channel` argument has been moved. Please always check commands with `k!help <command>`
+- Previously optional `channel_id` arguments are now required in all but `list` & `viewMsg`
 - Internal API library changed, may increase delays in twitch API responses
 
 ## [0.4.4] - 19-08-2021

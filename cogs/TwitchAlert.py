@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 from twitchAPI.twitch import Twitch
 
 # Constants
-logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'TwitchAlert.log')
+logging.basicConfig(filename=KoalaBot.CONFIG_DIR + 'TwitchAlert.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
 DEFAULT_MESSAGE = ""
@@ -41,6 +41,7 @@ TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
 LOOP_CHECK_LIVE_DELAY = 1
 TEAMS_LOOP_CHECK_LIVE_DELAY = 1
 REFRESH_TEAMS_DELAY = 5
+
 
 # Variables
 
@@ -65,7 +66,7 @@ class TwitchAlert(commands.Cog):
         A discord.py cog for alerting when someone goes live on twitch
     """
 
-    def __init__(self, bot, database_manager=None):
+    def __init__(self, bot: discord.ext.commands.Bot, database_manager=None):
 
         """
         Initialises local variables
@@ -96,20 +97,16 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="editMsg")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def edit_default_message(self, ctx, raw_channel_id, *default_live_message):
+    async def edit_default_message(self, ctx, channel: discord.TextChannel, *default_live_message):
         """
         Edit the default message put in a Twitch Alert Notification
         :param ctx: The discord context of the command
-        :param raw_channel_id: The channel ID where the twitch alert is being used
+        :param channel: The channel where the twitch alert is being used
         :param default_live_message: The default live message of users within this Twitch Alert,
         leave empty for program default
         :return:
         """
-        try:
-            channel_id = extract_id(raw_channel_id)
-        except TypeError:
-            channel_id = ctx.message.channel.id
-            default_live_message = (raw_channel_id,) + default_live_message
+        channel_id = channel.id
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -140,18 +137,15 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="viewMsg")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def view_default_message(self, ctx, raw_channel_id=None):
+    async def view_default_message(self, ctx, channel: discord.TextChannel = None):
         """
         Shows the current default message for Twitch Alerts
         :param ctx: The discord context of the command
-        :param raw_channel_id: The channel ID where the twitch alert is being used
+        :param channel: The channel where the twitch alert is being used
         leave empty for program default
         :return:
         """
-        if raw_channel_id is None:
-            channel_id = ctx.message.channel.id
-        else:
-            channel_id = extract_id(raw_channel_id)
+        channel_id = channel.id
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -171,24 +165,19 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="add")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def add_user_to_twitch_alert(self, ctx, raw_channel_id, twitch_username=None, *custom_live_message):
+    async def add_user_to_twitch_alert(self, ctx, twitch_username,
+                                       channel: discord.TextChannel, *custom_live_message):
         """
         Add a Twitch user to a Twitch Alert
         :param ctx: The discord context of the command
-        :param raw_channel_id: The channel ID where the twitch alert is being used
         :param twitch_username: The Twitch Username of the user being added (lowercase)
+        :param channel: The channel ID where the twitch alert is being used
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
-        try:
-            channel_id = extract_id(raw_channel_id)
-        except TypeError:
-            custom_live_message = (twitch_username,) + custom_live_message
-            twitch_username = raw_channel_id
-            channel_id = ctx.message.channel.id
-        if twitch_username is None:
-            raise discord.errors.InvalidArgument("twitch_username is a required argument that is missing.")
-        elif not re.search(TWITCH_USERNAME_REGEX, twitch_username):
+        channel_id = channel.id
+        twitch_username = str.lower(twitch_username)
+        if not re.search(TWITCH_USERNAME_REGEX, twitch_username):
             raise discord.errors.InvalidArgument(
                 "The given twitch_username is not a valid username (please use lowercase)")
 
@@ -223,22 +212,16 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="remove")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def remove_user_from_twitch_alert(self, ctx, raw_channel_id, twitch_username=None):
+    async def remove_user_from_twitch_alert(self, ctx, twitch_username, channel: discord.TextChannel,):
         """
         Removes a user from a Twitch Alert
         :param ctx: the discord context
-        :param raw_channel_id: The discord channel ID of the Twitch Alert
         :param twitch_username: The username of the user to be removed
+        :param channel: The discord channel ID of the Twitch Alert
         :return:
         """
 
-        try:
-            channel_id = extract_id(raw_channel_id)
-        except TypeError:
-            twitch_username = raw_channel_id
-            channel_id = ctx.message.channel.id
-        if twitch_username is None:
-            raise discord.errors.InvalidArgument("twitch_username is a required argument that is missing.")
+        channel_id = channel.id
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -256,24 +239,19 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="addTeam")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def add_team_to_twitch_alert(self, ctx, raw_channel_id, team_name=None, *custom_live_message):
+    async def add_team_to_twitch_alert(self, ctx, team_name, channel: discord.TextChannel, *custom_live_message):
         """
         Add a Twitch team to a Twitch Alert
         :param ctx: The discord context of the command
-        :param raw_channel_id: The channel ID where the twitch alert is being used
         :param team_name: The Twitch team being added (lowercase)
+        :param channel: The channel ID where the twitch alert is being used
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
-        try:
-            channel_id = extract_id(raw_channel_id)
-        except TypeError:
-            custom_live_message = (team_name,) + custom_live_message
-            team_name = raw_channel_id
-            channel_id = ctx.message.channel.id
-        if team_name is None:
-            raise discord.errors.InvalidArgument("team_name is a required argument that is missing.")
-        elif not re.search(TWITCH_USERNAME_REGEX, team_name):
+        channel_id = channel.id
+        team_name = str.lower(team_name)
+
+        if not re.search(TWITCH_USERNAME_REGEX, team_name):
             raise discord.errors.InvalidArgument(
                 "The given team_name is not a valid twitch team name (please use lowercase)")
 
@@ -307,22 +285,16 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="removeTeam")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def remove_team_from_twitch_alert(self, ctx, raw_channel_id, team_name=None):
+    async def remove_team_from_twitch_alert(self, ctx, team_name, channel: discord.TextChannel):
         """
         Removes a team from a Twitch Alert
         :param ctx: the discord context
-        :param raw_channel_id: The discord channel ID of the Twitch Alert
         :param team_name: The Twitch team being added (lowercase)
+        :param channel: The discord channel ID of the Twitch Alert
         :return:
         """
 
-        try:
-            channel_id = extract_id(raw_channel_id)
-        except TypeError:
-            team_name = raw_channel_id
-            channel_id = ctx.message.channel.id
-        if team_name is None:
-            raise discord.errors.InvalidArgument("team_name is a required argument that is missing.")
+        channel_id = channel.id
 
         # Check the channel specified is in this guild
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -340,17 +312,14 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="list")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def list_twitch_alert(self, ctx, raw_channel_id=None):
+    async def list_twitch_alert(self, ctx, channel: discord.TextChannel = None):
         """
         Shows all current TwitchAlert users and teams in a channel
         :param ctx:
         :param raw_channel_id:
         :return:
         """
-        if raw_channel_id is None:
-            channel_id = ctx.message.channel.id
-        else:
-            channel_id = extract_id(raw_channel_id)
+        channel_id = channel.id
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
             await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
@@ -487,7 +456,7 @@ class TwitchAlert(commands.Cog):
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
                             self.ta_database_manager.db_execute_commit(sql_remove_invalid_channel,
-                                                                                        args=[channel.id])
+                                                                       args=[channel.id])
             except Exception as err:
                 logging.error(f"TwitchAlert: User Loop error {err}")
 
@@ -612,7 +581,7 @@ class TwitchAlert(commands.Cog):
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = "DELETE FROM TwitchAlerts WHERE channel_id = ?"
                             self.ta_database_manager.db_execute_commit(sql_remove_invalid_channel,
-                                                                                        args=[channel.id])
+                                                                       args=[channel.id])
             except Exception as err:
                 logging.error(f"TwitchAlert: Team Loop error {err}")
 
@@ -713,7 +682,6 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         super().__init__(database_path, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
         self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client
-
 
     def create_tables(self):
         """
@@ -860,7 +828,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
                              "WHERE twitch_username = ? " \
                              "AND channel_id = ? "
         message_id = self.db_execute_select(sql_get_message_id,
-                                                             args=[twitch_username, channel_id])[0][0]
+                                            args=[twitch_username, channel_id])[0][0]
         if message_id is not None:
             await self.delete_message(message_id, channel_id)
         sql_remove_entry = """DELETE FROM UserInTwitchAlert 
@@ -978,7 +946,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
                                    VALUES(?, ?)"""
                 try:
                     self.db_execute_commit(sql_add_user, args=[twitch_team_id, user.get("user_login")],
-                                                            pass_errors=True)
+                                           pass_errors=True)
                 except KoalaDBManager.sqlite3.IntegrityError as err:
                     logging.error(f"Twitch Alert: 1034: {err}")
 
