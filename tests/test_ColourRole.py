@@ -186,7 +186,7 @@ async def test_is_allowed_to_change_colour_true(utils_cog):
 
 
 @pytest.mark.parametrize("hex_str, value",
-                         [("000000", 0), ("111111", 1118481), ("228822", 2263074), ("ff82ae", 16745134)])
+                         [("000000", 0), ("111111", 1118481), ("228822", 2263074), ("ff82ae", 16745134),("#000000", 0), ("#111111", 1118481), ("#228822", 2263074), ("#ff82ae", 16745134)])
 @pytest.mark.asyncio
 async def test_get_colour_from_hex_str(hex_str, value, role_colour_cog):
     colour: discord.Colour = role_colour_cog.get_colour_from_hex_str(hex_str)
@@ -196,14 +196,15 @@ async def test_get_colour_from_hex_str(hex_str, value, role_colour_cog):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("colour_str, expected",
                          [("", False), (".", False), (" ", False), ("223", False), ("a", False), ("ffgeaa", False),
-                          ("FFeehu", False), ("FFee66", True), ("ffeea7", True), ("ABCDEF", True)])
+                          ("FFeehu", False), ("FFee66", True), ("ffeea7", True), ("ABCDEF", True), ("#ABCDEF", True), ("#123456", True), ("#", False), ("#123", False)])
 async def test_is_valid_colour_str(colour_str, expected, role_colour_cog):
     assert role_colour_cog.is_valid_colour_str(colour_str.upper()) == expected
 
 
 @pytest.mark.parametrize("colour1_str, colour2_str, expected",
                          [("ffffff", "ffffff", 0), ("FFFFFF", "ffffff", 0), ("ffffff", "000000", 764.8339663572415),
-                          ("ff74aa", "6900ff", 362.23060571789074), ("223636", "363636", 29.47456530637899)])
+                          ("ff74aa", "6900ff", 362.23060571789074), ("223636", "363636", 29.47456530637899),("#ffffff", "#ffffff", 0), ("#FFFFFF", "#ffffff", 0), ("#ffffff", "000000", 764.8339663572415),
+                           ("#ff74aa", "#6900ff", 362.23060571789074), ("#223636", "#363636", 29.47456530637899)])
 @pytest.mark.asyncio
 async def test_get_rgb_colour_distance(colour1_str, colour2_str, expected, role_colour_cog):
     colour1 = role_colour_cog.get_colour_from_hex_str(colour1_str)

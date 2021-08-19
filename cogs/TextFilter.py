@@ -6,19 +6,16 @@ Created by: Stefan Cooper
 """
 
 # Built-in/Generic Imports
-import os
-import asyncio
-import time
 import re
 
 # Libs
-from discord.ext import commands, tasks
+from discord.ext import commands
 import discord
 
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
-from utils.KoalaUtils import error_embed, is_channel_in_guild, extract_id
+from utils.KoalaUtils import extract_id
 from utils.KoalaDBManager import KoalaDBManager
 
 
@@ -278,7 +275,9 @@ class TextFilter(commands.Cog, name="TextFilter"):
         if message.author.bot:
             return
         if message.content.startswith(KoalaBot.COMMAND_PREFIX+"filter") or \
-                message.content.startswith(KoalaBot.COMMAND_PREFIX+"unfilter"):
+                message.content.startswith(KoalaBot.COMMAND_PREFIX+"unfilter") or \
+                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX+"filter") or \
+                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX+"unfilter"):
             return
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
