@@ -44,6 +44,8 @@ def parse_args(args):
     """
     parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
     parser.add_argument('--config', help="Config & database directory")
+    parser.add_argument('--cov', help="unused")
+    parser.add_argument('--cov-report', help="unused")
     return parser.parse_args(args)
 
 
