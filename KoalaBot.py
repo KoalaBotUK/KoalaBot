@@ -60,18 +60,15 @@ def get_config_from_argv():
             config_dir += "/"
 
         if os.name == 'nt' and config_dir[1] != ":":
-            if config_dir[0] == "/":
-                config_dir = config_dir[1:]
+            # if config_dir[0] == "/":
+            #     config_dir = config_dir[1:]
             config_dir = os.getcwd() + config_dir
     else:
-        config_dir=""
+        config_dir = ""
     return config_dir
 
 
-if __name__ == '__main__':
-    CONFIG_DIR = get_config_from_argv()
-else:
-    CONFIG_DIR = ""
+CONFIG_DIR = get_config_from_argv()
 
 logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
