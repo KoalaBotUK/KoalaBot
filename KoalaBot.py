@@ -62,8 +62,8 @@ def get_config_from_argv():
             config_dir += "/"
 
         if os.name == 'nt' and config_dir[1] != ":":
-            # if config_dir[0] == "/":
-            #     config_dir = config_dir[1:]
+            if config_dir[0] == "/" and os.getcwd()[-1] == "/":
+                config_dir = config_dir[1:]
             config_dir = os.getcwd() + config_dir
     else:
         config_dir = ""
