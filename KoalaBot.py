@@ -56,18 +56,11 @@ def get_config_from_argv():
     :return: Valid config dir
     """
     config_dir = vars(parse_args(sys.argv[1:])).get("config")
-    if config_dir:
-        config_dir = config_dir.replace("\\", "/")
-        if config_dir[-1] != "/":
-            config_dir += "/"
-
-        if os.name == 'nt' and config_dir[1] != ":":
-            if config_dir[0] == "/" and os.getcwd()[-1] == "/":
-                config_dir = config_dir[1:]
-            config_dir = os.getcwd() + config_dir
-    else:
+    if config_dir and os.name == 'nt' and config_dir[1] != ":":
+        config_dir = os.getcwd() + config_dir
+    elif config_dir is None:
         config_dir = ""
-    return config_dir
+    return Path(config_dir)
 
 
 CONFIG_DIR = get_config_from_argv()
