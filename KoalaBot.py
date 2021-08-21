@@ -24,6 +24,7 @@ import os
 import logging
 import sys
 import argparse
+from pathlib import Path
 
 # Libs
 import discord
@@ -44,9 +45,8 @@ def parse_args(args):
     """
     parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
     parser.add_argument('--config', help="Config & database directory")
-    parser.add_argument('--cov', help="unused")
-    parser.add_argument('--cov-report', help="unused")
-    return parser.parse_args(args)
+    args, unknown = parser.parse_known_args(args)
+    return args
 
 
 def get_config_from_argv():
