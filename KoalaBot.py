@@ -60,7 +60,7 @@ def get_config_from_argv():
         config_dir = os.getcwd() + config_dir
     elif config_dir is None:
         config_dir = ""
-    return Path(config_dir)
+    return str(Path(config_dir))
 
 
 CONFIG_DIR = get_config_from_argv()
