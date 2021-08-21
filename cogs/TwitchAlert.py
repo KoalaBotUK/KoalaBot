@@ -619,6 +619,16 @@ def create_live_embed(stream_info, user_info, game_info, message):
     return embed
 
 
+def split_to_100s(array: list):
+    if array is None:
+        return array
+    result = []
+    while len(array)>=100:
+        result.append(array[:100])
+        array = array[100:]
+    result.append(array)
+    return result
+
 class TwitchAPIHandler:
     """
     A wrapper to interact with the twitch API
@@ -637,13 +647,27 @@ class TwitchAPIHandler:
 
         return result
 
-    async def get_user_data(self, username):
+    async def get_user_data(self, usernames=None, ids=None):
         """
         Gets the user information of a given user
-        :param username: The display twitch username of the user
+
+        :param usernames: The display twitch usernames of the users
+        :param ids: The unique twitch ids of the users
         :return: The JSON information of the user's data
         """
-        return self.twitch.get_users(logins=username).get("data")[0]
+        result = {}
+
+        if usernames:
+            user_list = split_to_100s(usernames)
+            for u_batch in user_list:
+                result.update(self.twitch.get_users(logins=u_batch).get("data")[0])
+
+        if ids:
+            id_list = split_to_100s(ids)
+            for id_batch in id_list:
+                result.update(self.twitch.get_users(logins=id_batch).get("data")[0])
+
+        return result
 
     async def get_game_data(self, game_id):
         """
@@ -664,6 +688,7 @@ class TwitchAPIHandler:
         :return: the JSON information of the users
         """
         return (self.twitch.get_teams(name=team_id)).get("data")[0].get("users")
+
 
 
 class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):

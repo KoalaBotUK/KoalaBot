@@ -134,11 +134,11 @@ async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: TwitchAlert.Twit
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
-    await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {dpytest.get_config().channels[0].id}",
+    with pytest.raises(discord.ext.commands.errors.ChannelNotFound,
+                       match=f"Channel \"{dpytest.get_config().guilds[0].channels[0].id}\" not found."):
+        await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {dpytest.get_config().guilds[0].channels[0].id}",
         channel=-1, member=member)
-    assert dpytest.verify().message().embed(
-        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
 
 
 @pytest.mark.asyncio(order=3)
@@ -209,11 +209,11 @@ async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
-    await dpytest.message(
+    with pytest.raises(discord.ext.commands.errors.ChannelNotFound,
+                       match=f"Channel \"{dpytest.get_config().channels[0].id}\" not found."):
+        await dpytest.message(
         f"{KoalaBot.COMMAND_PREFIX}twitch remove monstercat {dpytest.get_config().channels[0].id}",
         channel=-1, member=member)
-    assert dpytest.verify().message().embed(
-        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
 
 
 @pytest.mark.asyncio()
@@ -266,11 +266,11 @@ async def test_add_team_to_twitch_alert_wrong_guild(twitch_cog):
     member = await dpytest.member_join(-1, name="TestUser", discrim=1)
     await dpytest.member_join(-1, dpytest.get_config().client.user)
     # Creates Twitch Alert
-    await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {dpytest.get_config().channels[0].id} ", channel=-1,
-        member=member)
-    assert dpytest.verify().message().embed(
-        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
+    with pytest.raises(discord.ext.commands.errors.ChannelNotFound,
+                       match=f"Channel \"{dpytest.get_config().channels[0].id}\" not found."):
+        await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {dpytest.get_config().channels[0].id}",
+        channel=-1, member=member)
 
 
 @pytest.mark.asyncio()
@@ -308,11 +308,11 @@ async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
     member = await dpytest.member_join(1, name="TestUser", discrim=1)
     await dpytest.member_join(1, dpytest.get_config().client.user)
 
-    await dpytest.message(
-        f"{KoalaBot.COMMAND_PREFIX}twitch removeTeam monstercat {dpytest.get_config().channels[0].id}",
+    with pytest.raises(discord.ext.commands.errors.ChannelNotFound,
+                       match=f"Channel \"{dpytest.get_config().channels[0].id}\" not found."):
+        await dpytest.message(
+        f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {dpytest.get_config().channels[0].id}",
         channel=-1, member=member)
-    assert dpytest.verify().message().embed(
-        embed=TwitchAlert.error_embed("The channel ID provided is either invalid, or not in this server."))
 
 
 @pytest.mark.asyncio()
@@ -361,6 +361,20 @@ async def test_create_alert_embed(twitch_cog):
 async def test_loop_check_team_live(twitch_cog):
     assert False, "Not Implemented"
 
+
+def test_split_to_100s_small():
+    assert len(TwitchAlert.split_to_100s(list(range(1,99)))) == 1
+
+
+def test_split_to_100s_medium():
+    assert len(TwitchAlert.split_to_100s(list(range(1,150)))) == 2
+
+
+def test_split_to_100s_large():
+    result = TwitchAlert.split_to_100s(list(range(1, 1501)))
+    assert len(result) == 16
+    for res in result:
+        assert len(res) <= 100
 
 # Test TwitchAPIHandler
 
