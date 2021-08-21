@@ -24,7 +24,7 @@ import os
 import logging
 import sys
 import argparse
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 # Libs
 import discord
@@ -60,7 +60,12 @@ def get_config_from_argv():
         config_dir = os.getcwd() + config_dir
     elif config_dir is None:
         config_dir = ""
-    return str(Path(config_dir))
+    if os.name == 'nt':
+        return str(PureWindowsPath(config_dir))
+    elif os.name == 'posix':
+        return str(PurePosixPath(config_dir))
+    else:
+        return str(Path(config_dir))
 
 
 CONFIG_DIR = get_config_from_argv()
