@@ -24,6 +24,7 @@ import os
 import logging
 import sys
 import argparse
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 # Libs
 import discord
@@ -44,7 +45,8 @@ def parse_args(args):
     """
     parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
     parser.add_argument('--config', help="Config & database directory")
-    return parser.parse_args(args)
+    args, unknown = parser.parse_known_args(args)
+    return args
 
 
 def get_config_from_argv():
@@ -54,24 +56,19 @@ def get_config_from_argv():
     :return: Valid config dir
     """
     config_dir = vars(parse_args(sys.argv[1:])).get("config")
-    if config_dir:
-        config_dir = config_dir.replace("\\", "/")
-        if config_dir[-1] != "/":
-            config_dir += "/"
-
-        if os.name == 'nt' and config_dir[1] != ":":
-            if config_dir[0] == "/":
-                config_dir = config_dir[1:]
-            config_dir = os.getcwd() + config_dir
+    if config_dir and os.name == 'nt' and config_dir[1] != ":":
+        config_dir = os.getcwd() + config_dir
+    elif config_dir is None:
+        config_dir = ""
+    if os.name == 'nt':
+        return str(PureWindowsPath(config_dir))
+    elif os.name == 'posix':
+        return str(PurePosixPath(config_dir))
     else:
-        config_dir=""
-    return config_dir
+        return str(Path(config_dir))
 
 
-if __name__ == '__main__':
-    CONFIG_DIR = get_config_from_argv()
-else:
-    CONFIG_DIR = ""
+CONFIG_DIR = get_config_from_argv()
 
 logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
