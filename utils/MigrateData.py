@@ -3,6 +3,10 @@ import shutil
 
 
 def backup_data():
+    """
+    Stores the Koala.db database stored in the cwd to a new folder, new folder created each time in case of large rollback needed.
+    :return:
+    """
     try:
         size = len(os.listdir(os.getcwd() + '\\KoalaDBBackups'))
         if not os.path.exists('KoalaDBBackups\\backup_' + str(size)):
@@ -17,6 +21,10 @@ def backup_data():
 
 
 def reset_db():
+    """
+    Deletes an errored Koala.db database in the cwd and replaces it with the most recently saved database
+    :return:
+    """
     src = os.getcwd() + '\\KoalaDBBackups'
     last_db = src + '\\' + os.listdir(src)[-1] + '\\Koala.db'
     os.remove(os.getcwd() + '\\Koala.db')
@@ -28,6 +36,10 @@ class MigrateData:
         self.database_manager = database_manager
 
     def execute_update(self):
+        """
+        Sequentially applied the database update, if an error occurs then the entire database is rolled back.
+        :return:
+        """
         if backup_data():
             funcs = [self.remake_guilds, self.remake_guild_extensions, self.remake_guild_welcome_messages,
                      self.remake_votes, self.remake_vote_sent, self.remake_vote_options, self.remake_vote_target_roles,
