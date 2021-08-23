@@ -316,14 +316,14 @@ async def test_rfr_db_functions_guild_rfr_required_roles():
         roles.append(role)
         DBManager.add_guild_rfr_required_role(guild.id, role.id)
         assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], i
-        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
+        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.independent_get_guild_rfr_required_role(
             guild.id), i
 
     while len(roles) > 0:
         role: discord.Role = roles.pop()
         DBManager.remove_guild_rfr_required_role(guild.id, role.id)
         assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], len(roles)
-        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
+        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.independent_get_guild_rfr_required_role(
             guild.id), len(roles)
 
 

@@ -566,7 +566,7 @@ async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tabl
     twitch_alert_db_manager_tables.get_parent_database_manager().db_execute_commit(sql_add_message)
     with mock.patch.object(TwitchAlert.TwitchAlertDBManager, 'delete_message') as mock1:
         await twitch_alert_db_manager_tables.remove_team_from_ta(605, "monstercat")
-    mock1.assert_called_with(1, 605)
+    mock1.assert_called_with(str(1), 605)
 
 
 @pytest.mark.asyncio()
@@ -615,7 +615,7 @@ async def test_delete_all_offline_streams(twitch_alert_db_manager_tables, bot: d
     assert result[0][0] is None
     with pytest.raises(discord.errors.NotFound,
                        match="Unknown Message"):
-        await bot.guilds[0].channels[0].fetch_message(message_id)
+        await bot.guilds[0].channels[0].fetch_message(str(message_id))
     pass
 
 
