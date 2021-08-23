@@ -731,7 +731,7 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command.
         :return:
         """
-        role_ids = self.rfr_database_manager.independent_get_guild_rfr_required_role(ctx.guild.id)
+        role_ids = self.rfr_database_manager.get_guild_rfr_required_role(ctx.guild.id)
         msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
         for role_id in role_ids:
 
@@ -773,7 +773,7 @@ class ReactForRole(commands.Cog):
         :param member: Member to check rfr perms for
         :return: True if member has one of the required roles, or if there are no required roles. False otherwise
         """
-        required_roles: List[int] = self.rfr_database_manager.independent_get_guild_rfr_required_role(member.guild.id)
+        required_roles: List[int] = self.rfr_database_manager.get_guild_rfr_required_role(member.guild.id)
         if not required_roles or len(required_roles) == 0:
             return True
         return any(x in required_roles for x in [y.id for y in member.roles])
@@ -1265,7 +1265,7 @@ class ReactForRoleDBManager:
         self.database_manager.db_execute_commit("DELETE FROM GuildRFRRequiredRoles WHERE guild_id = ? AND role_id = ?",
                                                 args=[guild_id, role_id])
 
-    def independent_get_guild_rfr_required_role(self, guild_id) -> List[int]:
+    def get_guild_rfr_required_role(self, guild_id) -> List[int]:
         """
         Gets the list of role IDs of roles required to use rfr functionality in a guild
         :param guild_id: guild ID
