@@ -226,6 +226,14 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 
         await ctx.send(embed=embed)
 
+    @commands.command(name="version")
+    @commands.check(KoalaBot.is_owner)
+    async def version(self, ctx):
+        """
+        Get the version of KoalaBot
+        """
+        await ctx.send(KoalaBot.__version__)
+
 
 def setup(bot: KoalaBot) -> None:
     """

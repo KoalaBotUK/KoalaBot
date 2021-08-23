@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Other
+- Small improvements
 
 ## [0.4.4] - 19-08-2021
 ### ReactForRole
