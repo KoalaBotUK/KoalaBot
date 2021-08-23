@@ -959,6 +959,7 @@ async def test_rfr_without_req_role(num_roles, num_required, rfr_cog):
         DBManager.add_guild_rfr_required_role(test_guild.id, r.id)
         assert independent_get_guild_rfr_required_role(test_guild.id, r.id) is not None
 
+
     member: discord.Member = await dpytest.member_join()
     await member.add_roles(*[r for r in r_list if r not in required])
     mem_roles = member.roles
@@ -982,9 +983,9 @@ async def test_rfr_without_req_role(num_roles, num_required, rfr_cog):
             add_role_mock.assert_not_called()
             assert role_to_add not in member.roles
 
-
 @pytest.mark.parametrize("num_roles, num_required",
                          [(1, 1), (2, 1), (2, 2), (5, 1), (5, 2), (20, 5), (100, 20), (200, 20)])
+
 @pytest.mark.asyncio
 async def test_rfr_with_req_role(num_roles, num_required, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
