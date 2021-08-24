@@ -232,7 +232,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         Get the version of KoalaBot
         """
-        await ctx.send(KoalaBot.__version__)
+        await ctx.send("version: "+KoalaBot.__version__)
 
 
 def setup(bot: KoalaBot) -> None:

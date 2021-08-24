@@ -188,7 +188,7 @@ async def test_invalid_unload_cog(base_cog: BaseCog.BaseCog):
 @pytest.mark.asyncio
 async def test_version(base_cog: BaseCog.BaseCog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "version")
-    assert dpytest.verify().message().content(KoalaBot.__version__)
+    assert dpytest.verify().message().content("version: "+KoalaBot.__version__)
 
 
 
