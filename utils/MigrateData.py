@@ -567,7 +567,7 @@ class MigrateData:
             guild_id text NOT NULL,
             channel_id text NOT NULL,
             message_id text NOT NULL,
-            emoji_role_id text,
+            emoji_role_id integer,
             PRIMARY KEY (emoji_role_id),
             FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id),
             UNIQUE (guild_id, channel_id, message_id)
@@ -592,7 +592,7 @@ class MigrateData:
         if count[0][0] == 1:
             sql_create_rfr_message_emoji_roles_table = """
             CREATE TABLE IF NOT EXISTS RFRMessageEmojiRoles (
-            emoji_role_id text NOT NULL,
+            emoji_role_id integer NOT NULL,
             emoji_raw text NOT NULL,
             role_id text NOT NULL,
             PRIMARY KEY (emoji_role_id, emoji_raw, role_id),
