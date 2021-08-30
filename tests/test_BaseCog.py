@@ -186,6 +186,13 @@ async def test_invalid_unload_cog(base_cog: BaseCog.BaseCog):
 
 
 @pytest.mark.asyncio
+async def test_version(base_cog: BaseCog.BaseCog):
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "version")
+    assert dpytest.verify().message().content("version: "+KoalaBot.__version__)
+
+
+
+@pytest.mark.asyncio
 async def test_setup():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
         BaseCog.setup(KoalaBot.client)
