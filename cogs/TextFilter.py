@@ -15,7 +15,7 @@ import discord
 # Own modules
 import KoalaBot
 from utils.KoalaColours import *
-from utils.KoalaUtils import extract_id
+from utils.KoalaUtils import extract_id, change_field_types
 from utils.KoalaDBManager import KoalaDBManager
 
 
@@ -654,8 +654,8 @@ class TextFilterDBManager:
         :param guild_id: The guild id to get the list from
         :return: list of ignored channels
         """
-        rows = self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"])
+        rows = change_field_types(self.database_manager.db_execute_select(
+            "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"]), [str,int,str,int])
         channels = []
         for row in rows:
             channels.append((row[3]))
