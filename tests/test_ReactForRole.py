@@ -29,7 +29,7 @@ from cogs import ReactForRole
 from cogs.ReactForRole import ReactForRoleDBManager
 from utils import KoalaColours
 from utils.KoalaDBManager import KoalaDBManager
-from utils.KoalaUtils import wait_for_message
+from utils.KoalaUtils import wait_for_message, change_field_types
 
 # Constants
 
@@ -73,6 +73,8 @@ def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id
     rows = dbm.db_execute_select(sql_select_str)
     if not rows:
         return []
+    else:
+        rows = change_field_types(rows, [int, int, int, int])
     return rows
 
 
@@ -93,6 +95,8 @@ def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, r
     rows = dbm.db_execute_select(sql_select_str)
     if not rows:
         return []
+    else:
+        rows = change_field_types(rows, [int, str, int])
     return rows
 
 
@@ -109,6 +113,8 @@ def independent_get_guild_rfr_required_role(guild_id=None, role_id=None) -> List
     rows = DBManager.get_parent_database_manager().db_execute_select(sql_select_str)
     if not rows:
         return []
+    else:
+        rows = change_field_types(rows, [int, int])
     return rows
 
 
@@ -117,6 +123,8 @@ def get_rfr_reaction_role_by_role_id(emoji_role_id: int, role_id: int) -> Option
         f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
     if not rows:
         return
+    else:
+        rows = change_field_types(rows, [int, str, int])
     return rows[0][2]
 
 

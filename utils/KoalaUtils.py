@@ -91,3 +91,22 @@ async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: 
     if not msg:
         return msg, ctx.channel
     return msg, None
+
+
+def change_field_types(query_result: [[]], new_types: [type]):
+    """
+    Change the types within a query result
+
+    :param query_result: The result from a db query
+    :param new_types: A list of the new types to be assigned, must be the same length as the fields in query_result
+    :return:
+    """
+    for i in range(len(query_result)):
+        new_row = []
+        for j in range(len(query_result[i])):
+            if query_result[i][j]:
+                new_row.append(new_types[j](query_result[i][j]))
+            else:
+                new_row.append(None)
+        query_result[i] = tuple(new_row)
+    return query_result

@@ -1169,6 +1169,8 @@ class ReactForRoleDBManager:
             args=[guild_id, channel_id, message_id])
         if not rows:
             return
+        else:
+            KoalaUtils.change_field_types(rows, [int, int, int, int])
         return rows[0]
 
     def get_guild_rfr_messages(self, guild_id: int):
@@ -1179,6 +1181,10 @@ class ReactForRoleDBManager:
         """
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
             "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
+        if not rows:
+            return
+        else:
+            rows = KoalaUtils.change_field_types(rows, [int, int, int, int])
         return rows
 
     def get_guild_rfr_roles(self, guild_id: int) -> List[int]:
@@ -1190,6 +1196,7 @@ class ReactForRoleDBManager:
         """
         rfr_messages: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
             "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
+        rfr_messages = KoalaUtils.change_field_types(rfr_messages, [int, int, int, int])
         if not rfr_messages:
             return []
         role_ids: List[int] = []
@@ -1213,6 +1220,8 @@ class ReactForRoleDBManager:
             "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ?;", args=[emoji_role_id])
         if not rows:
             return
+        else:
+            rows = KoalaUtils.change_field_types(rows, [int, str, int])
         return rows
 
     def get_rfr_reaction_role(self, emoji_role_id: int, emoji_raw: str, role_id: int):
@@ -1229,6 +1238,8 @@ class ReactForRoleDBManager:
             args=[emoji_role_id, emoji_raw, role_id])
         if not rows:
             return
+        else:
+            rows = KoalaUtils.change_field_types(rows, [int, str, int])
         return rows[0]
 
     def get_rfr_reaction_role_by_emoji_str(self, emoji_role_id: int, emoji_raw: str) -> Optional[int]:
@@ -1243,6 +1254,8 @@ class ReactForRoleDBManager:
             args=[emoji_role_id, emoji_raw])
         if not rows:
             return
+        else:
+            rows = KoalaUtils.change_field_types(rows, [int, str, int])
         return rows[0][2]
 
     def add_guild_rfr_required_role(self, guild_id: int, role_id: int):
@@ -1271,8 +1284,8 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         :return: List of role IDs
         """
-        rows = self.database_manager.db_execute_select("SELECT * FROM GuildRFRRequiredRoles WHERE guild_id = ?",
-                                                       args=[guild_id])
+        rows = KoalaUtils.change_field_types(self.database_manager.db_execute_select("SELECT * FROM GuildRFRRequiredRoles WHERE guild_id = ?",
+                                                                                     args=[guild_id]), [int, int])
         role_ids = [x[1] for x in rows]
         if not role_ids:
             return []
