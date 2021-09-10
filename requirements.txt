@@ -11,7 +11,7 @@ emoji==1.4.2
 idna==3.2
 iniconfig==1.1.1
 mock==4.0.3
-more-itertools==8.8.0
+more-itertools==8.9.0
 multidict==5.1.0
 packaging==21.0
 parsedatetime==2.6
