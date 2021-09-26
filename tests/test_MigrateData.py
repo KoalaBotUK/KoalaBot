@@ -264,29 +264,99 @@ def create_base_tables():
 
 def populate_tables():
     guild_extension_data = [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2)]
+    for i in guild_extension_data:
+        database_manager.db_execute_commit('INSERT INTO GuildExtensions VALUES (?,?);', i)
+
     guilds_data = []
+    #database_manager.db_execute_commit('INSERT INTO Guilds VALUES (?,?);', guild_extension_data)
+
     guild_welcome_messages_data = [(1, "This is a welcome message"), (2, "This is also a welcome message")]
+    for i in guild_welcome_messages_data:
+        database_manager.db_execute_commit('INSERT INTO GuildWelcomeMessages VALUES (?,?);', i)
+
     votes_data = [(1, 1, 1, "VOTE1", 1, 1, 0), (2, 1, 1, "VOTE2", 2, 2, 0), (3, 2, 2, "VOTE3", 3, 3, 0), (4, 2, 2, "VOTE4", 4, 4, 0)]
-    vote_sent_data = []
-    vote_options_data = []
-    vote_target_roles_data = []
-    verified_emails_data = []
-    not_verified_emails_data = []
-    roles_data = []
-    to_re_verify_data = []
-    twitch_alerts_data = []
-    user_in_twitch_alerts_data = []
-    team_in_twitch_alerts_data = []
-    user_in_twitch_team_data = []
-    text_filter_data = []
-    text_filter_moderation_data = []
-    text_filter_ignore_list_data = []
-    guild_rfr_messages_data = []
-    rfr_message_emoji_roles_data = []
-    guild_rfr_required_roles_data = []
-    guild_colour_change_permissions_data = []
-    guild_invalid_custom_colour_roles_data = []
-    guild_usage_data = []
+    for i in votes_data:
+        database_manager.db_execute_commit('INSERT INTO Votes VALUES (?,?,?,?,?,?,?);', i)
+
+    vote_sent_data = [(1, 5, "MESSAGE1"), (2, 6, "MESSAGE2"), (3, 7, "MESSAGE3"), (4, 8, "MESSAGE4")]
+    for i in vote_sent_data:
+        database_manager.db_execute_commit('INSERT INTO VoteSent VALUES (?,?,?);', i)
+
+    vote_options_data = [(1, 1, "TITLE1", "DESCRIPTION1"), (2, 2, "TITLE2", "DESCRIPTION2"), (3, 3, "TITLE3", "DESCRIPTION3"), (4, 4, "TITLE4", "DESCRIPTION4")]
+    for i in vote_options_data    :
+        database_manager.db_execute_commit('INSERT INTO VoteOptions VALUES (?,?,?,?);', i)
+
+    vote_target_roles_data = [(1, 1), (2, 2), (3, 3), (4, 4)]
+    for i in vote_target_roles_data:
+        database_manager.db_execute_commit('INSERT INTO VoteTargetRoles VALUES (?,?);', i)
+
+    verified_emails_data = [(1, "EMAIL1"), (2, "EMAIL2"), (3, "EMAIL3"), (4, "EMAIL4")]
+    for i in verified_emails_data:
+        database_manager.db_execute_commit('INSERT INTO verified_emails VALUES (?,?);', i)
+
+    not_verified_emails_data = [(5, "EMAIL5", "TOKEN5"), (6, "EMAIL6", "TOKEN6"), (7, "EMAIL7", "TOKEN7"), (8, "EMAIL8", "TOKEN8")]
+    for i in not_verified_emails_data:
+        database_manager.db_execute_commit('INSERT INTO non_verified_emails VALUES (?,?,?);', i)
+
+    roles_data = [(1, 1, "EMAIL_SUFFIX1"), (1, 2, "EMAIL_SUFFIX2"), (2, 3, "EMAIL_SUFFIX3"), (2, 4, "EMAIL_SUFFIX4")]
+    for i in roles_data:
+        database_manager.db_execute_commit('INSERT INTO roles VALUES (?,?,?);', i)
+
+    to_re_verify_data = [(1, 1), (2, 2)]
+    for i in to_re_verify_data:
+        database_manager.db_execute_commit('INSERT INTO to_re_verify VALUES (?,?);', i)
+
+    twitch_alerts_data = [(1, 1, "MESSAGE1"), (1, 2, "MESSAGE2"), (2, 3, "MESSAGE3"), (2, 4, "MESSAGE4")]
+    for i in twitch_alerts_data:
+        database_manager.db_execute_commit('INSERT INTO TwitchAlerts VALUES (?,?,?);', i)
+
+    user_in_twitch_alerts_data = [(1, "USERNAME1", "MESSAGE1", 1), (2, "USERNAME2", "MESSAGE2", 2), (3, "USERNAME3", "MESSAGE3", 3), (4, "USERNAME4", "MESSAGE4", 4)]
+    for i in user_in_twitch_alerts_data:
+        database_manager.db_execute_commit('INSERT INTO UserInTwitchAlert VALUES (?,?,?,?);', i)
+
+    team_in_twitch_alerts_data = [(1, "TEAM_NAME1", "MESSAGE1"), (2, "TEAM_NAME2", "MESSAGE2"), (3, "TEAM_NAME3", "MESSAGE3"), (4, "TEAM_NAME4", "MESSAGE4")]
+    for i in team_in_twitch_alerts_data:
+        database_manager.db_execute_commit('INSERT INTO TeamInTwitchAlert (channel_id, twitch_team_name, custom_message) VALUES (?,?,?);', i)
+
+    user_in_twitch_team_data = [(1, "USERNAME1", 1), (2, "USERNAME2", 2), (3, "USERNAME3", 3), (4, "USERNAME4", 4)]
+    for i in user_in_twitch_team_data:
+        database_manager.db_execute_commit('INSERT INTO UserInTwitchTeam VALUES (?,?,?);', i)
+
+    text_filter_data = [(1, 1, "TEXT1", "TYPE1", True), (2, 1, "TEXT2", "TYPE2", False), (3, 2, "TEXT3", "TYPE3", True), (4, 2, "TEXT4", "TYPE4", False)]
+    for i in text_filter_data:
+        database_manager.db_execute_commit('INSERT INTO TextFilter VALUES (?,?,?,?,?);', i)
+
+    text_filter_moderation_data = [(1, 1), (2, 1), (3, 2), (4, 2)]
+    for i in text_filter_moderation_data:
+        database_manager.db_execute_commit('INSERT INTO TextFilterModeration VALUES (?,?);', i)
+
+    text_filter_ignore_list_data = [(1, 1, "TYPE1", 1), (2, 1, "TYPE2", 1), (3, 2, "TYPE3", 1), (4, 2, "TYPE4", 1)]
+    for i in text_filter_ignore_list_data:
+        database_manager.db_execute_commit('INSERT INTO TextFilterIgnoreList VALUES (?,?,?,?);', i)
+
+    guild_rfr_messages_data = [(1, 1, 1, 1), (1, 2, 2, 2), (2, 3, 3, 3), (2, 3, 4, 4)]
+    for i in guild_rfr_messages_data:
+        database_manager.db_execute_commit('INSERT INTO GuildRFRMessages VALUES (?,?,?,?);', i)
+
+    rfr_message_emoji_roles_data = [(1, "EMOJI1", 1), (2, "EMOJI2", 2), (3, "EMOJI3", 3), (4, "EMOJI4", 4)]
+    for i in rfr_message_emoji_roles_data:
+        database_manager.db_execute_commit('INSERT INTO RFRMessageEmojiRoles VALUES (?,?,?);', i)
+
+    guild_rfr_required_roles_data = [(1, 1), (1, 2), (2, 3), (2, 4)]
+    for i in guild_rfr_required_roles_data:
+        database_manager.db_execute_commit('INSERT INTO GuildRFRRequiredRoles VALUES (?,?);', i)
+
+    guild_colour_change_permissions_data = [(1, 1), (1, 2), (2, 3), (2, 4)]
+    for i in guild_colour_change_permissions_data:
+        database_manager.db_execute_commit('INSERT INTO GuildColourChangePermissions VALUES (?,?);', i)
+
+    guild_invalid_custom_colour_roles_data = [(1, 5), (1, 6), (2, 7), (2, 8)]
+    for i in guild_invalid_custom_colour_roles_data:
+        database_manager.db_execute_commit('INSERT INTO GuildInvalidCustomColourRoles VALUES (?,?);', i)
+
+    guild_usage_data = [(1, 1), (2, 2)]
+    for i in guild_usage_data:
+        database_manager.db_execute_commit('INSERT INTO GuildUsage VALUES (?,?);', i)
 
 
 def drop_all_tables():
@@ -298,6 +368,7 @@ def drop_all_tables():
 
 @pytest.fixture(autouse=True)
 def run_before_and_after_tests():
+    drop_all_tables()
     create_base_tables()
     populate_tables()
     yield
@@ -305,11 +376,15 @@ def run_before_and_after_tests():
 
 
 @pytest.mark.asyncio()
-async def test_remake_guilds():
+async def test_remake_guild_extensions():
+    before_expected_result = [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2)]
+    before_data_stored = database_manager.db_execute_select("SELECT * FROM GuildExtensions")
+    assert before_data_stored == before_expected_result
+    migrate_database.remake_guild_extensions()
+    after_expected_result = [('1', 1), ('2', 1), ('3', 1), ('1', 2), ('2', 2)]
+    after_data_stored = database_manager.db_execute_select("SELECT * FROM GuildExtensions")
 
-    pass
 
-
-async def test_remake_guilds_no_table():
-
-    pass
+# async def test_remake_guilds_no_table():
+#
+#     pass
