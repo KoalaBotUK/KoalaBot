@@ -26,6 +26,10 @@ def backup_data():
 
 
 def get_largest_file_number():
+    """
+
+    :return:
+    """
     src = os.getcwd() + '\\KoalaDBBackups'
     if len(os.listdir(src)) == 0:
         return 0
@@ -53,11 +57,11 @@ def reset_db():
 class MigrateData:
 
     def __init__(self, database_manager):
+        """
+        Initalised shit
+        :param database_manager: idk, jack help plz
+        """
         self.database_manager = database_manager
-        thing = "SELECT name FROM sqlite_master WHERE type='table' order by name"
-        result = self.database_manager.db_execute_select(thing)
-        # for i in result:
-        #    print(i[0])
 
     def execute_update(self):
         """
@@ -71,7 +75,7 @@ class MigrateData:
                      self.remake_to_re_verify, self.remake_twitch_alerts, self.remake_user_in_twitch_alert,
                      self.remake_team_in_twitch_alert, self.remake_user_in_twitch_team, self.remake_text_filter,
                      self.remake_text_filter_moderation, self.remake_text_filter_ignore_list,
-                     self.remake_guild_rf_messages, self.remake_rfr_message_emoji_roles,
+                     self.remake_guild_rfr_messages, self.remake_rfr_message_emoji_roles,
                      self.remake_guild_rfr_required_roles, self.remake_guild_colour_change_permissions,
                      self.remake_guild_invalid_custom_colour_roles, self.remake_guild_usage]
             for func in funcs:
@@ -115,6 +119,7 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
                         args=list(i))
+
 
     def remake_guild_extensions(self):
         """
@@ -291,7 +296,9 @@ class MigrateData:
         the data into the new table.
         :return:
         """
-        count = self.database_manager.db_execute_select(
+        count_old = self.database_manager.db_execute_select(
+            """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='verified_emails'""")
+        count_new = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VerifiedEmails'""")
         verified_table = """
              CREATE TABLE IF NOT EXISTS VerifiedEmails (
@@ -299,7 +306,15 @@ class MigrateData:
              email text NOT NULL,
              PRIMARY KEY (user_id, email)
              );"""
-        if count[0][0] == 1:
+        if count_old[0][0] == 1:
+            data = self.database_manager.db_execute_select("""SELECT * FROM verified_emails;""")
+            self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS verified_emails;""")
+            self.database_manager.db_execute_commit(verified_table)
+            for i in data:
+                self.database_manager.db_execute_commit(
+                    """INSERT INTO VerifiedEmails (user_id, email) VALUES (?, ?);""",
+                    args=list(i))
+        elif count_new[0][0] == 1:
             data = self.database_manager.db_execute_select("""SELECT * FROM VerifiedEmails;""")
             self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VerifiedEmails;""")
             self.database_manager.db_execute_commit(verified_table)
@@ -316,7 +331,9 @@ class MigrateData:
         inserts the data into the new table.
         :return:
         """
-        count = self.database_manager.db_execute_select(
+        count_old = self.database_manager.db_execute_select(
+            """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='non_verified_emails'""")
+        count_new = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='NonVerifiedEmails'""")
         non_verified_table = """
              CREATE TABLE IF NOT EXISTS NonVerifiedEmails (
@@ -325,7 +342,15 @@ class MigrateData:
              token text NOT NULL,
              PRIMARY KEY (token)
              );"""
-        if count[0][0] == 1:
+        if count_old[0][0] == 1:
+            data = self.database_manager.db_execute_select("""SELECT * FROM non_verified_emails;""")
+            self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS non_verified_emails;""")
+            self.database_manager.db_execute_commit(non_verified_table)
+            for i in data:
+                self.database_manager.db_execute_commit(
+                    """INSERT INTO NonVerifiedEmails (user_id, email, token) VALUES (?, ?, ?);""",
+                    args=list(i))
+        elif count_new[0][0] == 1:
             data = self.database_manager.db_execute_select("""SELECT * FROM NonVerifiedEmails;""")
             self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS NonVerifiedEmails;""")
             self.database_manager.db_execute_commit(non_verified_table)
@@ -342,7 +367,9 @@ class MigrateData:
         into the new table.
         :return:
         """
-        count = self.database_manager.db_execute_select(
+        count_old = self.database_manager.db_execute_select(
+            """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='roles'""")
+        count_new = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Roles'""")
         role_table = """
         CREATE TABLE IF NOT EXISTS Roles (
@@ -352,7 +379,15 @@ class MigrateData:
         PRIMARY KEY (guild_id, role_id, email_suffix),
         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
         );"""
-        if count[0][0] == 1:
+        if count_old[0][0] == 1:
+            data = self.database_manager.db_execute_select("""SELECT * FROM roles;""")
+            self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS roles;""")
+            self.database_manager.db_execute_commit(role_table)
+            for i in data:
+                self.database_manager.db_execute_commit(
+                    """INSERT INTO Roles (guild_id, role_id, email_suffix) VALUES (?, ?, ?);""",
+                    args=list(i))
+        elif count_new[0][0] == 1:
             data = self.database_manager.db_execute_select("""SELECT * FROM Roles;""")
             self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Roles;""")
             self.database_manager.db_execute_commit(role_table)
@@ -369,7 +404,9 @@ class MigrateData:
         data into the new table.
         :return:
         """
-        count = self.database_manager.db_execute_select(
+        count_old = self.database_manager.db_execute_select(
+            """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='to_re_verify'""")
+        count_new = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='ToReVerify'""")
         re_verify_table = """
             CREATE TABLE IF NOT EXISTS ToReVerify (
@@ -377,7 +414,15 @@ class MigrateData:
             role_id text NOT NULL,
             PRIMARY KEY (user_id, role_id)
             );"""
-        if count[0][0] == 1:
+        if count_old[0][0] == 1:
+            data = self.database_manager.db_execute_select("""SELECT * FROM to_re_verify;""")
+            self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS to_re_verify;""")
+            self.database_manager.db_execute_commit(re_verify_table)
+            for i in data:
+                self.database_manager.db_execute_commit(
+                    """INSERT INTO ToReVerify (user_id, role_id) VALUES (?, ?);""",
+                    args=list(i))
+        if count_new[0][0] == 1:
             data = self.database_manager.db_execute_select("""SELECT * FROM ToReVerify;""")
             self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS ToReVerify;""")
             self.database_manager.db_execute_commit(re_verify_table)
@@ -592,7 +637,7 @@ class MigrateData:
         else:
             self.database_manager.db_execute_commit(sql_create_ignore_list_table)
 
-    def remake_guild_rf_messages(self):
+    def remake_guild_rfr_messages(self):
         """
         Copies data from GuildRFRMessages table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
