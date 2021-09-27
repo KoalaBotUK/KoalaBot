@@ -19,7 +19,7 @@ from cogs import BaseCog
 from cogs import TextFilter
 from tests.utils_testing import LastCtxCog
 from tests.utils_testing.TestUtils import assert_activity
-from utils import KoalaDBManager
+from utils.KoalaDBManager import KoalaDBManager
 from utils.KoalaColours import *
 from utils.KoalaUtils import is_int
 
@@ -29,7 +29,7 @@ from utils.KoalaUtils import is_int
 #utils_cog =  None
 
 
-def se5tup_function():
+def setup_function():
     """ setup any state specific to the execution of the given module."""
     global base_cog, tf_cog, utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)

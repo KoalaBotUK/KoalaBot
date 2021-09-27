@@ -58,8 +58,8 @@ class MigrateData:
 
     def __init__(self, database_manager):
         """
-        Initalised shit
-        :param database_manager: idk, jack help plz
+        Initalises database manager
+        :param database_manager:
         """
         self.database_manager = database_manager
 

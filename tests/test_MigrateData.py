@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 import KoalaBot
@@ -1070,3 +1072,35 @@ async def test_remake_guild_usage_no_table():
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildUsage'""")
     assert 1 == count_before[0][0]
+
+
+@pytest.mark.asyncio()
+async def test_execute_update():
+    try:
+        migrate_database.execute_update()
+    except Exception as exc:
+        assert False, f"'execute_update' raised and exception {exc}"
+    drop_all_tables()
+    create_base_tables()
+    populate_tables()
+    table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
+    for table_name, in table_names:
+        print(table_name)
+        print(database_manager.db_execute_select(f"pragma table_info('{table_name}')"))
+
+
+@pytest.mark.asyncio()
+async def test_get_largest_file_number():
+    for root, dirs, files in os.walk(os.getcwd() + "\\KoalaDBBackups"):
+        for file in files:
+            print(file)
+
+
+@pytest.mark.asyncio()
+async def test_backup_date():
+    pass
+
+
+@pytest.mark.asyncio()
+async def test_reset_db():
+    pass

@@ -99,7 +99,6 @@ intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 database_manager = DBManager(DATABASE_PATH, DB_KEY, CONFIG_DIR)
-update_database = MigrateData(database_manager)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
