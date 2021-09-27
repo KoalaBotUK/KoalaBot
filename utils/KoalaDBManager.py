@@ -159,18 +159,17 @@ class KoalaDBManager:
         PRIMARY KEY (extension_id,guild_id),
         CONSTRAINT fk_extensions
             FOREIGN KEY (extension_id) 
-            REFERENCES KoalaExtensions (extension_id)
+            REFERENCES KoalaExtensions(extension_id)
             ON DELETE CASCADE, 
             
-            FOREIGN KEY (guild_id)
-            REFERENCES Guilds (guild_id)
+            FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
         );"""
 
         sql_create_guild_welcome_messages_table = """
         CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
         guild_id text NOT NULL PRIMARY KEY,
         welcome_message text,
-        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
         );"""
 
         self.db_execute_commit(sql_create_guild_welcome_messages_table)

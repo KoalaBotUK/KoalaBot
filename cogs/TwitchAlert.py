@@ -804,7 +804,7 @@ class TwitchAlertDBManager:
         PRIMARY KEY (guild_id, channel_id),
         CONSTRAINT fk_guild
             FOREIGN KEY (guild_id) 
-            REFERENCES Guilds (guild_id)
+            REFERENCES Guilds(guild_id)
             ON DELETE CASCADE 
         );"""
 
@@ -818,7 +818,7 @@ class TwitchAlertDBManager:
         PRIMARY KEY (channel_id, twitch_username),
         CONSTRAINT fk_channel
             FOREIGN KEY (channel_id) 
-            REFERENCES TwitchAlerts (channel_id)
+            REFERENCES TwitchAlerts(channel_id)
             ON DELETE CASCADE 
         );"""
 
@@ -831,20 +831,20 @@ class TwitchAlertDBManager:
         custom_message text,
         CONSTRAINT fk_channel
             FOREIGN KEY (channel_id) 
-            REFERENCES TwitchAlerts (channel_id)
+            REFERENCES TwitchAlerts(channel_id)
             ON DELETE CASCADE 
         );"""
 
         # UserInTwitchTeam
         sql_create_user_in_twitch_team_table = """
         CREATE TABLE IF NOT EXISTS UserInTwitchTeam (
-        team_twitch_alert_id integer NOT NULL,
+        team_twitch_alert_id text NOT NULL,
         twitch_username text NOT NULL,
         message_id text,
         PRIMARY KEY (team_twitch_alert_id, twitch_username),
         CONSTRAINT fk_twitch_team_alert
             FOREIGN KEY (team_twitch_alert_id) 
-            REFERENCES TeamInTwitchAlert (team_twitch_alert_id)
+            REFERENCES TeamInTwitchAlert(team_twitch_alert_id)
             ON DELETE CASCADE 
         );"""
 

@@ -83,7 +83,7 @@ class Verification(commands.Cog, name="Verify"):
         role_id text NOT NULL,
         email_suffix text NOT NULL,
         PRIMARY KEY (guild_id, role_id, email_suffix),
-        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
         );
         """
 

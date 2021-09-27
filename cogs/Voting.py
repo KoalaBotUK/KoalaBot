@@ -159,9 +159,9 @@ class Voting(commands.Cog, name="Vote"):
     async def vote_end_loop(self):
         now = time.time()
         votes = self.DBManager.db_execute_select("SELECT * FROM Votes WHERE end_time < ?", (now,))
-        for v_id, a_id, g_id, title, _, _, end_time in votes:
-            if v_id in self.vote_manager.sent_votes.keys():
-                vote = self.vote_manager.get_vote_from_id(v_id)
+        for vote_id, author_id, g_id, title, _, _, end_time in votes:
+            if vote_id in self.vote_manager.sent_votes.keys():
+                vote = self.vote_manager.get_vote_from_id(vote_id)
                 results = await get_results(self.bot, vote)
                 embed = await make_result_embed(vote, results)
                 try:
@@ -387,9 +387,9 @@ class Voting(commands.Cog, name="Vote"):
         Cancels a vote you are setting up or have sent
         :param title: title of the vote to cancel
         """
-        v_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
-        if v_id in self.vote_manager.sent_votes.keys():
-            self.vote_manager.cancel_sent_vote(v_id)
+        vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
+        if vote_id in self.vote_manager.sent_votes.keys():
+            self.vote_manager.cancel_sent_vote(vote_id)
         else:
             self.vote_manager.cancel_configuring_vote(ctx.author.id)
         await ctx.send(f"Vote {title} has been cancelled.")
@@ -612,7 +612,7 @@ class VoteManager:
         voice_id text,
         end_time float,
         PRIMARY KEY (vote_id),
-        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
         )
         """
 
@@ -621,7 +621,7 @@ class VoteManager:
         vote_id text NOT NULL,
         role_id text NOT NULL,
         PRIMARY KEY (vote_id),
-        FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
+        FOREIGN KEY (vote_id) REFERENCES Votes(vote_id)
         )"""
 
         option_table = """
@@ -630,7 +630,7 @@ class VoteManager:
         opt_id text NOT NULL,
         option_title text NOT NULL,
         option_desc text NOT NULL,
-        FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
+        FOREIGN KEY (vote_id) REFERENCES Votes(vote_id)
         )"""
 
         delivered_table = """
@@ -639,7 +639,7 @@ class VoteManager:
         vote_receiver_id text NOT NULL,
         vote_receiver_message text NOT NULL,
         PRIMARY KEY (vote_id),
-        FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
+        FOREIGN KEY (vote_id) REFERENCES Votes(vote_id)
         )"""
 
         self.DBManager.db_execute_commit(vote_table)
@@ -673,16 +673,15 @@ class VoteManager:
             else:
                 self.configuring_votes[author_id] = vote
 
-    def get_vote_from_id(self, v_id):
+    def get_vote_from_id(self, vote_id):
         """
         Returns a vote from a given discord context
-        :param v_id: id of the vote
+        :param vote_id: id of the vote
         :return: Relevant vote object
         """
-        return self.sent_votes[str(v_id)]
+        return self.sent_votes[str(vote_id)]
 
     def get_configuring_vote(self, author_id):
-        print(self.configuring_votes.keys())
         return self.configuring_votes[author_id]
 
     def has_active_vote(self, author_id):
@@ -701,21 +700,21 @@ class VoteManager:
         :param title: title of the vote
         :return: the newly created Vote object
         """
-        v_id = self.gen_vote_id()
-        vote = Vote(v_id, title, author_id, guild_id, self.DBManager)
-        self.vote_lookup[(author_id, title)] = v_id
+        vote_id = self.gen_vote_id()
+        vote = Vote(vote_id, title, author_id, guild_id, self.DBManager)
+        self.vote_lookup[(author_id, title)] = vote_id
         self.configuring_votes[author_id] = vote
         self.DBManager.db_execute_commit("INSERT INTO Votes VALUES (?, ?, ?, ?, ?, ?, ?)",
                                          (vote.id, author_id, vote.guild, vote.title, vote.chair, vote.target_voice_channel, vote.end_time))
         return vote
 
-    def cancel_sent_vote(self, v_id):
+    def cancel_sent_vote(self, vote_id):
         """
         Removed a vote from the list of active votes
-        :param v_id: the vote id
+        :param vote_id: the vote id
         :return: None
         """
-        vote = self.sent_votes.pop(str(v_id))
+        vote = self.sent_votes.pop(str(vote_id))
         self.cancel_vote(vote)
 
     def cancel_configuring_vote(self, author_id):
@@ -742,7 +741,7 @@ class VoteManager:
 
 
 class Vote:
-    def __init__(self, v_id, title, author_id, guild_id, db_manager):
+    def __init__(self, vote_id, title, author_id, guild_id, db_manager):
         """
         An object containing methods and attributes of an active vote
         :param title: title of the vote
@@ -750,7 +749,7 @@ class Vote:
         :param guild_id: location of the vote
         """
         self.guild = guild_id
-        self.id = v_id
+        self.id = vote_id
         self.author = author_id
         self.title = title
         self.DBManager = db_manager

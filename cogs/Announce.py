@@ -67,8 +67,8 @@ class Announce(commands.Cog):
         :return:
         """
         if self.announce_database_manager.get_last_use_date(guild_id):
-            return int(time.time()) - int(self.announce_database_manager.get_last_use_date(
-                guild_id)) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
+            return int(time.time()) - self.announce_database_manager.get_last_use_date(
+                guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
         return True
 
     def has_active_msg(self, guild_id):
@@ -338,7 +338,7 @@ class AnnounceDBManager:
         guild_id text NOT NULL,
         last_message_epoch_time text NOT NULL,
         PRIMARY KEY (guild_id),
-        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
+        FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
         );
         """
         self.database_manager.db_execute_commit(sql_create_usage_tables)

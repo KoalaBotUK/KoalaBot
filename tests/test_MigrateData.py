@@ -7,7 +7,6 @@ from utils.KoalaDBManager import KoalaDBManager
 from utils.MigrateData import MigrateData
 
 database_manager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
-database_manager.create_base_tables()
 migrate_database = MigrateData(database_manager)
 
 TABLE_NAME = "{TABLE_NAME}"
@@ -15,6 +14,10 @@ DROP_TABLE_SQL = f"DROP TABLE {TABLE_NAME}"
 
 
 def create_base_tables():
+    """
+    Creates all tables in schema before Migrate Database is applied, so that all tests can be completed from the same inital point
+    :return:
+    """
     sql_create_koala_extensions_table = """
     CREATE TABLE IF NOT EXISTS KoalaExtensions (
     extension_id text NOT NULL PRIMARY KEY,
