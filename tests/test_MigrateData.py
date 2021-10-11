@@ -840,7 +840,7 @@ async def test_remake_user_in_twitch_team():
     before_data_stored = database_manager.db_execute_select("SELECT * FROM UserInTwitchTeam")
     assert before_data_stored == before_expected_result
     migrate_database.remake_user_in_twitch_team()
-    after_expected_result = [(1, "USERNAME1", "1"), (2, "USERNAME2", "2"), (3, "USERNAME3", "3"), (4, "USERNAME4", "4")]
+    after_expected_result = [("1", "USERNAME1", "1"), ("2", "USERNAME2", "2"), ("3", "USERNAME3", "3"), ("4", "USERNAME4", "4")]
     after_data_stored = database_manager.db_execute_select("SELECT * FROM UserInTwitchTeam")
     assert after_data_stored == after_expected_result
 
@@ -1101,7 +1101,7 @@ async def test_get_largest_file_number():
 
 @pytest.mark.asyncio()
 async def test_backup_date():
-    pass
+    print(database_manager.db_file_path)
 
 
 @pytest.mark.asyncio()

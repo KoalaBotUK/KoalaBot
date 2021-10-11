@@ -1,34 +1,12 @@
 import os
 import shutil
-import re
-
-
-def backup_data():
-    """
-    Stores the Koala.db database stored in the cwd to a new folder, new folder created each time in case of large rollback needed.
-    :return:
-    """
-    try:
-        file_number = str(get_largest_file_number() + 1)
-        if not os.path.exists('KoalaDBBackups\\backup_' + file_number):
-            os.makedirs('KoalaDBBackups\\backup_' + file_number)
-        des = os.getcwd() + '\\KoalaDBBackups\\backup_' + file_number
-        regex = re.compile('.*Koala.db')
-        for root, dirs, files in os.walk(os.getcwd()):
-            for file in files:
-                if regex.match(file):
-                    src = os.path.join(os.getcwd(), file)
-                    shutil.copy(src, des)
-                    return True
-    except Exception as e:
-        print(e)
-        return False
 
 
 def get_largest_file_number():
     """
-
-    :return:
+    Gets the largest number from a list of files, this way files can be deleted but the numbering of the files will
+    still increase. Files are named as backup_X, so the most recent save would be saved under the largest value of X.
+    :return: Single integer number of the largest file name.
     """
     src = os.getcwd() + '\\KoalaDBBackups'
     if len(os.listdir(src)) == 0:
@@ -39,36 +17,45 @@ def get_largest_file_number():
         return values[-1]
 
 
-def reset_db():
-    """
-    Deletes an errored Koala.db database in the cwd and replaces it with the most recently saved database
-    :return:
-    """
-    last_db = os.listdir(os.getcwd() + "KoalaDBBackups\\backup_" + str(get_largest_file_number()))[0]
-    os.remove(os.getcwd() + '\\Koala.db')
-    regex = re.compile('.*Koala.db')
-    for root, dirs, files in os.walk(os.getcwd()):
-        for file in files:
-            if regex.match(file):
-                os.remove(file)
-    shutil.copy(last_db, os.getcwd())
-
-
 class MigrateData:
 
     def __init__(self, database_manager):
         """
         Initalises database manager
-        :param database_manager:
+        :param database_manager: The database manager used in this instance.
         """
         self.database_manager = database_manager
+
+    def reset_db(self):
+        """
+        Deletes an errored Koala.db database in the cwd and replaces it with the most recently saved database
+        :return:
+        """
+        last_db = os.listdir(os.getcwd() + "KoalaDBBackups\\backup_" + str(get_largest_file_number()))[0]
+        os.remove(self.database_manager.db_file_path)
+        shutil.copy(last_db, os.getcwd())
+
+    def backup_data(self):
+        """
+        Stores the Koala.db database stored in the cwd to a new folder, new folder created each time in case of large rollback needed.
+        :return:
+        """
+        try:
+            file_number = str(get_largest_file_number() + 1)
+            if not os.path.exists('''KoalaDBBackups\\backup_''' + file_number):
+                os.makedirs('KoalaDBBackups\\backup_' + file_number)
+            des = os.getcwd() + '\\KoalaDBBackups\\backup_' + file_number
+            shutil.copy(self.database_manager.db_file_path, des)
+            return True
+        except Exception as e:
+            return False
 
     def execute_update(self):
         """
         Sequentially applied the database update, if an error occurs then the entire database is rolled back.
         :return:
         """
-        if backup_data():
+        if self.backup_data():
             funcs = [self.remake_guilds, self.remake_guild_extensions, self.remake_guild_welcome_messages,
                      self.remake_votes, self.remake_vote_sent, self.remake_vote_options, self.remake_vote_target_roles,
                      self.remake_verified_emails, self.remake_not_verified_emails, self.remake_role_table,
@@ -83,7 +70,7 @@ class MigrateData:
                     func()
                 except Exception as e:
                     print(e)
-                    reset_db()
+                    self.reset_db()
                     break
 
     def remake_guilds(self):
@@ -119,7 +106,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
                         args=list(i))
-
 
     def remake_guild_extensions(self):
         """
@@ -534,7 +520,7 @@ class MigrateData:
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchTeam'""")
         sql_create_user_in_twitch_team_table = """
             CREATE TABLE IF NOT EXISTS UserInTwitchTeam (
-            team_twitch_alert_id integer NOT NULL,
+            team_twitch_alert_id text NOT NULL,
             twitch_username text NOT NULL,
             message_id text,
             PRIMARY KEY (team_twitch_alert_id, twitch_username),
