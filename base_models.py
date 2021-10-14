@@ -2,14 +2,14 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from KoalaBot import DATABASE_PATH
+from KoalaBot import DATABASE_PATH, DB_KEY
 from utils.KoalaDBManager import ENCRYPTED_DB
 import os
 
 if os.name == 'nt' or not ENCRYPTED_DB:
     protocol = "sqlite:///"
 else:
-    protocol = "sqlite+pysqlcipher:///"
+    protocol = "sqlite+pysqlcipher:///:"+DB_KEY+"@"
 
 Base = declarative_base()
 connection_url = protocol+DATABASE_PATH
