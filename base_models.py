@@ -8,11 +8,14 @@ import os
 
 if os.name == 'nt' or not ENCRYPTED_DB:
     protocol = "sqlite:///"
+    suffix = ""
 else:
     protocol = "sqlite+pysqlcipher:///:"+DB_KEY+"@"
+    suffix = "?cipher=aes-256-cfb&kdf_iter=64000"
+
 
 Base = declarative_base()
-connection_url = protocol+DATABASE_PATH
+connection_url = protocol+DATABASE_PATH+suffix
 engine = create_engine(connection_url, future=True, echo=True)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
