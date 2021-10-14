@@ -28,6 +28,7 @@ session = Session()
 
 class KoalaExtensions(Base):
     __tablename__ = 'KoalaExtensions'
+    __table_args__ = {'extend_existing': True}
     extension_id = Column(String, primary_key=True)
     subscription_required = Column(Integer)
     available = Column(Boolean)
@@ -36,5 +37,6 @@ class KoalaExtensions(Base):
 
 class GuildExtensions(Base):
     __tablename__ = 'GuildExtensions'
+    __table_args__ = {'extend_existing': True}
     extension_id = Column(String, ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
     guild_id = Column(Integer)
