@@ -11,7 +11,6 @@ import KoalaBot
 # Libs
 import discord
 from dotenv import load_dotenv
-from twitchAPI.twitch import Twitch
 from utils.KoalaColours import KOALA_GREEN
 
 # Constants

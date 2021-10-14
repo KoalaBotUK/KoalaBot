@@ -30,6 +30,7 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from pathlib import PurePath
 
 # Own modules
 from utils.KoalaDBManager import KoalaDBManager as DBManager
@@ -89,9 +90,9 @@ def format_db_path(directory: str, filename: str):
         directory = ""
 
     if os.name == 'nt' or not ENCRYPTED_DB:
-        return directory + "windows_" + filename
+        return str(PurePath(directory, "windows_" + filename))
     else:
-        return directory + filename
+        return str(PurePath(directory, filename))
 
 
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
@@ -121,6 +122,7 @@ intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
+logging.basicConfig(filename=format_db_path(CONFIG_DIR, 'KoalaBot.log'), format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
 

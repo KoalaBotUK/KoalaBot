@@ -1,10 +1,8 @@
 # Futures
 
 # Built-in/Generic Imports
-import os
 import re
 import logging
-import sys
 # from sqlalchemy import select, update, insert, and_, or_
 
 # Own modules
@@ -17,7 +15,6 @@ from base_models import session
 
 # Libs
 import discord
-from dotenv import load_dotenv
 
 # Constants
 

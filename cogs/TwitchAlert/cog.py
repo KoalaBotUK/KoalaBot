@@ -4,11 +4,9 @@ from discord.ext import commands
 # Futures
 
 # Built-in/Generic Imports
-import os
 import time
 import re
 import logging
-import sys
 
 # Own modules
 import KoalaBot
@@ -22,7 +20,6 @@ from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_R
 # Libs
 import discord
 from discord.ext import commands, tasks
-from dotenv import load_dotenv
 
 # Constants
 

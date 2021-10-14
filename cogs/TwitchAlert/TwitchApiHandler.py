@@ -1,16 +1,11 @@
 # Futures
 
 # Built-in/Generic Imports
-import os
-import logging
-import sys
 
 # Own modules
-import KoalaBot
 from .utils import split_to_100s
 
 # Libs
-from dotenv import load_dotenv
 from twitchAPI.twitch import Twitch
 
 # Constants

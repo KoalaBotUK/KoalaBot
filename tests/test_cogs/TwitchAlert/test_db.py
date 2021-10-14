@@ -16,7 +16,7 @@ import pytest_ordering as pytest
 import pytest
 import discord
 from discord.ext import commands
-from sqlalchemy import select, update, insert, and_, or_
+from sqlalchemy import select, update, insert, delete, and_, or_
 
 # Own modules
 from cogs.TwitchAlert.cog import TwitchAlert
@@ -49,6 +49,12 @@ def twitch_alert_db_manager(twitch_cog: TwitchAlert):
 
 @pytest.fixture
 def twitch_alert_db_manager_tables(twitch_alert_db_manager):
+    session.execute(delete(TwitchAlerts))
+    session.execute(delete(TeamInTwitchAlert))
+    session.execute(delete(UserInTwitchAlert))
+    session.execute(delete(UserInTwitchTeam))
+    session.commit()
+
     twitch_alert_db_manager.create_tables()
     return twitch_alert_db_manager
 
