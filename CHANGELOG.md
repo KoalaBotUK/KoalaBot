@@ -10,6 +10,10 @@ administrators
 - Previously optional `channel_id` arguments are now required in all but `list` & `viewMsg`
 - Internal API library changed, may increase delays in twitch API responses
 
+## [0.4.5] - 25-08-2021
+### Other
+- Small improvements
+
 ## [0.4.4] - 19-08-2021
 ### ReactForRole
 - Fix bug where reacting with a unicode emoji broke the whole message
@@ -240,7 +244,8 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.3...v0.4.4
+[0.4.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.4...v0.4.5
+[0.4.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.0...v0.4.1
