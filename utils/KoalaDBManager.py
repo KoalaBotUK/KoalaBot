@@ -162,7 +162,9 @@ class KoalaDBManager:
             REFERENCES KoalaExtensions(extension_id)
             ON DELETE CASCADE, 
             
-            FOREIGN KEY (guild_id) REFERENCES Guilds(guild_id)
+        CONSTRAINT fk_extensions
+            FOREIGN KEY (guild_id)
+            REFERENCES Guilds(guild_id)
         );"""
 
         sql_create_guild_welcome_messages_table = """

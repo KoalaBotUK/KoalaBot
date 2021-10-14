@@ -1,5 +1,8 @@
-import os
+import pathlib
 import shutil
+import logging
+import sys
+from pathlib import Path
 
 
 def get_largest_file_number():
@@ -8,13 +11,16 @@ def get_largest_file_number():
     still increase. Files are named as backup_X, so the most recent save would be saved under the largest value of X.
     :return: Single integer number of the largest file name.
     """
-    src = os.getcwd() + '\\KoalaDBBackups'
-    if len(os.listdir(src)) == 0:
+    src = Path().cwd() / 'KoalaDBBackups'
+    if not src.is_dir():
         return 0
     else:
-        values = [int(i[7:]) for i in os.listdir(src)]
+        filenames = [x.__str__().split('\\')[-1] for x in list(src.glob('*'))]
+        values = [int(i[7:]) for i in filenames]
         values.sort()
         return values[-1]
+
+#print(get_largest_file_number())
 
 
 class MigrateData:
@@ -26,14 +32,15 @@ class MigrateData:
         """
         self.database_manager = database_manager
 
-    def reset_db(self):
-        """
-        Deletes an errored Koala.db database in the cwd and replaces it with the most recently saved database
-        :return:
-        """
-        last_db = os.listdir(os.getcwd() + "KoalaDBBackups\\backup_" + str(get_largest_file_number()))[0]
-        os.remove(self.database_manager.db_file_path)
-        shutil.copy(last_db, os.getcwd())
+    # def reset_db(self):
+    #     """
+    #     Deletes an errored Koala.db database in the cwd and replaces it with the most recently saved database
+    #     :return:
+    #     """
+    #     last_file = "backup_" + str(get_largest_file_number())
+    #     last_db = pathlib.Path(f'./KoalaDBBackups/{last_file}/{str(self.database_manager.db_file_path)}')
+    #     pathlib.Path.unlink(self.database_manager.db_file_path)
+    #     shutil.copy(last_db, Path().cwd())
 
     def backup_data(self):
         """
@@ -41,13 +48,14 @@ class MigrateData:
         :return:
         """
         try:
-            file_number = str(get_largest_file_number() + 1)
-            if not os.path.exists('''KoalaDBBackups\\backup_''' + file_number):
-                os.makedirs('KoalaDBBackups\\backup_' + file_number)
-            des = os.getcwd() + '\\KoalaDBBackups\\backup_' + file_number
-            shutil.copy(self.database_manager.db_file_path, des)
+            file_name = "backup_" + str(get_largest_file_number() + 1)
+            src = pathlib.Path(f'./KoalaDBBackups/{file_name}')
+            if not src.is_dir():
+                src.mkdir()
+            shutil.copy(self.database_manager.db_file_path, src)
             return True
         except Exception as e:
+            logging.warning(f"MigrateData: {e}")
             return False
 
     def execute_update(self):
@@ -69,9 +77,9 @@ class MigrateData:
                 try:
                     func()
                 except Exception as e:
-                    print(e)
-                    self.reset_db()
-                    break
+                    logging.error(f"MigrateDatabase: {e}")
+                    sys.exit("Migration of database has failed")
+                    raise e
 
     def remake_guilds(self):
         """
@@ -89,23 +97,23 @@ class MigrateData:
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'""")
         count_guild_extension = self.database_manager.db_execute_select(
             """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'""")
-        if not count_guilds[0][0] == count_guild_extension[0][0] == 0:
-            if count_guilds[0][0] == 0:
-                data = self.database_manager.db_execute_select("""SELECT guild_id FROM GuildExtensions;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Guilds;""")
-                self.database_manager.db_execute_commit(sql_create_guilds_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
-                        args=[i, 0])
-            else:
-                data = self.database_manager.db_execute_select("""SELECT * FROM Guilds;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Guilds;""")
-                self.database_manager.db_execute_commit(sql_create_guilds_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
-                        args=list(i))
+        if count_guilds[0][0] == count_guild_extension[0][0] == 0:
+            self.database_manager.db_execute_commit(sql_create_guilds_table)
+        elif count_guilds[0][0] == 0 and count_guild_extension[0][0] == 1:
+            data = self.database_manager.db_execute_select("""SELECT guild_id FROM GuildExtensions;""")
+            self.database_manager.db_execute_commit(sql_create_guilds_table)
+            for i in data:
+                self.database_manager.db_execute_commit(
+                    """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
+                    args=[i, 0])
+        else:
+            data = self.database_manager.db_execute_select("""SELECT * FROM Guilds;""")
+            self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Guilds;""")
+            self.database_manager.db_execute_commit(sql_create_guilds_table)
+            for i in data:
+                self.database_manager.db_execute_commit(
+                    """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
+                    i)
 
     def remake_guild_extensions(self):
         """

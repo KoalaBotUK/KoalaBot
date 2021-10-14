@@ -13,38 +13,69 @@ TABLE_NAME = "{TABLE_NAME}"
 DROP_TABLE_SQL = f"DROP TABLE {TABLE_NAME}"
 
 
-def create_base_tables():
-    """
-    Creates all tables in schema before Migrate Database is applied, so that all tests can be completed from the same inital point
-    :return:
-    """
-    sql_create_koala_extensions_table = """
-    CREATE TABLE IF NOT EXISTS KoalaExtensions (
-    extension_id text NOT NULL PRIMARY KEY,
-    subscription_required integer NOT NULL,
-    available boolean NOT NULL,
-    enabled boolean NOT NULL
-    );"""
+def drop_table(table_name):
+    sql = f"DROP TABLE IF EXISTS {table_name}"
+    database_manager.db_execute_commit(sql)
+
+
+def create_old_guild_extensions():
+    create_old_koala_extensions()
+    populate_old_koala_extensions()
 
     sql_create_guild_extensions_table = """
     CREATE TABLE IF NOT EXISTS GuildExtensions (
-    extension_id text NOT NULL,
-    guild_id integer NOT NULL,
-    PRIMARY KEY (extension_id,guild_id),
-    CONSTRAINT fk_extensions
-        FOREIGN KEY (extension_id) 
-        REFERENCES KoalaExtensions (extension_id)
-        ON DELETE CASCADE 
+        extension_id text NOT NULL,
+        guild_id integer NOT NULL,
+        PRIMARY KEY (extension_id,guild_id),
+        CONSTRAINT fk_extensions
+            FOREIGN KEY (extension_id) 
+            REFERENCES KoalaExtensions (extension_id)
+            ON DELETE CASCADE 
     );"""
+    database_manager.db_execute_commit(sql_create_guild_extensions_table)
 
+
+def populate_old_guild_extensions():
+    guild_extension_data = [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2)]
+    for i in guild_extension_data:
+        database_manager.db_execute_commit('INSERT INTO GuildExtensions VALUES (?,?);', i)
+
+
+def create_old_koala_extensions():
+    sql_create_koala_extensions_table = """
+        CREATE TABLE IF NOT EXISTS KoalaExtensions (
+        extension_id text NOT NULL PRIMARY KEY,
+        subscription_required integer NOT NULL,
+        available boolean NOT NULL,
+        enabled boolean NOT NULL
+    );"""
+    database_manager.db_execute_commit(sql_create_koala_extensions_table)
+
+
+def populate_old_koala_extensions():
+    koala_extension_data = [(1, 0, True, True), (2, 1, True, True), (3, 0, True, True)]
+    for i in koala_extension_data:
+        database_manager.db_execute_commit('INSERT INTO KoalaExtensions VALUES (?,?,?,?);', i)
+
+
+def create_old_guild_welcome_message():
     sql_create_guild_welcome_messages_table = """
-    CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
-    guild_id integer NOT NULL PRIMARY KEY,
-    welcome_message text
+        CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
+        guild_id integer NOT NULL PRIMARY KEY,
+        welcome_message text
     );"""
     database_manager.db_execute_commit(sql_create_guild_welcome_messages_table)
-    database_manager.db_execute_commit(sql_create_koala_extensions_table)
-    database_manager.db_execute_commit(sql_create_guild_extensions_table)
+
+
+def populate_old_guild_welcome_message():
+    guild_welcome_messages_data = [(1, "This is a welcome message"), (2, "This is also a welcome message")]
+    for i in guild_welcome_messages_data:
+        database_manager.db_execute_commit('INSERT INTO GuildWelcomeMessages VALUES (?,?);', i)
+
+
+def create_old_guild_usage():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
 
     sql_create_usage_tables = """
             CREATE TABLE IF NOT EXISTS GuildUsage (
@@ -56,6 +87,17 @@ def create_base_tables():
             """
     database_manager.db_execute_commit(sql_create_usage_tables)
 
+
+def populate_old_guild_usage():
+    guild_usage_data = [(1, 1), (2, 2)]
+    for i in guild_usage_data:
+        database_manager.db_execute_commit('INSERT INTO GuildUsage VALUES (?,?);', i)
+
+
+def create_old_guild_colour_change_permissions():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
+
     sql_create_guild_colour_change_permissions_table = """
             CREATE TABLE IF NOT EXISTS GuildColourChangePermissions (
             guild_id integer NOT NULL,
@@ -63,6 +105,18 @@ def create_base_tables():
             PRIMARY KEY (guild_id, role_id),
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
             );"""
+    database_manager.db_execute_commit(sql_create_guild_colour_change_permissions_table)
+
+
+def populate_old_guild_colour_change_permissions():
+    guild_colour_change_permissions_data = [(1, 1), (1, 2), (2, 3), (2, 4)]
+    for i in guild_colour_change_permissions_data:
+        database_manager.db_execute_commit('INSERT INTO GuildColourChangePermissions VALUES (?,?);', i)
+
+
+def create_old_guild_invalid_custom_colour_roles():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
 
     sql_create_guild_colour_change_invalid_colours_table = """
             CREATE TABLE IF NOT EXISTS GuildInvalidCustomColourRoles (
@@ -71,8 +125,18 @@ def create_base_tables():
             PRIMARY KEY (guild_id, role_id),
             FOREIGN KEY (guild_id) REFERENCES GuildExtensions (guild_id)
             );"""
-    database_manager.db_execute_commit(sql_create_guild_colour_change_permissions_table)
     database_manager.db_execute_commit(sql_create_guild_colour_change_invalid_colours_table)
+
+
+def populate_old_guild_invalid_custom_colour_roles():
+    guild_invalid_custom_colour_roles_data = [(1, 5), (1, 6), (2, 7), (2, 8)]
+    for i in guild_invalid_custom_colour_roles_data:
+        database_manager.db_execute_commit('INSERT INTO GuildInvalidCustomColourRoles VALUES (?,?);', i)
+
+
+def create_old_guild_rfr_messages():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
 
     sql_create_guild_rfr_message_ids_table = """
             CREATE TABLE IF NOT EXISTS GuildRFRMessages (
@@ -85,6 +149,18 @@ def create_base_tables():
             UNIQUE (guild_id, channel_id, message_id)
             );
             """
+    database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
+
+
+def populate_old_guild_rfr_messages():
+    guild_rfr_messages_data = [(1, 1, 1, 1), (1, 2, 2, 2), (2, 3, 3, 3), (2, 3, 4, 4)]
+    for i in guild_rfr_messages_data:
+        database_manager.db_execute_commit('INSERT INTO GuildRFRMessages VALUES (?,?,?,?);', i)
+
+
+def create_old_rfr_message_emoji_roles():
+    create_old_guild_rfr_messages()
+    populate_old_guild_rfr_messages()
 
     sql_create_rfr_message_emoji_roles_table = """
             CREATE TABLE IF NOT EXISTS RFRMessageEmojiRoles (
@@ -97,6 +173,18 @@ def create_base_tables():
             UNIQUE  (emoji_role_id, role_id)
             );
             """
+    database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
+
+
+def populate_old_rfr_message_emoji_roles():
+    rfr_message_emoji_roles_data = [(1, "EMOJI1", 1), (2, "EMOJI2", 2), (3, "EMOJI3", 3), (4, "EMOJI4", 4)]
+    for i in rfr_message_emoji_roles_data:
+        database_manager.db_execute_commit('INSERT INTO RFRMessageEmojiRoles VALUES (?,?,?);', i)
+
+
+def create_old_guild_rfr_required_roles():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
 
     sql_create_rfr_required_roles_table = """
             CREATE TABLE IF NOT EXISTS GuildRFRRequiredRoles (
@@ -107,10 +195,16 @@ def create_base_tables():
             UNIQUE (guild_id, role_id)
             );
             """
-    database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
-    database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
     database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
 
+
+def populate_old_guild_rfr_required_roles():
+    guild_rfr_required_roles_data = [(1, 1), (1, 2), (2, 3), (2, 4)]
+    for i in guild_rfr_required_roles_data:
+        database_manager.db_execute_commit('INSERT INTO GuildRFRRequiredRoles VALUES (?,?);', i)
+
+
+def create_old_text_filter():
     sql_create_text_filter_table = """
             CREATE TABLE IF NOT EXISTS TextFilter (
             filtered_text_id text NOT NULL,
@@ -120,14 +214,33 @@ def create_base_tables():
             is_regex boolean NOT NULL,
             PRIMARY KEY (filtered_text_id)
             );"""
+    database_manager.db_execute_commit(sql_create_text_filter_table)
 
+
+def populate_old_text_filter():
+    text_filter_data = [("1", 1, "TEXT1", "TYPE1", True), ("2", 1, "TEXT2", "TYPE2", False),
+                        ("3", 2, "TEXT3", "TYPE3", True), ("4", 2, "TEXT4", "TYPE4", False)]
+    for i in text_filter_data:
+        database_manager.db_execute_commit('INSERT INTO TextFilter VALUES (?,?,?,?,?);', i)
+
+
+def create_old_text_filter_moderation():
     sql_create_mod_table = """
             CREATE TABLE IF NOT EXISTS TextFilterModeration (
             channel_id text NOT NULL,
             guild_id integer NOT NULL,
             PRIMARY KEY (channel_id)
             );"""
+    database_manager.db_execute_commit(sql_create_mod_table)
 
+
+def populate_old_text_filter_moderation():
+    text_filter_moderation_data = [("1", 1), ("2", 1), ("3", 2), ("4", 2)]
+    for i in text_filter_moderation_data:
+        database_manager.db_execute_commit('INSERT INTO TextFilterModeration VALUES (?,?);', i)
+
+
+def create_old_text_filter_ignore_list():
     sql_create_ignore_list_table = """
             CREATE TABLE IF NOT EXISTS TextFilterIgnoreList (
             ignore_id text NOT NULL,
@@ -136,9 +249,19 @@ def create_base_tables():
             ignore integer NOT NULL,
             PRIMARY KEY (ignore_id)
             );"""
-    database_manager.db_execute_commit(sql_create_text_filter_table)
-    database_manager.db_execute_commit(sql_create_mod_table)
     database_manager.db_execute_commit(sql_create_ignore_list_table)
+
+
+def populate_old_text_filter_ignore_list():
+    text_filter_ignore_list_data = [("1", 1, "TYPE1", 1), ("2", 1, "TYPE2", 1), ("3", 2, "TYPE3", 1),
+                                    ("4", 2, "TYPE4", 1)]
+    for i in text_filter_ignore_list_data:
+        database_manager.db_execute_commit('INSERT INTO TextFilterIgnoreList VALUES (?,?,?,?);', i)
+
+
+def create_old_twitch_alerts():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
 
     sql_create_twitch_alerts_table = """
             CREATE TABLE IF NOT EXISTS TwitchAlerts (
@@ -151,6 +274,18 @@ def create_base_tables():
                 REFERENCES GuildExtensions (guild_id)
                 ON DELETE CASCADE 
             );"""
+    database_manager.db_execute_commit(sql_create_twitch_alerts_table)
+
+
+def populate_old_twitch_alerts():
+    twitch_alerts_data = [(1, 1, "MESSAGE1"), (1, 2, "MESSAGE2"), (2, 3, "MESSAGE3"), (2, 4, "MESSAGE4")]
+    for i in twitch_alerts_data:
+        database_manager.db_execute_commit('INSERT INTO TwitchAlerts VALUES (?,?,?);', i)
+
+
+def create_old_user_in_twitch_alerts():
+    create_old_twitch_alerts()
+    populate_old_twitch_alerts()
 
     sql_create_user_in_twitch_alert_table = """
             CREATE TABLE IF NOT EXISTS UserInTwitchAlert (
@@ -164,6 +299,19 @@ def create_base_tables():
                 REFERENCES TwitchAlerts (channel_id)
                 ON DELETE CASCADE 
             );"""
+    database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
+
+
+def populate_old_user_in_twitch_alerts():
+    user_in_twitch_alerts_data = [(1, "USERNAME1", "MESSAGE1", 1), (2, "USERNAME2", "MESSAGE2", 2),
+                                  (3, "USERNAME3", "MESSAGE3", 3), (4, "USERNAME4", "MESSAGE4", 4)]
+    for i in user_in_twitch_alerts_data:
+        database_manager.db_execute_commit('INSERT INTO UserInTwitchAlert VALUES (?,?,?,?);', i)
+
+
+def create_old_team_in_twitch_alerts():
+    create_old_twitch_alerts()
+    populate_old_twitch_alerts()
 
     sql_create_team_in_twitch_alert_table = """
             CREATE TABLE IF NOT EXISTS TeamInTwitchAlert (
@@ -176,6 +324,20 @@ def create_base_tables():
                 REFERENCES TwitchAlerts (channel_id)
                 ON DELETE CASCADE 
             );"""
+    database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
+
+
+def populate_old_team_in_twitch_alerts():
+    team_in_twitch_alerts_data = [(1, "TEAM_NAME1", "MESSAGE1"), (2, "TEAM_NAME2", "MESSAGE2"),
+                                  (3, "TEAM_NAME3", "MESSAGE3"), (4, "TEAM_NAME4", "MESSAGE4")]
+    for i in team_in_twitch_alerts_data:
+        database_manager.db_execute_commit(
+            'INSERT INTO TeamInTwitchAlert (channel_id, twitch_team_name, custom_message) VALUES (?,?,?);', i)
+
+
+def create_old_user_in_twitch_team():
+    create_old_team_in_twitch_alerts()
+    populate_old_team_in_twitch_alerts()
 
     sql_create_user_in_twitch_team_table = """
             CREATE TABLE IF NOT EXISTS UserInTwitchTeam (
@@ -188,18 +350,33 @@ def create_base_tables():
                 REFERENCES TeamInTwitchAlert (team_twitch_alert_id)
                 ON DELETE CASCADE 
             );"""
-    database_manager.db_execute_commit(sql_create_twitch_alerts_table)
-    database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
-    database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
     database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
 
+
+def populate_old_user_in_twitch_team():
+    user_in_twitch_team_data = [("1", "USERNAME1", 1), ("2", "USERNAME2", 2), ("3", "USERNAME3", 3),
+                                ("4", "USERNAME4", 4)]
+    for i in user_in_twitch_team_data:
+        database_manager.db_execute_commit('INSERT INTO UserInTwitchTeam VALUES (?,?,?);', i)
+
+
+def create_old_verified_emails():
     verified_table = """
             CREATE TABLE IF NOT EXISTS verified_emails (
             u_id integer NOT NULL,
             email text NOT NULL,
             PRIMARY KEY (u_id, email)
             );"""
+    database_manager.db_execute_commit(verified_table)
 
+
+def populate_old_verified_emails():
+    verified_emails_data = [(1, "EMAIL1"), (2, "EMAIL2"), (3, "EMAIL3"), (4, "EMAIL4")]
+    for i in verified_emails_data:
+        database_manager.db_execute_commit('INSERT INTO verified_emails VALUES (?,?);', i)
+
+
+def create_old_non_verified_emails():
     non_verified_table = """
             CREATE TABLE IF NOT EXISTS non_verified_emails (
             u_id integer NOT NULL,
@@ -207,6 +384,19 @@ def create_base_tables():
             token text NOT NULL,
             PRIMARY KEY (token)
             );"""
+    database_manager.db_execute_commit(non_verified_table)
+
+
+def populate_old_non_verified_emails():
+    not_verified_emails_data = [(5, "EMAIL5", "TOKEN5"), (6, "EMAIL6", "TOKEN6"), (7, "EMAIL7", "TOKEN7"),
+                                (8, "EMAIL8", "TOKEN8")]
+    for i in not_verified_emails_data:
+        database_manager.db_execute_commit('INSERT INTO non_verified_emails VALUES (?,?,?);', i)
+
+
+def create_old_roles():
+    create_old_guild_extensions()
+    populate_old_guild_extensions()
 
     role_table = """
             CREATE TABLE IF NOT EXISTS roles (
@@ -216,18 +406,32 @@ def create_base_tables():
             PRIMARY KEY (s_id, r_id, email_suffix),
             FOREIGN KEY (s_id) REFERENCES GuildExtensions (guild_id)
             );"""
+    database_manager.db_execute_commit(role_table)
 
+
+def populate_old_roles():
+    roles_data = [(1, 1, "EMAIL_SUFFIX1"), (1, 2, "EMAIL_SUFFIX2"), (2, 3, "EMAIL_SUFFIX3"), (2, 4, "EMAIL_SUFFIX4")]
+    for i in roles_data:
+        database_manager.db_execute_commit('INSERT INTO roles VALUES (?,?,?);', i)
+
+
+def create_old_to_re_verify():
     re_verify_table = """
             CREATE TABLE IF NOT EXISTS to_re_verify (
             u_id integer NOT NULL,
             r_id text NOT NULL,
             PRIMARY KEY (u_id, r_id)
             );"""
-    database_manager.db_execute_commit(verified_table)
-    database_manager.db_execute_commit(non_verified_table)
-    database_manager.db_execute_commit(role_table)
     database_manager.db_execute_commit(re_verify_table)
 
+
+def populate_old_to_re_verify():
+    to_re_verify_data = [(1, 1), (2, 2)]
+    for i in to_re_verify_data:
+        database_manager.db_execute_commit('INSERT INTO to_re_verify VALUES (?,?);', i)
+
+
+def create_old_votes():
     vote_table = """
             CREATE TABLE IF NOT EXISTS Votes (
             vote_id integer NOT NULL,
@@ -238,13 +442,32 @@ def create_base_tables():
             voice_id integer,
             end_time float
             );"""
+    database_manager.db_execute_commit(vote_table)
 
+
+def populate_old_votes():
+    votes_data = [(1, 1, 1, "VOTE1", 1, 1, 0), (2, 1, 1, "VOTE2", 2, 2, 0), (3, 2, 2, "VOTE3", 3, 3, 0),
+                  (4, 2, 2, "VOTE4", 4, 4, 0)]
+    for i in votes_data:
+        database_manager.db_execute_commit('INSERT INTO Votes VALUES (?,?,?,?,?,?,?);', i)
+
+
+def create_old_vote_target_roles():
     role_table = """
             CREATE TABLE IF NOT EXISTS VoteTargetRoles (
             vote_id integer NOT NULL,
             role_id integer NOT NULL
             );"""
+    database_manager.db_execute_commit(role_table)
 
+
+def populate_old_vote_target_roles():
+    vote_target_roles_data = [(1, 1), (2, 2), (3, 3), (4, 4)]
+    for i in vote_target_roles_data:
+        database_manager.db_execute_commit('INSERT INTO VoteTargetRoles VALUES (?,?);', i)
+
+
+def create_old_vote_options():
     option_table = """
             CREATE TABLE IF NOT EXISTS VoteOptions (
             vote_id integer NOT NULL,
@@ -252,140 +475,38 @@ def create_base_tables():
             option_title text NOT NULL,
             option_desc text NOT NULL
             );"""
+    database_manager.db_execute_commit(option_table)
 
+
+def populate_old_vote_options():
+    vote_options_data = [(1, 1, "TITLE1", "DESCRIPTION1"), (2, 2, "TITLE2", "DESCRIPTION2"),
+                         (3, 3, "TITLE3", "DESCRIPTION3"), (4, 4, "TITLE4", "DESCRIPTION4")]
+    for i in vote_options_data:
+        database_manager.db_execute_commit('INSERT INTO VoteOptions VALUES (?,?,?,?);', i)
+
+
+def create_old_vote_sent():
     delivered_table = """
             CREATE TABLE IF NOT EXISTS VoteSent (
             vote_id integer NOT NULL,
             vote_receiver_id integer NOT NULL,
             vote_receiver_message integer NOT NULL
             );"""
-    database_manager.db_execute_commit(vote_table)
-    database_manager.db_execute_commit(role_table)
-    database_manager.db_execute_commit(option_table)
     database_manager.db_execute_commit(delivered_table)
 
-    pass
 
-
-def populate_tables():
-    guild_extension_data = [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2)]
-    for i in guild_extension_data:
-        database_manager.db_execute_commit('INSERT INTO GuildExtensions VALUES (?,?);', i)
-
-    guilds_data = []
-    # database_manager.db_execute_commit('INSERT INTO Guilds VALUES (?,?);', guild_extension_data)
-
-    guild_welcome_messages_data = [(1, "This is a welcome message"), (2, "This is also a welcome message")]
-    for i in guild_welcome_messages_data:
-        database_manager.db_execute_commit('INSERT INTO GuildWelcomeMessages VALUES (?,?);', i)
-
-    votes_data = [(1, 1, 1, "VOTE1", 1, 1, 0), (2, 1, 1, "VOTE2", 2, 2, 0), (3, 2, 2, "VOTE3", 3, 3, 0),
-                  (4, 2, 2, "VOTE4", 4, 4, 0)]
-    for i in votes_data:
-        database_manager.db_execute_commit('INSERT INTO Votes VALUES (?,?,?,?,?,?,?);', i)
-
+def populate_old_vote_sent():
     vote_sent_data = [(1, 5, "MESSAGE1"), (2, 6, "MESSAGE2"), (3, 7, "MESSAGE3"), (4, 8, "MESSAGE4")]
     for i in vote_sent_data:
         database_manager.db_execute_commit('INSERT INTO VoteSent VALUES (?,?,?);', i)
 
-    vote_options_data = [(1, 1, "TITLE1", "DESCRIPTION1"), (2, 2, "TITLE2", "DESCRIPTION2"),
-                         (3, 3, "TITLE3", "DESCRIPTION3"), (4, 4, "TITLE4", "DESCRIPTION4")]
-    for i in vote_options_data:
-        database_manager.db_execute_commit('INSERT INTO VoteOptions VALUES (?,?,?,?);', i)
 
-    vote_target_roles_data = [(1, 1), (2, 2), (3, 3), (4, 4)]
-    for i in vote_target_roles_data:
-        database_manager.db_execute_commit('INSERT INTO VoteTargetRoles VALUES (?,?);', i)
-
-    verified_emails_data = [(1, "EMAIL1"), (2, "EMAIL2"), (3, "EMAIL3"), (4, "EMAIL4")]
-    for i in verified_emails_data:
-        database_manager.db_execute_commit('INSERT INTO verified_emails VALUES (?,?);', i)
-
-    not_verified_emails_data = [(5, "EMAIL5", "TOKEN5"), (6, "EMAIL6", "TOKEN6"), (7, "EMAIL7", "TOKEN7"),
-                                (8, "EMAIL8", "TOKEN8")]
-    for i in not_verified_emails_data:
-        database_manager.db_execute_commit('INSERT INTO non_verified_emails VALUES (?,?,?);', i)
-
-    roles_data = [(1, 1, "EMAIL_SUFFIX1"), (1, 2, "EMAIL_SUFFIX2"), (2, 3, "EMAIL_SUFFIX3"), (2, 4, "EMAIL_SUFFIX4")]
-    for i in roles_data:
-        database_manager.db_execute_commit('INSERT INTO roles VALUES (?,?,?);', i)
-
-    to_re_verify_data = [(1, 1), (2, 2)]
-    for i in to_re_verify_data:
-        database_manager.db_execute_commit('INSERT INTO to_re_verify VALUES (?,?);', i)
-
-    twitch_alerts_data = [(1, 1, "MESSAGE1"), (1, 2, "MESSAGE2"), (2, 3, "MESSAGE3"), (2, 4, "MESSAGE4")]
-    for i in twitch_alerts_data:
-        database_manager.db_execute_commit('INSERT INTO TwitchAlerts VALUES (?,?,?);', i)
-
-    user_in_twitch_alerts_data = [(1, "USERNAME1", "MESSAGE1", 1), (2, "USERNAME2", "MESSAGE2", 2),
-                                  (3, "USERNAME3", "MESSAGE3", 3), (4, "USERNAME4", "MESSAGE4", 4)]
-    for i in user_in_twitch_alerts_data:
-        database_manager.db_execute_commit('INSERT INTO UserInTwitchAlert VALUES (?,?,?,?);', i)
-
-    team_in_twitch_alerts_data = [(1, "TEAM_NAME1", "MESSAGE1"), (2, "TEAM_NAME2", "MESSAGE2"),
-                                  (3, "TEAM_NAME3", "MESSAGE3"), (4, "TEAM_NAME4", "MESSAGE4")]
-    for i in team_in_twitch_alerts_data:
-        database_manager.db_execute_commit(
-            'INSERT INTO TeamInTwitchAlert (channel_id, twitch_team_name, custom_message) VALUES (?,?,?);', i)
-
-    user_in_twitch_team_data = [("1", "USERNAME1", 1), ("2", "USERNAME2", 2), ("3", "USERNAME3", 3), ("4", "USERNAME4", 4)]
-    for i in user_in_twitch_team_data:
-        database_manager.db_execute_commit('INSERT INTO UserInTwitchTeam VALUES (?,?,?);', i)
-
-    text_filter_data = [("1", 1, "TEXT1", "TYPE1", True), ("2", 1, "TEXT2", "TYPE2", False),
-                        ("3", 2, "TEXT3", "TYPE3", True), ("4", 2, "TEXT4", "TYPE4", False)]
-    for i in text_filter_data:
-        database_manager.db_execute_commit('INSERT INTO TextFilter VALUES (?,?,?,?,?);', i)
-
-    text_filter_moderation_data = [("1", 1), ("2", 1), ("3", 2), ("4", 2)]
-    for i in text_filter_moderation_data:
-        database_manager.db_execute_commit('INSERT INTO TextFilterModeration VALUES (?,?);', i)
-
-    text_filter_ignore_list_data = [("1", 1, "TYPE1", 1), ("2", 1, "TYPE2", 1), ("3", 2, "TYPE3", 1), ("4", 2, "TYPE4", 1)]
-    for i in text_filter_ignore_list_data:
-        database_manager.db_execute_commit('INSERT INTO TextFilterIgnoreList VALUES (?,?,?,?);', i)
-
-    guild_rfr_messages_data = [(1, 1, 1, 1), (1, 2, 2, 2), (2, 3, 3, 3), (2, 3, 4, 4)]
-    for i in guild_rfr_messages_data:
-        database_manager.db_execute_commit('INSERT INTO GuildRFRMessages VALUES (?,?,?,?);', i)
-
-    rfr_message_emoji_roles_data = [(1, "EMOJI1", 1), (2, "EMOJI2", 2), (3, "EMOJI3", 3), (4, "EMOJI4", 4)]
-    for i in rfr_message_emoji_roles_data:
-        database_manager.db_execute_commit('INSERT INTO RFRMessageEmojiRoles VALUES (?,?,?);', i)
-
-    guild_rfr_required_roles_data = [(1, 1), (1, 2), (2, 3), (2, 4)]
-    for i in guild_rfr_required_roles_data:
-        database_manager.db_execute_commit('INSERT INTO GuildRFRRequiredRoles VALUES (?,?);', i)
-
-    guild_colour_change_permissions_data = [(1, 1), (1, 2), (2, 3), (2, 4)]
-    for i in guild_colour_change_permissions_data:
-        database_manager.db_execute_commit('INSERT INTO GuildColourChangePermissions VALUES (?,?);', i)
-
-    guild_invalid_custom_colour_roles_data = [(1, 5), (1, 6), (2, 7), (2, 8)]
-    for i in guild_invalid_custom_colour_roles_data:
-        database_manager.db_execute_commit('INSERT INTO GuildInvalidCustomColourRoles VALUES (?,?);', i)
-
-    guild_usage_data = [(1, 1), (2, 2)]
-    for i in guild_usage_data:
-        database_manager.db_execute_commit('INSERT INTO GuildUsage VALUES (?,?);', i)
-
-
-def drop_all_tables():
-    table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
-    for table, in table_names:
-        if "sqlite_" not in table:
-            sql = DROP_TABLE_SQL.replace(TABLE_NAME, table)
-            database_manager.db_execute_commit(sql)
-
-
-@pytest.fixture(autouse=True)
-def run_before_and_after_tests():
-    drop_all_tables()
-    create_base_tables()
-    populate_tables()
-    yield
-    drop_all_tables()
+# @pytest.fixture(autouse=True)
+# def run_before_and_after_tests():
+#     drop_table("GuildExtensions")
+#     create_old_guild_extensions()
+#     yield
+#     drop_table("GuildExtensions")
 
 
 @pytest.mark.asyncio()
@@ -401,8 +522,7 @@ async def test_remake_guild_extensions():
 
 @pytest.mark.asyncio()
 async def test_remake_guilds_extensions_no_table():
-    drop_table = """DROP TABLE GuildExtensions"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildExtensions")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'""")
     assert 0 == count_before[0][0]
@@ -425,8 +545,7 @@ async def test_remake_guild_welcome_message():
 
 @pytest.mark.asyncio()
 async def test_remake_guild_welcome_message_no_table():
-    drop_table = """DROP TABLE GuildWelcomeMessages"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildWelcomeMessages")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildWelcomeMessages'""")
     assert 0 == count_before[0][0]
@@ -451,8 +570,7 @@ async def test_remake_votes():
 
 @pytest.mark.asyncio()
 async def test_remake_votes_no_table():
-    drop_table = """DROP TABLE Votes"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("Votes")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Votes'""")
     assert 0 == count_before[0][0]
@@ -476,8 +594,7 @@ async def test_remake_vote_sent():
 
 @pytest.mark.asyncio()
 async def test_remake_vote_sent_no_table():
-    drop_table = """DROP TABLE VoteSent"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("VoteSent")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteSent'""")
     assert 0 == count_before[0][0]
@@ -502,8 +619,7 @@ async def test_remake_vote_options():
 
 @pytest.mark.asyncio()
 async def test_remake_vote_options_no_table():
-    drop_table = """DROP TABLE VoteOptions"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("VoteOptions")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteOptions'""")
     assert 0 == count_before[0][0]
@@ -526,8 +642,7 @@ async def test_remake_vote_target_roles():
 
 @pytest.mark.asyncio()
 async def test_remake_vote_target_roles_no_table():
-    drop_table = """DROP TABLE VoteTargetRoles"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("VoteTargetRoles")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteTargetRoles'""")
     assert 0 == count_before[0][0]
@@ -550,8 +665,7 @@ async def test_remake_verified_emails_old_name():
 
 @pytest.mark.asyncio()
 async def test_remake_verified_emails_old_name_no_table():
-    drop_table = """DROP TABLE verified_emails"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("verified_emails")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VerifiedEmails'""")
     assert 0 == count_before[0][0]
@@ -579,8 +693,7 @@ async def test_remake_verified_emails_new_name():
 @pytest.mark.asyncio()
 async def test_remake_verified_emails_new_name_no_table():
     database_manager.db_execute_commit("""ALTER TABLE verified_emails RENAME TO VerifiedEmails;""")
-    drop_table = """DROP TABLE VerifiedEmails"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("VerifiedEmails")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VerifiedEmails'""")
     assert 0 == count_before[0][0]
@@ -605,8 +718,7 @@ async def test_remake_not_verified_emails_old_name():
 
 @pytest.mark.asyncio()
 async def test_remake_not_verified_emails_old_name_no_table():
-    drop_table = """DROP TABLE non_verified_emails"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("non_verified_emails")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='NonVerifiedEmails'""")
     assert 0 == count_before[0][0]
@@ -636,8 +748,7 @@ async def test_remake_not_verified_emails_new_name():
 @pytest.mark.asyncio()
 async def test_remake_not_verified_emails_new_name_no_table():
     database_manager.db_execute_commit("""ALTER TABLE non_verified_emails RENAME TO NonVerifiedEmails;""")
-    drop_table = """DROP TABLE NonVerifiedEmails"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("NonVerifiedEmails")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='NonVerifiedEmails'""")
     assert 0 == count_before[0][0]
@@ -662,8 +773,7 @@ async def test_remake_role_old_name():
 
 @pytest.mark.asyncio()
 async def test_remake_role_old_name_no_table():
-    drop_table = """DROP TABLE roles"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("roles")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Roles'""")
     assert 0 == count_before[0][0]
@@ -693,8 +803,7 @@ async def test_remake_role_new_name():
 @pytest.mark.asyncio()
 async def test_remake_role_new_name_no_table():
     database_manager.db_execute_commit("""ALTER TABLE roles RENAME TO Roles;""")
-    drop_table = """DROP TABLE Roles"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("Roles")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Roles'""")
     assert 0 == count_before[0][0]
@@ -717,8 +826,7 @@ async def test_remake_to_re_verify_old_name():
 
 @pytest.mark.asyncio()
 async def test_remake_to_re_verify_old_name_no_table():
-    drop_table = """DROP TABLE to_re_verify"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("to_re_verify")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='ToReVerify'""")
     assert 0 == count_before[0][0]
@@ -746,8 +854,7 @@ async def test_remake_to_re_verify_new_name():
 @pytest.mark.asyncio()
 async def test_remake_to_re_verify_new_name_no_table():
     database_manager.db_execute_commit("""ALTER TABLE to_re_verify RENAME TO ToReVerify;""")
-    drop_table = """DROP TABLE ToReVerify"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("ToReVerify")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='ToReVerify'""")
     assert 0 == count_before[0][0]
@@ -771,8 +878,7 @@ async def test_remake_twitch_alert():
 
 @pytest.mark.asyncio()
 async def test_remake_twitch_alert_no_table():
-    drop_table = """DROP TABLE TwitchAlerts"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("TwitchAlerts")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TwitchAlerts'""")
     assert 0 == count_before[0][0]
@@ -797,8 +903,7 @@ async def test_remake_user_in_twitch_alert():
 
 @pytest.mark.asyncio()
 async def test_remake_user_in_twitch_alert_no_table():
-    drop_table = """DROP TABLE UserInTwitchAlert"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("UserInTwitchAlert")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchAlert'""")
     assert 0 == count_before[0][0]
@@ -823,8 +928,7 @@ async def test_remake_team_in_twitch_alert():
 
 @pytest.mark.asyncio()
 async def test_remake_team_in_twitch_alert_no_table():
-    drop_table = """DROP TABLE TeamInTwitchAlert"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("TeamInTwitchAlert")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TeamInTwitchAlert'""")
     assert 0 == count_before[0][0]
@@ -836,19 +940,20 @@ async def test_remake_team_in_twitch_alert_no_table():
 
 @pytest.mark.asyncio()
 async def test_remake_user_in_twitch_team():
-    before_expected_result = [("1", "USERNAME1", 1), ("2", "USERNAME2", 2), ("3", "USERNAME3", 3), ("4", "USERNAME4", 4)]
+    before_expected_result = [("1", "USERNAME1", 1), ("2", "USERNAME2", 2), ("3", "USERNAME3", 3),
+                              ("4", "USERNAME4", 4)]
     before_data_stored = database_manager.db_execute_select("SELECT * FROM UserInTwitchTeam")
     assert before_data_stored == before_expected_result
     migrate_database.remake_user_in_twitch_team()
-    after_expected_result = [("1", "USERNAME1", "1"), ("2", "USERNAME2", "2"), ("3", "USERNAME3", "3"), ("4", "USERNAME4", "4")]
+    after_expected_result = [("1", "USERNAME1", "1"), ("2", "USERNAME2", "2"), ("3", "USERNAME3", "3"),
+                             ("4", "USERNAME4", "4")]
     after_data_stored = database_manager.db_execute_select("SELECT * FROM UserInTwitchTeam")
     assert after_data_stored == after_expected_result
 
 
 @pytest.mark.asyncio()
 async def test_remake_user_in_twitch_team_no_table():
-    drop_table = """DROP TABLE UserInTwitchTeam"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("UserInTwitchTeam")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchTeam'""")
     assert 0 == count_before[0][0]
@@ -873,8 +978,7 @@ async def test_remake_text_filter():
 
 @pytest.mark.asyncio()
 async def test_remake_text_filter_no_table():
-    drop_table = """DROP TABLE TextFilter"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("TextFilter")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilter'""")
     assert 0 == count_before[0][0]
@@ -897,8 +1001,7 @@ async def test_remake_text_filter_moderation():
 
 @pytest.mark.asyncio()
 async def test_remake_text_filter_moderation_no_table():
-    drop_table = """DROP TABLE TextFilterModeration"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("TextFilterModeration")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilterModeration'""")
     assert 0 == count_before[0][0]
@@ -922,8 +1025,7 @@ async def test_remake_text_filter_ignore_list():
 
 @pytest.mark.asyncio()
 async def test_remake_text_filter_ignore_list_no_table():
-    drop_table = """DROP TABLE TextFilterIgnoreList"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("TextFilterIgnoreList")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilterIgnoreList'""")
     assert 0 == count_before[0][0]
@@ -946,8 +1048,7 @@ async def test_remake_guild_rfr_messages():
 
 @pytest.mark.asyncio()
 async def test_remake_guild_rfr_messages_no_table():
-    drop_table = """DROP TABLE GuildRFRMessages"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildRFRMessages")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildRFRMessages'""")
     assert 0 == count_before[0][0]
@@ -970,8 +1071,7 @@ async def test_remake_rfr_message_emoji_roles():
 
 @pytest.mark.asyncio()
 async def test_remake_rfr_message_emoji_roles_no_table():
-    drop_table = """DROP TABLE RFRMessageEmojiRoles"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("RFRMessageEmojiRoles")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='RFRMessageEmojiRoles'""")
     assert 0 == count_before[0][0]
@@ -994,8 +1094,7 @@ async def test_remake_guild_rfr_required_roles():
 
 @pytest.mark.asyncio()
 async def test_remake_guild_rfr_required_roles_no_table():
-    drop_table = """DROP TABLE GuildRFRRequiredRoles"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildRFRRequiredRoles")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildRFRRequiredRoles'""")
     assert 0 == count_before[0][0]
@@ -1018,8 +1117,7 @@ async def test_remake_guild_colour_change_permissions():
 
 @pytest.mark.asyncio()
 async def test_remake_guild_colour_change_permissions_no_table():
-    drop_table = """DROP TABLE GuildColourChangePermissions"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildColourChangePermissions")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildColourChangePermissions'""")
     assert 0 == count_before[0][0]
@@ -1042,8 +1140,7 @@ async def test_remake_guild_invalid_custom_colour_roles():
 
 @pytest.mark.asyncio()
 async def test_remake_guild_invalid_custom_colour_roles_no_table():
-    drop_table = """DROP TABLE GuildInvalidCustomColourRoles"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildInvalidCustomColourRoles")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildInvalidCustomColourRoles'""")
     assert 0 == count_before[0][0]
@@ -1066,8 +1163,7 @@ async def test_remake_guild_usage():
 
 @pytest.mark.asyncio()
 async def test_remake_guild_usage_no_table():
-    drop_table = """DROP TABLE GuildUsage"""
-    database_manager.db_execute_commit(drop_table)
+    drop_table("GuildUsage")
     count_before = database_manager.db_execute_select(
         """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildUsage'""")
     assert 0 == count_before[0][0]
