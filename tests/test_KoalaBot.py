@@ -27,7 +27,7 @@ from utils.KoalaDBManager import KoalaDBManager
 
 # Variables
 utils_cog = None
-DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
+DBManager = KoalaBot.database_manager
 DBManager.create_base_tables()
 
 
@@ -155,6 +155,7 @@ def test_not_admin_is_admin(test_ctx):
 def test_load_all_cogs():
     test_koala = KoalaBot
     test_koala.COGS_DIR = "tests/fake_load_all_cogs"
+    test_koala.ENABLED_COGS = []
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
         test_koala.load_all_cogs()
     mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
@@ -187,6 +188,26 @@ async def test_dm_empty_group_message():
     x = await KoalaBot.dm_group_message([], test_message)
     assert dpytest.verify().message().nothing()
     assert x == 0
+
+@mock.patch("os.name", "posix")
+@mock.patch("KoalaBot.ENCRYPTED_DB", False)
+def test_format_db_path_linux_absolute_unencrypted():
+    db_path = KoalaBot.format_db_path("/test_dir/", "test.db")
+    assert db_path == "/test_dir/windows_test.db"
+
+
+@mock.patch("os.name", "posix")
+@mock.patch("KoalaBot.ENCRYPTED_DB", True)
+def test_format_db_path_linux_absolute_encrypted():
+    db_path = KoalaBot.format_db_path("/test_dir/", "test.db")
+    assert db_path == "/test_dir/test.db"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("KoalaBot.ENCRYPTED_DB", True)
+def test_format_db_path_windows():
+    db_path = KoalaBot.format_db_path("/test_dir/", "test.db")
+    assert db_path == "/test_dir/windows_test.db"
 
 
 @pytest.fixture(scope='session', autouse=True)

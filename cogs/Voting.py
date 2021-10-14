@@ -19,7 +19,7 @@ import parsedatetime.parsedatetime
 import KoalaBot
 
 # Constants
-logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'Vote.log')
+# logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'Vote.log')
 load_dotenv()
 MIN_ID_VALUE = 100000000000000000
 MAX_ID_VALUE = 999999999999999999

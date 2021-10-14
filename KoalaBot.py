@@ -74,8 +74,29 @@ else:
     CONFIG_DIR = ""
 
 logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
+ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
+
+
+def format_db_path(directory: str, filename: str):
+    """
+    Format the path to be used by the database.
+
+    This will be parsed directly into sqlite3 create connection.
+
+    :param directory: The directory for the database file
+    :param filename: The filename of the given database
+    """
+    if not directory:
+        directory = ""
+
+    if os.name == 'nt' or not ENCRYPTED_DB:
+        return directory + "windows_" + filename
+    else:
+        return directory + filename
+
+
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ.get('BOT_OWNER')
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
@@ -86,11 +107,12 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
-DATABASE_PATH = "Koala.db"
+DATABASE_PATH = format_db_path(CONFIG_DIR, "Koala.db")
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
+ENABLED_COGS=["cogs.TwitchAlert.cog"]
 
 # Variables
 started = False
@@ -100,7 +122,7 @@ intent.members = True
 intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
-database_manager = DBManager(DATABASE_PATH, DB_KEY, CONFIG_DIR)
+database_manager = DBManager(DATABASE_PATH, DB_KEY)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
@@ -152,6 +174,10 @@ def load_all_cogs():
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py') and filename not in UNRELEASED:
             client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
+
+    # New Approach
+    for cog in ENABLED_COGS:
+        client.load_extension(cog)
 
 
 def get_channel_from_id(id):

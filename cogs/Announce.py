@@ -17,8 +17,8 @@ from utils.KoalaUtils import extract_id, wait_for_message
 from utils import KoalaColours
 import time
 
-logging.basicConfig(filename='Announce.log')
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+# logging.basicConfig(filename='Announce.log')
+# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 # Own modules
 import KoalaBot

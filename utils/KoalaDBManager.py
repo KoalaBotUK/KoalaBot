@@ -29,22 +29,6 @@ else:
 
 # Variables
 
-def format_db_path(directory: str, filename: str):
-    """
-    Format the path to be used by the database.
-
-    This will be parsed directly into sqlite3 create connection.
-
-    :param directory: The directory for the database file
-    :param filename: The filename of the given database
-    """
-    if not directory:
-        directory = ""
-
-    if os.name == 'nt' or not ENCRYPTED_DB:
-        return directory + "windows_" + filename
-    else:
-        return directory + filename
 
 
 class KoalaDBManager:
@@ -52,8 +36,8 @@ class KoalaDBManager:
     The database manager for KoalaBot
     """
 
-    def __init__(self, db_filename, db_secret_key, db_directory=None):
-        self.db_file_path = format_db_path(db_directory, db_filename)
+    def __init__(self, db_filename, db_secret_key):
+        self.db_file_path = db_filename
         self.db_secret_key = db_secret_key
         self.create_base_tables()
 

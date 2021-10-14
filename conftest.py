@@ -4,6 +4,7 @@ A configuration file for methods useful in all testing with pytest
 # Futures
 
 # Built-in/Generic Imports
+import os
 
 # Libs
 import pytest
@@ -33,3 +34,9 @@ def setup_is_dpytest():
     KoalaBot.is_dpytest = True
     yield
     KoalaBot.is_dpytest = False
+
+
+@pytest.fixture(scope="session", autouse=True)
+def delete_database():
+    print("deleting database")
+    os.remove(KoalaBot.DATABASE_PATH)
