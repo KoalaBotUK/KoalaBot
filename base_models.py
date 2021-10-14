@@ -10,7 +10,7 @@ if os.name == 'nt' or not ENCRYPTED_DB:
     protocol = "sqlite:///"
     suffix = ""
 else:
-    protocol = "sqlite+pysqlcipher://:"+DB_KEY+"@/"
+    protocol = "sqlite+pysqlcipher://:x'"+DB_KEY+"'@/"
     suffix = "?cipher=aes-256-cfb&kdf_iter=64000"
 
 
