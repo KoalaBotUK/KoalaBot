@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from KoalaBot import DATABASE_PATH, DB_KEY
 from utils.KoalaDBManager import ENCRYPTED_DB
 import os
+import logging
 
 if os.name == 'nt' or not ENCRYPTED_DB:
     protocol = "sqlite:///"
@@ -16,6 +17,9 @@ else:
 
 Base = declarative_base()
 connection_url = protocol+DATABASE_PATH+suffix
+logging.error("connection_url"+connection_url)
+print("connection_url"+connection_url)
+
 engine = create_engine(connection_url, future=True, echo=True)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
