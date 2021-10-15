@@ -9,14 +9,12 @@ import logging
 
 if os.name == 'nt' or not ENCRYPTED_DB:
     protocol = "sqlite:///"
-    suffix = ""
 else:
-    protocol = "sqlite+pysqlcipher://:x'"+DB_KEY+"'@//"
-    suffix = "?cipher=aes-256-cfb&kdf_iter=64000"
+    protocol = "sqlite+pysqlcipher://:x'"+DB_KEY+"'@/"
 
 
 Base = declarative_base()
-connection_url = protocol+DATABASE_PATH+suffix
+connection_url = protocol+DATABASE_PATH
 logging.error("connection_url"+connection_url)
 print("connection_url"+connection_url)
 
