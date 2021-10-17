@@ -47,8 +47,6 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
           sudo apt-get install libsqlcipher-dev
-          touch Koala.db
-          chmod 777 -R .
         elif  [ "$RUNNER_OS" == "macOS" ]; then
           echo "ENCRYPTED=False" >> $GITHUB_ENV
         fi
@@ -76,7 +74,11 @@ jobs:
         TWITCH_SECRET: ${{ secrets.TWITCH_SECRET }}
         TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
       run: |
-        pytest --cov=./ --cov-report=xml
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo pytest --cov=./ --cov-report=xml
+        else
+          pytest --cov=./ --cov-report=xml
+        fi
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
