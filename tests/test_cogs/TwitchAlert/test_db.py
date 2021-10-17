@@ -161,7 +161,9 @@ def test_add_team_to_ta(twitch_alert_db_manager_tables):
     sql_select_team = select(TeamInTwitchAlert.custom_message)\
         .where(and_(TeamInTwitchAlert.channel_id == 566, TeamInTwitchAlert.twitch_team_name == 'faze'))
 
-    assert session.execute(sql_select_team).fetchone().custom_message is None
+    result: TeamInTwitchAlert = session.execute(sql_select_team).fetchone()
+
+    assert result.custom_message is None
 
 
 def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_id=573, guild_id=574):
@@ -171,7 +173,9 @@ def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_i
     sql_select_team = select(TeamInTwitchAlert.custom_message)\
         .where(and_(TeamInTwitchAlert.channel_id == channel_id, TeamInTwitchAlert.twitch_team_name == 'faze'))
 
-    assert session.execute(sql_select_team).fetchone().custom_message == "Message here"
+    result: TeamInTwitchAlert = session.execute(sql_select_team).fetchone()
+
+    assert result.custom_message == "Message here"
 
 
 @pytest.mark.asyncio()

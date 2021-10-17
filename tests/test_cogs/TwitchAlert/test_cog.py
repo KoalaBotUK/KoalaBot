@@ -15,8 +15,7 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from cogs import TwitchAlert as TwitchAlert
-from utils import KoalaDBManager
-from utils.KoalaColours import *
+from utils.KoalaColours import KOALA_GREEN
 
 # Constants
 DB_PATH = "Koala.db"
