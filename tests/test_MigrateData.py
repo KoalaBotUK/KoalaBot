@@ -1628,21 +1628,19 @@ async def test_backup_data():
     Next tests that the data in the two tables is copied across correctly.
     :return:
     """
-    db1 = pathlib.Path(f'./{database_manager.db_file_path}')
     migrate_database.backup_data()
     db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn1 = sqlite3.connect(db1)
     conn2 = sqlite3.connect(db2)
 
-    expected = conn1.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
+    expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
     saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
     assert expected == saved_db_result
 
-    table_names = conn1.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+    table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
     for table_name, in table_names:
         if table_name not in ["sqlite_master", "sqlite_sequence"]:
-            assert conn1.execute(f"pragma table_info('{table_name}')").fetchall() == conn2.execute(f"pragma table_info('{table_name}')").fetchall()
+            assert database_manager.db_execute_select(f"pragma table_info('{table_name}')") == conn2.execute(f"pragma table_info('{table_name}')").fetchall()
 
 
 @pytest.mark.asyncio()
@@ -1656,20 +1654,18 @@ async def test_rollback_database():
     broken_db_path = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/brokenKoalaDB.db')
     assert broken_db_path.is_file()
 
-    db1 = pathlib.Path(f'./{database_manager.db_file_path}')
     db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn1 = sqlite3.connect(db1)
     conn2 = sqlite3.connect(db2)
 
-    expected = conn1.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
+    expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
     saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
     assert expected == saved_db_result
 
-    table_names = conn1.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+    table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
     for table_name, in table_names:
         if table_name not in ["sqlite_master", "sqlite_sequence"]:
-            assert conn1.execute(f"pragma table_info('{table_name}')").fetchall() == conn2.execute(
+            assert database_manager.db_execute_select(f"pragma table_info('{table_name}')") == conn2.execute(
                 f"pragma table_info('{table_name}')").fetchall()
 
     drop_table("Guilds")
