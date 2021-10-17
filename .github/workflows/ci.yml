@@ -74,7 +74,7 @@ jobs:
         TWITCH_SECRET: ${{ secrets.TWITCH_SECRET }}
         TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
       run: |
-        pytest --cov=./ --cov-report=xml
+        sudo pytest --cov=./ --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
