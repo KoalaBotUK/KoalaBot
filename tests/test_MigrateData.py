@@ -1662,18 +1662,20 @@ async def test_backup_data():
     :return:
     """
     migrate_database.backup_data()
-    db2 = pathlib.PurePath(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
+    db2 = pathlib.PurePath(f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn2 = sqlite3.connect(str(db2))
+    conn, c = create_connection(str(db2))
 
     expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
-    saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
+    c.execute("""select sql from sqlite_master where type = 'table'""")
+    saved_db_result = c.fetchall()
     assert expected == saved_db_result
 
     table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
     for table_name, in table_names:
         if table_name not in ["sqlite_master", "sqlite_sequence"]:
-            assert database_manager.db_execute_select(f"pragma table_info('{table_name}')") == conn2.execute(f"pragma table_info('{table_name}')").fetchall()
+            assert database_manager.db_execute_select(f"pragma table_info('{table_name}')") == c.execute(
+                f"pragma table_info('{table_name}')").fetchall()
 
 
 @pytest.mark.asyncio()
