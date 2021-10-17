@@ -38,9 +38,9 @@ def setup_is_dpytest():
     KoalaBot.is_dpytest = False
 
 
-@pytest.fixture(scope="session", autouse=True)
-def delete_database():
-    print("deleting database")
-    os.remove(KoalaBot.DATABASE_PATH)
-    create_db(KoalaBot.DATABASE_PATH)
-    Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
+# @pytest.fixture(scope="session", autouse=True)
+# def delete_database():
+#     print("deleting database")
+#     os.remove(KoalaBot.DATABASE_PATH)
+#     create_db(KoalaBot.DATABASE_PATH)
+#     Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
