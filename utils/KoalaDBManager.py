@@ -12,6 +12,7 @@ import os
 
 # Libs
 from dotenv import load_dotenv
+from pathlib import Path
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:
@@ -30,6 +31,11 @@ else:
 # Variables
 
 
+def create_db(file_path):
+    Path(file_path).touch()
+    if not (os.name == 'nt' or not ENCRYPTED_DB):
+        os.system("chown www-data "+file_path)
+        os.system("chmod 777 "+file_path)
 
 class KoalaDBManager:
     """
@@ -37,6 +43,7 @@ class KoalaDBManager:
     """
 
     def __init__(self, db_filename, db_secret_key):
+        create_db(db_filename)
         self.db_file_path = db_filename
         self.db_secret_key = db_secret_key
         self.create_base_tables()

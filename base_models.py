@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from KoalaBot import DATABASE_PATH, DB_KEY
-from utils.KoalaDBManager import ENCRYPTED_DB
+from utils.KoalaDBManager import ENCRYPTED_DB, create_db
 import os
 import logging
 
@@ -17,6 +17,7 @@ Base = declarative_base()
 connection_url = protocol+DATABASE_PATH
 logging.error("connection_url"+connection_url)
 print("connection_url"+connection_url)
+create_db(DATABASE_PATH)
 
 engine = create_engine(connection_url, future=True, echo=True)
 Session = sessionmaker(future=True)
