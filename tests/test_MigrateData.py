@@ -1654,7 +1654,8 @@ async def test_rollback_database():
     broken_db_path = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/brokenKoalaDB.db')
     assert broken_db_path.is_file()
 
-    db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
+    backup_filename = f'backup_{migrate_database.get_largest_file_number()}'
+    db2 = pathlib.Path() / 'KoalaDBBackups' / backup_filename / database_manager.db_file_path
 
     conn2 = sqlite3.connect(db2)
 
