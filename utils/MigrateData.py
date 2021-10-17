@@ -28,8 +28,8 @@ class MigrateData:
         if not src.is_dir():
             return 0
         else:
-            filenames = [x.__str__().split('\\')[-1] for x in list(src.glob('*'))]
-            values = [int(i[7:]) for i in filenames]
+            files = list(src.glob('*'))
+            values = [int(pathlib.Path(x).name[7:]) for x in files]
             values.sort()
             return values[-1]
 
