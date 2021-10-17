@@ -1,9 +1,6 @@
-import os
 import pathlib
 import random
-import shutil
 import sqlite3
-from difflib import Differ
 
 import pytest
 
@@ -11,7 +8,7 @@ import KoalaBot
 from utils.KoalaDBManager import KoalaDBManager
 from utils.MigrateData import MigrateData
 
-database_manager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
+database_manager = KoalaDBManager("migrateTest.db", KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
 migrate_database = MigrateData(database_manager)
 
 
@@ -1602,47 +1599,27 @@ async def test_remake_guilds_both_exist_table():
 
 
 @pytest.mark.asyncio()
-async def test_execute_update():
-    pass
-    # try:
-    #     migrate_database.execute_update('./KoalaDBBackupsTest/')
-    # except Exception as exc:
-    #     assert False, f"'execute_update' raised an exception {exc}"
-    #
-    # conn = sqlite3.connect(pathlib.Path(f'./KoalaDBBackupsTest/backup_{migrate_database.get_largest_file_number("./KoalaDBBackupsTest")}/{database_manager.db_file_path}'))
-    # schema_before = conn.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
-    # schema_after = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
-    # # assert the schema changes
-    # assert schema_before != schema_after
-
-
-
-    # table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
-    # for table_name, in table_names:
-    #     print(table_name)
-    #     print(database_manager.db_execute_select(f"pragma table_info('{table_name}')"))
-
-
-@pytest.mark.asyncio()
 async def test_get_largest_file_number():
-    src = pathlib.Path(f'./KoalaDBBackupsTest/')
+    src = pathlib.Path(f'./KoalaDBBackups/')
+    src.mkdir(exist_ok=True)
     recursively_delete_dir(src)
-    assert migrate_database.get_largest_file_number(src) == 0
+    assert migrate_database.get_largest_file_number() == 0
     src.mkdir()
     for i in range(0, 10):
-        new_file = pathlib.Path(f'./KoalaDBBackupsTest/backup_{i}')
+        new_file = pathlib.Path(f'./KoalaDBBackups/backup_{i}')
         new_file.mkdir()
-    assert migrate_database.get_largest_file_number(src) == 9
+    assert migrate_database.get_largest_file_number() == 9
     recursively_delete_dir(src)
     src.mkdir()
     file_numbers = [0, 100]
     for i in range(0, 10):
         new_number = random.choice([x for x in range(max(file_numbers)) if x not in file_numbers])
         file_numbers.append(new_number)
-        new_file = pathlib.Path(f'./KoalaDBBackupsTest/backup_{new_number}')
+        new_file = pathlib.Path(f'./KoalaDBBackups/backup_{new_number}')
         new_file.mkdir()
-    assert migrate_database.get_largest_file_number(src) == sorted(file_numbers)[-2]
+    assert migrate_database.get_largest_file_number() == sorted(file_numbers)[-2]
     src.mkdir(exist_ok=True)
+
 
 @pytest.mark.asyncio()
 async def test_backup_data():
@@ -1652,8 +1629,8 @@ async def test_backup_data():
     :return:
     """
     db1 = pathlib.Path(f'./{database_manager.db_file_path}')
-    migrate_database.backup_data('./KoalaDBBackupsTest/')
-    db2 = pathlib.Path(f'./KoalaDBBackupsTest/backup_{migrate_database.get_largest_file_number("./KoalaDBBackupsTest")}/{database_manager.db_file_path}')
+    migrate_database.backup_data()
+    db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
     conn1 = sqlite3.connect(db1)
     conn2 = sqlite3.connect(db2)
@@ -1664,4 +1641,46 @@ async def test_backup_data():
 
     table_names = conn1.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
     for table_name, in table_names:
-        assert conn1.execute(f"pragma table_info('{table_name}')").fetchall() == conn2.execute(f"pragma table_info('{table_name}')").fetchall()
+        if table_name not in ["sqlite_master", "sqlite_sequence"]:
+            assert conn1.execute(f"pragma table_info('{table_name}')").fetchall() == conn2.execute(f"pragma table_info('{table_name}')").fetchall()
+
+
+@pytest.mark.asyncio()
+async def test_rollback_database():
+    migrate_database.backup_data()
+    drop_table("Guilds")
+    drop_table("GuildExtensions")
+    drop_table("TextFilter")
+    migrate_database.rollback_database()
+
+    broken_db_path = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/brokenKoalaDB.db')
+    assert broken_db_path.is_file()
+
+    db1 = pathlib.Path(f'./{database_manager.db_file_path}')
+    db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
+
+    conn1 = sqlite3.connect(db1)
+    conn2 = sqlite3.connect(db2)
+
+    expected = conn1.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
+    saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
+    assert expected == saved_db_result
+
+    table_names = conn1.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+    for table_name, in table_names:
+        if table_name not in ["sqlite_master", "sqlite_sequence"]:
+            assert conn1.execute(f"pragma table_info('{table_name}')").fetchall() == conn2.execute(
+                f"pragma table_info('{table_name}')").fetchall()
+
+    drop_table("Guilds")
+    create_guilds()
+    # testing database is linked properly
+    guild_id_in_guilds_before = database_manager.db_execute_select("""SELECT guild_id FROM Guilds""")
+    assert guild_id_in_guilds_before == []
+    populate_guilds()
+    guild_id_in_guilds_after = database_manager.db_execute_select("""SELECT guild_id FROM Guilds""")
+    assert guild_id_in_guilds_after == [('1',), ('2',)]
+
+
+    # make change to verify linked properly
+    pass

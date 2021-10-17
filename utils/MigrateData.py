@@ -3,7 +3,6 @@ Koala Bot database migration util
 Craeted by: Kieran Allinson
 """
 
-
 import pathlib
 import shutil
 import logging
@@ -23,14 +22,13 @@ class MigrateData:
         """
         self.database_manager = database_manager
 
-    def get_largest_file_number(self, path):
+    def get_largest_file_number(self):
         """
         Gets the largest number from a list of files, this way files can be deleted but the numbering of the files will
         still increase. Files are named as backup_X, so the most recent save would be saved under the largest value of X.
-        :path: The path of the database backups folder, needed to resolve testing issues
         :return: Single integer number of the largest file name.
         """
-        src = pathlib.Path(path)
+        src = pathlib.Path().cwd() / 'KoalaDBBackups'
         if not src.is_dir():
             return 0
         else:
@@ -39,15 +37,14 @@ class MigrateData:
             values.sort()
             return values[-1]
 
-    def backup_data(self, path):
+    def backup_data(self):
         """
         Stores the Koala.db database stored in the cwd to a new folder, new folder created each time in case of large rollback needed.
-        :path: The path of the database backups folder, needed to resolve testing issues
         :return:
         """
         try:
-            file_name = "backup_" + str(self.get_largest_file_number(path) + 1)
-            src = pathlib.Path(f'{path}{file_name}')
+            file_name = "backup_" + str(self.get_largest_file_number() + 1)
+            src = pathlib.Path().cwd() / 'KoalaDBBackups' / file_name
             if not src.is_dir():
                 src.mkdir()
             shutil.copy(self.database_manager.db_file_path, src)
@@ -56,13 +53,24 @@ class MigrateData:
             logging.warning(f"MigrateData: {e}")
             return False
 
-    def execute_update(self, path):
+    def rollback_database(self):
         """
-        Sequentially applied the database update, if an error occurs then the entire database is rolled back.
-        :path: The path of the database backups folder, needed to resolve testing issues
+        Saves a copy of the broken database, then replaces it with the most recent backup.
         :return:
         """
-        if self.backup_data(path):
+        recent_backup = pathlib.Path(f'./KoalaDBBackups/backup_{self.get_largest_file_number()}/{self.database_manager.db_file_path}')
+        broken_db = pathlib.Path(f'./{self.database_manager.db_file_path}')
+        broken_db.replace('brokenKoalaDB.db')
+        shutil.copy(pathlib.Path(f'./brokenKoalaDB.db'), pathlib.Path(f'./KoalaDBBackups/backup_{self.get_largest_file_number()}'))
+        pathlib.Path(f'./brokenKoalaDB.db').unlink()
+        shutil.copy(recent_backup, pathlib.Path(f'.'))
+
+    def execute_update(self):
+        """
+        Sequentially applied the database update, if an error occurs then the database is rolled back and the bot is killed with exit code 1.
+        :return:
+        """
+        if self.backup_data():
             funcs = [self.remake_guilds, self.remake_guild_extensions, self.remake_guild_welcome_messages,
                      self.remake_votes, self.remake_vote_sent, self.remake_vote_options, self.remake_vote_target_roles,
                      self.remake_verified_emails, self.remake_not_verified_emails, self.remake_role_table,
@@ -77,7 +85,8 @@ class MigrateData:
                     func()
                 except Exception as e:
                     logging.error(f"Error in MigrateDatabase: {e}")
-                    sys.exit("Migration of database has failed, change to backup database")
+                    self.rollback_database()
+                    sys.exit(3)
 
     def remake_guilds(self):
         """
@@ -115,7 +124,6 @@ class MigrateData:
                         i)
         except Exception as e:
             raise Exception(f"Error in remake_guilds: {e}")
-
 
     def remake_guild_extensions(self):
         """
