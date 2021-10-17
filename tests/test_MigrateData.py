@@ -40,9 +40,24 @@ def recursively_delete_dir(src):
     src.rmdir()
 
 
-def convert_directory():
-    pass
+def create_connection(path):
+    """
+    Create a database connection to the SQLite3 database specified in db_file_path
 
+    :return: Connection object or None
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(path)
+        c = conn.cursor()
+        if not (os.name == 'nt' or not ENCRYPTED_DB):
+            c.execute('''PRAGMA key="x'{}'"'''.format(database_manager.db_secret_key))
+
+        return conn, c
+    except Exception as e:
+        print(e)
+
+    return conn
 
 def create_old_guild_extensions():
     create_old_koala_extensions()
@@ -1647,7 +1662,7 @@ async def test_backup_data():
     :return:
     """
     migrate_database.backup_data()
-    db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
+    db2 = pathlib.PurePath(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
     conn2 = sqlite3.connect(str(db2))
 
@@ -1669,24 +1684,25 @@ async def test_rollback_database():
     drop_table("TextFilter")
     migrate_database.rollback_database()
 
-    broken_db_backup_name = f'backup_{migrate_database.get_largest_file_number()}'
-    broken_db_path = pathlib.Path() / 'KoalaDBBackups' / broken_db_backup_name / 'brokenKoalaDB.db'
+    broken_db_path = pathlib.Path() / 'KoalaDBBackups' / f'backup_{migrate_database.get_largest_file_number()}' / 'brokenKoalaDB.db'
     assert broken_db_path.is_file()
 
-    backup_filename = f'backup_{migrate_database.get_largest_file_number()}'
-    db2 = pathlib.Path() / 'KoalaDBBackups' / backup_filename / database_manager.db_file_path
+    db2 = pathlib.PurePath(f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn2 = sqlite3.connect(str(db2))
+    conn, c = create_connection(str(db2))
 
     expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
-    saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
+    c.execute("""select sql from sqlite_master where type = 'table'""")
+    saved_db_result = c.fetchall()
     assert expected == saved_db_result
 
     table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
     for table_name, in table_names:
         if table_name not in ["sqlite_master", "sqlite_sequence"]:
-            assert database_manager.db_execute_select(f"pragma table_info('{table_name}')") == conn2.execute(
+            assert database_manager.db_execute_select(f"pragma table_info('{table_name}')") == c.execute(
                 f"pragma table_info('{table_name}')").fetchall()
+
+    conn.close()
 
     drop_table("Guilds")
     create_guilds()
