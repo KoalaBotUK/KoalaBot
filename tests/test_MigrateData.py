@@ -1,6 +1,20 @@
+import os
 import pathlib
 import random
-import sqlite3
+
+# Libs
+from dotenv import load_dotenv
+
+load_dotenv()
+ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
+if ENCRYPTED_DB:
+    print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
+if os.name == 'nt' or not ENCRYPTED_DB:
+    print("Database Encryption Disabled")
+    import sqlite3
+else:
+    print("Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
 
 import pytest
 
@@ -1651,7 +1665,8 @@ async def test_rollback_database():
     drop_table("TextFilter")
     migrate_database.rollback_database()
 
-    broken_db_path = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/brokenKoalaDB.db')
+    broken_db_backup_name = f'backup_{migrate_database.get_largest_file_number()}'
+    broken_db_path = pathlib.Path() / 'KoalaDBBackups' / broken_db_backup_name / 'brokenKoalaDB.db'
     assert broken_db_path.is_file()
 
     backup_filename = f'backup_{migrate_database.get_largest_file_number()}'
