@@ -45,7 +45,6 @@ class TwitchAlert(commands.Cog):
         database_manager.insert_extension("TwitchAlert", 0, True, True)
         self.ta_database_manager = TwitchAlertDBManager(bot)
         # self.ta_database_manager.translate_names_to_ids()
-        self.ta_database_manager.create_tables()
         self.loop_thread = None
         self.loop_team_thread = None
         self.running = False
@@ -119,7 +118,7 @@ class TwitchAlert(commands.Cog):
             return
 
         # Creates a new Twitch Alert with the used guild ID and default message if provided
-        default_message = self.ta_database_manager.get_default_message(channel_id)[0][0]
+        default_message = self.ta_database_manager.get_default_message(channel_id)
 
         # Returns an embed with information altered
         new_embed = discord.Embed(title="Default Message", colour=KOALA_GREEN,
@@ -299,7 +298,7 @@ class TwitchAlert(commands.Cog):
         if results:
             users = ""
             for result in results:
-                users += f"{result[0]}\n"
+                users += f"{result.twitch_username}\n"
             embed.add_field(name=":bust_in_silhouette: Users", value=users)
         else:
             embed.add_field(name=":bust_in_silhouette: Users", value="None")
@@ -308,7 +307,7 @@ class TwitchAlert(commands.Cog):
         if results:
             teams = ""
             for result in results:
-                teams += f"{result[0]}\n"
+                teams += f"{result.twitch_team_name}\n"
             embed.add_field(name=":busts_in_silhouette: Teams", value=teams)
         else:
             embed.add_field(name=":busts_in_silhouette: Teams", value="None")

@@ -23,7 +23,7 @@ from cogs.TwitchAlert.cog import TwitchAlert
 from cogs.TwitchAlert.db import TwitchAlertDBManager
 from cogs.TwitchAlert import utils
 from cogs.TwitchAlert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from base_models import session
+from base_models import session, create_tables
 from utils import KoalaDBManager
 
 # Constants
@@ -47,7 +47,7 @@ def twitch_alert_db_manager(twitch_cog: TwitchAlert):
     return TwitchAlertDBManager(twitch_cog.bot)
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def twitch_alert_db_manager_tables(twitch_alert_db_manager):
     session.execute(delete(TwitchAlerts))
     session.execute(delete(TeamInTwitchAlert))
@@ -55,7 +55,7 @@ def twitch_alert_db_manager_tables(twitch_alert_db_manager):
     session.execute(delete(UserInTwitchTeam))
     session.commit()
 
-    twitch_alert_db_manager.create_tables()
+    create_tables()
     return twitch_alert_db_manager
 
 
@@ -63,8 +63,8 @@ def test_get_parent_database_manager(twitch_alert_db_manager):
     assert isinstance(twitch_alert_db_manager, KoalaDBManager.KoalaDBManager)
 
 
-def test_create_tables(twitch_alert_db_manager):
-    twitch_alert_db_manager.create_tables()
+def test_create_tables():
+    create_tables()
     tables = ['TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam']
     sql_check_table_exists = "SELECT name FROM sqlite_master " \
                              "WHERE type='table' AND " \
@@ -88,25 +88,25 @@ def test_new_ta(twitch_alert_db_manager_tables):
 
 def test_new_ta_message(twitch_alert_db_manager_tables):
     test_message = "Test message"
-    assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=12345, channel_id=23456,
+    assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=23456,
                                                                  default_message=test_message)
 
     sql_check_db_updated = select(TwitchAlerts.guild_id, TwitchAlerts.default_message)\
         .where(TwitchAlerts.channel_id == 23456)
 
     result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
-    assert result.guild_id == 12345
+    assert result.guild_id == 1234
     assert result.default_message == test_message
 
 
 def test_new_ta_replace(twitch_alert_db_manager_tables):
     test_message = "Test message"
     test_new_ta_message(twitch_alert_db_manager_tables=twitch_alert_db_manager_tables)
-    assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=234567,
+    assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=23456,
                                                                  default_message=test_message, replace=True)
 
     sql_check_db_updated = select(TwitchAlerts.guild_id, TwitchAlerts.default_message)\
-        .where(TwitchAlerts.channel_id == 234567)
+        .where(TwitchAlerts.channel_id == 23456)
 
     result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
     assert result.guild_id == 1234
@@ -115,7 +115,7 @@ def test_new_ta_replace(twitch_alert_db_manager_tables):
 
 def test_add_user_to_ta_default_message(twitch_alert_db_manager_tables):
     twitch_alert_db_manager_tables.new_ta(1234, 1234567891, None)
-    twitch_alert_db_manager_tables.add_user_to_ta(1234567891, "monstercat", None)
+    twitch_alert_db_manager_tables.add_user_to_ta(1234567891, "monstercat", None, 1234)
 
     sql_find_twitch_alert = select(UserInTwitchAlert.twitch_username, UserInTwitchAlert.custom_message)\
         .where(and_(UserInTwitchAlert.channel_id == 1234567891, UserInTwitchAlert.twitch_username == 'monstercat'))
@@ -127,7 +127,7 @@ def test_add_user_to_ta_default_message(twitch_alert_db_manager_tables):
 
 def test_add_user_to_ta_custom_message(twitch_alert_db_manager_tables):
     twitch_alert_db_manager_tables.new_ta(1234, 1234567892, None)
-    twitch_alert_db_manager_tables.add_user_to_ta(1234567892, "monstercat", "FiddleSticks {user} is live!")
+    twitch_alert_db_manager_tables.add_user_to_ta(1234567892, "monstercat", "FiddleSticks {user} is live!", 1234)
 
     sql_find_twitch_alert = select(UserInTwitchAlert.twitch_username, UserInTwitchAlert.custom_message)\
         .where(and_(UserInTwitchAlert.channel_id == 1234567892, UserInTwitchAlert.twitch_username == 'monstercat'))

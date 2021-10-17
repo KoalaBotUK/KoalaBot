@@ -39,3 +39,7 @@ class GuildExtensions(Base):
     __table_args__ = {'extend_existing': True}
     extension_id = Column(String, ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
     guild_id = Column(Integer)
+
+
+def create_tables():
+    Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)

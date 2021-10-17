@@ -27,7 +27,6 @@ class TeamInTwitchAlert(Base):
 
 class UserInTwitchTeam(Base):
     __tablename__ = 'UserInTwitchTeam'
-    __table_args__ = {'extend_existing': True}
     team_twitch_alert_id = Column(Integer, ForeignKey("TeamInTwitchAlert.team_twitch_alert_id"), primary_key=True)
     twitch_username = Column(String, primary_key=True)
     message_id = Column(Integer, nullable=True)
