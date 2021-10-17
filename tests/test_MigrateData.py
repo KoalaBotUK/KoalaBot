@@ -1680,7 +1680,3 @@ async def test_rollback_database():
     populate_guilds()
     guild_id_in_guilds_after = database_manager.db_execute_select("""SELECT guild_id FROM Guilds""")
     assert guild_id_in_guilds_after == [('1',), ('2',)]
-
-
-    # make change to verify linked properly
-    pass

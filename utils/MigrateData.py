@@ -3,14 +3,10 @@ Koala Bot database migration util
 Craeted by: Kieran Allinson
 """
 
+import logging
 import pathlib
 import shutil
-import logging
 import sys
-from pathlib import Path
-
-
-
 
 
 class MigrateData:
@@ -58,10 +54,12 @@ class MigrateData:
         Saves a copy of the broken database, then replaces it with the most recent backup.
         :return:
         """
-        recent_backup = pathlib.Path(f'./KoalaDBBackups/backup_{self.get_largest_file_number()}/{self.database_manager.db_file_path}')
+        recent_backup = pathlib.Path(
+            f'./KoalaDBBackups/backup_{self.get_largest_file_number()}/{self.database_manager.db_file_path}')
         broken_db = pathlib.Path(f'./{self.database_manager.db_file_path}')
         broken_db.replace('brokenKoalaDB.db')
-        shutil.copy(pathlib.Path(f'./brokenKoalaDB.db'), pathlib.Path(f'./KoalaDBBackups/backup_{self.get_largest_file_number()}'))
+        shutil.copy(pathlib.Path(f'./brokenKoalaDB.db'),
+                    pathlib.Path(f'./KoalaDBBackups/backup_{self.get_largest_file_number()}'))
         pathlib.Path(f'./brokenKoalaDB.db').unlink()
         shutil.copy(recent_backup, pathlib.Path(f'.'))
 
