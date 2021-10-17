@@ -4,7 +4,7 @@
 import re
 import logging
 # from sqlalchemy import select, update, insert, and_, or_
-from base_models import Base, engine
+
 
 # Own modules
 import KoalaBot
@@ -12,7 +12,7 @@ from utils import KoalaDBManager
 from.TwitchApiHandler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
-from base_models import session
+from base_models import Base, engine, session
 
 # Libs
 import discord

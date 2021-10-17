@@ -15,6 +15,7 @@ import discord.ext.test as dpytest
 # Own modules
 import KoalaBot
 from utils.KoalaDBManager import create_db
+from base_models import Base, engine
 
 # Constants
 
@@ -36,9 +37,10 @@ def setup_is_dpytest():
     yield
     KoalaBot.is_dpytest = False
 
-#
-# @pytest.fixture(scope="session", autouse=True)
-# def delete_database():
-#     print("deleting database")
-#     os.remove(KoalaBot.DATABASE_PATH)
-#     create_db(KoalaBot.DATABASE_PATH)
+
+@pytest.fixture(scope="session", autouse=True)
+def delete_database():
+    print("deleting database")
+    os.remove(KoalaBot.DATABASE_PATH)
+    create_db(KoalaBot.DATABASE_PATH)
+    Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
