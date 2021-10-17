@@ -40,6 +40,10 @@ def recursively_delete_dir(src):
     src.rmdir()
 
 
+def convert_directory():
+    pass
+
+
 def create_old_guild_extensions():
     create_old_koala_extensions()
     populate_old_koala_extensions()
@@ -1645,7 +1649,7 @@ async def test_backup_data():
     migrate_database.backup_data()
     db2 = pathlib.Path(f'./KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn2 = sqlite3.connect(db2)
+    conn2 = sqlite3.connect(str(db2))
 
     expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
     saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
@@ -1672,7 +1676,7 @@ async def test_rollback_database():
     backup_filename = f'backup_{migrate_database.get_largest_file_number()}'
     db2 = pathlib.Path() / 'KoalaDBBackups' / backup_filename / database_manager.db_file_path
 
-    conn2 = sqlite3.connect(db2)
+    conn2 = sqlite3.connect(str(db2))
 
     expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
     saved_db_result = conn2.execute("""select sql from sqlite_master where type = 'table'""").fetchall()
