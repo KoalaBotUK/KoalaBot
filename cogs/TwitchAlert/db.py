@@ -4,6 +4,7 @@
 import re
 import logging
 # from sqlalchemy import select, update, insert, and_, or_
+from base_models import Base, engine
 
 # Own modules
 import KoalaBot
@@ -32,6 +33,8 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         """
         if not database_path:
             database_path = KoalaBot.DATABASE_PATH
+
+        Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
 
         super().__init__(database_path, KoalaBot.DB_KEY)
         self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)

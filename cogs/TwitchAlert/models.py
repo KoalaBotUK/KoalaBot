@@ -4,7 +4,6 @@ from base_models import Base, engine
 
 class TwitchAlerts(Base):
     __tablename__ = 'TwitchAlerts'
-    __table_args__ = {'extend_existing': True}
     guild_id = Column(Integer, ForeignKey("GuildExtensions.guild_id"), primary_key=True)
     channel_id = Column(Integer, primary_key=True)
     default_message = Column(String)
@@ -12,7 +11,6 @@ class TwitchAlerts(Base):
 
 class UserInTwitchAlert(Base):
     __tablename__ = 'UserInTwitchAlert'
-    __table_args__ = {'extend_existing': True}
     channel_id = Column(Integer, ForeignKey("TwitchAlerts.channel_id"), primary_key=True)
     twitch_username = Column(String, primary_key=True)
     custom_message = Column(String, nullable=True)
@@ -21,9 +19,8 @@ class UserInTwitchAlert(Base):
 
 class TeamInTwitchAlert(Base):
     __tablename__ = 'TeamInTwitchAlert'
-    __table_args__ = {'extend_existing': True}
-    team_twitch_alert_id = Column(Integer, primary_key=True)
-    channel_id = Column(Integer, ForeignKey("TwitchAlerts.channel_id"), primary_key=True)
+    team_twitch_alert_id = Column(Integer, autoincrement=True, primary_key=True)
+    channel_id = Column(Integer, ForeignKey("TwitchAlerts.channel_id"))
     twitch_team_name = Column(String)
     custom_message = Column(String, nullable=True)
 
