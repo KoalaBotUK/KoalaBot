@@ -47,6 +47,7 @@ jobs:
       run: |
         if [ "$RUNNER_OS" == "Linux" ]; then
           sudo apt-get install libsqlcipher-dev
+          chmod 664 /path/to/your/directory/
         elif  [ "$RUNNER_OS" == "macOS" ]; then
           echo "ENCRYPTED=False" >> $GITHUB_ENV
         fi
@@ -74,7 +75,7 @@ jobs:
         TWITCH_SECRET: ${{ secrets.TWITCH_SECRET }}
         TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
       run: |
-        sudo pytest --cov=./ --cov-report=xml
+        pytest --cov=./ --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
