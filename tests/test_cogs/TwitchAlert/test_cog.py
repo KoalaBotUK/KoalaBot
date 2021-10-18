@@ -13,8 +13,12 @@ import discord
 from discord.ext import commands
 
 # Own modules
+from sqlalchemy import select, and_
+
 import KoalaBot
+from base_models import session
 from cogs import TwitchAlert as TwitchAlert
+from cogs.TwitchAlert.models import UserInTwitchAlert
 from utils.KoalaColours import KOALA_GREEN
 
 # Constants
@@ -117,9 +121,10 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog: TwitchAlert.c
         member=member)
     assert dpytest.verify().message().embed(embed=assert_embed)
 
-    sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
-    assert twitch_cog.ta_database_manager.db_execute_select(sql_check_updated_server) == [
-        (test_custom_message,)]
+    sql_check_updated_server = select(UserInTwitchAlert.custom_message).where(
+        and_(UserInTwitchAlert.twitch_username == 'monstercat', UserInTwitchAlert.channel_id == channel.id))
+    result = session.execute(sql_check_updated_server).one()
+    assert result.custom_message == test_custom_message
 
 
 @pytest.mark.asyncio()
@@ -139,9 +144,10 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog: TwitchAler
         f"{KoalaBot.COMMAND_PREFIX}twitch add monstercat {channel.id} {test_custom_message}", channel=-1,
         member=member)
 
-    sql_check_updated_server = f"SELECT custom_message FROM UserInTwitchAlert WHERE twitch_username='monstercat' AND channel_id={channel.id}"
-    assert twitch_cog.ta_database_manager.db_execute_select(sql_check_updated_server) == [
-        (test_custom_message,)]
+    sql_check_updated_server = select(UserInTwitchAlert.custom_message).where(and_(UserInTwitchAlert.twitch_username == 'monstercat', UserInTwitchAlert.channel_id == channel.id))
+    result_before = session.execute(sql_check_updated_server).one()
+
+    assert result_before.custom_message == test_custom_message
     await dpytest.empty_queue()
     # Removes Twitch Alert
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch remove monstercat {channel.id}", channel=-1,
@@ -150,8 +156,8 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog: TwitchAler
                               description=f"Channel: {channel.id}\n"
                                           f"User: monstercat")
     assert dpytest.verify().message().embed(new_embed)
-    assert twitch_cog.ta_database_manager.db_execute_select(sql_check_updated_server) == []
-    pass
+    result_after = session.execute(sql_check_updated_server).one_or_none()
+    assert result_after is None
 
 
 @pytest.mark.asyncio(order=3)

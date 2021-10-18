@@ -1,4 +1,4 @@
-from cogs.TwitchAlert.TwitchApiHandler import TwitchAPIHandler
+from cogs.TwitchAlert.twitch_handler import TwitchAPIHandler
 from cogs.TwitchAlert.utils import TWITCH_KEY, TWITCH_SECRET
 import pytest
 

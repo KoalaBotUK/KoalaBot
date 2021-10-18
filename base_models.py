@@ -19,7 +19,7 @@ logging.error("connection_url"+connection_url)
 print("connection_url"+connection_url)
 create_db(DATABASE_PATH)
 
-engine = create_engine(connection_url, future=True, echo=True)
+engine = create_engine(connection_url, future=True)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 session = Session()

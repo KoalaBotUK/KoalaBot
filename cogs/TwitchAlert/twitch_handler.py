@@ -27,7 +27,7 @@ class TwitchAPIHandler:
         :param usernames: The list of usernames
         :return: The JSON data of the request
         """
-        result = self.twitch.get_streams(user_id=usernames)
+        result = self.twitch.get_streams(user_login=usernames).get("data")
 
         return result
 

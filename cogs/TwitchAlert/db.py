@@ -8,7 +8,7 @@ from sqlalchemy import select, update, insert, delete, and_, or_
 # Own modules
 import KoalaBot
 from utils import KoalaDBManager
-from .TwitchApiHandler import TwitchAPIHandler
+from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
 from base_models import session, create_tables

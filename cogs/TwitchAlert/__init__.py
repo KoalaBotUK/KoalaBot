@@ -1,1 +1,1 @@
-from . import utils, cog, db, TwitchApiHandler
+from . import utils, cog, db, twitch_handler
