@@ -3,7 +3,7 @@
 # Built-in/Generic Imports
 import re
 import logging
-from sqlalchemy import select, update, insert, delete, and_, or_
+from sqlalchemy import select, update, insert, delete, and_, or_, null
 
 # Own modules
 import KoalaBot
@@ -263,8 +263,11 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         if team:
             sql_select_offline_streams_with_message_ids = select(
                 TeamInTwitchAlert.channel_id,
-                UserInTwitchTeam.message_id).where(
-                and_(UserInTwitchTeam.message_id is not None,
+                UserInTwitchTeam.message_id)\
+                .join(UserInTwitchTeam,
+                      TeamInTwitchAlert.team_twitch_alert_id == UserInTwitchTeam.team_twitch_alert_id)\
+                .where(
+                and_(UserInTwitchTeam.message_id != null(),
                      UserInTwitchTeam.twitch_username.in_(usernames)))
 
             sql_update_offline_streams = update(UserInTwitchTeam).where(
@@ -273,8 +276,8 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         else:
             sql_select_offline_streams_with_message_ids = select(UserInTwitchAlert.channel_id,
                                                                  UserInTwitchAlert.message_id) \
-                .where(UserInTwitchAlert.message_id is not None,
-                       UserInTwitchAlert.twitch_username.in_(usernames))
+                .where(and_(UserInTwitchAlert.message_id != null(),
+                            UserInTwitchAlert.twitch_username.in_(usernames)))
 
             sql_update_offline_streams = update(UserInTwitchAlert).where(
                 UserInTwitchAlert.twitch_username.in_(usernames)).values(message_id=None)
