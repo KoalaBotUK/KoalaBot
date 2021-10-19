@@ -101,7 +101,8 @@ class ReactForRole(commands.Cog):
                 if response.status != 200:
                     KoalaBot.logger.error(
                         "RFR: HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
-                    raise aiohttp.ClientError("HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
+                    raise aiohttp.ClientError(
+                        "HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
                 image_bytes = await response.read()
                 data = BytesIO(image_bytes)
                 ftype: str = await file_type_from_hdr(response)
@@ -753,6 +754,7 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened.
         :return:
         """
+
         if payload.guild_id is not None:
             rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
                                                                     payload.message_id)
@@ -828,7 +830,10 @@ class ReactForRole(commands.Cog):
         embed: discord.Embed = self.get_embed_from_message(message)
 
         if emoji_reacted.is_unicode_emoji():
-            rep = emoji.demojize(emoji_reacted.name)
+            rep = emoji.emojize(emoji_reacted.name)
+            if not rep:
+                rep = emoji.emojize(emoji_reacted.name, use_aliases=True)
+
             field = await self.get_field_by_emoji(embed, rep)
             if not field:
                 return

@@ -40,5 +40,5 @@ def test_format_db_path_linux_absolute_encrypted():
 @mock.patch("utils.KoalaDBManager.ENCRYPTED_DB", True)
 def test_format_db_path_windows():
     db_path = KoalaDBManager.format_db_path("/test_dir/", "test.db")
-    assert db_path == "/test_dir/windows_test.db"
+    assert db_path == "\\test_dir\\windows_test.db"
 
