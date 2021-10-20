@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Other
+- Changed tables to use text to store IDs instead of integers.
+- Added `Guilds` table 
 
 ## [0.4.5] - 25-08-2021
 ### Other
