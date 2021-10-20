@@ -7,10 +7,12 @@ Run this to start the Bot
 Commented using reStructuredText (reST)
 """
 __author__ = "Jack Draper, Kieran Allinson, Viraj Shah," \
-             " Anan Venkatesh, Harry Nelson, Robert Slawik, Rurda Malik, Stefan Cooper"
+               "Anan Venkatesh, Harry Nelson, Robert Slawik, Rudra Malik, Stefan Cooper, Bill Cao," \
+               "Samuel Tiongson, Aqeel Little, Charlie Bowe, see full list of developers at: https://koalabot.uk/"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
 __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah",
-               "Anan Venkatesh", "Harry Nelson", "Robert Slawik", "Rurda Malik", "Stefan Cooper"]
+               "Anan Venkatesh", "Harry Nelson", "Robert Slawik", "Rudra Malik", "Stefan Cooper", "Bill Cao",
+               "Samuel Tiongson", "Aqeel Little", "Charlie Bowe", "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
 __version__ = "0.4.5"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper"
