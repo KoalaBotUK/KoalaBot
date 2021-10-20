@@ -29,21 +29,6 @@ from utils.KoalaUtils import is_int
 #utils_cog =  None
 
 
-def setup_function():
-    """ setup any state specific to the execution of the given module."""
-    global base_cog, tf_cog, utils_cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    base_cog = BaseCog.BaseCog(bot)
-    tf_cog = TextFilter.TextFilter(bot)
-    tf_cog.tf_database_manager.create_tables()
-    utils_cog = LastCtxCog.LastCtxCog(bot)
-    bot.add_cog(base_cog)
-    bot.add_cog(tf_cog)
-    bot.add_cog(utils_cog)
-    dpytest.configure(bot)
-    print("Tests starting")
-    return dpytest.get_config()
-
 @pytest.fixture(scope="function", autouse=True)
 def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
