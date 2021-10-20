@@ -40,6 +40,23 @@ def recursively_delete_dir(src):
     src.rmdir()
 
 
+def create_old_koala_extensions():
+    sql_create_koala_extensions_table = """
+        CREATE TABLE IF NOT EXISTS KoalaExtensions (
+        extension_id text NOT NULL PRIMARY KEY,
+        subscription_required integer NOT NULL,
+        available boolean NOT NULL,
+        enabled boolean NOT NULL
+    );"""
+    database_manager.db_execute_commit(sql_create_koala_extensions_table)
+
+
+def populate_old_koala_extensions():
+    koala_extension_data = [(1, 0, True, True), (2, 1, True, True), (3, 0, True, True)]
+    for i in koala_extension_data:
+        database_manager.db_execute_commit('INSERT INTO KoalaExtensions VALUES (?,?,?,?);', i)
+
+
 def create_old_guild_extensions():
     create_old_koala_extensions()
     populate_old_koala_extensions()
@@ -61,23 +78,6 @@ def populate_old_guild_extensions():
     guild_extension_data = [(1, 1), (2, 1), (3, 1), (1, 2), (2, 2)]
     for i in guild_extension_data:
         database_manager.db_execute_commit('INSERT INTO GuildExtensions VALUES (?,?);', i)
-
-
-def create_old_koala_extensions():
-    sql_create_koala_extensions_table = """
-        CREATE TABLE IF NOT EXISTS KoalaExtensions (
-        extension_id text NOT NULL PRIMARY KEY,
-        subscription_required integer NOT NULL,
-        available boolean NOT NULL,
-        enabled boolean NOT NULL
-    );"""
-    database_manager.db_execute_commit(sql_create_koala_extensions_table)
-
-
-def populate_old_koala_extensions():
-    koala_extension_data = [(1, 0, True, True), (2, 1, True, True), (3, 0, True, True)]
-    for i in koala_extension_data:
-        database_manager.db_execute_commit('INSERT INTO KoalaExtensions VALUES (?,?,?,?);', i)
 
 
 def create_old_guild_welcome_message():
