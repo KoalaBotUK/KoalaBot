@@ -31,7 +31,7 @@ class MigrateData:
             return 0
         else:
             files = list(src.glob('*'))
-            values = [int(pathlib.Path(x).name[7:]) for x in files]
+            values = [int(pathlib.Path(x).name.split("_")[1]) for x in files]
             values.sort()
             return values[-1]
 

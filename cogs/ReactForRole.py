@@ -1285,7 +1285,7 @@ class ReactForRoleDBManager:
         :param guild_id: guild ID
         :return: List of role IDs
         """
-        rows = KoalaUtils.change_field_types(self.database_manager.db_execute_select("SELECT * FROM GuildRFRRequiredRoles WHERE guild_id = ?",
+        rows = KoalaUtils.change_field_types(self.database_manager.db_execute_select("SELECT guild_id, role_id FROM GuildRFRRequiredRoles WHERE guild_id = ?",
                                                                                      args=[guild_id]), [int, int])
         role_ids = [x[1] for x in rows]
         if not role_ids:
