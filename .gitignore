@@ -142,8 +142,5 @@ dmypy.json
 # dat files
 *.dat
 
-# config files
-*.cfg
-
 # backup folders
 **/KoalaDBBackups
