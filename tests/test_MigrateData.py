@@ -40,25 +40,6 @@ def recursively_delete_dir(src):
     src.rmdir()
 
 
-def create_connection(path):
-    """
-    Create a database connection to the SQLite3 database specified in db_file_path
-
-    :return: Connection object or None
-    """
-    conn = None
-    try:
-        conn = sqlite3.connect(path)
-        c = conn.cursor()
-        if not (os.name == 'nt' or not ENCRYPTED_DB):
-            c.execute('''PRAGMA key="x'{}'"'''.format(database_manager.db_secret_key))
-
-        return conn, c
-    except Exception as e:
-        print(e)
-
-    return conn
-
 def create_old_guild_extensions():
     create_old_koala_extensions()
     populate_old_koala_extensions()
@@ -1664,7 +1645,7 @@ async def test_backup_data():
     migrate_database.backup_data()
     db2 = pathlib.PurePath(f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn, c = create_connection(str(db2))
+    conn, c = database_manager.create_connection_with_path(str(db2))
 
     expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
     c.execute("""select sql from sqlite_master where type = 'table'""")
@@ -1691,7 +1672,7 @@ async def test_rollback_database():
 
     db2 = pathlib.PurePath(f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
-    conn, c = create_connection(str(db2))
+    conn, c = database_manager.create_connection_with_path(str(db2))
 
     expected = database_manager.db_execute_select("""select sql from sqlite_master where type = 'table'""")
     c.execute("""select sql from sqlite_master where type = 'table'""")

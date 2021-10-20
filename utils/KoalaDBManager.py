@@ -79,6 +79,25 @@ class KoalaDBManager:
 
         return conn
 
+    def create_connection_with_path(self, path_to_db):
+        """
+        Create a database connection to the SQLite3 database specified in db_file_path
+
+        :return: Connection object or None
+        """
+        conn = None
+        try:
+            conn = sqlite3.connect(path_to_db)
+            c = conn.cursor()
+            if not (os.name == 'nt' or not ENCRYPTED_DB):
+                c.execute('''PRAGMA key="x'{}'"'''.format(self.db_secret_key))
+
+            return conn, c
+        except Exception as e:
+            print(e)
+
+        return conn
+
     def db_execute_select(self, sql_str, args=None, pass_errors=False):
         """ Execute an SQL selection with the connection stored in this object
 
