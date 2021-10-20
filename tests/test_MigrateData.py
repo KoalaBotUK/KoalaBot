@@ -1,31 +1,24 @@
+#!/usr/bin/env python
+"""
+Testing KoalaBot MigrateData
+
+Commented using reStructuredText (reST)
+"""
+
+# Libs
+from dotenv import load_dotenv
+import pytest
+
 import os
 import pathlib
 import random
 
-# Libs
-from dotenv import load_dotenv
-
-load_dotenv()
-ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
-if ENCRYPTED_DB:
-    print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
-if os.name == 'nt' or not ENCRYPTED_DB:
-    print("Database Encryption Disabled")
-    import sqlite3
-else:
-    print("Database Encryption Enabled")
-    from pysqlcipher3 import dbapi2 as sqlite3
-
-import pytest
-
+# Own modules
 import KoalaBot
 from utils.KoalaDBManager import KoalaDBManager
 from utils.MigrateData import MigrateData
 
-database_manager = KoalaDBManager("migrateTest.db", KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
-migrate_database = MigrateData(database_manager)
-
-
+# Constants
 GUILD_EXTENSION_SELECT = "SELECT * FROM GuildExtensions"
 GUILD_EXTENSION_COUNT = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'"
 
@@ -109,6 +102,22 @@ GUILD_USAGE_COUNT = "SELECT count(name) FROM sqlite_master WHERE type='table' AN
 
 GUILDS_SELECT = "SELECT * FROM Guilds"
 GUILDS_COUNT = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'"
+
+
+load_dotenv()
+ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
+if ENCRYPTED_DB:
+    print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
+if os.name == 'nt' or not ENCRYPTED_DB:
+    print("Database Encryption Disabled")
+    import sqlite3
+else:
+    print("Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
+
+
+database_manager = KoalaDBManager("migrateTest.db", KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
+migrate_database = MigrateData(database_manager)
 
 
 def drop_table(table_name):
