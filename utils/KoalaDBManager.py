@@ -81,8 +81,8 @@ class KoalaDBManager:
 
     def create_connection_with_path(self, path_to_db):
         """
-        Create a database connection to the SQLite3 database specified in db_file_path
-
+        Create a database connection to the SQLite3 database specified in the argument given.
+        :param path_to_db: String of filepath to desired database.
         :return: Connection object or None
         """
         conn = None

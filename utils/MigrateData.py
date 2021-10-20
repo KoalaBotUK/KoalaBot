@@ -14,6 +14,7 @@ class MigrateData:
     def __init__(self, database_manager):
         """
         Initalises database manager
+
         :param database_manager: The database manager used in this instance.
         """
         self.database_manager = database_manager
@@ -22,6 +23,7 @@ class MigrateData:
         """
         Gets the largest number from a list of files, this way files can be deleted but the numbering of the files will
         still increase. Files are named as backup_X, so the most recent save would be saved under the largest value of X.
+
         :return: Single integer number of the largest file name.
         """
         src = pathlib.Path().cwd() / 'KoalaDBBackups'
@@ -36,6 +38,7 @@ class MigrateData:
     def backup_data(self):
         """
         Stores the Koala.db database stored in the cwd to a new folder, new folder created each time in case of large rollback needed.
+
         :return:
         """
         try:
@@ -52,6 +55,7 @@ class MigrateData:
     def rollback_database(self):
         """
         Saves a copy of the broken database, then replaces it with the most recent backup.
+
         :return:
         """
         recent_backup = pathlib.Path(
@@ -66,6 +70,7 @@ class MigrateData:
     def execute_update(self):
         """
         Sequentially applied the database update, if an error occurs then the database is rolled back and the bot is killed with exit code 1.
+
         :return:
         """
         if self.backup_data():
@@ -90,6 +95,7 @@ class MigrateData:
         """
         Copies data from Guilds table if it doesn't exist, re-created the table with a given scheme, and inserts the
         data into the new table.
+
         :return:
         """
         try:
@@ -127,6 +133,7 @@ class MigrateData:
         """
         Copies data from GuildExtensions table if it doesn't exist, re-created the table with a given scheme,
         and inserts the data into the new table.
+
         :return:
         """
         try:
@@ -162,6 +169,7 @@ class MigrateData:
         """
         Copies data from GuildWelcomeMessage table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -190,6 +198,7 @@ class MigrateData:
         """
         Copies data from Votes table if it doesn't exist, re-created the table with a given scheme, and inserts the data
         into the new table.
+
         :return:
         """
         try:
@@ -224,6 +233,7 @@ class MigrateData:
         """
         Copies data from VoteSent table if it doesn't exist, re-created the table with a given scheme, and inserts the
         data into the new table.
+
         :return:
         """
         try:
@@ -254,6 +264,7 @@ class MigrateData:
         """
         Copies data from VoteOptions table if it doesn't exist, re-created the table with a given scheme, and inserts
         the data into the new table.
+
         :return:
         """
         try:
@@ -285,6 +296,7 @@ class MigrateData:
         """
         Copies data from VoteTargetRoles table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -314,6 +326,7 @@ class MigrateData:
         """
         Copies data from VerifiedEmails table if it doesn't exist, re-created the table with a given scheme, and inserts
         the data into the new table.
+
         :return:
         """
         try:
@@ -352,6 +365,7 @@ class MigrateData:
         """
         Copies data from NonVerifiedEmails table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -391,6 +405,7 @@ class MigrateData:
         """
         Copies data from Roles table if it doesn't exist, re-created the table with a given scheme, and inserts the data
         into the new table.
+
         :return:
         """
         try:
@@ -431,6 +446,7 @@ class MigrateData:
         """
         Copies data from ToReVerify table if it doesn't exist, re-created the table with a given scheme, and inserts the
         data into the new table.
+
         :return:
         """
         try:
@@ -469,6 +485,7 @@ class MigrateData:
         """
         Copies data from TwitchAlerts table if it doesn't exist, re-created the table with a given scheme, and inserts
         the data into the new table.
+
         :return:
         """
         try:
@@ -502,6 +519,7 @@ class MigrateData:
         """
         Copies data from UserInTwitchAlert table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -536,6 +554,7 @@ class MigrateData:
         """
         Copies data from TeamInTwitchAlert table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -569,6 +588,7 @@ class MigrateData:
         """
         Copies data from UserInTwitchTeam table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -602,6 +622,7 @@ class MigrateData:
         """
         Copies data from TextFilter table if it doesn't exist, re-created the table with a given scheme, and inserts the
         data into the new table.
+
         :return:
         """
         try:
@@ -634,6 +655,7 @@ class MigrateData:
         """
         Copies data from TextFilterModeration table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -663,6 +685,7 @@ class MigrateData:
         """
         Copies data from TextFilterIgnoreList table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -694,6 +717,7 @@ class MigrateData:
         """
         Copies data from GuildRFRMessages table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -726,6 +750,7 @@ class MigrateData:
         """
         Copies data from RFRMessageEmojiRoles table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -758,6 +783,7 @@ class MigrateData:
         """
         Copies data from GuildRFRRequiredRoles table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
+
         :return:
         """
         try:
@@ -788,6 +814,7 @@ class MigrateData:
         """
         Copies data from GuildColourChangePermissions table if it doesn't exist, re-created the table with a given
         scheme, and inserts the data into the new table.
+
         :return:
         """
         try:
@@ -817,6 +844,7 @@ class MigrateData:
         """
         Copies data from GuildInvalidCustomColourRoles table if it doesn't exist, re-created the table with a given
         scheme, and inserts the data into the new table.
+
         :return:
         """
         try:
@@ -846,6 +874,7 @@ class MigrateData:
         """
         Copies data from GuildUsage table if it doesn't exist, re-created the table with a given scheme, and inserts the
         data into the new table.
+
         :return:
         """
         try:

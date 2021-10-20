@@ -1614,6 +1614,12 @@ async def test_remake_guilds_both_exist_table():
 
 @pytest.mark.asyncio()
 async def test_get_largest_file_number():
+    """
+    Gets the largest number associated with a file in the database backups folder.
+    First tests the folder is empty, creates 10 sequential files and tests the largest is gotten, finally creates 10 random files and tests largest is gotten.
+
+    :return:
+    """
     src = pathlib.Path(f'./KoalaDBBackups/')
     src.mkdir(exist_ok=True)
     recursively_delete_dir(src)
@@ -1640,6 +1646,7 @@ async def test_backup_data():
     """
     Saves the current database to a test file, then compares the schema of the saved file against the original to ensure the schema copied across correctly.
     Next tests that the data in the two tables is copied across correctly.
+
     :return:
     """
     migrate_database.backup_data()
@@ -1652,6 +1659,7 @@ async def test_backup_data():
     saved_db_result = c.fetchall()
     assert expected == saved_db_result
 
+    # Tests the data within the backup table is correct.
     table_names = database_manager.db_execute_select("SELECT name FROM sqlite_master WHERE type='table';")
     for table_name, in table_names:
         if table_name not in ["sqlite_master", "sqlite_sequence"]:
@@ -1661,6 +1669,10 @@ async def test_backup_data():
 
 @pytest.mark.asyncio()
 async def test_rollback_database():
+    """
+    Tests broken database is saved correctly. Has similar tests to test_backup_data then tests the new table is properly linked.
+    :return:
+    """
     migrate_database.backup_data()
     drop_table("Guilds")
     drop_table("GuildExtensions")
