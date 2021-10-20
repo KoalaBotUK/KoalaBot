@@ -943,7 +943,7 @@ class ReactForRole(commands.Cog):
         #  Get the @everyone role.
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
         perms = channel.overwrites_for(role)
-        perms.add_reactions = False
+        perms.update(add_reactions=False)
         await channel.set_permissions(role, overwrite=perms)
         bot_members = [member for member in guild.members if member.bot and member.id == self.bot.user.id]
         overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
