@@ -411,4 +411,5 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(Announce(bot))
+    logging.info("Announce is ready.")
     print("Announce is ready.")

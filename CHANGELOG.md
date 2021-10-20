@@ -4,8 +4,7 @@ administrators
 
 ## [Unreleased]
 ### Other
-- Changed tables to use text to store IDs instead of integers.
-- Added `Guilds` table 
+- Database schema changed, any previous version of KoalaBot will be ported forward with database backed up however you will not be able to start Koala again in a previous version after updating.
 
 ## [0.4.5] - 25-08-2021
 ### Other

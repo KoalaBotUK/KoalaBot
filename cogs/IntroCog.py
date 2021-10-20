@@ -14,6 +14,7 @@ import asyncio
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import logging
 
 # Own modules
 import KoalaBot
@@ -196,4 +197,5 @@ def setup(bot: KoalaBot) -> None:
     :param bot: The client of the KoalaBot
     """
     bot.add_cog(IntroCog(bot))
+    logging.info("IntroCog is ready.")
     print("IntroCog is ready.")

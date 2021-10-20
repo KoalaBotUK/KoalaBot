@@ -14,6 +14,7 @@ from typing import List, Tuple, Any
 # Libs
 import discord
 from discord.ext import commands
+import logging
 
 # Own modules
 import KoalaBot
@@ -624,4 +625,5 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(ColourRole(bot))
+    logging.info("ColourRole is ready.")
     print("ColourRole is ready.")

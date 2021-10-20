@@ -76,7 +76,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ.get('BOT_OWNER')
-UPDATE_DATABASE = bool(os.environ.get('UPDATE_DATABASE'))
+UPDATE_DATABASE = bool(os.environ.get('UPDATE_DATABASE', 'True'))
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"

@@ -7,6 +7,7 @@ Created by: Stefan Cooper
 
 # Built-in/Generic Imports
 import re
+import logging
 
 # Libs
 from discord.ext import commands
@@ -736,3 +737,5 @@ def setup(bot: KoalaBot) -> None:
     :param  bot: The client of the KoalaBot
     """
     bot.add_cog(TextFilter(bot))
+    logging.info("TextFilter is ready.")
+    print("TextFilter is ready.")

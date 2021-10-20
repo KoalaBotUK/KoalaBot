@@ -868,4 +868,5 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(Voting(bot))
+    logging.info("Voting is ready.")
     print("Voting is ready.")

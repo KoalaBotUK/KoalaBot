@@ -17,6 +17,7 @@ import aiohttp
 import discord
 import emoji
 from discord.ext import commands
+import logging
 
 # Own modules
 import KoalaBot
@@ -1298,4 +1299,5 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(ReactForRole(bot))
+    logging.info("ReactForRole is ready.")
     print("ReactForRole is ready.")

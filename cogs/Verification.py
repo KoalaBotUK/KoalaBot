@@ -13,6 +13,7 @@ import smtplib
 from email.message import EmailMessage
 from dotenv import load_dotenv
 import os
+import logging
 
 # Libs
 import discord
@@ -443,4 +444,5 @@ def setup(bot: KoalaBot) -> None:
         KoalaBot.database_manager.insert_extension("Verify", 0, False, False)
     else:
         bot.add_cog(Verification(bot))
+        logging.info("Verification is ready.")
         print("Verification is ready.")
