@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### ReactForRole
+- Fixed issues with permissions for a text channel resetting when a react for role is created.
 
 ## [0.4.5] - 25-08-2021
 ### Other
