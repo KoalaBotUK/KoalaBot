@@ -9,7 +9,7 @@ Commented using reStructuredText (reST)
 __author__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
 __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh", "Harry Nelson", "Bill Cao",
-               "Aqeel Little", "Charlie Bowe", "Oluwaponmile Femi-Sunmaila", "see full list of developers at: https://koalabot.uk/"]
+               "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila", "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
 __version__ = "0.4.5"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
