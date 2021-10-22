@@ -17,7 +17,7 @@ from sqlalchemy import select, update, insert
 
 # Own modules
 from utils.base_models import KoalaExtensions, GuildExtensions
-from utils.KoalaUtils import session, Base, engine, ENCRYPTED_DB, DATABASE_PATH
+from utils.KoalaUtils import session, Base, engine, ENCRYPTED_DB, DATABASE_PATH, get_arg_config_path
 
 # Constants
 
@@ -76,6 +76,7 @@ def __create_db(file_path):
     Creates the database, with correct permissions on unix
     :param file_path: The file path of the database
     """
+    Path(get_arg_config_path()).mkdir(exist_ok=True)
     Path(file_path).touch()
     if ENCRYPTED_DB:
         os.system("chown www-data "+file_path)
