@@ -16,7 +16,6 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 from discord.ext import commands
-import pathlib
 
 # Own modules
 import KoalaBot
@@ -54,57 +53,49 @@ async def setup_clean_messages():
     yield dpytest
 
 
-def test_parse_args_config():
-    assert "/config/" == vars(KoalaBot.parse_args(["--config", "/config/"])).get("config")
-
-
-def test_parse_args_invalid():
-    assert vars(KoalaBot.parse_args(["--test", "/test/"])).get("config") is None
-
-
 @mock.patch("os.name", "posix")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
 def test_get_config_from_argv_linux():
-    assert KoalaBot.get_config_from_argv() == "/config"
+    assert KoalaBot.get_arg_config_path() == "/config"
 
 
 @mock.patch("os.name", "posix")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config"])
 def test_get_config_from_argv_linux_partial():
-    assert KoalaBot.get_config_from_argv() == "/config"
+    assert KoalaBot.get_arg_config_path() == "/config"
 
 @mock.patch("os.name", "posix")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", ""])
 def test_get_config_from_argv_linux_empty():
-    assert KoalaBot.get_config_from_argv() == "."
+    assert KoalaBot.get_arg_config_path() == "."
 
 
 @mock.patch("os.name", "nt")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_get_config_from_argv_windows_relative():
-    assert KoalaBot.get_config_from_argv() == "C:\\config"
+    assert KoalaBot.get_arg_config_path() == "C:\\config"
 
 
 @mock.patch("os.name", "nt")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config"])
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_get_config_from_argv_windows_relative_partial():
-    assert KoalaBot.get_config_from_argv() == "C:\\config"
+    assert KoalaBot.get_arg_config_path() == "C:\\config"
 
 
 @mock.patch("os.name", "nt")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "\\config\\"])
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_get_config_from_argv_windows_relative_backslash():
-    assert KoalaBot.get_config_from_argv() == "C:\\config"
+    assert KoalaBot.get_arg_config_path() == "C:\\config"
 
 
 @mock.patch("os.name", "nt")
 @mock.patch("sys.argv", ["KoalaBot.py", "--config", "D:/test/config/"])
 @mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
 def test_get_config_from_argv_windows_absolute():
-    assert KoalaBot.get_config_from_argv() == "D:\\test\\config"
+    assert KoalaBot.get_arg_config_path() == "D:\\test\\config"
 
 
 def test_test_user_is_owner(test_ctx):
@@ -187,26 +178,6 @@ async def test_dm_empty_group_message():
     x = await KoalaBot.dm_group_message([], test_message)
     assert dpytest.verify().message().nothing()
     assert x == 0
-
-@mock.patch("os.name", "posix")
-@mock.patch("KoalaBot.ENCRYPTED_DB", False)
-def test_format_db_path_linux_absolute_unencrypted():
-    db_path = KoalaBot.format_db_path("/test_dir/", "test.db")
-    assert db_path == "/test_dir/windows_test.db"
-
-
-@mock.patch("os.name", "posix")
-@mock.patch("KoalaBot.ENCRYPTED_DB", True)
-def test_format_db_path_linux_absolute_encrypted():
-    db_path = KoalaBot.format_db_path("/test_dir/", "test.db")
-    assert db_path == "/test_dir/test.db"
-
-
-@mock.patch("os.name", "nt")
-@mock.patch("KoalaBot.ENCRYPTED_DB", True)
-def test_format_db_path_windows():
-    db_path = KoalaBot.format_db_path("/test_dir/", "test.db")
-    assert db_path == "\\test_dir\\windows_test.db"
 
 
 @pytest.fixture(scope='session', autouse=True)

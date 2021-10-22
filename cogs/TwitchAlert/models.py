@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, func, update
-from base_models import Base, engine
+from utils.KoalaUtils import Base
 
 
 class TwitchAlerts(Base):
@@ -30,6 +30,3 @@ class UserInTwitchTeam(Base):
     team_twitch_alert_id = Column(Integer, ForeignKey("TeamInTwitchAlert.team_twitch_alert_id"), primary_key=True)
     twitch_username = Column(String, primary_key=True)
     message_id = Column(Integer, nullable=True)
-
-
-Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)

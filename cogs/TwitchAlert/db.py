@@ -11,7 +11,8 @@ from utils import KoalaDBManager
 from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
-from base_models import session, create_tables
+from utils.KoalaUtils import session
+from utils.base_db import setup
 
 # Libs
 import discord
@@ -20,6 +21,43 @@ import discord
 # Constants
 
 # Variables
+
+
+def delete_invalid_accounts():
+    """
+    Removes invalid teams & users (where the names are not valid according to the twitch Regex)
+    :return:
+    """
+    usernames = session.execute(select(UserInTwitchAlert.twitch_username))
+    teams = session.execute(select(TeamInTwitchAlert.twitch_team_name))
+    users_in_teams = session.execute(select(UserInTwitchTeam.twitch_username))
+
+    invalid_usernames = [user.twitch_username for user in usernames
+                         if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username)]
+    invalid_teams = [team.twitch_team_name for team in teams
+                     if not re.search(TWITCH_USERNAME_REGEX, team.twitch_team_name)]
+    invalid_users_in_teams = [user.twitch_username for user in users_in_teams
+                              if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username)]
+
+    if invalid_usernames:
+        print(f'Deleting Invalid Users: {invalid_usernames}')
+    if invalid_teams:
+        print(f'Deleting Invalid Teams: {invalid_teams}')
+    if invalid_users_in_teams:
+        print(f'Deleting Invalid Users in Teams: {invalid_users_in_teams}')
+
+    delete_invalid_usernames = delete(UserInTwitchAlert)\
+        .where(UserInTwitchAlert.twitch_username.in_(invalid_usernames))
+    delete_invalid_teams = delete(TeamInTwitchAlert)\
+        .where(TeamInTwitchAlert.twitch_team_name.in_(invalid_teams))
+    # This should be nothing
+    delete_invalid_users_in_teams = delete(TeamInTwitchAlert)\
+        .where(TeamInTwitchAlert.twitch_team_name.in_(invalid_teams))
+
+    session.execute(delete_invalid_usernames)
+    session.execute(delete_invalid_teams)
+    session.execute(delete_invalid_users_in_teams)
+    session.commit()
 
 
 class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
@@ -32,12 +70,13 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         Initialises local variables
         :param bot_client:
         """
+        delete_invalid_accounts()
+        setup()
         if not database_path:
             database_path = KoalaBot.DATABASE_PATH
 
-        create_tables()
-
         super().__init__(database_path, KoalaBot.DB_KEY)
+
         self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client
 
@@ -230,9 +269,10 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         if re.search(TWITCH_USERNAME_REGEX, team_name):
             users = self.twitch_handler.get_team_users(team_name)
             for user in users:
-                sql_add_user = insert(UserInTwitchTeam).values(team_twitch_alert_id=twitch_team_id,
-                                                               twitch_username=user.get("user_login")).prefix_with(
-                    "OR REPLACE")
+                sql_add_user = insert(UserInTwitchTeam)\
+                    .values(team_twitch_alert_id=twitch_team_id,
+                            twitch_username=user.get("user_login"))\
+                    .prefix_with("OR IGNORE")
 
                 try:
                     session.execute(sql_add_user)
@@ -247,10 +287,10 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         """
         sql_get_teams = select(TeamInTwitchAlert.team_twitch_alert_id, TeamInTwitchAlert.twitch_team_name)
         # """SELECT team_twitch_alert_id, twitch_team_name FROM TeamInTwitchAlert"""
-        teams_info = session.execute(sql_get_teams)
-        if teams_info is None:
+        teams_info = session.execute(sql_get_teams).all()
+        if not teams_info:
             return
-        for team_info in teams_info.all():
+        for team_info in teams_info:
             self.update_team_members(team_info.team_twitch_alert_id, team_info.twitch_team_name)
 
     async def delete_all_offline_streams(self, team: bool, usernames):

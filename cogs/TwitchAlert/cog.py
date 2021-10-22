@@ -1,29 +1,29 @@
 from discord.ext import commands
 
-
 # Futures
 
 # Built-in/Generic Imports
 import time
 import re
-import logging
 
 # Own modules
-from sqlalchemy import select, or_, delete, and_, update
-
 import KoalaBot
-from base_models import GuildExtensions, session
+from KoalaBot import logging
+from utils.base_models import GuildExtensions
+from utils.base_db import session
 from utils.KoalaColours import KOALA_GREEN
 from utils.KoalaUtils import error_embed, is_channel_in_guild
 from .models import UserInTwitchAlert, TwitchAlerts, UserInTwitchTeam, TeamInTwitchAlert
 from .utils import twitch_is_enabled, create_live_embed
 from .db import TwitchAlertDBManager
-from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX,\
+from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
 
 # Libs
 import discord
 from discord.ext import commands, tasks
+from sqlalchemy import select, or_, delete, and_, update, null
+
 
 # Constants
 
@@ -282,12 +282,15 @@ class TwitchAlert(commands.Cog):
     @twitch_group.command(name="list")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def list_twitch_alert(self, ctx, channel: discord.TextChannel = None):
+    async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel = None):
         """
         Shows all current TwitchAlert users and teams in a channel
         :param ctx:
         :param channel: The discord channel ID of the Twitch Alert
         """
+        if not channel:
+            channel = ctx.channel
+
         channel_id = channel.id
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -348,29 +351,19 @@ class TwitchAlert(commands.Cog):
         """
         start = time.time()
         # logging.info("TwitchAlert: User Loop Started")
-        sql_find_users = select(UserInTwitchAlert.twitch_username)\
-            .join(TwitchAlerts, UserInTwitchAlert.channel_id == TwitchAlerts.channel_id)\
-            .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id)\
+        sql_find_users = select(UserInTwitchAlert.twitch_username) \
+            .join(TwitchAlerts, UserInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
+            .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
             .where(or_(GuildExtensions.extension_id == 'TwitchAlert', GuildExtensions.extension_id == 'All'))
-            # "SELECT twitch_username " \
-            #              "FROM UserInTwitchAlert " \
-            #              "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
-            #              "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-            #              "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
+        # "SELECT twitch_username " \
+        #              "FROM UserInTwitchAlert " \
+        #              "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+        #              "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+        #              "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
         users = session.execute(sql_find_users).all()
-        usernames = []
-        if users is None:
-            return
 
-        for user in users:
-            if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username):
-                sql_remove_invalid_user = delete(UserInTwitchAlert).where(UserInTwitchAlert.twitch_username == user.twitch_username)
-                session.execute(sql_remove_invalid_user)
-                session.commit()
-            else:
-                usernames.append(user.twitch_username)
+        usernames = [str.lower(user.twitch_username) for user in users]
 
-        # user_streams = self.ta_database_manager.twitch_handler.get_streams_data(usernames)
         if not usernames:
             return
 
@@ -383,27 +376,28 @@ class TwitchAlert(commands.Cog):
             try:
                 if streams_details.get('type') == "live":
                     current_username = str.lower(streams_details.get("user_login"))
-                    temp = usernames
+                    old_len = len(usernames)
                     usernames.remove(current_username)
-                    if usernames == temp:
+                    if len(usernames) == old_len:
                         logging.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list")
 
                     sql_find_message_id = select(UserInTwitchAlert.channel_id,
                                                  UserInTwitchAlert.message_id,
                                                  UserInTwitchAlert.custom_message,
-                                                 TwitchAlerts.default_message)\
-                        .join(TwitchAlerts, UserInTwitchAlert.channel_id == TwitchAlerts.channel_id)\
-                        .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id)\
-                        .where(and_(or_(GuildExtensions.extension_id == 'TwitchAlert',
-                                        GuildExtensions.extension_id == 'All'),
-                                    UserInTwitchAlert.twitch_username == current_username))
-                        # "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
-                        # "FROM UserInTwitchAlert " \
-                        # "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
-                        # "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-                        # "WHERE extension_id = 'TwitchAlert' " \
-                        # "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
-                        # "WHERE twitch_username = ?;"
+                                                 TwitchAlerts.default_message) \
+                        .join(TwitchAlerts, UserInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
+                        .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
+                        .where(and_(and_(or_(GuildExtensions.extension_id == 'TwitchAlert',
+                                             GuildExtensions.extension_id == 'All'),
+                                         UserInTwitchAlert.twitch_username == current_username),
+                                    UserInTwitchAlert.message_id == null()))
+                    # "SELECT UserInTwitchAlert.channel_id, message_id, custom_message, default_message " \
+                    # "FROM UserInTwitchAlert " \
+                    # "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
+                    # "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
+                    # "WHERE extension_id = 'TwitchAlert' " \
+                    # "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id " \
+                    # "WHERE twitch_username = ?;"
 
                     results = session.execute(sql_find_message_id).all()
 
@@ -431,13 +425,14 @@ class TwitchAlert(commands.Cog):
                                     new_message = await channel.send(embed=new_message_embed)
                                     sql_update_message_id = update(UserInTwitchAlert).where(and_(
                                         UserInTwitchAlert.channel_id == channel_id,
-                                        UserInTwitchAlert.twitch_username == current_username))\
+                                        UserInTwitchAlert.twitch_username == current_username)) \
                                         .values(message_id=new_message.id)
                                     session.execute(sql_update_message_id)
                                     session.commit()
                         except discord.errors.Forbidden as err:
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
-                            sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel.id)
+                            sql_remove_invalid_channel = delete(TwitchAlerts).where(
+                                TwitchAlerts.channel_id == channel.id)
                             session.execute(sql_remove_invalid_channel)
                             session.commit()
 
@@ -481,12 +476,15 @@ class TwitchAlert(commands.Cog):
         """
         start = time.time()
         # logging.info("TwitchAlert: Team Loop Started")
-        sql_select_team_users = select(UserInTwitchTeam.twitch_username, TeamInTwitchAlert.twitch_team_name)\
-            .join(TeamInTwitchAlert, UserInTwitchTeam.team_twitch_alert_id == TeamInTwitchAlert.team_twitch_alert_id)\
-            .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id)\
-            .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id)\
-            .where(
-            or_(GuildExtensions.extension_id == 'TwitchAlert', GuildExtensions.extension_id == 'All'))
+
+        # Select all twitch users & team names where TwitchAlert is enabled
+        sql_select_team_users = select(UserInTwitchTeam.twitch_username, TeamInTwitchAlert.twitch_team_name) \
+            .join(TeamInTwitchAlert, UserInTwitchTeam.team_twitch_alert_id == TeamInTwitchAlert.team_twitch_alert_id) \
+            .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
+            .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
+            .where(or_(GuildExtensions.extension_id == 'TwitchAlert', GuildExtensions.extension_id == 'All'))
+
+        users_and_teams = session.execute(sql_select_team_users).all()
         # sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
         #                         "FROM UserInTwitchTeam " \
         #                         "JOIN TeamInTwitchAlert TITA " \
@@ -496,19 +494,7 @@ class TwitchAlert(commands.Cog):
         #                         "WHERE extension_id = 'TwitchAlert' " \
         #                         "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
 
-        users_and_teams = session.execute(sql_select_team_users).all()
-        usernames = []
-        if users_and_teams is None:
-            return
-
-        for user in users_and_teams:
-            if not re.search(TWITCH_USERNAME_REGEX, user.twitch_team_name):
-                sql_remove_invalid_user = delete(TeamInTwitchAlert)\
-                    .where(TeamInTwitchAlert.twitch_team_name == user.twitch_team_name)
-                session.execute(sql_remove_invalid_user)
-                session.commit()
-            else:
-                usernames.append(user.twitch_username)
+        usernames = [str.lower(user.twitch_username) for user in users_and_teams]
 
         if not usernames:
             return
@@ -522,21 +508,23 @@ class TwitchAlert(commands.Cog):
             try:
                 if stream_data.get('type') == "live":
                     current_username = str.lower(stream_data.get("user_login"))
-                    temp = usernames
+                    old_len = len(usernames)
                     usernames.remove(current_username)
-                    if usernames == temp:
+                    if len(usernames) == old_len:
                         logging.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user teams list")
                     sql_find_message_id = select(TeamInTwitchAlert.channel_id,
                                                  UserInTwitchTeam.message_id,
                                                  TeamInTwitchAlert.team_twitch_alert_id,
                                                  TeamInTwitchAlert.custom_message,
-                                                 TwitchAlerts.default_message)\
-                        .join(TeamInTwitchAlert, UserInTwitchTeam.team_twitch_alert_id == TeamInTwitchAlert.team_twitch_alert_id)\
-                        .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id)\
-                        .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id)\
-                        .where(and_(or_(GuildExtensions.extension_id == 'TwitchAlert',
-                                        GuildExtensions.extension_id == 'All'),
-                                    UserInTwitchTeam.twitch_username == current_username))
+                                                 TwitchAlerts.default_message) \
+                        .join(TeamInTwitchAlert,
+                              UserInTwitchTeam.team_twitch_alert_id == TeamInTwitchAlert.team_twitch_alert_id) \
+                        .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
+                        .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
+                        .where(and_(and_(or_(GuildExtensions.extension_id == 'TwitchAlert',
+                                             GuildExtensions.extension_id == 'All'),
+                                         UserInTwitchTeam.twitch_username == current_username),
+                                    UserInTwitchTeam.message_id == null()))
 
                     # sql_find_message_id = """
                     # SELECT TITA.channel_id, UserInTwitchTeam.message_id, TITA.team_twitch_alert_id, custom_message,
@@ -549,7 +537,7 @@ class TwitchAlert(commands.Cog):
                     #       WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE ON TA.guild_id = GE.guild_id
                     # WHERE twitch_username = ?"""
 
-                    results = session.execute(sql_find_message_id)
+                    results = session.execute(sql_find_message_id).all()
 
                     new_message_embed = None
 
@@ -574,15 +562,16 @@ class TwitchAlert(commands.Cog):
                                 if new_message_embed is not None and channel is not None:
                                     new_message = await channel.send(embed=new_message_embed)
 
-                                    sql_update_message_id = update(UserInTwitchTeam)\
+                                    sql_update_message_id = update(UserInTwitchTeam) \
                                         .where(and_(UserInTwitchTeam.team_twitch_alert_id == team_twitch_alert_id,
-                                                    UserInTwitchTeam.twitch_username == current_username))\
+                                                    UserInTwitchTeam.twitch_username == current_username)) \
                                         .values(message_id=new_message.id)
                                     session.execute(sql_update_message_id)
                                     session.commit()
                         except discord.errors.Forbidden as err:
                             logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
-                            sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel.id)
+                            sql_remove_invalid_channel = delete(TwitchAlerts).where(
+                                TwitchAlerts.channel_id == channel.id)
                             session.execute(sql_remove_invalid_channel)
                             session.commit()
             except Exception as err:

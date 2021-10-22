@@ -4,9 +4,11 @@
 
 # Own modules
 from .utils import split_to_100s
+from KoalaBot import logging
 
 # Libs
 from twitchAPI.twitch import Twitch
+from twitchAPI.types import TwitchAPIException
 
 # Constants
 
@@ -27,7 +29,20 @@ class TwitchAPIHandler:
         :param usernames: The list of usernames
         :return: The JSON data of the request
         """
-        result = self.twitch.get_streams(user_login=usernames).get("data")
+        result = []
+        batches = split_to_100s(usernames)
+        for batch in batches:
+            batch_result = []
+            try:
+                batch_result.extend(self.twitch.get_streams(user_login=batch).get("data"))
+            except TwitchAPIException:
+                logging.error(f"TwitchAlert: Streams data not received for batch: {batch}")
+                for user in batch:
+                    try:
+                        batch_result.extend(self.twitch.get_streams(user_login=user).get("data"))
+                    except TwitchAPIException:
+                        logging.error(f"TwitchAlert: User data cannot be found | {user} ")
+            result.extend(batch_result)
 
         return result
 

@@ -25,17 +25,12 @@ else:
     from pysqlcipher3 import dbapi2 as sqlite3
 
 # Own modules
+from utils import base_db
 
 # Constants
 
 # Variables
 
-
-def create_db(file_path):
-    Path(file_path).touch()
-    if not (os.name == 'nt' or not ENCRYPTED_DB):
-        os.system("chown www-data "+file_path)
-        os.system("chmod 777 "+file_path)
 
 class KoalaDBManager:
     """
@@ -43,7 +38,7 @@ class KoalaDBManager:
     """
 
     def __init__(self, db_filename, db_secret_key):
-        create_db(db_filename)
+        base_db.setup()
         self.db_file_path = db_filename
         self.db_secret_key = db_secret_key
         self.create_base_tables()
@@ -124,34 +119,7 @@ class KoalaDBManager:
 
         Does not include 'Koala Extension' tables.
         """
-        sql_create_koala_extensions_table = """
-        CREATE TABLE IF NOT EXISTS KoalaExtensions (
-        extension_id text NOT NULL PRIMARY KEY,
-        subscription_required integer NOT NULL,
-        available boolean NOT NULL,
-        enabled boolean NOT NULL
-        );"""
-
-        sql_create_guild_extensions_table = """
-        CREATE TABLE IF NOT EXISTS GuildExtensions (
-        extension_id text NOT NULL,
-        guild_id integer NOT NULL,
-        PRIMARY KEY (extension_id,guild_id),
-        CONSTRAINT fk_extensions
-            FOREIGN KEY (extension_id) 
-            REFERENCES KoalaExtensions (extension_id)
-            ON DELETE CASCADE 
-        );"""
-
-        sql_create_guild_welcome_messages_table = """
-        CREATE TABLE IF NOT EXISTS GuildWelcomeMessages (
-        guild_id integer NOT NULL PRIMARY KEY,
-        welcome_message text
-        );"""
-
-        self.db_execute_commit(sql_create_guild_welcome_messages_table)
-        self.db_execute_commit(sql_create_koala_extensions_table)
-        self.db_execute_commit(sql_create_guild_extensions_table)
+        base_db.setup()
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
         """
@@ -164,24 +132,7 @@ class KoalaDBManager:
         :param enabled: Is currently enabled and running
             (false if down for maintenance)
         """
-
-        sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ?"""
-
-        if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0:
-            sql_update_extension = """
-            UPDATE KoalaExtensions
-            SET subscription_required = ?,
-                available = ?,
-                enabled = ?
-            WHERE extension_id = ?"""
-            self.db_execute_commit(sql_update_extension, args=[subscription_required, available, enabled, extension_id])
-
-        else:
-            sql_insert_extension = """
-            INSERT INTO KoalaExtensions 
-            VALUES (?,?,?,?)"""
-
-            self.db_execute_commit(sql_insert_extension, args=[extension_id, subscription_required, available, enabled])
+        base_db.insert_extension(extension_id, subscription_required, available, enabled)
 
     def extension_enabled(self, guild_id, extension_id: str):
         """

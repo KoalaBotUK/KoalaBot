@@ -16,7 +16,7 @@ from discord.ext import commands
 from sqlalchemy import select, and_
 
 import KoalaBot
-from base_models import session
+from utils.base_db import session
 from cogs import TwitchAlert as TwitchAlert
 from cogs.TwitchAlert.models import UserInTwitchAlert
 from utils.KoalaColours import KOALA_GREEN
@@ -44,7 +44,7 @@ async def twitch_cog(bot: discord.ext.commands.Bot):
     return twitch_cog
 
 
-@mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
+# @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=1)
 async def test_edit_default_message_default_from_none(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
@@ -57,7 +57,7 @@ async def test_edit_default_message_default_from_none(twitch_cog):
     assert dpytest.verify().message().embed(embed=assert_embed)
 
 
-@mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
+# @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=2)
 async def test_edit_default_message_existing(twitch_cog):
     this_channel = dpytest.get_config().channels[0]

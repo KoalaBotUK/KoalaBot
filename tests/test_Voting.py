@@ -21,6 +21,7 @@ from discord.ext import commands
 import KoalaBot
 from cogs import Voting
 from utils import KoalaDBManager
+from utils.KoalaUtils import format_config_path, CONFIG_DIR
 
 
 class Fake:
@@ -33,7 +34,7 @@ ctx = Fake()
 ctx.author.id = 1234
 ctx.guild.id = 4567
 cog = None
-db_manager = KoalaDBManager.KoalaDBManager("votingTest.db", KoalaBot.DB_KEY)
+db_manager = KoalaDBManager.KoalaDBManager(format_config_path(CONFIG_DIR, "votingTest.db"), KoalaBot.DB_KEY)
 db_manager.create_base_tables()
 vote_manager = None
 

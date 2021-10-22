@@ -18,86 +18,25 @@ __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
-
 # Built-in/Generic Imports
+import sys
 import os
 import logging
-import sys
-import argparse
-from pathlib import Path, PurePosixPath, PureWindowsPath
 
 # Libs
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from pathlib import PurePath
 
 # Own modules
+from utils.KoalaUtils import error_embed, format_config_path, get_arg_config_path, DATABASE_PATH, CONFIG_DIR, DB_KEY
 from utils.KoalaDBManager import KoalaDBManager as DBManager
-from utils.KoalaUtils import error_embed
 
 # Constants
-def parse_args(args):
-    """
-    Uses argparse to return a parser of all given arguments when running KoalaBot.py
-
-    :param args: sys.argv[1:]
-    :return: parsed argparse
-    """
-    parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
-    parser.add_argument('--config', help="Config & database directory")
-    args, unknown = parser.parse_known_args(args)
-    return args
-
-
-def get_config_from_argv():
-    """
-    Gets config directory if given from arguments when running KoalaBot.py
-
-    :return: Valid config dir
-    """
-    config_dir = vars(parse_args(sys.argv[1:])).get("config")
-    if config_dir and os.name == 'nt' and config_dir[1] != ":":
-        config_dir = os.getcwd() + config_dir
-    elif config_dir is None:
-        config_dir = ""
-    if os.name == 'nt':
-        return str(PureWindowsPath(config_dir))
-    elif os.name == 'posix':
-        return str(PurePosixPath(config_dir))
-    else:
-        return str(Path(config_dir))
-
-
-CONFIG_DIR = get_config_from_argv()
-
-logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
-# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
-ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
-
-
-def format_db_path(directory: str, filename: str):
-    """
-    Format the path to be used by the database.
-
-    This will be parsed directly into sqlite3 create connection.
-
-    :param directory: The directory for the database file
-    :param filename: The filename of the given database
-    """
-    if not directory:
-        directory = ""
-
-    if os.name == 'nt' or not ENCRYPTED_DB:
-        return str(PurePath(directory, "windows_" + filename))
-    else:
-        return str(PurePath(directory, filename))
-
 
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ.get('BOT_OWNER')
-DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
@@ -105,12 +44,11 @@ COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
-DATABASE_PATH = format_db_path(CONFIG_DIR, "Koala.db")
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
-ENABLED_COGS=["cogs.TwitchAlert.cog"]
+ENABLED_COGS = ["cogs.TwitchAlert.cog"]
 
 # Variables
 started = False
@@ -121,11 +59,12 @@ intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
-logging.basicConfig(filename=format_db_path(CONFIG_DIR, 'KoalaBot.log'), format='%(asctime)s %(levelname)-8s %(message)s')
+logging.basicConfig(filename=format_config_path(CONFIG_DIR, 'KoalaBot.log'),
+                    level=logging.INFO,
+                    format='%(asctime)s %(levelname)-8s %(message)s')
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 logger = logging.getLogger('discord')
 is_dpytest = False
-
 
 
 def is_owner(ctx):

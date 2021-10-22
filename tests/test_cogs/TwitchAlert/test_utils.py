@@ -1,30 +1,20 @@
 # Futures
 
 # Built-in/Generic Imports
-import os
-import asyncio
 
 # Libs
 import discord.ext.test as dpytest
-import mock
-import pytest_ordering as pytest
-import pytest
 import discord
-from discord.ext import commands
 
 # Own modules
-import KoalaBot
 from cogs.TwitchAlert import utils as TwitchAlert
-from utils import KoalaDBManager
-from utils.KoalaColours import *
+from utils.KoalaColours import KOALA_GREEN
 
 # Constants
 DB_PATH = "Koala.db"
 
 
 # Variables
-
-
 
 
 def test_create_live_embed():
@@ -43,6 +33,7 @@ def test_create_live_embed():
     # Get response and assert equal
     result = TwitchAlert.create_live_embed(stream_info, user_info, game_info, "")
     assert dpytest.embed_eq(result, expected)
+
 
 def test_create_live_embed_with_message():
     # Create the expected embed with information required
