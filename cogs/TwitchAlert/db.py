@@ -2,11 +2,11 @@
 
 # Built-in/Generic Imports
 import re
-import logging
 from sqlalchemy import select, update, insert, delete, and_, or_, null
 
 # Own modules
 import KoalaBot
+from KoalaBot import logging
 from utils import KoalaDBManager
 from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
@@ -40,11 +40,11 @@ def delete_invalid_accounts():
                               if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username)]
 
     if invalid_usernames:
-        print(f'Deleting Invalid Users: {invalid_usernames}')
+        logging.warning(f'Deleting Invalid Users: {invalid_usernames}')
     if invalid_teams:
-        print(f'Deleting Invalid Teams: {invalid_teams}')
+        logging.warning(f'Deleting Invalid Teams: {invalid_teams}')
     if invalid_users_in_teams:
-        print(f'Deleting Invalid Users in Teams: {invalid_users_in_teams}')
+        logging.warning(f'Deleting Invalid Users in Teams: {invalid_users_in_teams}')
 
     delete_invalid_usernames = delete(UserInTwitchAlert)\
         .where(UserInTwitchAlert.twitch_username.in_(invalid_usernames))

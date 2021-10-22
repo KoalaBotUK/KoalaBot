@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, func, update
+from sqlalchemy import Column, Integer, String, ForeignKey
 from utils.KoalaUtils import Base
 
 

@@ -29,7 +29,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
-from utils.KoalaUtils import error_embed, format_config_path, get_arg_config_path, DATABASE_PATH, CONFIG_DIR, DB_KEY
+from utils.KoalaUtils import error_embed, format_config_path, DATABASE_PATH, CONFIG_DIR, DB_KEY
 from utils.KoalaDBManager import KoalaDBManager as DBManager
 
 # Constants

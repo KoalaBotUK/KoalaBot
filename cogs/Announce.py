@@ -11,7 +11,6 @@ import math
 # Libs
 import discord
 import logging
-import sys
 from discord.ext import commands
 from utils.KoalaUtils import extract_id, wait_for_message
 from utils import KoalaColours

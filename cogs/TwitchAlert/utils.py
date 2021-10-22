@@ -2,8 +2,6 @@
 
 # Built-in/Generic Imports
 import os
-import logging
-import sys
 
 # Own modules
 import KoalaBot

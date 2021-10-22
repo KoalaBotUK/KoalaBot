@@ -12,7 +12,6 @@ import os
 
 # Libs
 from dotenv import load_dotenv
-from pathlib import Path
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
 if ENCRYPTED_DB:

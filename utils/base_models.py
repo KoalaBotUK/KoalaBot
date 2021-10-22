@@ -1,7 +1,5 @@
 # Futures
 # Built-in/Generic Imports
-import os
-
 # Libs
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 
