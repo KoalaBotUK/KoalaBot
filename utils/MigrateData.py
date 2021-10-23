@@ -30,8 +30,11 @@ class MigrateData:
         if not src.is_dir():
             return 0
         else:
+            # TODO: Have a look at better pattern matching
             files = list(src.glob('*'))
-            values = [int(pathlib.Path(x).name.split("_")[1]) for x in files]
+            values = [int(pathlib.Path(x).name.replace("backup_", "")) for x in files]
+            if not values:
+                return 0
             values.sort()
             return values[-1]
 
@@ -43,13 +46,13 @@ class MigrateData:
         """
         try:
             file_name = "backup_" + str(self.get_largest_file_number() + 1)
-            src = pathlib.Path().cwd() / 'KoalaDBBackups' / file_name
+            src = pathlib.Path(f'KoalaDBBackups/{file_name}')
             if not src.is_dir():
                 src.mkdir()
             shutil.copy(self.database_manager.db_file_path, src)
             return True
         except Exception as e:
-            logging.warning(f"MigrateData: {e}")
+            logging.warning(f"MigrateData: error in backup data: {e}")
             return False
 
     def rollback_database(self):
@@ -160,8 +163,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildExtensions (extension_id, guild_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_guild_extensions_table)
         except Exception as e:
             raise Exception(f"Error in remake_guild_extensions: {e}")
 
