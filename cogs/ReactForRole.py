@@ -1166,7 +1166,7 @@ class ReactForRoleDBManager:
         :return: RFR message info of the specific message if found, otherwise None.
         """
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM GuildRFRMessages WHERE guild_id = ? AND channel_id = ? AND message_id = ?;",
+            "SELECT guild_id, channel_id, message_id, emoji_role_id FROM GuildRFRMessages WHERE guild_id = ? AND channel_id = ? AND message_id = ?;",
             args=[guild_id, channel_id, message_id])
         if not rows:
             return
@@ -1181,7 +1181,7 @@ class ReactForRoleDBManager:
         :return: List of rfr messages in the guild.
         """
         rows: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
+            "SELECT guild_id, channel_id, message_id, emoji_role_id FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
         if not rows:
             return
         else:
@@ -1196,7 +1196,7 @@ class ReactForRoleDBManager:
         :return: Role IDs of RFR roles in a specific guild
         """
         rfr_messages: List[Tuple[int, int, int, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
+            "SELECT guild_id, channel_id, message_id, emoji_role_id FROM GuildRFRMessages WHERE guild_id = ?;", args=[guild_id])
         rfr_messages = KoalaUtils.change_field_types(rfr_messages, [int, int, int, int])
         if not rfr_messages:
             return []
@@ -1218,7 +1218,7 @@ class ReactForRoleDBManager:
         :return: List of rows in the database if found, otherwise None
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ?;", args=[emoji_role_id])
+            "SELECT emoji_role_id, emoji_raw, role_id FROM RFRMessageEmojiRoles WHERE emoji_role_id = ?;", args=[emoji_role_id])
         if not rows:
             return
         else:
@@ -1235,7 +1235,7 @@ class ReactForRoleDBManager:
         :return: Unique row corresponding to a specific emoji-role combo
         """
         rows: List[Tuple[int, str, int]] = self.database_manager.db_execute_select(
-            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ? AND role_id = ?;",
+            "SELECT emoji_role_id, emoji_raw, role_id FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ? AND role_id = ?;",
             args=[emoji_role_id, emoji_raw, role_id])
         if not rows:
             return
@@ -1251,7 +1251,7 @@ class ReactForRoleDBManager:
         :return: role ID of the emoji-role combo
         """
         rows: Tuple[int, str, int] = self.database_manager.db_execute_select(
-            "SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ?;",
+            "SELECT emoji_role_id, emoji_raw, role_id FROM RFRMessageEmojiRoles WHERE emoji_role_id = ? AND emoji_raw = ?;",
             args=[emoji_role_id, emoji_raw])
         if not rows:
             return
