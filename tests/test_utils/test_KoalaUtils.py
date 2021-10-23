@@ -1,6 +1,52 @@
 import mock
 import pathlib
-from utils.KoalaUtils import __parse_args, format_config_path
+from utils.KoalaUtils import __parse_args, get_arg_config_path, format_config_path
+
+
+@mock.patch("os.name", "posix")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
+def test_get_config_from_argv_linux():
+    assert get_arg_config_path() == "/config"
+
+
+@mock.patch("os.name", "posix")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config"])
+def test_get_config_from_argv_linux_partial():
+    assert get_arg_config_path() == "/config"
+
+
+@mock.patch("os.name", "posix")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", ""])
+def test_get_config_from_argv_linux_empty():
+    assert get_arg_config_path() == "."
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config/"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_relative():
+    assert get_arg_config_path() == "C:\\config"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "/config"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_relative_partial():
+    assert get_arg_config_path() == "C:\\config"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "\\config\\"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_relative_backslash():
+    assert get_arg_config_path() == "C:\\config"
+
+
+@mock.patch("os.name", "nt")
+@mock.patch("sys.argv", ["KoalaBot.py", "--config", "D:/test/config/"])
+@mock.patch("os.getcwd", mock.MagicMock(return_value="C:/"))
+def test_get_config_from_argv_windows_absolute():
+    assert get_arg_config_path() == "D:\\test\\config"
 
 
 def test_parse_args_config():
