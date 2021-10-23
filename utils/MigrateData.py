@@ -190,8 +190,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_guild_welcome_messages_table)
         except Exception as e:
             raise Exception(f"Error in remake_guild_welcome_messages: {e}")
 
@@ -225,8 +223,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO Votes (vote_id, author_id, guild_id, title, chair_id, voice_id, end_time) VALUES (?, ?, ?, ?, ?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(vote_table)
         except Exception as e:
             raise Exception(f"Error in remake_votes: {e}")
 
@@ -256,8 +252,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO VoteSent (vote_id, vote_receiver_id, vote_receiver_message) VALUES (?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(delivered_table)
         except Exception as e:
             raise Exception(f"Error in remake_vote_sent: {e}")
 
@@ -288,8 +282,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO VoteOptions (vote_id, opt_id, option_title, option_desc) VALUES (?, ?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(option_table)
         except Exception as e:
             raise Exception(f"Error in remake_vote_options: {e}")
 
@@ -318,8 +310,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO VoteTargetRoles (vote_id, role_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(role_table)
         except Exception as e:
             raise Exception(f"Error in remake_vote_target_roles: {e}")
 
@@ -357,8 +347,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO VerifiedEmails (user_id, email) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(verified_table)
         except Exception as e:
             raise Exception(f"Error in remake_verified_emails: {e}")
 
@@ -397,8 +385,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO NonVerifiedEmails (user_id, email, token) VALUES (?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(non_verified_table)
         except Exception as e:
             raise Exception(f"Error in remake_not_verified_emails: {e}")
 
@@ -438,8 +424,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO Roles (guild_id, role_id, email_suffix) VALUES (?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(role_table)
         except Exception as e:
             raise Exception(f"Error in remake_role_table: {e}")
 
@@ -477,8 +461,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO ToReVerify (user_id, role_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(re_verify_table)
         except Exception as e:
             raise Exception(f"Error in remake_to_re_verify: {e}")
 
@@ -511,8 +493,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO TwitchAlerts (guild_id, channel_id, default_message) VALUES (?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_twitch_alerts_table)
         except Exception as e:
             raise Exception(f"Error in remake_twitch_alerts: {e}")
 
@@ -546,8 +526,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO UserInTwitchAlert (channel_id, twitch_username, custom_message, message_id) VALUES (?, ?, ? ,?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
         except Exception as e:
             raise Exception(f"Error in remake_user_in_twitch_alert: {e}")
 
@@ -580,8 +558,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO TeamInTwitchAlert (team_twitch_alert_id, channel_id, twitch_team_name, custom_message) VALUES (?, ?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
         except Exception as e:
             raise Exception(f"Error in remake_team_in_twitch_alert: {e}")
 
@@ -614,8 +590,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO UserInTwitchTeam (team_twitch_alert_id, twitch_username, message_id) VALUES (?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
         except Exception as e:
             raise Exception(f"Error in remake_user_in_twitch_team: {e}")
 
@@ -647,8 +621,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (?, ?, ?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_text_filter_table)
         except Exception as e:
             raise Exception(f"Error in remake_text_filter: {e}")
 
@@ -677,8 +649,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_mod_table)
         except Exception as e:
             raise Exception(f"Error in remake_text_filter_moderation: {e}")
 
@@ -709,8 +679,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO TextFilterIgnoreList (ignore_id, guild_id, ignore_type, ignore) VALUES (?, ?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_ignore_list_table)
         except Exception as e:
             raise Exception(f"Error in remake_text_filter_ignore_list: {e}")
 
@@ -742,8 +710,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildRFRMessages (guild_id, channel_id, message_id, emoji_role_id) VALUES (?, ?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
         except Exception as e:
             raise Exception(f"Error in remake_guild_rfr_messages: {e}")
 
@@ -775,8 +741,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES (?, ?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
         except Exception as e:
             raise Exception(f"Error in remake_rfr_message_emoji_roles: {e}")
 
@@ -806,8 +770,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildRFRRequiredRoles (guild_id, role_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
         except Exception as e:
             raise Exception(f"Error in remake_guild_rfr_required_roles: {e}")
 
@@ -836,8 +798,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_guild_colour_change_permissions_table)
         except Exception as e:
             raise Exception(f"Error in remake_guild_colour_change_permissions: {e}")
 
@@ -866,8 +826,6 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_guild_colour_change_invalid_colours_table)
         except Exception as e:
             raise Exception(f"Error in remake_guild_invalid_custom_colour_roles: {e}")
 
@@ -897,7 +855,5 @@ class MigrateData:
                     self.database_manager.db_execute_commit(
                         """INSERT INTO GuildUsage (guild_id, last_message_epoch_time) VALUES (?, ?);""",
                         args=list(i))
-            else:
-                self.database_manager.db_execute_commit(sql_create_usage_tables)
         except Exception as e:
             raise Exception(f"Error in remake_guild_usage: {e}")

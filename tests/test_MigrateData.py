@@ -575,22 +575,6 @@ async def test_remake_guild_extensions():
 
 
 @pytest.mark.asyncio()
-async def test_remake_guilds_extensions_no_table():
-    guild_extension_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'"
-
-    drop_table("GuildExtensions")
-
-    count_before = database_manager.db_execute_select(guild_extension_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_extensions()
-    count_after = database_manager.db_execute_select(guild_extension_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("GuildExtensions")
-    create_old_guild_extensions()
-
-
-@pytest.mark.asyncio()
 async def test_remake_guild_welcome_message():
     guild_welcome_message_select = "SELECT * FROM GuildWelcomeMessages"
     
@@ -605,22 +589,6 @@ async def test_remake_guild_welcome_message():
     after_expected_result = [("1", "This is a welcome message"), ("2", "This is also a welcome message")]
     after_data_stored = database_manager.db_execute_select(guild_welcome_message_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("GuildWelcomeMessages")
-    create_old_guild_welcome_message()
-
-
-@pytest.mark.asyncio()
-async def test_remake_guild_welcome_message_no_table():
-    guild_welcome_message_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildWelcomeMessages'"
-    
-    drop_table("GuildWelcomeMessages")
-
-    count_before = database_manager.db_execute_select(guild_welcome_message_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_welcome_messages()
-    count_after = database_manager.db_execute_select(guild_welcome_message_count)
-    assert 1 == count_after[0][0]
 
     drop_table("GuildWelcomeMessages")
     create_old_guild_welcome_message()
@@ -649,22 +617,6 @@ async def test_remake_votes():
 
 
 @pytest.mark.asyncio()
-async def test_remake_votes_no_table():
-    votes_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Votes'"
-    
-    drop_table("Votes")
-
-    count_before = database_manager.db_execute_select(votes_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_votes()
-    count_after = database_manager.db_execute_select(votes_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("Votes")
-    create_old_votes()
-
-
-@pytest.mark.asyncio()
 async def test_remake_vote_sent():
     vote_sent_select = "SELECT * FROM VoteSent"
     
@@ -680,22 +632,6 @@ async def test_remake_vote_sent():
                              ("4", "8", "MESSAGE4")]
     after_data_stored = database_manager.db_execute_select(vote_sent_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("VoteSent")
-    create_old_vote_sent()
-
-
-@pytest.mark.asyncio()
-async def test_remake_vote_sent_no_table():
-    vote_sent_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteSent'"
-    
-    drop_table("VoteSent")
-
-    count_before = database_manager.db_execute_select(vote_sent_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_vote_sent()
-    count_after = database_manager.db_execute_select(vote_sent_count)
-    assert 1 == count_after[0][0]
 
     drop_table("VoteSent")
     create_old_vote_sent()
@@ -724,22 +660,6 @@ async def test_remake_vote_options():
 
 
 @pytest.mark.asyncio()
-async def test_remake_vote_options_no_table():
-    vote_options_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteOptions'"
-    
-    drop_table("VoteOptions")
-
-    count_before = database_manager.db_execute_select(vote_options_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_vote_options()
-    count_after = database_manager.db_execute_select(vote_options_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("VoteOptions")
-    create_old_vote_options()
-
-
-@pytest.mark.asyncio()
 async def test_remake_vote_target_roles():
     vote_target_roles_select = "SELECT * FROM VoteTargetRoles"
     
@@ -754,22 +674,6 @@ async def test_remake_vote_target_roles():
     after_expected_result = [("1", "1"), ("2", "2"), ("3", "3"), ("4", "4")]
     after_data_stored = database_manager.db_execute_select(vote_target_roles_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("VoteTargetRoles")
-    create_old_vote_target_roles()
-
-
-@pytest.mark.asyncio()
-async def test_remake_vote_target_roles_no_table():
-    vote_target_roles_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VoteTargetRoles'"
-    
-    drop_table("VoteTargetRoles")
-
-    count_before = database_manager.db_execute_select(vote_target_roles_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_vote_target_roles()
-    count_after = database_manager.db_execute_select(vote_target_roles_count)
-    assert 1 == count_after[0][0]
 
     drop_table("VoteTargetRoles")
     create_old_vote_target_roles()
@@ -798,26 +702,6 @@ async def test_remake_verified_emails_old_name():
 
 
 @pytest.mark.asyncio()
-async def test_remake_verified_emails_old_name_no_table():
-    verified_emails_old_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='verified_emails'"
-    verified_emails_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VerifiedEmails'"
-    
-    drop_table("verified_emails")
-    drop_table("VerifiedEmails")
-
-    count_before = database_manager.db_execute_select(verified_emails_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_verified_emails()
-    count_wrong_name = database_manager.db_execute_select(verified_emails_old_count)
-    assert 0 == count_wrong_name[0][0]
-    count_after = database_manager.db_execute_select(verified_emails_new_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("VerifiedEmails")
-    create_old_verified_emails()
-
-
-@pytest.mark.asyncio()
 async def test_remake_verified_emails_new_name():
     verified_emails_new_select = "SELECT * FROM VerifiedEmails"
     
@@ -835,23 +719,6 @@ async def test_remake_verified_emails_new_name():
     after_expected_result = [("1", "EMAIL1"), ("2", "EMAIL2"), ("3", "EMAIL3"), ("4", "EMAIL4")]
     after_data_stored = database_manager.db_execute_select(verified_emails_new_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("VerifiedEmails")
-    create_old_verified_emails()
-
-
-@pytest.mark.asyncio()
-async def test_remake_verified_emails_new_name_no_table():
-    verified_emails_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='VerifiedEmails'"
-    
-    drop_table("verified_emails")
-    drop_table("VerifiedEmails")
-
-    count_before = database_manager.db_execute_select(verified_emails_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_verified_emails()
-    count_after = database_manager.db_execute_select(verified_emails_new_count)
-    assert 1 == count_after[0][0]
 
     drop_table("VerifiedEmails")
     create_old_verified_emails()
@@ -882,26 +749,6 @@ async def test_remake_not_verified_emails_old_name():
 
 
 @pytest.mark.asyncio()
-async def test_remake_not_verified_emails_old_name_no_table():
-    non_verified_emails_old_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='non_verified_emails'"
-    non_verified_emails_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='NonVerifiedEmails'"
-    
-    drop_table("non_verified_emails")
-    drop_table("NonVerifiedEmails")
-
-    count_before = database_manager.db_execute_select(non_verified_emails_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_not_verified_emails()
-    count_wrong_name = database_manager.db_execute_select(non_verified_emails_old_count)
-    assert 0 == count_wrong_name[0][0]
-    count_after = database_manager.db_execute_select(non_verified_emails_new_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("NonVerifiedEmails")
-    create_old_non_verified_emails()
-
-
-@pytest.mark.asyncio()
 async def test_remake_not_verified_emails_new_name():
     non_verified_emails_new_select = "SELECT * FROM NonVerifiedEmails"
     
@@ -920,23 +767,6 @@ async def test_remake_not_verified_emails_new_name():
                              ("8", "EMAIL8", "TOKEN8")]
     after_data_stored = database_manager.db_execute_select(non_verified_emails_new_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("NonVerifiedEmails")
-    create_old_non_verified_emails()
-
-
-@pytest.mark.asyncio()
-async def test_remake_not_verified_emails_new_name_no_table():
-    non_verified_emails_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='NonVerifiedEmails'"
-    
-    drop_table("non_verified_emails")
-    drop_table("NonVerifiedEmails")
-
-    count_before = database_manager.db_execute_select(non_verified_emails_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_not_verified_emails()
-    count_after = database_manager.db_execute_select(non_verified_emails_new_count)
-    assert 1 == count_after[0][0]
 
     drop_table("NonVerifiedEmails")
     create_old_non_verified_emails()
@@ -967,26 +797,6 @@ async def test_remake_role_old_name():
 
 
 @pytest.mark.asyncio()
-async def test_remake_role_old_name_no_table():
-    roles_old_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='roles'"
-    roles_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Roles'"
-    
-    drop_table("roles")
-    drop_table("Roles")
-
-    count_before = database_manager.db_execute_select(roles_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_role_table()
-    count_wrong_name = database_manager.db_execute_select(roles_old_count)
-    assert 0 == count_wrong_name[0][0]
-    count_after = database_manager.db_execute_select(roles_new_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("Roles")
-    create_old_roles()
-
-
-@pytest.mark.asyncio()
 async def test_remake_role_new_name():
     roles_new_select = "SELECT * FROM Roles"
     
@@ -1005,23 +815,6 @@ async def test_remake_role_new_name():
                              ("2", "4", "EMAIL_SUFFIX4")]
     after_data_stored = database_manager.db_execute_select(roles_new_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("Roles")
-    create_old_roles()
-
-
-@pytest.mark.asyncio()
-async def test_remake_role_new_name_no_table():
-    roles_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Roles'"
-    
-    drop_table("roles")
-    drop_table("Roles")
-
-    count_before = database_manager.db_execute_select(roles_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_role_table()
-    count_after = database_manager.db_execute_select(roles_new_count)
-    assert 1 == count_after[0][0]
 
     drop_table("Roles")
     create_old_roles()
@@ -1050,26 +843,6 @@ async def test_remake_to_re_verify_old_name():
 
 
 @pytest.mark.asyncio()
-async def test_remake_to_re_verify_old_name_no_table():
-    to_re_verify_old_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='to_re_verify'"
-    to_re_verify_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='ToReVerify'"
-    
-    drop_table("to_re_verify")
-    drop_table("ToReVerify")
-
-    count_before = database_manager.db_execute_select(to_re_verify_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_to_re_verify()
-    count_wrong_name = database_manager.db_execute_select(to_re_verify_old_count)
-    assert 0 == count_wrong_name[0][0]
-    count_after = database_manager.db_execute_select(to_re_verify_new_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("ToReVerify")
-    create_old_to_re_verify()
-
-
-@pytest.mark.asyncio()
 async def test_remake_to_re_verify_new_name():
     to_re_verify_new_select = "SELECT * FROM ToReVerify"
     
@@ -1092,23 +865,6 @@ async def test_remake_to_re_verify_new_name():
 
 
 @pytest.mark.asyncio()
-async def test_remake_to_re_verify_new_name_no_table():
-    to_re_verify_new_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='ToReVerify'"
-    
-    drop_table("to_re_verify")
-    drop_table("ToReVerify")
-
-    count_before = database_manager.db_execute_select(to_re_verify_new_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_to_re_verify()
-    count_after = database_manager.db_execute_select(to_re_verify_new_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("ToReVerify")
-    create_old_to_re_verify()
-
-
-@pytest.mark.asyncio()
 async def test_remake_twitch_alert():
     twitch_alerts_select = "SELECT * FROM TwitchAlerts"
         
@@ -1124,22 +880,6 @@ async def test_remake_twitch_alert():
                              ("2", "4", "MESSAGE4")]
     after_data_stored = database_manager.db_execute_select(twitch_alerts_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("TwitchAlerts")
-    create_old_twitch_alerts()
-
-
-@pytest.mark.asyncio()
-async def test_remake_twitch_alert_no_table():
-    twitch_alerts_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TwitchAlerts'"
-    
-    drop_table("TwitchAlerts")
-
-    count_before = database_manager.db_execute_select(twitch_alerts_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_twitch_alerts()
-    count_after = database_manager.db_execute_select(twitch_alerts_count)
-    assert 1 == count_after[0][0]
 
     drop_table("TwitchAlerts")
     create_old_twitch_alerts()
@@ -1168,22 +908,6 @@ async def test_remake_user_in_twitch_alert():
 
 
 @pytest.mark.asyncio()
-async def test_remake_user_in_twitch_alert_no_table():
-    user_in_twitch_alert_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchAlert'"
-    
-    drop_table("UserInTwitchAlert")
-
-    count_before = database_manager.db_execute_select(user_in_twitch_alert_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_user_in_twitch_alert()
-    count_after = database_manager.db_execute_select(user_in_twitch_alert_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("UserInTwitchAlert")
-    create_old_user_in_twitch_alerts()
-
-
-@pytest.mark.asyncio()
 async def test_remake_team_in_twitch_alert():
     team_in_twitch_alert_select = "SELECT * FROM TeamInTwitchAlert"
     
@@ -1200,22 +924,6 @@ async def test_remake_team_in_twitch_alert():
                              (3, "3", "TEAM_NAME3", "MESSAGE3"), (4, "4", "TEAM_NAME4", "MESSAGE4")]
     after_data_stored = database_manager.db_execute_select(team_in_twitch_alert_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("TeamInTwitchAlert")
-    create_old_team_in_twitch_alerts()
-
-
-@pytest.mark.asyncio()
-async def test_remake_team_in_twitch_alert_no_table():
-    team_in_twitch_alert_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TeamInTwitchAlert'"
-    
-    drop_table("TeamInTwitchAlert")
-
-    count_before = database_manager.db_execute_select(team_in_twitch_alert_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_team_in_twitch_alert()
-    count_after = database_manager.db_execute_select(team_in_twitch_alert_count)
-    assert 1 == count_after[0][0]
 
     drop_table("TeamInTwitchAlert")
     create_old_team_in_twitch_alerts()
@@ -1244,22 +952,6 @@ async def test_remake_user_in_twitch_team():
 
 
 @pytest.mark.asyncio()
-async def test_remake_user_in_twitch_team_no_table():
-    user_in_twitch_team_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchTeam'"
-    
-    drop_table("UserInTwitchTeam")
-
-    count_before = database_manager.db_execute_select(user_in_twitch_team_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_user_in_twitch_team()
-    count_after = database_manager.db_execute_select(user_in_twitch_team_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("UserInTwitchTeam")
-    create_old_user_in_twitch_team()
-
-
-@pytest.mark.asyncio()
 async def test_remake_text_filter():
     text_filter_select = "SELECT * FROM TextFilter"
     
@@ -1282,22 +974,6 @@ async def test_remake_text_filter():
 
 
 @pytest.mark.asyncio()
-async def test_remake_text_filter_no_table():
-    text_filter_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilter'"
-    
-    drop_table("TextFilter")
-
-    count_before = database_manager.db_execute_select(text_filter_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_text_filter()
-    count_after = database_manager.db_execute_select(text_filter_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("TextFilter")
-    create_old_text_filter()
-
-
-@pytest.mark.asyncio()
 async def test_remake_text_filter_moderation():
     text_filter_moderation_select = "SELECT * FROM TextFilterModeration"
     
@@ -1312,22 +988,6 @@ async def test_remake_text_filter_moderation():
     after_expected_result = [("1", "1"), ("2", "1"), ("3", "2"), ("4", "2")]
     after_data_stored = database_manager.db_execute_select(text_filter_moderation_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("TextFilterModeration")
-    create_old_text_filter_moderation()
-
-
-@pytest.mark.asyncio()
-async def test_remake_text_filter_moderation_no_table():
-    text_filter_moderation_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilterModeration'"
-    
-    drop_table("TextFilterModeration")
-
-    count_before = database_manager.db_execute_select(text_filter_moderation_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_text_filter_moderation()
-    count_after = database_manager.db_execute_select(text_filter_moderation_count)
-    assert 1 == count_after[0][0]
 
     drop_table("TextFilterModeration")
     create_old_text_filter_moderation()
@@ -1355,22 +1015,6 @@ async def test_remake_text_filter_ignore_list():
 
 
 @pytest.mark.asyncio()
-async def test_remake_text_filter_ignore_list_no_table():
-    text_filter_ignore_list_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='TextFilterIgnoreList'"
-    
-    drop_table("TextFilterIgnoreList")
-
-    count_before = database_manager.db_execute_select(text_filter_ignore_list_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_text_filter_ignore_list()
-    count_after = database_manager.db_execute_select(text_filter_ignore_list_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("TextFilterIgnoreList")
-    create_old_text_filter_ignore_list()
-
-
-@pytest.mark.asyncio()
 async def test_remake_guild_rfr_messages():
     guild_rfr_messages_select = "SELECT * FROM GuildRFRMessages"
     
@@ -1385,22 +1029,6 @@ async def test_remake_guild_rfr_messages():
     after_expected_result = [("1", "1", "1", 1), ("1", "2", "2", 2), ("2", "3", "3", 3), ("2", "3", "4", 4)]
     after_data_stored = database_manager.db_execute_select(guild_rfr_messages_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("GuildRFRMessages")
-    create_old_guild_rfr_messages()
-
-
-@pytest.mark.asyncio()
-async def test_remake_guild_rfr_messages_no_table():
-    guild_rfr_messages_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildRFRMessages'"
-
-    drop_table("GuildRFRMessages")
-
-    count_before = database_manager.db_execute_select(guild_rfr_messages_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_rfr_messages()
-    count_after = database_manager.db_execute_select(guild_rfr_messages_count)
-    assert 1 == count_after[0][0]
 
     drop_table("GuildRFRMessages")
     create_old_guild_rfr_messages()
@@ -1427,22 +1055,6 @@ async def test_remake_rfr_message_emoji_roles():
 
 
 @pytest.mark.asyncio()
-async def test_remake_rfr_message_emoji_roles_no_table():
-    rfr_message_emoji_roles_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='RFRMessageEmojiRoles'"
-
-    drop_table("RFRMessageEmojiRoles")
-
-    count_before = database_manager.db_execute_select(rfr_message_emoji_roles_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_rfr_message_emoji_roles()
-    count_after = database_manager.db_execute_select(rfr_message_emoji_roles_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("RFRMessageEmojiRoles")
-    create_old_rfr_message_emoji_roles()
-
-
-@pytest.mark.asyncio()
 async def test_remake_guild_rfr_required_roles():
     guild_rfr_required_roles_select = "SELECT * FROM GuildRFRRequiredRoles"
        
@@ -1457,22 +1069,6 @@ async def test_remake_guild_rfr_required_roles():
     after_expected_result = [("1", "1"), ("1", "2"), ("2", "3"), ("2", "4")]
     after_data_stored = database_manager.db_execute_select(guild_rfr_required_roles_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("GuildRFRRequiredRoles")
-    create_old_guild_rfr_required_roles()
-
-
-@pytest.mark.asyncio()
-async def test_remake_guild_rfr_required_roles_no_table():
-    guild_rfr_required_roles_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildRFRRequiredRoles'"
-    
-    drop_table("GuildRFRRequiredRoles")
-
-    count_before = database_manager.db_execute_select(guild_rfr_required_roles_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_rfr_required_roles()
-    count_after = database_manager.db_execute_select(guild_rfr_required_roles_count)
-    assert 1 == count_after[0][0]
 
     drop_table("GuildRFRRequiredRoles")
     create_old_guild_rfr_required_roles()
@@ -1499,22 +1095,6 @@ async def test_remake_guild_colour_change_permissions():
 
 
 @pytest.mark.asyncio()
-async def test_remake_guild_colour_change_permissions_no_table():
-    guild_colour_change_permissions_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildColourChangePermissions'"
-    
-    drop_table("GuildColourChangePermissions")
-
-    count_before = database_manager.db_execute_select(guild_colour_change_permissions_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_colour_change_permissions()
-    count_after = database_manager.db_execute_select(guild_colour_change_permissions_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("GuildColourChangePermissions")
-    create_old_guild_colour_change_permissions()
-
-
-@pytest.mark.asyncio()
 async def test_remake_guild_invalid_custom_colour_roles():
     guild_invalid_custom_colour_roles_select = "SELECT * FROM GuildInvalidCustomColourRoles"
         
@@ -1535,22 +1115,6 @@ async def test_remake_guild_invalid_custom_colour_roles():
 
 
 @pytest.mark.asyncio()
-async def test_remake_guild_invalid_custom_colour_roles_no_table():
-    guild_invalid_custom_colour_roles_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildInvalidCustomColourRoles'"
-    
-    drop_table("GuildInvalidCustomColourRoles")
-
-    count_before = database_manager.db_execute_select(guild_invalid_custom_colour_roles_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_invalid_custom_colour_roles()
-    count_after = database_manager.db_execute_select(guild_invalid_custom_colour_roles_count)
-    assert 1 == count_after[0][0]
-
-    drop_table("GuildInvalidCustomColourRoles")
-    create_old_guild_invalid_custom_colour_roles()
-
-
-@pytest.mark.asyncio()
 async def test_remake_guild_usage():
     guild_usage_select = "SELECT * FROM GuildUsage"
     
@@ -1565,22 +1129,6 @@ async def test_remake_guild_usage():
     after_expected_result = [("1", "1"), ("2", "2")]
     after_data_stored = database_manager.db_execute_select(guild_usage_select)
     assert after_data_stored == after_expected_result
-
-    drop_table("GuildUsage")
-    create_old_guild_usage()
-
-
-@pytest.mark.asyncio()
-async def test_remake_guild_usage_no_table():
-    guild_usage_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildUsage'"
-    
-    drop_table("GuildUsage")
-
-    count_before = database_manager.db_execute_select(guild_usage_count)
-    assert 0 == count_before[0][0]
-    migrate_database.remake_guild_usage()
-    count_after = database_manager.db_execute_select(guild_usage_count)
-    assert 1 == count_after[0][0]
 
     drop_table("GuildUsage")
     create_old_guild_usage()
