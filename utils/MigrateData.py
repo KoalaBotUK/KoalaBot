@@ -112,23 +112,13 @@ class MigrateData:
                 """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'""")
             count_guild_extension = self.database_manager.db_execute_select(
                 """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'""")
-            if count_guilds[0][0] == count_guild_extension[0][0] == 0:
-                self.database_manager.db_execute_commit(sql_create_guilds_table)
-            elif count_guilds[0][0] == 0 and count_guild_extension[0][0] == 1:
+            if count_guilds[0][0] == 0 and count_guild_extension[0][0] == 1:
                 data = self.database_manager.db_execute_select("""SELECT guild_id FROM GuildExtensions;""")
                 self.database_manager.db_execute_commit(sql_create_guilds_table)
                 for i, in sorted(list(set(data))):
                     self.database_manager.db_execute_commit(
                         """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
                         args=[i, 0])
-            else:
-                data = self.database_manager.db_execute_select("""SELECT * FROM Guilds;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Guilds;""")
-                self.database_manager.db_execute_commit(sql_create_guilds_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO Guilds (guild_id, subscription) VALUES (?, ?);""",
-                        i)
         except Exception as e:
             raise Exception(f"Error in remake_guilds: {e}")
 

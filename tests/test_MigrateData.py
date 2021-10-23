@@ -1135,27 +1135,6 @@ async def test_remake_guild_usage():
 
 
 @pytest.mark.asyncio()
-async def test_remake_guilds_no_guilds_no_extensions_table():
-    guilds_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'"
-    guild_extension_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'"
-    
-    drop_table("Guilds")
-    drop_table("GuildExtensions")
-
-    count_before_guilds = database_manager.db_execute_select(guilds_count)
-    assert 0 == count_before_guilds[0][0]
-    count_before_extensions = database_manager.db_execute_select(guild_extension_count)
-    assert 0 == count_before_extensions[0][0]
-    migrate_database.remake_guilds()
-    count_after = database_manager.db_execute_select(guilds_count)
-    assert 1 == count_after[0][0]
-    count_after_extensions = database_manager.db_execute_select(guild_extension_count)
-    assert 0 == count_after_extensions[0][0]
-
-    drop_table("Guilds")
-
-
-@pytest.mark.asyncio()
 async def test_remake_guilds_only_no_guilds_table():
     guilds_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'"
     guild_extension_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'"
