@@ -146,13 +146,16 @@ class MigrateData:
                             REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildExtensions;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildExtensions;""")
-                self.database_manager.db_execute_commit(sql_create_guild_extensions_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildExtensions (extension_id, guild_id) VALUES (?, ?);""",
-                        args=list(i))
+                # TODO: Continue this down for each method. Make new test for each method for if this is not true
+                # (cid, name, type, notnull, dflt_value, pk)
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildExtensions);""") == [(0, 'extension_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 2)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildExtensions;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildExtensions;""")
+                    self.database_manager.db_execute_commit(sql_create_guild_extensions_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildExtensions (extension_id, guild_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_extensions: {e}")
 
