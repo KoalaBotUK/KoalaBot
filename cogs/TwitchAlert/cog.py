@@ -1,5 +1,3 @@
-from discord.ext import commands
-
 # Futures
 
 # Built-in/Generic Imports
@@ -8,7 +6,7 @@ import re
 
 # Own modules
 import KoalaBot
-from KoalaBot import logging
+from KoalaBot import logging, COMMAND_PREFIX as CP
 from utils.base_models import GuildExtensions
 from utils.base_db import session
 from utils.KoalaColours import KOALA_GREEN
@@ -57,14 +55,23 @@ class TwitchAlert(commands.Cog):
     @commands.check(KoalaBot.is_guild_channel)
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    @commands.group(name="twitch")
+    @commands.group(name="twitch", short_doc="Group of commands for Twitch Alert functionality.")
     async def twitch_group(self, ctx: commands.Context):
         """
         Group of commands for Twitch Alert functionality.
         """
         pass
 
-    @twitch_group.command(name="editMsg")
+    @twitch_group.command(name="editMsg",
+                          brief="Edit the default message used in a Twitch Alert notification",
+                          usage=f"{CP}twitch editMsg <channel> [message]",
+                          help=("""Edit the default message used in a Twitch Alert notification
+                                
+                                <channel>: The channel to be modified (e.g. #text-channel)
+                                [message]: *optional* The default notification message for this text channel """
+                                f"""(e.g. Your favourite stream is now live!)
+                                
+                                Example: {CP}twitch editMsg #text-channel \"Your favourite stream is now live!\""""))
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def edit_default_message(self, ctx, channel: discord.TextChannel, *default_live_message):
@@ -104,10 +111,17 @@ class TwitchAlert(commands.Cog):
                                               f"Default Message: {default_message}")
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="viewMsg")
+    @twitch_group.command(name="viewMsg",
+                          brief="Shows the current default message for Twitch Alerts",
+                          usage=f"{CP}twitch viewMsg <channel>",
+                          help=f"""Shows the current default message for Twitch Alerts
+                          
+                          <channel>: The channel to be modified (e.g. #text-channel)
+                          
+                          Example: {CP}twitch viewMsg #text-channel""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def view_default_message(self, ctx, channel: discord.TextChannel = None):
+    async def view_default_message(self, ctx, channel: discord.TextChannel):
         """
         Shows the current default message for Twitch Alerts
         :param ctx: The discord context of the command
@@ -132,7 +146,17 @@ class TwitchAlert(commands.Cog):
         # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="add")
+    @twitch_group.command(name="add",
+                          brief="Add a Twitch user to a Twitch Alert",
+                          usage=f"{CP}twitch add <username> <channel> [message]",
+                          help=f"""Add a Twitch user to a Twitch Alert
+                          
+                          <username>: The twitch username to be added (e.g. thenuel)
+                          <channel> : The channel to be modified (e.g. #text-channel)
+                          [message] : *optional* The notification message for this user """
+                          f"""(e.g. Your favourite streamer is now live!)
+                          
+                          Example: {CP}twitch add thenuel #text-channel \"Come watch us play games!\"""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def add_user_to_twitch_alert(self, ctx, twitch_username,
@@ -179,7 +203,15 @@ class TwitchAlert(commands.Cog):
 
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="remove")
+    @twitch_group.command(name="remove",
+                          brief="Removes a user from a Twitch Alert",
+                          usage=f"{CP}twitch remove <username> <channel>",
+                          help=f"""Removes a user from a Twitch Alert
+                          
+                          <username>: The twitch username to be removed (e.g. thenuel)
+                          <channel> : The channel to be modified (e.g. #text-channel)
+                          
+                          Example: {CP}twitch remove thenuel #text-channel""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def remove_user_from_twitch_alert(self, ctx, twitch_username, channel: discord.TextChannel):
@@ -206,7 +238,17 @@ class TwitchAlert(commands.Cog):
 
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="addTeam")
+    @twitch_group.command(name="addTeam",
+                          brief="Add a Twitch team to a Twitch Alert",
+                          usage=f"{CP}twitch addTeam <team> <channel> [message]",
+                          help=f"""Add a Twitch team to a Twitch Alert
+                          
+                          <team>    : The Twitch team to be added (e.g. thenuel)
+                          <channel> : The channel to be modified (e.g. #text-channel)
+                          [message] : *optional* The notification message for this user """
+                          f"""(e.g. Your favourite streamer is now live!)
+                          
+                          Example: {CP}twitch addTeam thenuel #text-channel \"Come watch us play games!\"""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def add_team_to_twitch_alert(self, ctx, team_name, channel: discord.TextChannel, *custom_live_message):
@@ -252,7 +294,15 @@ class TwitchAlert(commands.Cog):
         # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="removeTeam")
+    @twitch_group.command(name="removeTeam",
+                          brief="Removes a team from a Twitch Alert",
+                          usage=f"{CP}twitch removeTeam <team> <channel>",
+                          help=f"""Removes a team from a Twitch Alert
+                          
+                          <team>    : The Twitch team to be added (e.g. thenuel)
+                          <channel> : The channel to be modified (e.g. #text-channel)
+                          
+                          Example: {CP}twitch removeTeam thenuel #text-channel""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def remove_team_from_twitch_alert(self, ctx, team_name, channel: discord.TextChannel):
@@ -279,7 +329,14 @@ class TwitchAlert(commands.Cog):
 
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="list")
+    @twitch_group.command(name="list",
+                          brief="Show twitch alerts in a channel",
+                          usage=f"{CP}twitch list <channel>",
+                          help=f"""Shows all current TwitchAlert users and teams in a channel
+                          
+                          <channel> : The discord channel (e.g. #text-channel)
+                          
+                          Example: {CP}twitch list #text-channel""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel = None):
