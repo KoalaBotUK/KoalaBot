@@ -6,13 +6,13 @@ from sqlalchemy import select, update, insert, delete, and_, or_, null
 
 # Own modules
 import KoalaBot
-from KoalaBot import logging
 from utils import KoalaDBManager
 from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
 from utils.KoalaUtils import session
 from utils.base_db import setup
+from log import logging
 
 # Libs
 import discord

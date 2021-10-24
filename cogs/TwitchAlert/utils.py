@@ -12,8 +12,6 @@ from dotenv import load_dotenv
 from utils.KoalaColours import KOALA_GREEN
 
 # Constants
-# logging.basicConfig(filename=KoalaBot.CONFIG_DIR + 'TwitchAlert.log')
-# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \

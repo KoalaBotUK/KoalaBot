@@ -6,7 +6,7 @@ import re
 
 # Own modules
 import KoalaBot
-from KoalaBot import logging, COMMAND_PREFIX as CP
+from KoalaBot import COMMAND_PREFIX as CP
 from utils.base_models import GuildExtensions
 from utils.base_db import session
 from utils.KoalaColours import KOALA_GREEN
@@ -16,6 +16,7 @@ from .utils import twitch_is_enabled, create_live_embed
 from .db import TwitchAlertDBManager
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
+from log import logging
 
 # Libs
 import discord
