@@ -4,7 +4,7 @@
 
 # Own modules
 from .utils import split_to_100s
-from log import logging
+from .log import logging
 
 # Libs
 from twitchAPI.twitch import Twitch

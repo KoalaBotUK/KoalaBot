@@ -16,7 +16,7 @@ from .utils import twitch_is_enabled, create_live_embed
 from .db import TwitchAlertDBManager
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
-from log import logging
+from .log import logging
 
 # Libs
 import discord

@@ -12,7 +12,7 @@ from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwi
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
 from utils.KoalaUtils import session
 from utils.base_db import setup
-from log import logging
+from .log import logging
 
 # Libs
 import discord
