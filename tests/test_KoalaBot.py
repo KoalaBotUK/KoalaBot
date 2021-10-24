@@ -97,12 +97,11 @@ def test_not_admin_is_admin(test_ctx):
     KoalaBot.is_dpytest = True
 
 
+@mock.patch("KoalaBot.COGS_DIR", "tests/fake_load_all_cogs")
+@mock.patch("KoalaBot.ENABLED_COGS", [])
 def test_load_all_cogs():
-    test_koala = KoalaBot
-    test_koala.COGS_DIR = "tests/fake_load_all_cogs"
-    test_koala.ENABLED_COGS = []
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        test_koala.load_all_cogs()
+        KoalaBot.load_all_cogs()
     mock1.assert_called_with("tests.fake_load_all_cogs.Greetings")
 
 
