@@ -340,7 +340,7 @@ class TwitchAlert(commands.Cog):
                           Example: {CP}twitch list #text-channel""")
     @commands.check(KoalaBot.is_admin)
     @commands.check(twitch_is_enabled)
-    async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel = None):
+    async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel):
         """
         Shows all current TwitchAlert users and teams in a channel
         :param ctx:
