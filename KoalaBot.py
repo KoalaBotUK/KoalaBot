@@ -19,7 +19,6 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 # Built-in/Generic Imports
-import sys
 import os
 
 # Libs

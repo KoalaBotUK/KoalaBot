@@ -36,12 +36,13 @@ class TwitchAPIHandler:
             try:
                 batch_result.extend(self.twitch.get_streams(user_login=batch).get("data"))
             except TwitchAPIException:
-                logger.error(f"TwitchAlert: Streams data not received for batch: {batch}")
+                logger.error(f"Streams data not received for batch, invalid request")
                 for user in batch:
                     try:
                         batch_result.extend(self.twitch.get_streams(user_login=user).get("data"))
                     except TwitchAPIException:
-                        logger.error(f"TwitchAlert: User data cannot be found | {user} ")
+                        logger.error("User data cannot be found, invalid request")
+
             result.extend(batch_result)
 
         return result

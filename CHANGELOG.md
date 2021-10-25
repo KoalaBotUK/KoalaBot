@@ -10,6 +10,9 @@ administrators
 - Previously optional `channel` arguments are now required
 - Help messages are now more detailed
 - Internal API library changed, may increase delays in twitch API responses
+### Other
+- ./config is the new default config directory
+- /config/logs/<date> is used for logs
 
 ## [0.4.5] - 25-08-2021
 ### Other

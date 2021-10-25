@@ -40,11 +40,11 @@ def delete_invalid_accounts():
                               if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username)]
 
     if invalid_usernames:
-        logger.warning(f'Deleting Invalid Users: {invalid_usernames}')
+        logger.warning(f'Deleting Invalid Users')
     if invalid_teams:
-        logger.warning(f'Deleting Invalid Teams: {invalid_teams}')
+        logger.warning(f'Deleting Invalid Teams')
     if invalid_users_in_teams:
-        logger.warning(f'Deleting Invalid Users in Teams: {invalid_users_in_teams}')
+        logger.warning(f'Deleting Invalid Users in Teams')
 
     delete_invalid_usernames = delete(UserInTwitchAlert)\
         .where(UserInTwitchAlert.twitch_username.in_(invalid_usernames))
