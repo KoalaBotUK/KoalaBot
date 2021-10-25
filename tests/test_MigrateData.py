@@ -8,7 +8,7 @@ Commented using reStructuredText (reST)
 # Libs
 from dotenv import load_dotenv
 import pytest
-
+import mock
 import os
 import pathlib
 import random
@@ -17,13 +17,6 @@ import random
 import KoalaBot
 from utils.KoalaDBManager import KoalaDBManager
 from utils.MigrateData import MigrateData
-
-
-
-
-
-
-
 
 load_dotenv()
 ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
@@ -570,6 +563,11 @@ async def test_remake_guild_extensions():
     after_data_stored = database_manager.db_execute_select(guild_extension_select)
     assert after_data_stored == after_expected_result
 
+    # TODO; Put this in rest of tests
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_extensions()
+    mock1.assert_not_called()
+
     drop_table("GuildExtensions")
     create_old_guild_extensions()
 
@@ -946,6 +944,10 @@ async def test_remake_user_in_twitch_team():
                              ("4", "USERNAME4", "4")]
     after_data_stored = database_manager.db_execute_select(user_in_twitch_team_select)
     assert after_data_stored == after_expected_result
+
+
+
+
 
     drop_table("UserInTwitchTeam")
     create_old_user_in_twitch_team()

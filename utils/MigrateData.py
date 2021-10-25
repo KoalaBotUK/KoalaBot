@@ -11,6 +11,8 @@ import sys
 
 class MigrateData:
 
+    database_manager = None
+
     def __init__(self, database_manager):
         """
         Initalises database manager
@@ -148,7 +150,8 @@ class MigrateData:
             if count[0][0] == 1:
                 # TODO: Continue this down for each method. Make new test for each method for if this is not true
                 # (cid, name, type, notnull, dflt_value, pk)
-                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildExtensions);""") == [(0, 'extension_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 2)]:
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildExtensions);""") ==\
+                       [(0, 'extension_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 2)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM GuildExtensions;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildExtensions;""")
                     self.database_manager.db_execute_commit(sql_create_guild_extensions_table)
@@ -176,13 +179,14 @@ class MigrateData:
                         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildWelcomeMessages;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildWelcomeMessages;""")
-                self.database_manager.db_execute_commit(sql_create_guild_welcome_messages_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildWelcomeMessages);""") == []:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildWelcomeMessages;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildWelcomeMessages;""")
+                    self.database_manager.db_execute_commit(sql_create_guild_welcome_messages_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_welcome_messages: {e}")
 
@@ -209,13 +213,14 @@ class MigrateData:
                         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM Votes;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Votes;""")
-                self.database_manager.db_execute_commit(vote_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO Votes (vote_id, author_id, guild_id, title, chair_id, voice_id, end_time) VALUES (?, ?, ?, ?, ?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(Votes);""") == []:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM Votes;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Votes;""")
+                    self.database_manager.db_execute_commit(vote_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO Votes (vote_id, author_id, guild_id, title, chair_id, voice_id, end_time) VALUES (?, ?, ?, ?, ?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_votes: {e}")
 
@@ -238,13 +243,14 @@ class MigrateData:
                         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM VoteSent;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteSent;""")
-                self.database_manager.db_execute_commit(delivered_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO VoteSent (vote_id, vote_receiver_id, vote_receiver_message) VALUES (?, ?, ?);""",
-                        args=list(i))
+
+                    data = self.database_manager.db_execute_select("""SELECT * FROM VoteSent;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteSent;""")
+                    self.database_manager.db_execute_commit(delivered_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO VoteSent (vote_id, vote_receiver_id, vote_receiver_message) VALUES (?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_vote_sent: {e}")
 
@@ -268,13 +274,14 @@ class MigrateData:
                         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM VoteOptions;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteOptions;""")
-                self.database_manager.db_execute_commit(option_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO VoteOptions (vote_id, opt_id, option_title, option_desc) VALUES (?, ?, ?, ?);""",
-                        args=list(i))
+
+                    data = self.database_manager.db_execute_select("""SELECT * FROM VoteOptions;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteOptions;""")
+                    self.database_manager.db_execute_commit(option_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO VoteOptions (vote_id, opt_id, option_title, option_desc) VALUES (?, ?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_vote_options: {e}")
 
@@ -296,13 +303,14 @@ class MigrateData:
                         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM VoteTargetRoles;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteTargetRoles;""")
-                self.database_manager.db_execute_commit(role_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO VoteTargetRoles (vote_id, role_id) VALUES (?, ?);""",
-                        args=list(i))
+
+                    data = self.database_manager.db_execute_select("""SELECT * FROM VoteTargetRoles;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteTargetRoles;""")
+                    self.database_manager.db_execute_commit(role_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO VoteTargetRoles (vote_id, role_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_vote_target_roles: {e}")
 
