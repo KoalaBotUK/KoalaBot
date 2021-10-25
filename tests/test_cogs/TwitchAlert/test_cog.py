@@ -11,15 +11,17 @@ import pytest_ordering as pytest
 import pytest
 import discord
 from discord.ext import commands
-
-# Own modules
 from sqlalchemy import select, and_
 
+
+# Own modules
 import KoalaBot
 from utils.base_db import session
 from cogs import TwitchAlert as TwitchAlert
+from cogs.TwitchAlert import cog
 from cogs.TwitchAlert.models import UserInTwitchAlert
 from utils.KoalaColours import KOALA_GREEN
+from tests.utils_testing.LastCtxCog import LastCtxCog
 
 # Constants
 DB_PATH = "Koala.db"
@@ -30,18 +32,40 @@ DB_PATH = "Koala.db"
 @pytest.mark.asyncio
 async def test_setup():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
-        TwitchAlert.cog.setup(KoalaBot.client)
+        cog.setup(KoalaBot.client)
     mock1.assert_called()
 
 
 @pytest.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
-    twitch_cog = TwitchAlert.cog.TwitchAlert(bot)
+    twitch_cog = cog.TwitchAlert(bot)
     bot.add_cog(twitch_cog)
     await dpytest.empty_queue()
     dpytest.configure(bot)
     return twitch_cog
+
+
+@mock.patch("KoalaBot.check_guild_has_ext", mock.MagicMock(return_value=True))
+def test_twitch_is_enabled_true(twitch_cog):
+    assert cog.twitch_is_enabled(None)
+
+
+@mock.patch("KoalaBot.is_dm_channel", mock.MagicMock(return_value=True))
+def test_twitch_is_enabled_dm():
+    assert not cog.twitch_is_enabled(None)
+
+
+@mock.patch("KoalaBot.is_dm_channel", mock.MagicMock(return_value=False))
+@mock.patch("KoalaBot.is_dpytest", False)
+@pytest.mark.asyncio
+async def test_twitch_is_enabled_false(twitch_cog: cog.TwitchAlert):
+    last_ctx_cog = LastCtxCog(bot=twitch_cog.bot)
+    twitch_cog.bot.add_cog(last_ctx_cog)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx", channel=-1)
+    ctx: commands.Context = last_ctx_cog.get_last_ctx()
+
+    assert not cog.twitch_is_enabled(ctx)
 
 
 # @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))

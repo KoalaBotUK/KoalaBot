@@ -13,7 +13,7 @@ from utils.base_db import session
 from utils.KoalaColours import KOALA_GREEN
 from utils.KoalaUtils import error_embed, is_channel_in_guild
 from .models import UserInTwitchAlert, TwitchAlerts, UserInTwitchTeam, TeamInTwitchAlert
-from .utils import twitch_is_enabled, create_live_embed
+from .utils import create_live_embed
 from .db import TwitchAlertDBManager
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
@@ -28,6 +28,21 @@ from sqlalchemy import select, or_, delete, and_, update, null
 
 
 # Variables
+
+
+def twitch_is_enabled(ctx):
+    """
+    A command used to check if the guild has enabled twitch alert
+    e.g. @commands.check(KoalaBot.is_admin)
+    :param ctx: The context of the message
+    :return: True if admin or test, False otherwise
+    """
+    try:
+        result = KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
+    except PermissionError:
+        result = False
+
+    return result
 
 
 class TwitchAlert(commands.Cog):

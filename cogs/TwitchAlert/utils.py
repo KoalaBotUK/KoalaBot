@@ -28,20 +28,6 @@ REFRESH_TEAMS_DELAY = 5
 # Variables
 
 
-def twitch_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled twitch alert
-    e.g. @commands.check(KoalaBot.is_admin)
-    :param ctx: The context of the message
-    :return: True if admin or test, False otherwise
-    """
-    try:
-        result = KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
-    except PermissionError:
-        result = False
-
-    return result
-
 def create_live_embed(stream_info, user_info, game_info, message):
     """
     Creates an embed for the go live announcement
@@ -70,7 +56,7 @@ def create_live_embed(stream_info, user_info, game_info, message):
 
 
 def split_to_100s(array: list):
-    if array is None:
+    if not array:
         return array
     result = []
     while len(array) >= 100:
