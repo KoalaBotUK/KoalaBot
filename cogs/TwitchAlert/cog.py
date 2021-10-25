@@ -5,6 +5,7 @@ import time
 import re
 
 # Own modules
+from .log import logger
 import KoalaBot
 from KoalaBot import COMMAND_PREFIX as CP
 from utils.base_models import GuildExtensions
@@ -16,7 +17,6 @@ from .utils import twitch_is_enabled, create_live_embed
 from .db import TwitchAlertDBManager
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
-from .log import logging
 
 # Libs
 import discord
@@ -408,7 +408,7 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         start = time.time()
-        # logging.info("TwitchAlert: User Loop Started")
+        # logger.info("TwitchAlert: User Loop Started")
         sql_find_users = select(UserInTwitchAlert.twitch_username) \
             .join(TwitchAlerts, UserInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
             .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
@@ -437,7 +437,7 @@ class TwitchAlert(commands.Cog):
                     old_len = len(usernames)
                     usernames.remove(current_username)
                     if len(usernames) == old_len:
-                        logging.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list")
+                        logger.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list")
 
                     sql_find_message_id = select(UserInTwitchAlert.channel_id,
                                                  UserInTwitchAlert.message_id,
@@ -488,20 +488,20 @@ class TwitchAlert(commands.Cog):
                                     session.execute(sql_update_message_id)
                                     session.commit()
                         except discord.errors.Forbidden as err:
-                            logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
+                            logger.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = delete(TwitchAlerts).where(
                                 TwitchAlerts.channel_id == channel.id)
                             session.execute(sql_remove_invalid_channel)
                             session.commit()
 
             except Exception as err:
-                logging.error(f"TwitchAlert: User Loop error {err}")
+                logger.error(f"TwitchAlert: User Loop error {err}")
 
         # Deals with remaining offline streams
         await self.ta_database_manager.delete_all_offline_streams(False, usernames)
         time_diff = time.time() - start
         if time_diff > 5:
-            logging.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")
+            logger.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")
 
     async def create_alert_embed(self, stream_data, message):
         """
@@ -519,11 +519,11 @@ class TwitchAlert(commands.Cog):
     @tasks.loop(minutes=REFRESH_TEAMS_DELAY)
     async def loop_update_teams(self):
         start = time.time()
-        # logging.info("TwitchAlert: Started Update Teams")
+        # logger.info("TwitchAlert: Started Update Teams")
         self.ta_database_manager.update_all_teams_members()
         time_diff = time.time() - start
         if time_diff > 5:
-            logging.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
+            logger.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
 
     @tasks.loop(minutes=TEAMS_LOOP_CHECK_LIVE_DELAY)
     async def loop_check_team_live(self):
@@ -533,7 +533,7 @@ class TwitchAlert(commands.Cog):
         :return:
         """
         start = time.time()
-        # logging.info("TwitchAlert: Team Loop Started")
+        # logger.info("TwitchAlert: Team Loop Started")
 
         # Select all twitch users & team names where TwitchAlert is enabled
         sql_select_team_users = select(UserInTwitchTeam.twitch_username, TeamInTwitchAlert.twitch_team_name) \
@@ -569,7 +569,7 @@ class TwitchAlert(commands.Cog):
                     old_len = len(usernames)
                     usernames.remove(current_username)
                     if len(usernames) == old_len:
-                        logging.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user teams list")
+                        logger.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user teams list")
                     sql_find_message_id = select(TeamInTwitchAlert.channel_id,
                                                  UserInTwitchTeam.message_id,
                                                  TeamInTwitchAlert.team_twitch_alert_id,
@@ -627,19 +627,19 @@ class TwitchAlert(commands.Cog):
                                     session.execute(sql_update_message_id)
                                     session.commit()
                         except discord.errors.Forbidden as err:
-                            logging.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
+                            logger.warning(f"TwitchAlert: {err}  Name: {channel} ID: {channel.id}")
                             sql_remove_invalid_channel = delete(TwitchAlerts).where(
                                 TwitchAlerts.channel_id == channel.id)
                             session.execute(sql_remove_invalid_channel)
                             session.commit()
             except Exception as err:
-                logging.error(f"TwitchAlert: Team Loop error {err}")
+                logger.error(f"TwitchAlert: Team Loop error {err}")
 
         # Deals with remaining offline streams
         await self.ta_database_manager.delete_all_offline_streams(True, usernames)
         time_diff = time.time() - start
         if time_diff > 5:
-            logging.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
+            logger.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
 
 
 def setup(bot: KoalaBot) -> None:
@@ -648,10 +648,8 @@ def setup(bot: KoalaBot) -> None:
     :param bot: the bot client for KoalaBot
     """
     if TWITCH_SECRET is None or TWITCH_KEY is None:
-        logging.error("TwitchAlert not started. API keys not found in environment.")
-        print("TwitchAlert not started. API keys not found in environment.")
+        logger.error("TwitchAlert not started. API keys not found in environment.")
         KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, False)
     else:
         bot.add_cog(TwitchAlert(bot))
-        logging.info("TwitchAlert is ready.")
-        print("TwitchAlert is ready.")
+        logger.info("TwitchAlert is ready.")

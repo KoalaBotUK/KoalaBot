@@ -12,7 +12,7 @@ from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwi
 from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
 from utils.KoalaUtils import session
 from utils.base_db import setup
-from .log import logging
+from .log import logger
 
 # Libs
 import discord
@@ -40,11 +40,11 @@ def delete_invalid_accounts():
                               if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username)]
 
     if invalid_usernames:
-        logging.warning(f'Deleting Invalid Users: {invalid_usernames}')
+        logger.warning(f'Deleting Invalid Users: {invalid_usernames}')
     if invalid_teams:
-        logging.warning(f'Deleting Invalid Teams: {invalid_teams}')
+        logger.warning(f'Deleting Invalid Teams: {invalid_teams}')
     if invalid_users_in_teams:
-        logging.warning(f'Deleting Invalid Users in Teams: {invalid_users_in_teams}')
+        logger.warning(f'Deleting Invalid Users in Teams: {invalid_users_in_teams}')
 
     delete_invalid_usernames = delete(UserInTwitchAlert)\
         .where(UserInTwitchAlert.twitch_username.in_(invalid_usernames))
@@ -175,7 +175,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         try:
             channel = self.bot.get_channel(int(channel_id))
             if channel is None:
-                logging.warning(f"TwitchAlert: Channel ID {channel_id} does not exist, removing from database")
+                logger.warning(f"TwitchAlert: Channel ID {channel_id} does not exist, removing from database")
                 sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel_id)
                 session.execute(sql_remove_invalid_channel)
                 session.commit()
@@ -183,9 +183,9 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
             message = await channel.fetch_message(message_id)
             await message.delete()
         except discord.errors.NotFound as err:
-            logging.warning(f"TwitchAlert: Message ID {message_id} does not exist, skipping \nError: {err}")
+            logger.warning(f"TwitchAlert: Message ID {message_id} does not exist, skipping \nError: {err}")
         except discord.errors.Forbidden as err:
-            logging.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
+            logger.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
             sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel_id)
             session.execute(sql_remove_invalid_channel)
             session.commit()
@@ -278,7 +278,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
                     session.execute(sql_add_user)
                     session.commit()
                 except KoalaDBManager.sqlite3.IntegrityError as err:
-                    logging.error(f"Twitch Alert: 238: {err}")
+                    logger.error(f"Twitch Alert: 238: {err}")
 
     def update_all_teams_members(self):
         """
@@ -368,7 +368,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
                     twitch_username=(self.twitch_handler.get_user_data(usernames=[user.twitch_username]))[0].get("id")))
                 session.commit()
             except Exception as err:
-                logging.error(f"User not found on Twitch {user}, deleted")
+                logger.error(f"User not found on Twitch {user}, deleted")
         session.execute("ALTER TABLE UserInTwitchAlert RENAME COLUMN twitch_username TO twitch_user_id")
         session.commit()
 
@@ -381,6 +381,6 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
                     twitch_team_name=self.twitch_handler.get_team_data(team.twitch_team_name).get("id")))
                 session.commit()
             except Exception as err:
-                logging.error(f"Team not found on Twitch {team}, deleted")
+                logger.error(f"Team not found on Twitch {team}, deleted")
         session.execute("ALTER TABLE TeamInTwitchAlert RENAME COLUMN twitch_team_name TO twitch_team_id")
         session.commit()

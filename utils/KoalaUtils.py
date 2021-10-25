@@ -90,7 +90,7 @@ async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: 
     return msg, None
 
 
-def format_config_path(directory: str, filename: str):
+def format_config_path(directory: str, *filename: str):
     """
     Format the path to be used by the database.
 
@@ -102,7 +102,7 @@ def format_config_path(directory: str, filename: str):
     if not directory:
         directory = ""
 
-    return str(PurePath(directory, filename))
+    return str(PurePath(directory, *filename))
 
 
 def __parse_args(args):

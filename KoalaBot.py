@@ -21,7 +21,6 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 # Built-in/Generic Imports
 import sys
 import os
-import logging
 
 # Libs
 import discord
@@ -29,7 +28,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
-from utils.KoalaUtils import error_embed, format_config_path, DATABASE_PATH, CONFIG_DIR, DB_KEY
+from utils.log import logger
+from utils.KoalaUtils import error_embed, DATABASE_PATH, DB_KEY
 from utils.KoalaDBManager import KoalaDBManager as DBManager
 
 # Constants
@@ -52,18 +52,12 @@ ENABLED_COGS = ["cogs.TwitchAlert.cog"]
 
 # Variables
 started = False
-logging.info("Intents Enabled")
 intent = discord.Intents.default()
 intent.members = True
 intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 database_manager = DBManager(DATABASE_PATH, DB_KEY)
-logging.basicConfig(filename=format_config_path(CONFIG_DIR, 'KoalaBot.log'),
-                    level=logging.INFO,
-                    format='%(asctime)s %(levelname)-8s %(message)s')
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
-logger = logging.getLogger('discord')
 is_dpytest = False
 
 

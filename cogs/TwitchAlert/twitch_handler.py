@@ -4,7 +4,7 @@
 
 # Own modules
 from .utils import split_to_100s
-from .log import logging
+from .log import logger
 
 # Libs
 from twitchAPI.twitch import Twitch
@@ -36,12 +36,12 @@ class TwitchAPIHandler:
             try:
                 batch_result.extend(self.twitch.get_streams(user_login=batch).get("data"))
             except TwitchAPIException:
-                logging.error(f"TwitchAlert: Streams data not received for batch: {batch}")
+                logger.error(f"TwitchAlert: Streams data not received for batch: {batch}")
                 for user in batch:
                     try:
                         batch_result.extend(self.twitch.get_streams(user_login=user).get("data"))
                     except TwitchAPIException:
-                        logging.error(f"TwitchAlert: User data cannot be found | {user} ")
+                        logger.error(f"TwitchAlert: User data cannot be found | {user} ")
             result.extend(batch_result)
 
         return result
