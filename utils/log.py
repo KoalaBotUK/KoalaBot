@@ -9,6 +9,7 @@ _LOG_LEVEL = logging.INFO
 _FORMATTER = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 _LOG_DIR = format_config_path(CONFIG_DIR, "logs", str(date.today()))
 
+Path(format_config_path(CONFIG_DIR, "logs")).mkdir(exist_ok=True)
 Path(_LOG_DIR).mkdir(exist_ok=True)
 
 koala_log = logging.FileHandler(filename=format_config_path(_LOG_DIR, "KoalaBotWarn.log"))
