@@ -117,7 +117,11 @@ class KoalaDBManager:
         Create base tables required for KoalaBot.
 
         Does not include 'Koala Extension' tables.
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
+
         base_db.setup()
 
     def insert_extension(self, extension_id: str, subscription_required: int, available: bool, enabled: bool):
@@ -130,6 +134,9 @@ class KoalaDBManager:
             (false for if a special extension is to be enabled in one server only by the devs)
         :param enabled: Is currently enabled and running
             (false if down for maintenance)
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         base_db.insert_extension(extension_id, subscription_required, available, enabled)
 
@@ -139,6 +146,9 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         base_db.extension_enabled(guild_id, extension_id)
 
@@ -148,6 +158,9 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         base_db.give_guild_extension(guild_id, extension_id)
 
@@ -157,6 +170,9 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         base_db.remove_guild_extension(guild_id, extension_id)
 
@@ -165,6 +181,9 @@ class KoalaDBManager:
         Gets a list of extensions IDs that are enabled in a server
 
         :param guild_id: Discord guild ID for a given server
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.get_enabled_guild_extensions(guild_id)
 
@@ -175,12 +194,18 @@ class KoalaDBManager:
         todo: restrict with rules of subscriptions & enabled state
 
         :param guild_id: Discord guild ID for a given server
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.get_all_available_guild_extensions(guild_id)
 
     def fetch_all_tables(self):
         """
         Fetches all table names within the database
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.fetch_all_tables()
 
@@ -189,6 +214,9 @@ class KoalaDBManager:
         Clears al the data from the given tables
 
         :param tables: a list of all tables to be cleared
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         base_db.clear_all_tables(tables)
 
@@ -197,6 +225,9 @@ class KoalaDBManager:
         Fetches the guild welcome message for a given guild
 
         :param guild_id: Discord guild ID for a given server
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.fetch_guild_welcome_message(guild_id)
 
@@ -206,6 +237,9 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         :param new_message: The new guild welcome message to be set
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.update_guild_welcome_message(guild_id, new_message)
 
@@ -214,6 +248,9 @@ class KoalaDBManager:
         Removes the guild welcome message from a given guild
 
         :param guild_id: Discord guild ID for a given server
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.remove_guild_welcome_message(guild_id)
 
@@ -222,5 +259,8 @@ class KoalaDBManager:
         Sets the default guild welcome message to a given guild
 
         :param guild_id: Discord guild ID for a given server
+
+        .. deprecated:: 0.4.5
+           This method is now found in base_db
         """
         return base_db.new_guild_welcome_message(guild_id)
