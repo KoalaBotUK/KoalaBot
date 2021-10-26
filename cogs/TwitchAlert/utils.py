@@ -4,8 +4,6 @@
 import os
 
 # Own modules
-import KoalaBot
-
 # Libs
 import discord
 from dotenv import load_dotenv

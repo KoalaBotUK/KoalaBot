@@ -140,11 +140,7 @@ class KoalaDBManager:
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
         """
-        sql_select_extension = "SELECT extension_id " \
-                               "FROM GuildExtensions " \
-                               "WHERE guild_id = ?"
-        result = self.db_execute_select(sql_select_extension, args=[guild_id])
-        return ("All",) in result or (extension_id,) in result
+        base_db.extension_enabled(guild_id, extension_id)
 
     def give_guild_extension(self, guild_id, extension_id: str):
         """
@@ -153,14 +149,7 @@ class KoalaDBManager:
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
         """
-        sql_check_extension_exists = """SELECT * FROM KoalaExtensions WHERE extension_id = ? and available = 1"""
-        if len(self.db_execute_select(sql_check_extension_exists, args=[extension_id])) > 0 or extension_id == "All":
-            sql_insert_guild_extension = """
-            INSERT INTO GuildExtensions 
-            VALUES (?,?)"""
-            self.db_execute_commit(sql_insert_guild_extension, args=[extension_id, guild_id])
-        else:
-            raise NotImplementedError(f"{extension_id} is not a valid extension")
+        base_db.give_guild_extension(guild_id, extension_id)
 
     def remove_guild_extension(self, guild_id, extension_id: str):
         """
@@ -169,9 +158,7 @@ class KoalaDBManager:
         :param guild_id: Discord guild ID for a given server
         :param extension_id: The Koala extension ID
         """
-        sql_remove_extension = "DELETE FROM GuildExtensions " \
-                               "WHERE extension_id = ? AND guild_id = ?"
-        self.db_execute_commit(sql_remove_extension, args=[extension_id, guild_id], pass_errors=True)
+        base_db.remove_guild_extension(guild_id, extension_id)
 
     def get_enabled_guild_extensions(self, guild_id: int):
         """
@@ -179,11 +166,7 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         """
-        sql_select_enabled = "SELECT GuildExtensions.extension_id FROM GuildExtensions, KoalaExtensions " \
-                             "WHERE KoalaExtensions.extension_id = GuildExtensions.extension_id " \
-                             "  AND guild_id = ? " \
-                             "  AND available = 1"
-        return self.db_execute_select(sql_select_enabled, args=[guild_id], pass_errors=True)
+        return base_db.get_enabled_guild_extensions(guild_id)
 
     def get_all_available_guild_extensions(self, guild_id: int):
         """
@@ -193,15 +176,13 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         """
-        sql_select_all = "SELECT DISTINCT KoalaExtensions.extension_id " \
-                         "FROM KoalaExtensions WHERE available = 1"
-        return self.db_execute_select(sql_select_all, pass_errors=True)
+        return base_db.get_all_available_guild_extensions(guild_id)
 
     def fetch_all_tables(self):
         """
         Fetches all table names within the database
         """
-        return self.db_execute_select("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
+        return base_db.fetch_all_tables()
 
     def clear_all_tables(self, tables):
         """
@@ -209,8 +190,7 @@ class KoalaDBManager:
 
         :param tables: a list of all tables to be cleared
         """
-        for table in tables:
-            self.db_execute_commit('DELETE FROM ' + table[0] + ';')
+        base_db.clear_all_tables(tables)
 
     def fetch_guild_welcome_message(self, guild_id):
         """
@@ -218,10 +198,7 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         """
-        msg = self.db_execute_select("SELECT * FROM GuildWelcomeMessages WHERE guild_id = ?", args=[guild_id])
-        if len(msg) == 0:
-            return None
-        return msg[0][1]
+        return base_db.fetch_guild_welcome_message(guild_id)
 
     def update_guild_welcome_message(self, guild_id, new_message: str):
         """
@@ -230,9 +207,7 @@ class KoalaDBManager:
         :param guild_id: Discord guild ID for a given server
         :param new_message: The new guild welcome message to be set
         """
-        self.db_execute_commit(
-            "UPDATE GuildWelcomeMessages SET welcome_message = ? WHERE guild_id = ?;", args=[new_message, guild_id])
-        return new_message
+        return base_db.update_guild_welcome_message(guild_id, new_message)
 
     def remove_guild_welcome_message(self, guild_id):
         """
@@ -240,9 +215,7 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         """
-        rows = self.db_execute_select("SELECT * FROM GuildWelcomeMessages WHERE guild_id = ?;", args=[guild_id])
-        self.db_execute_commit("DELETE FROM GuildWelcomeMessages WHERE guild_id = ?;", args=[guild_id])
-        return len(rows)
+        return base_db.remove_guild_welcome_message(guild_id)
 
     def new_guild_welcome_message(self, guild_id):
         """
@@ -250,8 +223,4 @@ class KoalaDBManager:
 
         :param guild_id: Discord guild ID for a given server
         """
-        from cogs import IntroCog
-        self.db_execute_commit(
-            "INSERT INTO GuildWelcomeMessages (guild_id, welcome_message) VALUES (?, ?);",
-            args=[guild_id, IntroCog.DEFAULT_WELCOME_MESSAGE])
-        return self.fetch_guild_welcome_message(guild_id)
+        return base_db.new_guild_welcome_message(guild_id)

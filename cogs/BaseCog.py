@@ -65,13 +65,13 @@ def list_ext_embed(guild_id):
     enabled = ""
     disabled = ""
     for result in enabled_results:
-        enabled += f"{result[0]}\n"
+        enabled += f"{result}\n"
         try:
-            all_results.remove((result[0],))
+            all_results.remove(result)
         except ValueError:
             pass
     for result in all_results:
-        disabled += f"{result[0]}\n"
+        disabled += f"{result}\n"
     if enabled != "":
         embed.add_field(name=":white_check_mark: Enabled", value=enabled)
     if disabled != "":
@@ -183,7 +183,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         if koala_extension.lower() in ["all"]:
             available_extensions = KoalaBot.database_manager.get_all_available_guild_extensions(guild_id)
             for extension in available_extensions:
-                KoalaBot.database_manager.give_guild_extension(guild_id, extension[0])
+                KoalaBot.database_manager.give_guild_extension(guild_id, extension)
             embed = list_ext_embed(guild_id)
             embed.title = "All extensions enabled"
 
@@ -206,8 +206,8 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         all_ext = KoalaBot.database_manager.get_enabled_guild_extensions(guild_id)
         if koala_extension.lower() in ["all"]:
             for ext in all_ext:
-                KoalaBot.database_manager.remove_guild_extension(guild_id, ext[0])
-        elif (koala_extension,) not in all_ext:
+                KoalaBot.database_manager.remove_guild_extension(guild_id, ext)
+        elif koala_extension not in all_ext:
             raise NotImplementedError(f"{koala_extension} is not an enabled extension")
         KoalaBot.database_manager.remove_guild_extension(guild_id, koala_extension)
         embed = list_ext_embed(guild_id)

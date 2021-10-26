@@ -69,8 +69,7 @@ def test_create_tables():
     sql_check_table_exists = "SELECT name FROM sqlite_master " \
                              "WHERE type='table' AND " \
                              "name IN ('TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam');"
-    tables_found = session.execute(sql_check_table_exists)
-    print(type(tables_found))
+    tables_found = session.execute(sql_check_table_exists).all()
     for table in tables_found:
         assert table.name in tables
 
