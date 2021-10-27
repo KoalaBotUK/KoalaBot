@@ -16,9 +16,9 @@ from sqlalchemy import select, and_
 # Own modules
 import KoalaBot
 from koala.db import session
-from koala.cogs import TwitchAlert as TwitchAlert
-from koala.cogs.TwitchAlert import cog
-from koala.cogs.TwitchAlert.models import UserInTwitchAlert
+from koala.cogs import twitch_alert
+from koala.cogs.twitch_alert import cog
+from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.utils.KoalaColours import KOALA_GREEN
 from tests.tests_utils.LastCtxCog import LastCtxCog
 
@@ -74,7 +74,7 @@ async def test_edit_default_message_default_from_none(twitch_cog):
     assert_embed = discord.Embed(title="Default Message Edited",
                                  description=f"Guild: {dpytest.get_config().guilds[0].id}\n"
                                              f"Channel: {this_channel.id}\n"
-                                             f"Default Message: {TwitchAlert.utils.DEFAULT_MESSAGE}")
+                                             f"Default Message: {twitch_alert.utils.DEFAULT_MESSAGE}")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + f"twitch editMsg {this_channel.id}")
     assert dpytest.verify().message().embed(embed=assert_embed)
@@ -98,7 +98,7 @@ async def test_add_user_to_twitch_alert(twitch_cog):
     assert_embed = discord.Embed(title="Added User to Twitch Alert",
                                  description=f"Channel: {dpytest.get_config().channels[0].id}\n"
                                              f"User: monstercat\n"
-                                             f"Message: {TwitchAlert.utils.DEFAULT_MESSAGE}",
+                                             f"Message: {twitch_alert.utils.DEFAULT_MESSAGE}",
                                  colour=KOALA_GREEN)
 
     await dpytest.message(
@@ -107,7 +107,7 @@ async def test_add_user_to_twitch_alert(twitch_cog):
 
 
 @pytest.mark.asyncio(order=3)
-async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: TwitchAlert.cog.TwitchAlert):
+async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: twitch_alert.cog.TwitchAlert):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
     dpytest.get_config().guilds.append(guild)
@@ -123,7 +123,7 @@ async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: TwitchAlert.cog.
 
 
 @pytest.mark.asyncio(order=3)
-async def test_add_user_to_twitch_alert_custom_message(twitch_cog: TwitchAlert.cog.TwitchAlert):
+async def test_add_user_to_twitch_alert_custom_message(twitch_cog: twitch_alert.cog.TwitchAlert):
     test_custom_message = "We be live gamers!"
 
     guild = dpytest.backend.make_guild(name="TestGuild")
@@ -151,7 +151,7 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog: TwitchAlert.c
 
 
 @pytest.mark.asyncio()
-async def test_remove_user_from_twitch_alert_with_message(twitch_cog: TwitchAlert.cog.TwitchAlert):
+async def test_remove_user_from_twitch_alert_with_message(twitch_cog: twitch_alert.cog.TwitchAlert):
     test_custom_message = "We be live gamers!"
 
     # Creates guild and channels and adds user and bot
@@ -211,7 +211,7 @@ async def test_add_team_to_twitch_alert(twitch_cog):
     assert_embed = discord.Embed(title="Added Team to Twitch Alert",
                                  description=f"Channel: {channel.id}\n"
                                              f"Team: faze\n"
-                                             f"Message: {TwitchAlert.utils.DEFAULT_MESSAGE}",
+                                             f"Message: {twitch_alert.utils.DEFAULT_MESSAGE}",
                                  colour=KOALA_GREEN)
     # Creates Twitch Alert
     await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch addTeam faze {channel.id}", channel=-1,
@@ -300,20 +300,20 @@ async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
 
 @pytest.mark.asyncio()
 @pytest.mark.first
-async def test_on_ready(twitch_cog: TwitchAlert.cog.TwitchAlert):
-    with mock.patch.object(TwitchAlert.cog.TwitchAlert, 'start_loops') as mock1:
+async def test_on_ready(twitch_cog: twitch_alert.cog.TwitchAlert):
+    with mock.patch.object(twitch_alert.cog.TwitchAlert, 'start_loops') as mock1:
         await twitch_cog.on_ready()
     mock1.assert_called_with()
 
 
 @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7363))
-@mock.patch("cogs.TwitchAlert.TwitchAPIHandler.get_streams_data",
+@mock.patch("cogs.twitch_alert.TwitchAPIHandler.get_streams_data",
             mock.MagicMock(return_value={'id': '3215560150671170227', 'user_id': '27446517',
                                          "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',
                                          'title': 'Music 24/7'}))
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
 @pytest.mark.asyncio
-async def test_loop_check_live(twitch_cog: TwitchAlert.cog.TwitchAlert):
+async def test_loop_check_live(twitch_cog: twitch_alert.cog.TwitchAlert):
     this_channel = dpytest.get_config().channels[0]
     expected_embed = discord.Embed(colour=KoalaBot.KOALA_GREEN,
                                    title="<:twitch:734024383957434489>  Monstercat is now streaming!",
@@ -331,7 +331,7 @@ async def test_loop_check_live(twitch_cog: TwitchAlert.cog.TwitchAlert):
 
 
 @pytest.mark.asyncio
-async def test_create_alert_embed(twitch_cog: TwitchAlert.cog.TwitchAlert):
+async def test_create_alert_embed(twitch_cog: twitch_alert.cog.TwitchAlert):
     stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
                    "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
                    'title': 'Music 24/7'}

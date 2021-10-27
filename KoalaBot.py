@@ -47,7 +47,7 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
-ENABLED_COGS = ["cogs.TwitchAlert.cog"]
+ENABLED_COGS = ["cogs.twitch_alert.cog"]
 
 # Variables
 started = False

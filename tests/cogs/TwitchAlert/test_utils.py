@@ -7,7 +7,7 @@ import discord.ext.test as dpytest
 import discord
 
 # Own modules
-from koala.cogs.TwitchAlert import utils
+from koala.cogs.twitch_alert import utils
 from koala.utils.KoalaColours import KOALA_GREEN
 
 # Constants

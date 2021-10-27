@@ -432,7 +432,7 @@ class TwitchAlert(commands.Cog):
         #              "FROM UserInTwitchAlert " \
         #              "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
         #              "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
-        #              "WHERE extension_id = 'TwitchAlert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
+        #              "WHERE extension_id = 'twitch_alert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
         users = session.execute(sql_find_users).all()
 
         usernames = [str.lower(user.twitch_username) for user in users]

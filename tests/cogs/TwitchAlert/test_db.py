@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Testing KoalaBot TwitchAlert
+Testing KoalaBot twitch_alert
 
 Commented using reStructuredText (reST)
 """
@@ -19,10 +19,10 @@ from discord.ext import commands
 from sqlalchemy import select, update, insert, delete, and_, or_
 
 # Own modules
-from koala.cogs.TwitchAlert.cog import TwitchAlert
-from koala.cogs.TwitchAlert.db import TwitchAlertDBManager
-from koala.cogs.TwitchAlert import utils
-from koala.cogs.TwitchAlert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
+from koala.cogs.twitch_alert.cog import TwitchAlert
+from koala.cogs.twitch_alert.db import TwitchAlertDBManager
+from koala.cogs.twitch_alert import utils
+from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from koala.db import session, setup
 from koala.utils import KoalaDBManager
 
