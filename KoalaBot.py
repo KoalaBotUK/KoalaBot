@@ -27,9 +27,9 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
-from utils.log import logger
-from utils.KoalaUtils import error_embed, DATABASE_PATH, DB_KEY
-from utils.KoalaDBManager import KoalaDBManager as DBManager
+from koala.utils.KoalaUtils import error_embed, DATABASE_PATH, DB_KEY
+from koala.utils.KoalaDBManager import KoalaDBManager as DBManager
+from koala.log import logger
 
 # Constants
 load_dotenv()
@@ -39,7 +39,7 @@ BOT_OWNER = os.environ.get('BOT_OWNER')
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
-COGS_DIR = "cogs"
+COGS_DIR = "koala.cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
@@ -103,12 +103,14 @@ def load_all_cogs():
     UNRELEASED = []
 
     for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py') and filename not in UNRELEASED:
+        if filename.endswith('.py') and filename not in UNRELEASED and filename != "__init__.py":
             client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
     # New Approach
     for cog in ENABLED_COGS:
         client.load_extension(cog)
+
+    logger.info("All cogs loaded")
 
 
 def get_channel_from_id(id):

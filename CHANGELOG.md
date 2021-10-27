@@ -13,6 +13,8 @@ administrators
 ### Other
 - ./config is the new default config directory
 - /config/logs/<date> is used for logs
+- refactor koala file structure
+- 
 
 ## [0.4.5] - 25-08-2021
 ### Other
