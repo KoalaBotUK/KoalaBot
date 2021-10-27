@@ -80,7 +80,7 @@ class MigrateData:
         if self.backup_data():
             funcs = [self.remake_guilds, self.remake_guild_extensions, self.remake_guild_welcome_messages,
                      self.remake_votes, self.remake_vote_sent, self.remake_vote_options, self.remake_vote_target_roles,
-                     self.remake_verified_emails, self.remake_not_verified_emails, self.remake_role_table,
+                     self.remake_verified_emails, self.remake_non_verified_emails, self.remake_role_table,
                      self.remake_to_re_verify, self.remake_twitch_alerts, self.remake_user_in_twitch_alert,
                      self.remake_team_in_twitch_alert, self.remake_user_in_twitch_team, self.remake_text_filter,
                      self.remake_text_filter_moderation, self.remake_text_filter_ignore_list,
@@ -362,7 +362,7 @@ class MigrateData:
         except Exception as e:
             raise Exception(f"Error in remake_verified_emails: {e}")
 
-    def remake_not_verified_emails(self):
+    def remake_non_verified_emails(self):
         """
         Copies data from NonVerifiedEmails table if it doesn't exist, re-created the table with a given scheme, and
         inserts the data into the new table.
@@ -401,7 +401,7 @@ class MigrateData:
                             """INSERT INTO NonVerifiedEmails (user_id, email, token) VALUES (?, ?, ?);""",
                             args=list(i))
         except Exception as e:
-            raise Exception(f"Error in remake_not_verified_emails: {e}")
+            raise Exception(f"Error in remake_non_verified_emails: {e}")
 
     def remake_role_table(self):
         """

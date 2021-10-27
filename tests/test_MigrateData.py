@@ -763,14 +763,14 @@ async def test_remake_not_verified_emails_old_name():
                               (8, "EMAIL8", "TOKEN8")]
     before_data_stored = database_manager.db_execute_select(non_verified_emails_old_select)
     assert before_data_stored == before_expected_result
-    migrate_database.remake_not_verified_emails()
+    migrate_database.remake_non_verified_emails()
     after_expected_result = [("5", "EMAIL5", "TOKEN5"), ("6", "EMAIL6", "TOKEN6"), ("7", "EMAIL7", "TOKEN7"),
                              ("8", "EMAIL8", "TOKEN8")]
     after_data_stored = database_manager.db_execute_select(non_verified_emails_new_select)
     assert after_data_stored == after_expected_result
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
-        migrate_database.remake_not_verified_emails()
+        migrate_database.remake_non_verified_emails()
     mock1.assert_not_called()
 
     drop_table("NonVerifiedEmails")
@@ -791,14 +791,14 @@ async def test_remake_not_verified_emails_new_name():
                               (8, "EMAIL8", "TOKEN8")]
     before_data_stored = database_manager.db_execute_select(non_verified_emails_new_select)
     assert before_data_stored == before_expected_result
-    migrate_database.remake_not_verified_emails()
+    migrate_database.remake_non_verified_emails()
     after_expected_result = [("5", "EMAIL5", "TOKEN5"), ("6", "EMAIL6", "TOKEN6"), ("7", "EMAIL7", "TOKEN7"),
                              ("8", "EMAIL8", "TOKEN8")]
     after_data_stored = database_manager.db_execute_select(non_verified_emails_new_select)
     assert after_data_stored == after_expected_result
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
-        migrate_database.remake_not_verified_emails()
+        migrate_database.remake_non_verified_emails()
     mock1.assert_not_called()
 
     drop_table("NonVerifiedEmails")
