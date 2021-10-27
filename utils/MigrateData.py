@@ -10,7 +10,6 @@ import sys
 
 
 class MigrateData:
-
     database_manager = None
 
     def __init__(self, database_manager):
@@ -150,7 +149,7 @@ class MigrateData:
             if count[0][0] == 1:
                 # TODO: Continue this down for each method. Make new test for each method for if this is not true
                 # (cid, name, type, notnull, dflt_value, pk)
-                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildExtensions);""") ==\
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildExtensions);""") == \
                        [(0, 'extension_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 2)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM GuildExtensions;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildExtensions;""")
@@ -179,7 +178,8 @@ class MigrateData:
                         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildWelcomeMessages);""") == []:
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildWelcomeMessages);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'welcome_message', 'text', 0, None, 0)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM GuildWelcomeMessages;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildWelcomeMessages;""")
                     self.database_manager.db_execute_commit(sql_create_guild_welcome_messages_table)
@@ -213,7 +213,11 @@ class MigrateData:
                         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                if not self.database_manager.db_execute_select("""PRAGMA table_info(Votes);""") == []:
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(Votes);""") == \
+                       [(0, 'vote_id', 'text', 1, None, 1), (1, 'author_id', 'text', 1, None, 0),
+                        (2, 'guild_id', 'text', 1, None, 0), (3, 'title', 'text', 1, None, 0),
+                        (4, 'chair_id', 'text', 0, None, 0), (5, 'voice_id', 'text', 0, None, 0),
+                        (6, 'end_time', 'float', 0, None, 0)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM Votes;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Votes;""")
                     self.database_manager.db_execute_commit(vote_table)
@@ -243,7 +247,9 @@ class MigrateData:
                         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
                         );"""
             if count[0][0] == 1:
-
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(VoteSent);""") == \
+                       [(0, 'vote_id', 'text', 1, None, 1), (1, 'vote_receiver_id', 'text', 1, None, 0),
+                        (2, 'vote_receiver_message', 'text', 1, None, 0)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM VoteSent;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteSent;""")
                     self.database_manager.db_execute_commit(delivered_table)
@@ -274,7 +280,9 @@ class MigrateData:
                         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
                         );"""
             if count[0][0] == 1:
-
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(VoteOptions);""") == \
+                       [(0, 'vote_id', 'text', 1, None, 1), (1, 'opt_id', 'text', 1, None, 0),
+                        (2, 'option_title', 'text', 1, None, 0), (3, 'option_desc', 'text', 1, None, 0)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM VoteOptions;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteOptions;""")
                     self.database_manager.db_execute_commit(option_table)
@@ -303,7 +311,8 @@ class MigrateData:
                         FOREIGN KEY (vote_id) REFERENCES Votes (vote_id)
                         );"""
             if count[0][0] == 1:
-
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(VoteTargetRoles);""") == \
+                       [(0, 'vote_id', 'text', 1, None, 1), (1, 'role_id', 'text', 1, None, 0)]:
                     data = self.database_manager.db_execute_select("""SELECT * FROM VoteTargetRoles;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VoteTargetRoles;""")
                     self.database_manager.db_execute_commit(role_table)
@@ -341,13 +350,15 @@ class MigrateData:
                         """INSERT INTO VerifiedEmails (user_id, email) VALUES (?, ?);""",
                         args=list(i))
             elif count_new[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM VerifiedEmails;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VerifiedEmails;""")
-                self.database_manager.db_execute_commit(verified_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO VerifiedEmails (user_id, email) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(VerifiedEmails);""") == \
+                       [(0, 'user_id', 'text', 1, None, 1), (1, 'email', 'text', 1, None, 2)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM VerifiedEmails;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS VerifiedEmails;""")
+                    self.database_manager.db_execute_commit(verified_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO VerifiedEmails (user_id, email) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_verified_emails: {e}")
 
@@ -379,13 +390,16 @@ class MigrateData:
                         """INSERT INTO NonVerifiedEmails (user_id, email, token) VALUES (?, ?, ?);""",
                         args=list(i))
             elif count_new[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM NonVerifiedEmails;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS NonVerifiedEmails;""")
-                self.database_manager.db_execute_commit(non_verified_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO NonVerifiedEmails (user_id, email, token) VALUES (?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(NonVerifiedEmails);""") == \
+                       [(0, 'user_id', 'text', 1, None, 0), (1, 'email', 'text', 1, None, 0),
+                        (2, 'token', 'text', 1, None, 1)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM NonVerifiedEmails;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS NonVerifiedEmails;""")
+                    self.database_manager.db_execute_commit(non_verified_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO NonVerifiedEmails (user_id, email, token) VALUES (?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_not_verified_emails: {e}")
 
@@ -418,13 +432,16 @@ class MigrateData:
                         """INSERT INTO Roles (guild_id, role_id, email_suffix) VALUES (?, ?, ?);""",
                         args=list(i))
             elif count_new[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM Roles;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Roles;""")
-                self.database_manager.db_execute_commit(role_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO Roles (guild_id, role_id, email_suffix) VALUES (?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(Roles);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'role_id', 'text', 1, None, 2),
+                        (2, 'email_suffix', 'text', 1, None, 3)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM Roles;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS Roles;""")
+                    self.database_manager.db_execute_commit(role_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO Roles (guild_id, role_id, email_suffix) VALUES (?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_role_table: {e}")
 
@@ -455,13 +472,15 @@ class MigrateData:
                         """INSERT INTO ToReVerify (user_id, role_id) VALUES (?, ?);""",
                         args=list(i))
             if count_new[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM ToReVerify;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS ToReVerify;""")
-                self.database_manager.db_execute_commit(re_verify_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO ToReVerify (user_id, role_id) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(ToReVerify);""") == \
+                       [(0, 'user_id', 'text', 1, None, 1), (1, 'role_id', 'text', 1, None, 2)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM ToReVerify;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS ToReVerify;""")
+                    self.database_manager.db_execute_commit(re_verify_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO ToReVerify (user_id, role_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_to_re_verify: {e}")
 
@@ -487,13 +506,16 @@ class MigrateData:
                  ON DELETE CASCADE 
              );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM TwitchAlerts;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TwitchAlerts;""")
-                self.database_manager.db_execute_commit(sql_create_twitch_alerts_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO TwitchAlerts (guild_id, channel_id, default_message) VALUES (?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(TwitchAlerts);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'channel_id', 'text', 1, None, 2),
+                        (2, 'default_message', 'text', 1, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM TwitchAlerts;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TwitchAlerts;""")
+                    self.database_manager.db_execute_commit(sql_create_twitch_alerts_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO TwitchAlerts (guild_id, channel_id, default_message) VALUES (?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_twitch_alerts: {e}")
 
@@ -520,13 +542,16 @@ class MigrateData:
                      ON DELETE CASCADE 
                  );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM UserInTwitchAlert;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS UserInTwitchAlert;""")
-                self.database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO UserInTwitchAlert (channel_id, twitch_username, custom_message, message_id) VALUES (?, ?, ? ,?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(UserInTwitchAlert);""") == \
+                       [(0, 'channel_id', 'text', 1, None, 1), (1, 'twitch_username', 'text', 1, None, 2),
+                        (2, 'custom_message', 'text', 0, None, 0), (3, 'message_id', 'text', 0, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM UserInTwitchAlert;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS UserInTwitchAlert;""")
+                    self.database_manager.db_execute_commit(sql_create_user_in_twitch_alert_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO UserInTwitchAlert (channel_id, twitch_username, custom_message, message_id) VALUES (?, ?, ? ,?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_user_in_twitch_alert: {e}")
 
@@ -552,13 +577,16 @@ class MigrateData:
                      ON DELETE CASCADE 
                  );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM TeamInTwitchAlert;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TeamInTwitchAlert;""")
-                self.database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO TeamInTwitchAlert (team_twitch_alert_id, channel_id, twitch_team_name, custom_message) VALUES (?, ?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(TeamInTwitchAlert);""") == \
+                       [(0, 'team_twitch_alert_id', 'integer', 0, None, 1), (1, 'channel_id', 'text', 1, None, 0),
+                        (2, 'twitch_team_name', 'text', 1, None, 0), (3, 'custom_message', 'text', 0, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM TeamInTwitchAlert;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TeamInTwitchAlert;""")
+                    self.database_manager.db_execute_commit(sql_create_team_in_twitch_alert_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO TeamInTwitchAlert (team_twitch_alert_id, channel_id, twitch_team_name, custom_message) VALUES (?, ?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_team_in_twitch_alert: {e}")
 
@@ -584,13 +612,16 @@ class MigrateData:
                     ON DELETE CASCADE 
                 );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM UserInTwitchTeam;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS UserInTwitchTeam;""")
-                self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO UserInTwitchTeam (team_twitch_alert_id, twitch_username, message_id) VALUES (?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(UserInTwitchTeam);""") == \
+                       [(0, 'team_twitch_alert_id', 'text', 1, None, 1), (1, 'twitch_username', 'text', 1, None, 2),
+                        (2, 'message_id', 'text', 0, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM UserInTwitchTeam;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS UserInTwitchTeam;""")
+                    self.database_manager.db_execute_commit(sql_create_user_in_twitch_team_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO UserInTwitchTeam (team_twitch_alert_id, twitch_username, message_id) VALUES (?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_user_in_twitch_team: {e}")
 
@@ -615,13 +646,17 @@ class MigrateData:
                 FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                 );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM TextFilter;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TextFilter;""")
-                self.database_manager.db_execute_commit(sql_create_text_filter_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (?, ?, ?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(TextFilter);""") == \
+                       [(0, 'filtered_text_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 0),
+                        (2, 'filtered_text', 'text', 1, None, 0), (3, 'filter_type', 'text', 1, None, 0),
+                        (4, 'is_regex', 'boolean', 1, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM TextFilter;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TextFilter;""")
+                    self.database_manager.db_execute_commit(sql_create_text_filter_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex) VALUES (?, ?, ?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_text_filter: {e}")
 
@@ -643,13 +678,15 @@ class MigrateData:
                        FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                        );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM TextFilterModeration;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TextFilterModeration;""")
-                self.database_manager.db_execute_commit(sql_create_mod_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(TextFilterModeration);""") == \
+                       [(0, 'channel_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM TextFilterModeration;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TextFilterModeration;""")
+                    self.database_manager.db_execute_commit(sql_create_mod_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_text_filter_moderation: {e}")
 
@@ -673,13 +710,16 @@ class MigrateData:
               FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
               );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM TextFilterIgnoreList;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TextFilterIgnoreList;""")
-                self.database_manager.db_execute_commit(sql_create_ignore_list_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO TextFilterIgnoreList (ignore_id, guild_id, ignore_type, ignore) VALUES (?, ?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(TextFilterIgnoreList);""") == \
+                       [(0, 'ignore_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 0),
+                        (2, 'ignore_type', 'text', 1, None, 0), (3, 'ignore', 'text', 1, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM TextFilterIgnoreList;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS TextFilterIgnoreList;""")
+                    self.database_manager.db_execute_commit(sql_create_ignore_list_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO TextFilterIgnoreList (ignore_id, guild_id, ignore_type, ignore) VALUES (?, ?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_text_filter_ignore_list: {e}")
 
@@ -704,13 +744,16 @@ class MigrateData:
                  UNIQUE (guild_id, channel_id, message_id)
                  );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildRFRMessages;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildRFRMessages;""")
-                self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildRFRMessages (guild_id, channel_id, message_id, emoji_role_id) VALUES (?, ?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildRFRMessages);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 0), (1, 'channel_id', 'text', 1, None, 0),
+                        (2, 'message_id', 'text', 1, None, 0), (3, 'emoji_role_id', 'integer', 0, None, 1)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildRFRMessages;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildRFRMessages;""")
+                    self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildRFRMessages (guild_id, channel_id, message_id, emoji_role_id) VALUES (?, ?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_rfr_messages: {e}")
 
@@ -735,13 +778,16 @@ class MigrateData:
                  UNIQUE  (emoji_role_id, role_id)
                  );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM RFRMessageEmojiRoles;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS RFRMessageEmojiRoles;""")
-                self.database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES (?, ?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(RFRMessageEmojiRoles);""") == \
+                       [(0, 'emoji_role_id', 'integer', 1, None, 1), (1, 'emoji_raw', 'text', 1, None, 2),
+                        (2, 'role_id', 'text', 1, None, 3)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM RFRMessageEmojiRoles;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS RFRMessageEmojiRoles;""")
+                    self.database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO RFRMessageEmojiRoles (emoji_role_id, emoji_raw, role_id) VALUES (?, ?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_rfr_message_emoji_roles: {e}")
 
@@ -764,13 +810,15 @@ class MigrateData:
               UNIQUE (guild_id, role_id)
               );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildRFRRequiredRoles;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildRFRRequiredRoles;""")
-                self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildRFRRequiredRoles (guild_id, role_id) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildRFRRequiredRoles);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'role_id', 'text', 1, None, 2)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildRFRRequiredRoles;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildRFRRequiredRoles;""")
+                    self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildRFRRequiredRoles (guild_id, role_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_rfr_required_roles: {e}")
 
@@ -792,13 +840,16 @@ class MigrateData:
                         FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildColourChangePermissions;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildColourChangePermissions;""")
-                self.database_manager.db_execute_commit(sql_create_guild_colour_change_permissions_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select(
+                        """PRAGMA table_info(GuildColourChangePermissions);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'role_id', 'integer', 1, None, 2)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildColourChangePermissions;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildColourChangePermissions;""")
+                    self.database_manager.db_execute_commit(sql_create_guild_colour_change_permissions_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildColourChangePermissions (guild_id, role_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_colour_change_permissions: {e}")
 
@@ -820,13 +871,16 @@ class MigrateData:
                  FOREIGN KEY (guild_id) REFERENCES Guilds (guild_id)
                  );"""
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildInvalidCustomColourRoles;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildInvalidCustomColourRoles;""")
-                self.database_manager.db_execute_commit(sql_create_guild_colour_change_invalid_colours_table)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select(
+                        """PRAGMA table_info(GuildInvalidCustomColourRoles);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'role_id', 'integer', 1, None, 2)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildInvalidCustomColourRoles;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildInvalidCustomColourRoles;""")
+                    self.database_manager.db_execute_commit(sql_create_guild_colour_change_invalid_colours_table)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildInvalidCustomColourRoles (guild_id, role_id) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_invalid_custom_colour_roles: {e}")
 
@@ -849,12 +903,14 @@ class MigrateData:
             );
             """
             if count[0][0] == 1:
-                data = self.database_manager.db_execute_select("""SELECT * FROM GuildUsage;""")
-                self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildUsage;""")
-                self.database_manager.db_execute_commit(sql_create_usage_tables)
-                for i in data:
-                    self.database_manager.db_execute_commit(
-                        """INSERT INTO GuildUsage (guild_id, last_message_epoch_time) VALUES (?, ?);""",
-                        args=list(i))
+                if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildUsage);""") == \
+                       [(0, 'guild_id', 'text', 1, None, 1), (1, 'last_message_epoch_time', 'text', 1, None, 0)]:
+                    data = self.database_manager.db_execute_select("""SELECT * FROM GuildUsage;""")
+                    self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildUsage;""")
+                    self.database_manager.db_execute_commit(sql_create_usage_tables)
+                    for i in data:
+                        self.database_manager.db_execute_commit(
+                            """INSERT INTO GuildUsage (guild_id, last_message_epoch_time) VALUES (?, ?);""",
+                            args=list(i))
         except Exception as e:
             raise Exception(f"Error in remake_guild_usage: {e}")

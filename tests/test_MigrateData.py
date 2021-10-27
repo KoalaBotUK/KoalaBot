@@ -29,7 +29,6 @@ else:
     print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
 
-
 database_manager = KoalaDBManager("migrateTest.db", KoalaBot.DB_KEY, KoalaBot.CONFIG_DIR)
 migrate_database = MigrateData(database_manager)
 
@@ -575,7 +574,7 @@ async def test_remake_guild_extensions():
 @pytest.mark.asyncio()
 async def test_remake_guild_welcome_message():
     guild_welcome_message_select = "SELECT * FROM GuildWelcomeMessages"
-    
+
     drop_table("GuildWelcomeMessages")
     create_old_guild_welcome_message()
     populate_old_guild_welcome_message()
@@ -588,6 +587,10 @@ async def test_remake_guild_welcome_message():
     after_data_stored = database_manager.db_execute_select(guild_welcome_message_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_welcome_messages()
+    mock1.assert_not_called()
+
     drop_table("GuildWelcomeMessages")
     create_old_guild_welcome_message()
 
@@ -595,7 +598,7 @@ async def test_remake_guild_welcome_message():
 @pytest.mark.asyncio()
 async def test_remake_votes():
     votes_select = "SELECT * FROM Votes"
-    
+
     drop_table("Votes")
     create_old_votes()
     populate_old_votes()
@@ -610,6 +613,10 @@ async def test_remake_votes():
     after_data_stored = database_manager.db_execute_select(votes_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_votes()
+    mock1.assert_not_called()
+
     drop_table("Votes")
     create_old_votes()
 
@@ -617,7 +624,7 @@ async def test_remake_votes():
 @pytest.mark.asyncio()
 async def test_remake_vote_sent():
     vote_sent_select = "SELECT * FROM VoteSent"
-    
+
     drop_table("VoteSent")
     create_old_vote_sent()
     populate_old_vote_sent()
@@ -631,6 +638,10 @@ async def test_remake_vote_sent():
     after_data_stored = database_manager.db_execute_select(vote_sent_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_vote_sent()
+    mock1.assert_not_called()
+
     drop_table("VoteSent")
     create_old_vote_sent()
 
@@ -638,7 +649,7 @@ async def test_remake_vote_sent():
 @pytest.mark.asyncio()
 async def test_remake_vote_options():
     vote_options_select = "SELECT * FROM VoteOptions"
-    
+
     drop_table("VoteOptions")
     create_old_vote_options()
     populate_old_vote_options()
@@ -653,6 +664,10 @@ async def test_remake_vote_options():
     after_data_stored = database_manager.db_execute_select(vote_options_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_vote_options()
+    mock1.assert_not_called()
+
     drop_table("GuildExtensions")
     create_old_vote_options()
 
@@ -660,7 +675,7 @@ async def test_remake_vote_options():
 @pytest.mark.asyncio()
 async def test_remake_vote_target_roles():
     vote_target_roles_select = "SELECT * FROM VoteTargetRoles"
-    
+
     drop_table("VoteTargetRoles")
     create_old_vote_target_roles()
     populate_old_vote_target_roles()
@@ -673,6 +688,10 @@ async def test_remake_vote_target_roles():
     after_data_stored = database_manager.db_execute_select(vote_target_roles_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_vote_target_roles()
+    mock1.assert_not_called()
+
     drop_table("VoteTargetRoles")
     create_old_vote_target_roles()
 
@@ -681,7 +700,7 @@ async def test_remake_vote_target_roles():
 async def test_remake_verified_emails_old_name():
     verified_emails_new_select = "SELECT * FROM VerifiedEmails"
     verified_emails_old_select = "SELECT * FROM verified_emails"
-    
+
     drop_table("verified_emails")
     drop_table("VerifiedEmails")
     create_old_verified_emails()
@@ -695,6 +714,10 @@ async def test_remake_verified_emails_old_name():
     after_data_stored = database_manager.db_execute_select(verified_emails_new_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_verified_emails()
+    mock1.assert_not_called()
+
     drop_table("VerifiedEmails")
     create_old_verified_emails()
 
@@ -702,7 +725,7 @@ async def test_remake_verified_emails_old_name():
 @pytest.mark.asyncio()
 async def test_remake_verified_emails_new_name():
     verified_emails_new_select = "SELECT * FROM VerifiedEmails"
-    
+
     drop_table("verified_emails")
     drop_table("VerifiedEmails")
     create_old_verified_emails()
@@ -717,6 +740,10 @@ async def test_remake_verified_emails_new_name():
     after_expected_result = [("1", "EMAIL1"), ("2", "EMAIL2"), ("3", "EMAIL3"), ("4", "EMAIL4")]
     after_data_stored = database_manager.db_execute_select(verified_emails_new_select)
     assert after_data_stored == after_expected_result
+
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_verified_emails()
+    mock1.assert_not_called()
 
     drop_table("VerifiedEmails")
     create_old_verified_emails()
@@ -742,6 +769,10 @@ async def test_remake_not_verified_emails_old_name():
     after_data_stored = database_manager.db_execute_select(non_verified_emails_new_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_not_verified_emails()
+    mock1.assert_not_called()
+
     drop_table("NonVerifiedEmails")
     create_old_non_verified_emails()
 
@@ -749,7 +780,7 @@ async def test_remake_not_verified_emails_old_name():
 @pytest.mark.asyncio()
 async def test_remake_not_verified_emails_new_name():
     non_verified_emails_new_select = "SELECT * FROM NonVerifiedEmails"
-    
+
     drop_table("non_verified_emails")
     drop_table("NonVerifiedEmails")
     create_old_non_verified_emails()
@@ -766,6 +797,10 @@ async def test_remake_not_verified_emails_new_name():
     after_data_stored = database_manager.db_execute_select(non_verified_emails_new_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_not_verified_emails()
+    mock1.assert_not_called()
+
     drop_table("NonVerifiedEmails")
     create_old_non_verified_emails()
 
@@ -774,7 +809,7 @@ async def test_remake_not_verified_emails_new_name():
 async def test_remake_role_old_name():
     roles_old_select = "SELECT * FROM roles"
     roles_new_select = "SELECT * FROM Roles"
-    
+
     drop_table("roles")
     drop_table("Roles")
     create_old_roles()
@@ -790,6 +825,10 @@ async def test_remake_role_old_name():
     after_data_stored = database_manager.db_execute_select(roles_new_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_role_table()
+    mock1.assert_not_called()
+
     drop_table("Roles")
     create_old_roles()
 
@@ -797,7 +836,7 @@ async def test_remake_role_old_name():
 @pytest.mark.asyncio()
 async def test_remake_role_new_name():
     roles_new_select = "SELECT * FROM Roles"
-    
+
     drop_table("roles")
     drop_table("Roles")
     create_old_roles()
@@ -814,6 +853,10 @@ async def test_remake_role_new_name():
     after_data_stored = database_manager.db_execute_select(roles_new_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_role_table()
+    mock1.assert_not_called()
+
     drop_table("Roles")
     create_old_roles()
 
@@ -822,7 +865,7 @@ async def test_remake_role_new_name():
 async def test_remake_to_re_verify_old_name():
     to_re_verify_old_select = "SELECT * FROM to_re_verify"
     to_re_verify_new_select = "SELECT * FROM ToReVerify"
-    
+
     drop_table("to_re_verify")
     drop_table("ToReVerify")
     create_old_to_re_verify()
@@ -836,6 +879,10 @@ async def test_remake_to_re_verify_old_name():
     after_data_stored = database_manager.db_execute_select(to_re_verify_new_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_to_re_verify()
+    mock1.assert_not_called()
+
     drop_table("ToReVerify")
     create_old_to_re_verify()
 
@@ -843,7 +890,7 @@ async def test_remake_to_re_verify_old_name():
 @pytest.mark.asyncio()
 async def test_remake_to_re_verify_new_name():
     to_re_verify_new_select = "SELECT * FROM ToReVerify"
-    
+
     drop_table("to_re_verify")
     drop_table("ToReVerify")
     create_old_to_re_verify()
@@ -858,6 +905,12 @@ async def test_remake_to_re_verify_new_name():
     after_data_stored = database_manager.db_execute_select(to_re_verify_new_select)
     assert after_data_stored == after_expected_result
 
+    print(database_manager.db_execute_select("""PRAGMA table_info(ToReVerify);"""))
+
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_to_re_verify()
+    mock1.assert_not_called()
+
     drop_table("ToReVerify")
     create_old_to_re_verify()
 
@@ -865,7 +918,7 @@ async def test_remake_to_re_verify_new_name():
 @pytest.mark.asyncio()
 async def test_remake_twitch_alert():
     twitch_alerts_select = "SELECT * FROM TwitchAlerts"
-        
+
     drop_table("TwitchAlerts")
     create_old_twitch_alerts()
     populate_old_twitch_alerts()
@@ -879,6 +932,10 @@ async def test_remake_twitch_alert():
     after_data_stored = database_manager.db_execute_select(twitch_alerts_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_twitch_alerts()
+    mock1.assert_not_called()
+
     drop_table("TwitchAlerts")
     create_old_twitch_alerts()
 
@@ -886,7 +943,7 @@ async def test_remake_twitch_alert():
 @pytest.mark.asyncio()
 async def test_remake_user_in_twitch_alert():
     user_in_twitch_alert_select = "SELECT * FROM UserInTwitchAlert"
-    
+
     drop_table("UserInTwitchAlert")
     create_old_user_in_twitch_alerts()
     populate_old_user_in_twitch_alerts()
@@ -901,6 +958,10 @@ async def test_remake_user_in_twitch_alert():
     after_data_stored = database_manager.db_execute_select(user_in_twitch_alert_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_user_in_twitch_alert()
+    mock1.assert_not_called()
+
     drop_table("UserInTwitchAlert")
     create_old_user_in_twitch_alerts()
 
@@ -908,7 +969,7 @@ async def test_remake_user_in_twitch_alert():
 @pytest.mark.asyncio()
 async def test_remake_team_in_twitch_alert():
     team_in_twitch_alert_select = "SELECT * FROM TeamInTwitchAlert"
-    
+
     drop_table("TeamInTwitchAlert")
     create_old_team_in_twitch_alerts()
     populate_old_team_in_twitch_alerts()
@@ -923,6 +984,10 @@ async def test_remake_team_in_twitch_alert():
     after_data_stored = database_manager.db_execute_select(team_in_twitch_alert_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_team_in_twitch_alert()
+    mock1.assert_not_called()
+
     drop_table("TeamInTwitchAlert")
     create_old_team_in_twitch_alerts()
 
@@ -930,7 +995,7 @@ async def test_remake_team_in_twitch_alert():
 @pytest.mark.asyncio()
 async def test_remake_user_in_twitch_team():
     user_in_twitch_team_select = "SELECT * FROM UserInTwitchTeam"
-    
+
     drop_table("UserInTwitchTeam")
     create_old_user_in_twitch_team()
     populate_old_user_in_twitch_team()
@@ -945,9 +1010,9 @@ async def test_remake_user_in_twitch_team():
     after_data_stored = database_manager.db_execute_select(user_in_twitch_team_select)
     assert after_data_stored == after_expected_result
 
-
-
-
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_user_in_twitch_team()
+    mock1.assert_not_called()
 
     drop_table("UserInTwitchTeam")
     create_old_user_in_twitch_team()
@@ -956,7 +1021,7 @@ async def test_remake_user_in_twitch_team():
 @pytest.mark.asyncio()
 async def test_remake_text_filter():
     text_filter_select = "SELECT * FROM TextFilter"
-    
+
     drop_table("TextFilter")
     create_old_text_filter()
     populate_old_text_filter()
@@ -971,6 +1036,10 @@ async def test_remake_text_filter():
     after_data_stored = database_manager.db_execute_select(text_filter_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_text_filter()
+    mock1.assert_not_called()
+
     drop_table("TextFilter")
     create_old_text_filter()
 
@@ -978,7 +1047,7 @@ async def test_remake_text_filter():
 @pytest.mark.asyncio()
 async def test_remake_text_filter_moderation():
     text_filter_moderation_select = "SELECT * FROM TextFilterModeration"
-    
+
     drop_table("TextFilterModeration")
     create_old_text_filter_moderation()
     populate_old_text_filter_moderation()
@@ -991,6 +1060,10 @@ async def test_remake_text_filter_moderation():
     after_data_stored = database_manager.db_execute_select(text_filter_moderation_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_text_filter_moderation()
+    mock1.assert_not_called()
+
     drop_table("TextFilterModeration")
     create_old_text_filter_moderation()
 
@@ -998,7 +1071,7 @@ async def test_remake_text_filter_moderation():
 @pytest.mark.asyncio()
 async def test_remake_text_filter_ignore_list():
     text_filter_ignore_list_select = "SELECT * FROM TextFilterIgnoreList"
-    
+
     drop_table("TextFilterIgnoreList")
     create_old_text_filter_ignore_list()
     populate_old_text_filter_ignore_list()
@@ -1012,6 +1085,10 @@ async def test_remake_text_filter_ignore_list():
     after_data_stored = database_manager.db_execute_select(text_filter_ignore_list_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_text_filter_ignore_list()
+    mock1.assert_not_called()
+
     drop_table("TextFilterIgnoreList")
     create_old_text_filter_ignore_list()
 
@@ -1019,7 +1096,7 @@ async def test_remake_text_filter_ignore_list():
 @pytest.mark.asyncio()
 async def test_remake_guild_rfr_messages():
     guild_rfr_messages_select = "SELECT * FROM GuildRFRMessages"
-    
+
     drop_table("GuildRFRMessages")
     create_old_guild_rfr_messages()
     populate_old_guild_rfr_messages()
@@ -1032,6 +1109,10 @@ async def test_remake_guild_rfr_messages():
     after_data_stored = database_manager.db_execute_select(guild_rfr_messages_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_rfr_messages()
+    mock1.assert_not_called()
+
     drop_table("GuildRFRMessages")
     create_old_guild_rfr_messages()
 
@@ -1039,7 +1120,7 @@ async def test_remake_guild_rfr_messages():
 @pytest.mark.asyncio()
 async def test_remake_rfr_message_emoji_roles():
     rfr_message_emoji_roles_select = "SELECT * FROM RFRMessageEmojiRoles"
-    
+
     drop_table("RFRMessageEmojiRoles")
     create_old_rfr_message_emoji_roles()
     populate_old_rfr_message_emoji_roles()
@@ -1052,6 +1133,10 @@ async def test_remake_rfr_message_emoji_roles():
     after_data_stored = database_manager.db_execute_select(rfr_message_emoji_roles_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_rfr_message_emoji_roles()
+    mock1.assert_not_called()
+
     drop_table("RFRMessageEmojiRoles")
     create_old_rfr_message_emoji_roles()
 
@@ -1059,7 +1144,7 @@ async def test_remake_rfr_message_emoji_roles():
 @pytest.mark.asyncio()
 async def test_remake_guild_rfr_required_roles():
     guild_rfr_required_roles_select = "SELECT * FROM GuildRFRRequiredRoles"
-       
+
     drop_table("GuildRFRRequiredRoles")
     create_old_guild_rfr_required_roles()
     populate_old_guild_rfr_required_roles()
@@ -1072,6 +1157,10 @@ async def test_remake_guild_rfr_required_roles():
     after_data_stored = database_manager.db_execute_select(guild_rfr_required_roles_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_rfr_required_roles()
+    mock1.assert_not_called()
+
     drop_table("GuildRFRRequiredRoles")
     create_old_guild_rfr_required_roles()
 
@@ -1079,7 +1168,7 @@ async def test_remake_guild_rfr_required_roles():
 @pytest.mark.asyncio()
 async def test_remake_guild_colour_change_permissions():
     guild_colour_change_permissions_select = "SELECT * FROM GuildColourChangePermissions"
-        
+
     drop_table("GuildColourChangePermissions")
     create_old_guild_colour_change_permissions()
     populate_old_guild_colour_change_permissions()
@@ -1092,6 +1181,10 @@ async def test_remake_guild_colour_change_permissions():
     after_data_stored = database_manager.db_execute_select(guild_colour_change_permissions_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_colour_change_permissions()
+    mock1.assert_not_called()
+
     drop_table("GuildColourChangePermissions")
     create_old_guild_colour_change_permissions()
 
@@ -1099,7 +1192,7 @@ async def test_remake_guild_colour_change_permissions():
 @pytest.mark.asyncio()
 async def test_remake_guild_invalid_custom_colour_roles():
     guild_invalid_custom_colour_roles_select = "SELECT * FROM GuildInvalidCustomColourRoles"
-        
+
     drop_table("GuildInvalidCustomColourRoles")
     create_old_guild_invalid_custom_colour_roles()
     populate_old_guild_invalid_custom_colour_roles()
@@ -1112,6 +1205,10 @@ async def test_remake_guild_invalid_custom_colour_roles():
     after_data_stored = database_manager.db_execute_select(guild_invalid_custom_colour_roles_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_invalid_custom_colour_roles()
+    mock1.assert_not_called()
+
     drop_table("GuildInvalidCustomColourRoles")
     create_old_guild_invalid_custom_colour_roles()
 
@@ -1119,7 +1216,7 @@ async def test_remake_guild_invalid_custom_colour_roles():
 @pytest.mark.asyncio()
 async def test_remake_guild_usage():
     guild_usage_select = "SELECT * FROM GuildUsage"
-    
+
     drop_table("GuildUsage")
     create_old_guild_usage()
     populate_old_guild_usage()
@@ -1132,6 +1229,10 @@ async def test_remake_guild_usage():
     after_data_stored = database_manager.db_execute_select(guild_usage_select)
     assert after_data_stored == after_expected_result
 
+    with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
+        migrate_database.remake_guild_usage()
+    mock1.assert_not_called()
+
     drop_table("GuildUsage")
     create_old_guild_usage()
 
@@ -1140,7 +1241,7 @@ async def test_remake_guild_usage():
 async def test_remake_guilds_only_no_guilds_table():
     guilds_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'"
     guild_extension_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'"
-    
+
     drop_table("Guilds")
     create_old_guild_extensions()
     populate_old_guild_extensions()
@@ -1164,7 +1265,7 @@ async def test_remake_guilds_only_no_guilds_table():
 async def test_remake_guilds_only_no_guild_extensions_table():
     guilds_select = "SELECT * FROM Guilds"
     guilds_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'"
-    
+
     create_guilds()
     populate_guilds()
     drop_table("GuildExtensions")
@@ -1186,7 +1287,7 @@ async def test_remake_guilds_both_exist_table():
     guilds_select = "SELECT * FROM Guilds"
     guilds_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='Guilds'"
     guild_extension_count = "SELECT count(name) FROM sqlite_master WHERE type='table' AND name='GuildExtensions'"
-    
+
     create_guilds()
     populate_guilds()
     create_old_guild_extensions()
@@ -1246,7 +1347,8 @@ async def test_backup_data():
     :return:
     """
     migrate_database.backup_data()
-    db2 = pathlib.PurePath(f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
+    db2 = pathlib.PurePath(
+        f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
     conn, c = database_manager.create_connection_with_path(str(db2))
 
@@ -1278,7 +1380,8 @@ async def test_rollback_database():
     broken_db_path = pathlib.Path() / 'KoalaDBBackups' / f'backup_{migrate_database.get_largest_file_number()}' / 'brokenKoalaDB.db'
     assert broken_db_path.is_file()
 
-    db2 = pathlib.PurePath(f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
+    db2 = pathlib.PurePath(
+        f'KoalaDBBackups/backup_{migrate_database.get_largest_file_number()}/{database_manager.db_file_path}')
 
     conn, c = database_manager.create_connection_with_path(str(db2))
 
