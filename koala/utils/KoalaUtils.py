@@ -31,7 +31,18 @@ ID_LENGTH = 18
 TIMEOUT_TIME = 60
 
 # Variables
+load_dotenv()
 
+# Koala Constants
+ENCRYPTED_DB = (not os.name == 'nt') and eval(os.environ.get('ENCRYPTED', "True"))
+DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
+CONFIG_PATH = os.getenv("CONFIG_PATH", "./config")
+Base = declarative_base()
+Session = sessionmaker(future=True)
+
+DATABASE_PATH = None
+engine = None
+session = None
 
 def error_embed(description, error_type=None):
     """
@@ -124,17 +135,14 @@ def get_arg_config_path():
 
     :return: Valid config dir
     """
-    config_dir = vars(__parse_args(sys.argv[1:])).get("config")
+    config_dir = CONFIG_PATH
     if config_dir and os.name == 'nt' and config_dir[1] != ":":
         config_dir = os.getcwd() + config_dir
     elif config_dir is None:
         config_dir = "./config"
-    if os.name == 'nt':
-        return str(PureWindowsPath(config_dir))
-    elif os.name == 'posix':
-        return str(PurePosixPath(config_dir))
-    else:
-        return str(Path(config_dir))
+    path = Path(config_dir)
+    path.mkdir(exist_ok=True, parents=True)
+    return str(path.absolute())
 
 
 def _get_sql_url(db_path, encrypted: bool, db_key=None):
@@ -144,21 +152,22 @@ def _get_sql_url(db_path, encrypted: bool, db_key=None):
         return "sqlite:///" + db_path
 
 
-load_dotenv()
+def set_variables(config):
+    global CONFIG_DIR, DATABASE_PATH, engine, session
 
-# Koala Constants
-ENCRYPTED_DB = (not os.name == 'nt') and eval(os.environ.get('ENCRYPTED', "True"))
-DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
+    CONFIG_DIR = config
+    print("configDir: " + CONFIG_DIR)
+    DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
+
+    engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
+                                        encrypted=ENCRYPTED_DB,
+                                        db_key=DB_KEY), future=True)
+
+    Session.configure(bind=engine)
+
+    session = Session()
+
+
 CONFIG_DIR = get_arg_config_path()
-DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
 
-Base = declarative_base()
-
-Session = sessionmaker(future=True)
-
-engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
-                                    encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
-Session.configure(bind=engine)
-
-session = Session()
+set_variables(CONFIG_DIR)

@@ -1,24 +1,32 @@
+import os
 import sys
 import logging
 from datetime import date
+
 from pathlib import Path
+from dotenv import load_dotenv
 
 from koala.utils.KoalaUtils import format_config_path, CONFIG_DIR
 
+# load_dotenv()
 _LOG_LEVEL = logging.INFO
 _FORMATTER = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 _LOG_DIR = format_config_path(CONFIG_DIR, "logs", str(date.today()))
+_LOGGING_FILE = eval(os.getenv("LOGGING_FILE", "True"))
 
 Path(_LOG_DIR).mkdir(exist_ok=True, parents=True)
-
-koala_log = logging.FileHandler(filename=format_config_path(_LOG_DIR, "KoalaBotWarn.log"))
-koala_log.setFormatter(_FORMATTER)
-koala_log.setLevel(logging.WARN)
 
 
 # logging.basicConfig(filename=format_config_path(_LOG_DIR, 'KoalaBot.log'),
 #                     level=logging.WARN,
 #                     format='%(asctime)s %(levelname)-8s %(message)s')
+
+
+def _get_default_warn_log():
+    koala_log = logging.FileHandler(filename=format_config_path(_LOG_DIR, "KoalaBotWarn.log"))
+    koala_log.setFormatter(_FORMATTER)
+    koala_log.setLevel(logging.WARN)
+    return koala_log
 
 
 def _get_file_handler(log_name, log_level):
@@ -38,9 +46,9 @@ def _get_stdout_stream_handler(log_level):
 def get_logger(log_name, log_level=_LOG_LEVEL, file_name=None, file_handler=True, stdout_handler=True):
     new_logger = logging.getLogger(log_name)
 
-    if file_handler:
+    if file_handler and _LOGGING_FILE:
         new_logger.addHandler(_get_file_handler(file_name if file_name else log_name, log_level))
-        new_logger.addHandler(koala_log)
+        new_logger.addHandler(_get_default_warn_log())
 
     if stdout_handler:
         new_logger.addHandler(_get_stdout_stream_handler(log_level))
@@ -53,3 +61,5 @@ def get_logger(log_name, log_level=_LOG_LEVEL, file_name=None, file_handler=True
 logger = get_logger(__name__)
 
 discord_logger = get_logger("discord", log_level=logging.WARN, file_name="discord.log", stdout_handler=False)
+
+

@@ -11,8 +11,8 @@ administrators
 - Help messages are now more detailed
 - Internal API library changed, may increase delays in twitch API responses
 ### Other
-- ./config is the new default config directory
-- /config/logs/<date> is used for logs
+- ./config is the new default config directory and is set in env
+- /config/logs/<date> is now used for logs
 - refactor koala file structure
 - 
 

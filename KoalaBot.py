@@ -39,7 +39,7 @@ BOT_OWNER = os.environ.get('BOT_OWNER')
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
-COGS_DIR = "koala.cogs"
+COGS_DIR = "koala/cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
@@ -47,7 +47,7 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
-ENABLED_COGS = ["cogs.twitch_alert.cog"]
+ENABLED_COGS = ["koala.cogs.twitch_alert.cog"]
 
 # Variables
 started = False
