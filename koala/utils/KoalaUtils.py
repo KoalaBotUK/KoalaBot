@@ -133,10 +133,9 @@ def get_arg_config_path():
     :return: Valid config dir
     """
     config_dir = CONFIG_PATH
-    if config_dir and os.name == 'nt' and config_dir[1] != ":":
-        config_dir = os.getcwd() + config_dir
-    elif config_dir is None:
+    if config_dir is None:
         config_dir = "./config"
+
     path = Path(config_dir)
     path.mkdir(exist_ok=True, parents=True)
     return str(path.absolute())
