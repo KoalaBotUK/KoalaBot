@@ -5,12 +5,12 @@ from koala.utils.KoalaUtils import __parse_args, get_arg_config_path, format_con
 
 @mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", None)
 def test_get_arg_config_path_default():
-    assert get_arg_config_path() == os.getcwd()+"\\config"
+    assert get_arg_config_path() == os.getcwd()+"\\config" or get_arg_config_path() == os.getcwd()+"/config"
 
 
 @mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "/config2")
 def test_get_arg_config_path_custom():
-    assert get_arg_config_path() == os.getcwd()+"\\config2"
+    assert get_arg_config_path() == os.getcwd()+"\\config2" or get_arg_config_path() == os.getcwd()+"/config2"
 
 
 def test_parse_args_config():
