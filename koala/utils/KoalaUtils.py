@@ -9,9 +9,8 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
-import sys
 import argparse
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path
 
 # Libs
 from typing import Tuple, Optional
@@ -40,9 +39,7 @@ CONFIG_PATH = os.getenv("CONFIG_PATH", "./config")
 Base = declarative_base()
 Session = sessionmaker(future=True)
 
-DATABASE_PATH = None
-engine = None
-session = None
+
 
 def error_embed(description, error_type=None):
     """
@@ -152,22 +149,14 @@ def _get_sql_url(db_path, encrypted: bool, db_key=None):
         return "sqlite:///" + db_path
 
 
-def set_variables(config):
-    global CONFIG_DIR, DATABASE_PATH, engine, session
-
-    CONFIG_DIR = config
-    print("configDir: " + CONFIG_DIR)
-    DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
-
-    engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
-                                        encrypted=ENCRYPTED_DB,
-                                        db_key=DB_KEY), future=True)
-
-    Session.configure(bind=engine)
-
-    session = Session()
-
-
 CONFIG_DIR = get_arg_config_path()
+print("configDir: " + CONFIG_DIR)
+DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
 
-set_variables(CONFIG_DIR)
+engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
+                                    encrypted=ENCRYPTED_DB,
+                                    db_key=DB_KEY), future=True)
+
+Session.configure(bind=engine)
+
+session = Session()

@@ -21,7 +21,7 @@ class KoalaExtensions(Base):
 class GuildExtensions(Base):
     __tablename__ = 'GuildExtensions'
     extension_id = Column(String, ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
-    guild_id = Column(Integer)
+    guild_id = Column(Integer, primary_key=True)
 
 
 class GuildWelcomeMessages(Base):

@@ -21,6 +21,7 @@ from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.utils.KoalaColours import KOALA_GREEN
 from tests.tests_utils.LastCtxCog import LastCtxCog
+from koala.utils.KoalaUtils import error_embed
 
 # Constants
 DB_PATH = "Koala.db"

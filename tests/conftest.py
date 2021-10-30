@@ -7,6 +7,7 @@ A configuration file for methods useful in all testing with pytest
 import os
 import sys
 import shutil
+import time
 
 # Libs
 from dotenv import load_dotenv
@@ -31,12 +32,8 @@ def teardown_config():
     print("Tearing down session")
 
     from koala.utils.KoalaUtils import get_arg_config_path
-    from koala.log import discord_logger
 
-    for handler in discord_logger.handlers:
-        discord_logger.removeHandler(handler)
-
-    shutil.rmtree(get_arg_config_path())
+    shutil.rmtree(get_arg_config_path(), ignore_errors=True)
 
 
 @pytest.fixture

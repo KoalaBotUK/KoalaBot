@@ -9,10 +9,11 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
+from contextlib import contextmanager
 
 # Libs
 from pathlib import Path
-from sqlalchemy import select, update, insert, delete, and_
+from sqlalchemy import select, update, insert, delete, and_, func
 
 
 # Own modules
@@ -63,9 +64,9 @@ def insert_extension(extension_id: str, subscription_required: int, available: b
         (false if down for maintenance)
     """
 
-    sql_check_extension_exists = select(KoalaExtensions).where(KoalaExtensions.extension_id == extension_id)
+    sql_check_extension_exists = select(func.count(KoalaExtensions.extension_id)).where(KoalaExtensions.extension_id == extension_id)
 
-    if len(session.execute(sql_check_extension_exists).all()) > 0:
+    if session.execute(sql_check_extension_exists).scalars().one() > 0:
         sql_update_extension = update(KoalaExtensions)\
             .where(KoalaExtensions.extension_id == extension_id)\
             .values(
@@ -110,7 +111,7 @@ def give_guild_extension(guild_id, extension_id: str):
     sql_check_extension_exists = select(KoalaExtensions).where(and_(KoalaExtensions.extension_id == extension_id, KoalaExtensions.available == 1))
     result = session.execute(sql_check_extension_exists).all()
     if len(result) > 0 or extension_id == "All":
-        sql_insert_guild_extension = insert(GuildExtensions).values(extension_id=extension_id, guild_id=guild_id)
+        sql_insert_guild_extension = insert(GuildExtensions).values(extension_id=extension_id, guild_id=guild_id).prefix_with("OR IGNORE")
         session.execute(sql_insert_guild_extension)
         session.commit()
     else:
@@ -155,7 +156,7 @@ def get_all_available_guild_extensions(guild_id: int):
 
     :param guild_id: Discord guild ID for a given server
     """
-    sql_select_all = select.distinct(KoalaExtensions.extension_id).where(KoalaExtensions.available == 1)
+    sql_select_all = select(KoalaExtensions.extension_id).where(KoalaExtensions.available == 1).distinct()
     return [extension.extension_id for extension in session.execute(sql_select_all).all()]
 
 
@@ -228,3 +229,18 @@ def new_guild_welcome_message(guild_id):
     session.execute(insert(GuildWelcomeMessages).values(guild_id=guild_id, welcome_message=DEFAULT_WELCOME_MESSAGE))
     session.commit()
     return fetch_guild_welcome_message(guild_id)
+
+@contextmanager
+def session_manager():
+    """
+    Provide a transactional scope around a series of operations
+    """
+    from koala.utils.KoalaUtils import Session
+    session = Session()
+    try:
+        yield session
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()

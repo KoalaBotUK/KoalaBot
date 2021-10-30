@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, orm
 from koala.utils.KoalaUtils import Base
 
 
@@ -15,6 +15,7 @@ class UserInTwitchAlert(Base):
     twitch_username = Column(String, primary_key=True)
     custom_message = Column(String, nullable=True)
     message_id = Column(Integer, nullable=True)
+    twitch_alert = orm.relationship("TwitchAlerts")
 
 
 class TeamInTwitchAlert(Base):
@@ -23,6 +24,7 @@ class TeamInTwitchAlert(Base):
     channel_id = Column(Integer, ForeignKey("TwitchAlerts.channel_id"))
     twitch_team_name = Column(String)
     custom_message = Column(String, nullable=True)
+    twitch_alert = orm.relationship("TwitchAlerts")
 
 
 class UserInTwitchTeam(Base):
@@ -30,3 +32,4 @@ class UserInTwitchTeam(Base):
     team_twitch_alert_id = Column(Integer, ForeignKey("TeamInTwitchAlert.team_twitch_alert_id"), primary_key=True)
     twitch_username = Column(String, primary_key=True)
     message_id = Column(Integer, nullable=True)
+    team = orm.relationship("TeamInTwitchAlert")

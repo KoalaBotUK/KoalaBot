@@ -1,6 +1,5 @@
 import mock
 import os
-import pathlib
 from koala.utils.KoalaUtils import __parse_args, get_arg_config_path, format_config_path
 
 

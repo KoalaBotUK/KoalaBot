@@ -151,7 +151,7 @@ class KoalaDBManager:
         .. deprecated:: 0.4.5
            This method is now found in base_db
         """
-        db.extension_enabled(guild_id, extension_id)
+        return db.extension_enabled(guild_id, extension_id)
 
     def give_guild_extension(self, guild_id, extension_id: str):
         """
