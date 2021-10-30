@@ -4,11 +4,13 @@ from koala.utils.KoalaUtils import __parse_args, get_arg_config_path, format_con
 
 
 @mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", None)
+@mock.patch("pathlib.Path.mkdir", mock.MagicMock(return_value=False))
 def test_get_arg_config_path_default():
     assert get_arg_config_path() == os.getcwd()+"\\config" or get_arg_config_path() == os.getcwd()+"/config"
 
 
 @mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "/config2")
+@mock.patch("pathlib.Path.mkdir", mock.MagicMock(return_value=False))
 def test_get_arg_config_path_custom():
     assert get_arg_config_path() == os.getcwd()+"\\config2" or get_arg_config_path() == os.getcwd()+"/config2"
 
