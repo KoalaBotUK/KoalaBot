@@ -3,24 +3,14 @@ import os
 from koala.utils.KoalaUtils import __parse_args, get_arg_config_path, format_config_path
 
 
-@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "/config/")
-def test_get_config_from_argv_windows_relative():
+@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", None)
+def test_get_arg_config_path_default():
     assert get_arg_config_path() == os.getcwd()+"\\config"
 
 
-@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "/config")
-def test_get_config_from_argv_windows_relative_partial():
-    assert get_arg_config_path() == os.getcwd()+"\\config"
-
-
-@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "\\config\\")
-def test_get_config_from_argv_windows_relative_backslash():
-    assert get_arg_config_path() == os.getcwd()+"\\config"
-
-
-@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "/test/config/")
-def test_get_config_from_argv_windows_absolute():
-    assert get_arg_config_path() == os.getcwd()+"\\test\\config"
+@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "/config2")
+def test_get_arg_config_path_custom():
+    assert get_arg_config_path() == os.getcwd()+"\\config2"
 
 
 def test_parse_args_config():
