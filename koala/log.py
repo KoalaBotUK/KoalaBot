@@ -4,15 +4,14 @@ import logging
 from datetime import date
 
 from pathlib import Path
-from dotenv import load_dotenv
 
-from koala.utils.KoalaUtils import format_config_path, CONFIG_DIR
+from koala.utils.KoalaUtils import format_config_path
+from koala.env import CONFIG_PATH, LOGGING_FILE
 
 # load_dotenv()
 _LOG_LEVEL = logging.INFO
 _FORMATTER = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
-_LOG_DIR = format_config_path(CONFIG_DIR, "logs", str(date.today()))
-_LOGGING_FILE = eval(os.getenv("LOGGING_FILE", "True"))
+_LOG_DIR = format_config_path(CONFIG_PATH, "logs", str(date.today()))
 
 Path(_LOG_DIR).mkdir(exist_ok=True, parents=True)
 
@@ -46,7 +45,7 @@ def _get_stdout_stream_handler(log_level):
 def get_logger(log_name, log_level=_LOG_LEVEL, file_name=None, file_handler=True, stdout_handler=True):
     new_logger = logging.getLogger(log_name)
 
-    if file_handler and _LOGGING_FILE:
+    if file_handler and LOGGING_FILE:
         new_logger.addHandler(_get_file_handler(file_name if file_name else log_name, log_level))
         new_logger.addHandler(_get_default_warn_log())
 

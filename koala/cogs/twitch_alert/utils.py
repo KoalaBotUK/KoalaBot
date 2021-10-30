@@ -1,22 +1,17 @@
 # Futures
 
 # Built-in/Generic Imports
-import os
 
-# Own modules
 # Libs
 import discord
-from dotenv import load_dotenv
+
+# Own modules
 from koala.utils.KoalaColours import KOALA_GREEN
 
 # Constants
-load_dotenv()
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \
               "/128/social-twitch-circle-512.png"
-TWITCH_KEY = os.environ.get('TWITCH_TOKEN')
-TWITCH_SECRET = os.environ.get('TWITCH_SECRET')
-
 TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
 
 LOOP_CHECK_LIVE_DELAY = 1

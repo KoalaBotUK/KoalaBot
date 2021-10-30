@@ -23,7 +23,7 @@ from koala.cogs.twitch_alert.cog import TwitchAlert
 from koala.cogs.twitch_alert.db import TwitchAlertDBManager
 from koala.cogs.twitch_alert import utils
 from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from koala.db import session, setup
+from koala.db import session_manager, setup
 from koala.utils import KoalaDBManager
 
 # Constants
@@ -49,14 +49,15 @@ def twitch_alert_db_manager(twitch_cog: TwitchAlert):
 
 @pytest.fixture(autouse=True)
 def twitch_alert_db_manager_tables(twitch_alert_db_manager):
-    session.execute(delete(TwitchAlerts))
-    session.execute(delete(TeamInTwitchAlert))
-    session.execute(delete(UserInTwitchAlert))
-    session.execute(delete(UserInTwitchTeam))
-    session.commit()
+    with session_manager() as session:
+        session.execute(delete(TwitchAlerts))
+        session.execute(delete(TeamInTwitchAlert))
+        session.execute(delete(UserInTwitchAlert))
+        session.execute(delete(UserInTwitchTeam))
+        session.commit()
 
-    setup()
-    return twitch_alert_db_manager
+        setup()
+        return twitch_alert_db_manager
 
 
 def test_get_parent_database_manager(twitch_alert_db_manager):
@@ -69,7 +70,8 @@ def test_create_tables():
     sql_check_table_exists = "SELECT name FROM sqlite_master " \
                              "WHERE type='table' AND " \
                              "name IN ('TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam');"
-    tables_found = session.execute(sql_check_table_exists).all()
+    with session_manager() as session:
+        tables_found = session.execute(sql_check_table_exists).all()
     for table in tables_found:
         assert table.name in tables
 
@@ -79,8 +81,8 @@ def test_new_ta(twitch_alert_db_manager_tables):
 
     sql_check_db_updated = select(TwitchAlerts.guild_id, TwitchAlerts.default_message)\
         .where(TwitchAlerts.channel_id == 2345)
-
-    result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
+    with session_manager() as session:
+        result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
     assert result.guild_id == 1234
     assert result.default_message == utils.DEFAULT_MESSAGE
 
@@ -92,8 +94,8 @@ def test_new_ta_message(twitch_alert_db_manager_tables):
 
     sql_check_db_updated = select(TwitchAlerts.guild_id, TwitchAlerts.default_message)\
         .where(TwitchAlerts.channel_id == 23456)
-
-    result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
+    with session_manager() as session:
+        result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
     assert result.guild_id == 1234
     assert result.default_message == test_message
 
@@ -106,8 +108,8 @@ def test_new_ta_replace(twitch_alert_db_manager_tables):
 
     sql_check_db_updated = select(TwitchAlerts.guild_id, TwitchAlerts.default_message)\
         .where(TwitchAlerts.channel_id == 23456)
-
-    result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
+    with session_manager() as session:
+        result: TwitchAlerts = session.execute(sql_check_db_updated).fetchone()
     assert result.guild_id == 1234
     assert result.default_message == test_message
 
@@ -118,8 +120,8 @@ def test_add_user_to_ta_default_message(twitch_alert_db_manager_tables):
 
     sql_find_twitch_alert = select(UserInTwitchAlert.twitch_username, UserInTwitchAlert.custom_message)\
         .where(and_(UserInTwitchAlert.channel_id == 1234567891, UserInTwitchAlert.twitch_username == 'monstercat'))
-
-    result: TwitchAlerts = session.execute(sql_find_twitch_alert).fetchone()
+    with session_manager() as session:
+        result: TwitchAlerts = session.execute(sql_find_twitch_alert).fetchone()
     assert result.twitch_username == 'monstercat'
     assert result.custom_message is None
 
@@ -130,8 +132,8 @@ def test_add_user_to_ta_custom_message(twitch_alert_db_manager_tables):
 
     sql_find_twitch_alert = select(UserInTwitchAlert.twitch_username, UserInTwitchAlert.custom_message)\
         .where(and_(UserInTwitchAlert.channel_id == 1234567892, UserInTwitchAlert.twitch_username == 'monstercat'))
-
-    result: TwitchAlerts = session.execute(sql_find_twitch_alert).fetchone()
+    with session_manager() as session:
+        result: TwitchAlerts = session.execute(sql_find_twitch_alert).fetchone()
     assert result.twitch_username == 'monstercat'
     assert result.custom_message == "FiddleSticks {user} is live!"
 
@@ -143,8 +145,8 @@ async def test_remove_user_from_ta(twitch_alert_db_manager_tables):
 
     sql_find_twitch_alert = select(UserInTwitchAlert.twitch_username, UserInTwitchAlert.custom_message)\
         .where(and_(UserInTwitchAlert.channel_id == 1234567891, UserInTwitchAlert.twitch_username == 'monstercat'))
-
-    assert session.execute(sql_find_twitch_alert).one_or_none() is None
+    with session_manager() as session:
+        assert session.execute(sql_find_twitch_alert).one_or_none() is None
 
 
 @pytest.mark.asyncio()
@@ -159,8 +161,8 @@ def test_add_team_to_ta(twitch_alert_db_manager_tables):
 
     sql_select_team = select(TeamInTwitchAlert.custom_message)\
         .where(and_(TeamInTwitchAlert.channel_id == 566, TeamInTwitchAlert.twitch_team_name == 'faze'))
-
-    result: TeamInTwitchAlert = session.execute(sql_select_team).fetchone()
+    with session_manager() as session:
+        result: TeamInTwitchAlert = session.execute(sql_select_team).fetchone()
 
     assert result.custom_message is None
 
@@ -171,8 +173,8 @@ def test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_i
 
     sql_select_team = select(TeamInTwitchAlert.custom_message)\
         .where(and_(TeamInTwitchAlert.channel_id == channel_id, TeamInTwitchAlert.twitch_team_name == 'faze'))
-
-    result: TeamInTwitchAlert = session.execute(sql_select_team).fetchone()
+    with session_manager() as session:
+        result: TeamInTwitchAlert = session.execute(sql_select_team).fetchone()
 
     assert result.custom_message == "Message here"
 
@@ -184,8 +186,8 @@ async def test_remove_team_from_ta(twitch_alert_db_manager_tables):
 
     sql_select_team = select(TeamInTwitchAlert.custom_message)\
         .where(and_(TeamInTwitchAlert.channel_id == 590, TeamInTwitchAlert.twitch_team_name == 'faze'))
-
-    assert session.execute(sql_select_team).one_or_none() is None
+    with session_manager() as session:
+        assert session.execute(sql_select_team).one_or_none() is None
 
 
 @pytest.mark.asyncio()
@@ -202,9 +204,9 @@ async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tabl
     test = update(UserInTwitchTeam)\
         .where(and_(UserInTwitchTeam.team_twitch_alert_id == 604,
                     UserInTwitchTeam.twitch_username == 'monstercat')).values(message_id=1)
-
-    session.execute(test)
-    session.commit()
+    with session_manager() as session:
+        session.execute(test)
+        session.commit()
 
     with mock.patch.object(TwitchAlertDBManager, 'delete_message') as mock1:
         await twitch_alert_db_manager_tables.remove_team_from_ta(605, "monstercat")
@@ -215,38 +217,39 @@ async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tabl
 async def test_update_team_members(twitch_alert_db_manager_tables):
     sql_insert_monstercat_team = insert(TeamInTwitchAlert).values(
         team_twitch_alert_id=604, channel_id=605, twitch_team_name='monstercat')
+    with session_manager() as session:
+        session.execute(sql_insert_monstercat_team)
+        session.commit()
 
-    session.execute(sql_insert_monstercat_team)
-    session.commit()
+        twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
 
-    twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
+        sql_select_monstercat_team = select(UserInTwitchTeam).where(and_(UserInTwitchTeam.team_twitch_alert_id == 604,
+                                                                         UserInTwitchTeam.twitch_username == 'monstercat'))
 
-    sql_select_monstercat_team = select(UserInTwitchTeam).where(and_(UserInTwitchTeam.team_twitch_alert_id == 604,
-                                                                     UserInTwitchTeam.twitch_username == 'monstercat'))
-
-    result = session.execute(sql_select_monstercat_team)
-    assert result.one_or_none() is not None
+        result = session.execute(sql_select_monstercat_team)
+        assert result.one_or_none() is not None
 
 
 @pytest.mark.asyncio()
 async def test_update_all_teams_members(twitch_alert_db_manager_tables):
     sql_insert_monstercat_team = insert(TeamInTwitchAlert).values(
         team_twitch_alert_id=614, channel_id=615, twitch_team_name='monstercat')
-    session.execute(sql_insert_monstercat_team)
+    with session_manager() as session:
+        session.execute(sql_insert_monstercat_team)
 
-    sql_insert_monstercat_team = insert(TeamInTwitchAlert).values(
-        team_twitch_alert_id=616, channel_id=617, twitch_team_name='monstercat')
-    session.execute(sql_insert_monstercat_team)
-    session.commit()
+        sql_insert_monstercat_team = insert(TeamInTwitchAlert).values(
+            team_twitch_alert_id=616, channel_id=617, twitch_team_name='monstercat')
+        session.execute(sql_insert_monstercat_team)
+        session.commit()
 
-    twitch_alert_db_manager_tables.update_all_teams_members()
+        twitch_alert_db_manager_tables.update_all_teams_members()
 
-    sql_select_monstercats_team = select(UserInTwitchTeam.twitch_username).where(and_(
-            or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
-            UserInTwitchTeam.twitch_username == 'monstercat'))
+        sql_select_monstercats_team = select(UserInTwitchTeam.twitch_username).where(and_(
+                or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
+                UserInTwitchTeam.twitch_username == 'monstercat'))
 
-    result = session.execute(sql_select_monstercats_team).all()
-    assert len(result) == 2
+        result = session.execute(sql_select_monstercats_team).all()
+        assert len(result) == 2
 
 
 @pytest.mark.asyncio()
@@ -257,21 +260,22 @@ async def test_delete_all_offline_streams(twitch_alert_db_manager_tables, bot: d
         twitch_username='monstercat',
         custom_message=None,
         message_id=message_id)
-    session.execute(sql_add_message)
-    session.commit()
+    with session_manager() as session:
+        session.execute(sql_add_message)
+        session.commit()
 
-    await twitch_alert_db_manager_tables.delete_all_offline_streams(False, ['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_streams(False, ['monstercat'])
 
-    sql_select_messages = select(UserInTwitchAlert.message_id).where(and_(
-        UserInTwitchAlert.twitch_username == 'monstercat',
-        UserInTwitchAlert.channel_id == bot.guilds[0].channels[0].id))
-    result = session.execute(sql_select_messages).one_or_none()
+        sql_select_messages = select(UserInTwitchAlert.message_id).where(and_(
+            UserInTwitchAlert.twitch_username == 'monstercat',
+            UserInTwitchAlert.channel_id == bot.guilds[0].channels[0].id))
+        result = session.execute(sql_select_messages).one_or_none()
 
-    assert result is not None
-    assert result.message_id is None
-    with pytest.raises(discord.errors.NotFound,
-                       match="Unknown Message"):
-        await bot.guilds[0].channels[0].fetch_message(message_id)
+        assert result is not None
+        assert result.message_id is None
+        with pytest.raises(discord.errors.NotFound,
+                           match="Unknown Message"):
+            await bot.guilds[0].channels[0].fetch_message(message_id)
 
 
 @pytest.mark.asyncio()
@@ -281,17 +285,17 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
     sql_add_message = update(UserInTwitchTeam).where(and_(or_(
         UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
         UserInTwitchTeam.twitch_username == 'monstercat')).values(message_id=1)
+    with session_manager() as session:
+        session.execute(sql_add_message)
+        session.commit()
 
-    session.execute(sql_add_message)
-    session.commit()
+        await twitch_alert_db_manager_tables.delete_all_offline_streams(True, ['monstercat'])
 
-    await twitch_alert_db_manager_tables.delete_all_offline_streams(True, ['monstercat'])
+        sql_select_messages = select(UserInTwitchTeam.message_id, UserInTwitchTeam.twitch_username).where(
+            and_(or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
+                 UserInTwitchTeam.twitch_username == 'monstercat'))
+        result = session.execute(sql_select_messages).fetchall()
 
-    sql_select_messages = select(UserInTwitchTeam.message_id, UserInTwitchTeam.twitch_username).where(
-        and_(or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
-             UserInTwitchTeam.twitch_username == 'monstercat'))
-    result = session.execute(sql_select_messages).fetchall()
-
-    assert len(result) == 2
-    assert result[0].message_id is None
-    assert result[1].message_id is None
+        assert len(result) == 2
+        assert result[0].message_id is None
+        assert result[1].message_id is None

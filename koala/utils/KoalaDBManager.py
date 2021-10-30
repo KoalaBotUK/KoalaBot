@@ -11,9 +11,14 @@ Commented using reStructuredText (reST)
 import os
 
 # Libs
-from dotenv import load_dotenv
-load_dotenv()
-ENCRYPTED_DB = eval(os.environ.get('ENCRYPTED', "True"))
+
+# Own modules
+from koala import db
+from koala.env import ENCRYPTED_DB
+
+# Constants
+
+# Variables
 if ENCRYPTED_DB:
     print(f"ENCRYPTED_DB{ENCRYPTED_DB}")
 if os.name == 'nt' or not ENCRYPTED_DB:
@@ -22,14 +27,6 @@ if os.name == 'nt' or not ENCRYPTED_DB:
 else:
     print("Database Encryption Enabled")
     from pysqlcipher3 import dbapi2 as sqlite3
-
-# Own modules
-from koala import db
-
-
-# Constants
-
-# Variables
 
 
 class KoalaDBManager:

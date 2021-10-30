@@ -28,15 +28,16 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
-from koala.utils.KoalaUtils import error_embed, DATABASE_PATH, DB_KEY
+from koala.utils.KoalaUtils import error_embed
 from koala.utils.KoalaDBManager import KoalaDBManager as DBManager
 from koala.log import logger
+from koala.env import DB_KEY, BOT_TOKEN, BOT_OWNER
+from koala.db import DATABASE_PATH
 
 # Constants
 load_dotenv()
 
-BOT_TOKEN = os.environ['DISCORD_TOKEN']
-BOT_OWNER = os.environ.get('BOT_OWNER')
+
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/jaydwee"

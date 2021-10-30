@@ -17,7 +17,8 @@ from discord.ext import commands
 import KoalaBot
 from koala.cogs import Verification
 from koala.utils.KoalaDBManager import KoalaDBManager
-from koala.utils.KoalaUtils import format_config_path, CONFIG_DIR
+from koala.utils.KoalaUtils import format_config_path
+from koala.env import CONFIG_PATH
 
 # Constants
 TEST_EMAIL = 'verify_test@koalabot.uk'
@@ -25,7 +26,7 @@ TEST_EMAIL_DOMAIN = 'koalabot.uk'
 
 # Variables
 cog = None
-db_manager = KoalaDBManager(format_config_path(CONFIG_DIR, "verifyTest.db"), KoalaBot.DB_KEY)
+db_manager = KoalaDBManager(format_config_path(CONFIG_PATH, "verifyTest.db"), KoalaBot.DB_KEY)
 db_manager.create_base_tables()
 
 

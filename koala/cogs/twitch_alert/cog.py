@@ -9,14 +9,15 @@ from .log import logger
 import KoalaBot
 from KoalaBot import COMMAND_PREFIX as CP
 from koala.models import GuildExtensions
-from koala.db import session
+from koala.db import session_manager
 from koala.utils.KoalaColours import KOALA_GREEN
 from koala.utils.KoalaUtils import error_embed, is_channel_in_guild
 from .models import UserInTwitchAlert, TwitchAlerts, UserInTwitchTeam, TeamInTwitchAlert
 from .utils import create_live_embed
 from .db import TwitchAlertDBManager
-from .utils import TWITCH_KEY, TWITCH_SECRET, DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
+from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
+from .env import TWITCH_KEY, TWITCH_SECRET
 
 # Libs
 import discord
@@ -433,7 +434,8 @@ class TwitchAlert(commands.Cog):
         #              "JOIN TwitchAlerts TA on UserInTwitchAlert.channel_id = TA.channel_id " \
         #              "JOIN (SELECT extension_id, guild_id FROM GuildExtensions " \
         #              "WHERE extension_id = 'twitch_alert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
-        users = session.execute(sql_find_users).all()
+        with session_manager() as session:
+            users = session.execute(sql_find_users).all()
 
         usernames = [str.lower(user.twitch_username) for user in users]
 
@@ -556,8 +558,8 @@ class TwitchAlert(commands.Cog):
             .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
             .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
             .where(or_(GuildExtensions.extension_id == 'TwitchAlert', GuildExtensions.extension_id == 'All'))
-
-        users_and_teams = session.execute(sql_select_team_users).all()
+        with session_manager() as session:
+            users_and_teams = session.execute(sql_select_team_users).all()
         # sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
         #                         "FROM UserInTwitchTeam " \
         #                         "JOIN TeamInTwitchAlert TITA " \

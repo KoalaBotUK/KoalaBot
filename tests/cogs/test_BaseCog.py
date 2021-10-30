@@ -15,6 +15,7 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 from discord.ext import commands
+from sqlalchemy import select
 
 # Own modules
 import KoalaBot
@@ -43,6 +44,10 @@ async def base_cog(bot):
     await dpytest.empty_queue()
     dpytest.configure(bot)
     return base_cog
+
+def test_list_ext_embed():
+    expected_embed = discord.Embed()
+    expected_embed.add_field(name=":negative_squared_cross_mark: Disabled", value=select())
 
 
 @pytest.mark.asyncio

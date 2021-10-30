@@ -8,7 +8,6 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import os
 import argparse
 from pathlib import Path
 
@@ -17,12 +16,9 @@ from typing import Tuple, Optional
 from pathlib import PurePath
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
 
 # Own modules
+from koala.env import CONFIG_PATH
 from koala.utils.KoalaColours import ERROR_RED
 
 # Constants
@@ -30,14 +26,9 @@ ID_LENGTH = 18
 TIMEOUT_TIME = 60
 
 # Variables
-load_dotenv()
 
 # Koala Constants
-ENCRYPTED_DB = (not os.name == 'nt') and eval(os.environ.get('ENCRYPTED', "True"))
-DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
-CONFIG_PATH = os.getenv("CONFIG_PATH", "./config")
-Base = declarative_base()
-Session = sessionmaker(future=True)
+
 
 
 
@@ -141,21 +132,4 @@ def get_arg_config_path():
     return str(path.absolute())
 
 
-def _get_sql_url(db_path, encrypted: bool, db_key=None):
-    if encrypted:
-        return "sqlite+pysqlcipher://:x'" + db_key + "'@/" + db_path
-    else:
-        return "sqlite:///" + db_path
 
-
-CONFIG_DIR = get_arg_config_path()
-print("configDir: " + CONFIG_DIR)
-DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
-
-engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
-                                    encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
-
-Session.configure(bind=engine)
-
-session = Session()

@@ -2,12 +2,13 @@
 # Built-in/Generic Imports
 # Libs
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
+from sqlalchemy.ext.declarative import declarative_base
 
 # Own modules
-from koala.utils.KoalaUtils import Base
 
 # Constants
 # Variables
+Base = declarative_base()
 
 
 class KoalaExtensions(Base):

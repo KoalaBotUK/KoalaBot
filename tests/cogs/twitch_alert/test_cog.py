@@ -15,13 +15,12 @@ from sqlalchemy import select, and_
 
 # Own modules
 import KoalaBot
-from koala.db import session
+from koala.db import session_manager
 from koala.cogs import twitch_alert
 from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.utils.KoalaColours import KOALA_GREEN
 from tests.tests_utils.LastCtxCog import LastCtxCog
-from koala.utils.KoalaUtils import error_embed
 
 # Constants
 DB_PATH = "Koala.db"
@@ -147,7 +146,8 @@ async def test_add_user_to_twitch_alert_custom_message(twitch_cog: twitch_alert.
 
     sql_check_updated_server = select(UserInTwitchAlert.custom_message).where(
         and_(UserInTwitchAlert.twitch_username == 'monstercat', UserInTwitchAlert.channel_id == channel.id))
-    result = session.execute(sql_check_updated_server).one()
+    with session_manager() as session:
+        result = session.execute(sql_check_updated_server).one()
     assert result.custom_message == test_custom_message
 
 
@@ -169,19 +169,20 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog: twitch_ale
         member=member)
 
     sql_check_updated_server = select(UserInTwitchAlert.custom_message).where(and_(UserInTwitchAlert.twitch_username == 'monstercat', UserInTwitchAlert.channel_id == channel.id))
-    result_before = session.execute(sql_check_updated_server).one()
+    with session_manager() as session:
+        result_before = session.execute(sql_check_updated_server).one()
 
-    assert result_before.custom_message == test_custom_message
-    await dpytest.empty_queue()
-    # Removes Twitch Alert
-    await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch remove monstercat {channel.id}", channel=-1,
-                          member=member)
-    new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
-                              description=f"Channel: {channel.id}\n"
-                                          f"User: monstercat")
-    assert dpytest.verify().message().embed(new_embed)
-    result_after = session.execute(sql_check_updated_server).one_or_none()
-    assert result_after is None
+        assert result_before.custom_message == test_custom_message
+        await dpytest.empty_queue()
+        # Removes Twitch Alert
+        await dpytest.message(f"{KoalaBot.COMMAND_PREFIX}twitch remove monstercat {channel.id}", channel=-1,
+                              member=member)
+        new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
+                                  description=f"Channel: {channel.id}\n"
+                                              f"User: monstercat")
+        assert dpytest.verify().message().embed(new_embed)
+        result_after = session.execute(sql_check_updated_server).one_or_none()
+        assert result_after is None
 
 
 @pytest.mark.asyncio(order=3)

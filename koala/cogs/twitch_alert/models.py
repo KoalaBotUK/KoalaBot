@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, orm
-from koala.utils.KoalaUtils import Base
+from koala.models import Base
 
 
 class TwitchAlerts(Base):

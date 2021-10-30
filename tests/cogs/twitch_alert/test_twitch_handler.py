@@ -1,5 +1,5 @@
 from koala.cogs.twitch_alert.twitch_handler import TwitchAPIHandler
-from koala.cogs.twitch_alert.utils import TWITCH_KEY, TWITCH_SECRET
+from koala.cogs.twitch_alert.env import TWITCH_KEY, TWITCH_SECRET
 import pytest
 
 @pytest.fixture
