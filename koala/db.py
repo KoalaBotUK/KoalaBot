@@ -18,7 +18,7 @@ from sqlalchemy.orm import sessionmaker
 
 
 # Own modules
-from koala.models import Base, KoalaExtensions, GuildExtensions, GuildWelcomeMessages
+from koala.models import mapper_registry, KoalaExtensions, GuildExtensions, GuildWelcomeMessages
 from koala.env import DB_KEY, ENCRYPTED_DB
 from koala.utils.KoalaUtils import get_arg_config_path, format_config_path
 
@@ -58,7 +58,7 @@ def __create_tables():
     """
     Creates all tables currently in the metadata of Base
     """
-    Base.metadata.create_all(engine, Base.metadata.tables.values(), checkfirst=True)
+    mapper_registry.metadata.create_all(engine, mapper_registry.metadata.tables.values(), checkfirst=True)
 
 
 def insert_extension(extension_id: str, subscription_required: int, available: bool, enabled: bool):
@@ -236,11 +236,12 @@ def remove_guild_welcome_message(guild_id):
     :param guild_id: Discord guild ID for a given server
     """
     with session_manager() as session:
-        rows = session.execute(select(func.count(GuildWelcomeMessages))
-                               .where(GuildWelcomeMessages.guild_id == guild_id)).scalars().one()
-        session.execute(delete(GuildWelcomeMessages).where(GuildWelcomeMessages.guild_id == guild_id))
-        session.commit()
-    return rows
+        welcome_message = session.execute(select(GuildWelcomeMessages).filter_by(guild_id=guild_id)).scalars().one_or_none()
+        if welcome_message:
+            session.delete(welcome_message)
+            session.commit()
+            return 1
+        return 0
 
 
 def new_guild_welcome_message(guild_id):

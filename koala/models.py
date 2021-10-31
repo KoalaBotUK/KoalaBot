@@ -2,33 +2,47 @@
 # Built-in/Generic Imports
 # Libs
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import registry
 
 # Own modules
 
 # Constants
 # Variables
-Base = declarative_base()
+
+mapper_registry = registry()
 
 
-class KoalaExtensions(Base):
+@mapper_registry.mapped
+class KoalaExtensions:
     __tablename__ = 'KoalaExtensions'
     extension_id = Column(String, primary_key=True)
     subscription_required = Column(Integer)
     available = Column(Boolean)
     enabled = Column(Boolean)
 
+    def __repr__(self):
+        return "KoalaExtensions(%s, %s, %s, %s)>" % \
+               (self.extension_id, self.subscription_required, self.available, self.enabled)
 
-class GuildExtensions(Base):
+
+@mapper_registry.mapped
+class GuildExtensions:
     __tablename__ = 'GuildExtensions'
     extension_id = Column(String, ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
     guild_id = Column(Integer, primary_key=True)
 
+    def __repr__(self):
+        return "GuildExtensions(%s, %s)>" % \
+               (self.extension_id, self.guild_id)
 
-class GuildWelcomeMessages(Base):
+
+@mapper_registry.mapped
+class GuildWelcomeMessages:
     __tablename__ = 'GuildWelcomeMessages'
     guild_id = Column(Integer, primary_key=True)
     welcome_message = Column(String, nullable=True)
 
-
+    def __repr__(self):
+        return "GuildWelcomeMessages(%s, %s)>" % \
+               (self.guild_id, self.welcome_message)
 

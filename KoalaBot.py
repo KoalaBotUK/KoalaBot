@@ -106,11 +106,17 @@ def load_all_cogs():
 
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py') and filename not in UNRELEASED and filename != "__init__.py":
-            client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
+            try:
+                client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
+            except commands.errors.ExtensionAlreadyLoaded:
+                client.reload_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
     # New Approach
     for cog in ENABLED_COGS:
-        client.load_extension(cog)
+        try:
+            client.load_extension(cog)
+        except commands.errors.ExtensionAlreadyLoaded:
+            client.reload_extension(cog)
 
     logger.info("All cogs loaded")
 

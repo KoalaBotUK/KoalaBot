@@ -84,7 +84,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
 
     def new_ta(self, guild_id, channel_id, default_message=None, replace=False):
         """
-        Creates a new Twitch Alert and gives the ID associated with it
+        Creates a new Twitch Alert and gives the default message associated with it
         :param guild_id: The discord guild ID where the Twitch Alert is located
         :param channel_id: The discord channel ID of the twitch Alert
         :param default_message: The default message of users in the Twitch Alert
@@ -102,14 +102,10 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
                 return message.default_message
 
             # Insert new Twitch Alert to database
-            if replace:
-                sql_insert_twitch_alert = update(TwitchAlerts).where(
-                    and_(TwitchAlerts.channel_id == channel_id, TwitchAlerts.guild_id == guild_id)).values(
-                    default_message=default_message)
+            if message:
+                message.default_message = default_message
             else:
-                sql_insert_twitch_alert = insert(TwitchAlerts).values(guild_id=guild_id, channel_id=channel_id,
-                                                                      default_message=default_message)
-            session.execute(sql_insert_twitch_alert)
+                session.add(TwitchAlerts(guild_id=guild_id, channel_id=channel_id, default_message=default_message))
             session.commit()
             return default_message
 
