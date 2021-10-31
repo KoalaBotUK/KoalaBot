@@ -33,6 +33,7 @@ def _get_sql_url(db_path, encrypted: bool, db_key=None):
     else:
         return "sqlite:///" + db_path
 
+
 def setup():
     """
     Creates the database and tables
@@ -120,10 +121,10 @@ def give_guild_extension(guild_id, extension_id: str):
     :raises NotImplementedError: extension_id doesnt exist
     """
     with session_manager() as session:
-        sql_check_extension_exists = select(KoalaExtensions)\
+        sql_check_extension_exists = select(func.count(KoalaExtensions.extension_id))\
             .where(and_(KoalaExtensions.extension_id == extension_id, KoalaExtensions.available == 1))
-        result = session.execute(sql_check_extension_exists).all()
-        if len(result) > 0 or extension_id == "All":
+        result = session.execute(sql_check_extension_exists).scalars().one()
+        if result > 0 or extension_id == "All":
             sql_insert_guild_extension = insert(GuildExtensions)\
                 .values(extension_id=extension_id, guild_id=guild_id).prefix_with("OR IGNORE")
             session.execute(sql_insert_guild_extension)
@@ -235,10 +236,11 @@ def remove_guild_welcome_message(guild_id):
     :param guild_id: Discord guild ID for a given server
     """
     with session_manager() as session:
-        rows = session.execute(select(GuildWelcomeMessages).where(GuildWelcomeMessages.guild_id == guild_id)).all()
+        rows = session.execute(select(func.count(GuildWelcomeMessages))
+                               .where(GuildWelcomeMessages.guild_id == guild_id)).scalars().one()
         session.execute(delete(GuildWelcomeMessages).where(GuildWelcomeMessages.guild_id == guild_id))
         session.commit()
-    return len(rows)
+    return rows
 
 
 def new_guild_welcome_message(guild_id):

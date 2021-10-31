@@ -13,6 +13,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import insert_extension
 
 
 # Constants
@@ -32,6 +33,7 @@ class Greetings(commands.Cog):
         """
         self.bot = bot
         self._last_member = None
+        insert_extension("Greetings", 0, True, True)
 
     @commands.command()
     async def hello(self, ctx, *, member: discord.Member = None):

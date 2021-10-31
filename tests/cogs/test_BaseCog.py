@@ -15,12 +15,15 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 from discord.ext import commands
-from sqlalchemy import select
+from sqlalchemy import delete
 
 # Own modules
 import KoalaBot
 from koala.cogs import BaseCog
+from koala.db import session_manager
+from koala.models import KoalaExtensions, GuildExtensions
 from tests.tests_utils.TestUtils import assert_activity
+from koala.utils import KoalaColours
 
 
 # Constants
@@ -39,15 +42,58 @@ def setup_is_dpytest():
 @pytest.fixture(scope='function', autouse=True)
 async def base_cog(bot):
     """ setup any state specific to the execution of the given module."""
+    with session_manager() as session:
+        session.execute(delete(KoalaExtensions))
+        session.execute(delete(GuildExtensions))
+        session.commit()
+
     base_cog = BaseCog.BaseCog(bot)
     bot.add_cog(base_cog)
     await dpytest.empty_queue()
     dpytest.configure(bot)
     return base_cog
 
-def test_list_ext_embed():
+
+@mock.patch("KoalaBot.COGS_DIR", "tests/tests_utils/fake_load_all_cogs")
+@mock.patch("KoalaBot.ENABLED_COGS", [])
+@pytest.mark.asyncio
+async def test_list_koala_ext_disabled(base_cog):
+    KoalaBot.load_all_cogs()
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "listExt")
     expected_embed = discord.Embed()
-    expected_embed.add_field(name=":negative_squared_cross_mark: Disabled", value=select())
+    expected_embed.title = "Enabled extensions"
+    expected_embed.colour = KoalaColours.KOALA_GREEN
+    expected_embed.add_field(name=":negative_squared_cross_mark: Disabled", value="Greetings\n")
+    expected_embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
+    assert dpytest.verify().message().embed(embed=expected_embed)
+
+
+@mock.patch("KoalaBot.COGS_DIR", "tests/tests_utils/fake_load_all_cogs")
+@mock.patch("KoalaBot.ENABLED_COGS", [])
+@pytest.mark.asyncio
+async def test_enable_koala_ext(base_cog):
+    KoalaBot.load_all_cogs()
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "enableExt Greetings")
+    expected_embed = discord.Embed()
+    expected_embed.title = "Greetings enabled"
+    expected_embed.colour = KoalaColours.KOALA_GREEN
+    expected_embed.add_field(name=":white_check_mark: Enabled", value="Greetings\n")
+    expected_embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
+    assert dpytest.verify().message().embed(embed=expected_embed)
+
+
+@mock.patch("KoalaBot.COGS_DIR", "tests/tests_utils/fake_load_all_cogs")
+@mock.patch("KoalaBot.ENABLED_COGS", [])
+@pytest.mark.asyncio
+async def test_disable_koala_ext(base_cog):
+    await test_enable_koala_ext(base_cog)
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "disableExt Greetings")
+    expected_embed = discord.Embed()
+    expected_embed.title = "Greetings disabled"
+    expected_embed.colour = KoalaColours.KOALA_GREEN
+    expected_embed.add_field(name=":negative_squared_cross_mark: Disabled", value="Greetings\n")
+    expected_embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
+    assert dpytest.verify().message().embed(embed=expected_embed)
 
 
 @pytest.mark.asyncio

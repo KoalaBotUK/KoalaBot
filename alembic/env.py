@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from koala.utils.KoalaUtils import _get_sql_url, DATABASE_PATH, ENCRYPTED_DB, DB_KEY
+from koala.db import _get_sql_url, DATABASE_PATH, ENCRYPTED_DB, DB_KEY
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -15,8 +15,8 @@ config = context.config
 fileConfig(config.config_file_name)
 
 config.set_main_option('sqlalchemy.url', _get_sql_url(db_path=DATABASE_PATH,
-                                    encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY))
+                                                      encrypted=ENCRYPTED_DB,
+                                                      db_key=DB_KEY))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
