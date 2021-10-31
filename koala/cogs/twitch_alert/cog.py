@@ -515,7 +515,7 @@ class TwitchAlert(commands.Cog):
                 logger.error(f"TwitchAlert: User Loop error {err}")
 
         # Deals with remaining offline streams
-        await self.ta_database_manager.delete_all_offline_streams(False, usernames)
+        await self.ta_database_manager.delete_all_offline_streams(usernames)
         time_diff = time.time() - start
         if time_diff > 5:
             logger.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")
@@ -653,7 +653,7 @@ class TwitchAlert(commands.Cog):
                 logger.error(f"TwitchAlert: Team Loop error {err}")
 
         # Deals with remaining offline streams
-        await self.ta_database_manager.delete_all_offline_streams(True, usernames)
+        await self.ta_database_manager.delete_all_offline_team_streams(usernames)
         time_diff = time.time() - start
         if time_diff > 5:
             logger.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")

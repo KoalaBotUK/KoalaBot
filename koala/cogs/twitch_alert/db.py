@@ -3,6 +3,7 @@
 # Built-in/Generic Imports
 import re
 from sqlalchemy import select, update, insert, delete, and_, null
+from sqlalchemy.orm import selectinload
 
 # Own modules
 from koala.utils import KoalaDBManager
@@ -34,7 +35,7 @@ def delete_invalid_accounts():
         teams = session.execute(select(TeamInTwitchAlert.twitch_team_name))
         users_in_teams = session.execute(select(UserInTwitchTeam.twitch_username))
 
-        invalid_usernames = [user.twitch_username for user in usernames
+        invalid_usernames = [user for user in usernames
                              if not re.search(TWITCH_USERNAME_REGEX, user.twitch_username)]
         invalid_teams = [team.twitch_team_name for team in teams
                          if not re.search(TWITCH_USERNAME_REGEX, team.twitch_team_name)]
@@ -115,9 +116,11 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :param channel_id: The discord channel ID of the twitch Alert
         :return: The current default_message
         """
-        sql_find_ta = select(TwitchAlerts.default_message).where(TwitchAlerts.channel_id == channel_id)
         with session_manager() as session:
-            result = session.execute(sql_find_ta).one_or_none()
+            result = session.execute(
+                select(TwitchAlerts.default_message)
+                .filter_by(channel_id=channel_id)
+            ).one_or_none()
         if result:
             return result.default_message
         else:
@@ -135,16 +138,13 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :raises: KeyError if channel ID is not defined in TwitchAlerts and guild_id is not provided
         """
         self.new_ta(guild_id, channel_id)
-
-        if custom_message:
-            sql_insert_user_twitch_alert = insert(UserInTwitchAlert).values(channel_id=channel_id,
-                                                                            twitch_username=str.lower(twitch_username),
-                                                                            custom_message=custom_message)
-        else:
-            sql_insert_user_twitch_alert = insert(UserInTwitchAlert).values(channel_id=channel_id,
-                                                                            twitch_username=str.lower(twitch_username))
         with session_manager() as session:
-            session.execute(sql_insert_user_twitch_alert)
+            new_user = UserInTwitchAlert(channel_id=channel_id, twitch_username=str.lower(twitch_username))
+
+            if custom_message:
+                new_user.custom_message = custom_message
+
+            session.add(new_user)
             session.commit()
 
     async def remove_user_from_ta(self, channel_id, twitch_username):
@@ -154,16 +154,14 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :param twitch_username: The Twitch username of the user to be added
         :return:
         """
-        sql_get_message_id = select(UserInTwitchAlert.message_id).where(
-            and_(UserInTwitchAlert.twitch_username == twitch_username, UserInTwitchAlert.channel_id == channel_id))
         with session_manager() as session:
-            message = session.execute(sql_get_message_id).one_or_none()
+            message = session.execute(select(UserInTwitchAlert)
+                                      .filter_by(twitch_username=twitch_username, channel_id=channel_id)
+                                      ).scalars().one_or_none()
             if message is not None:
                 await self.delete_message(message.message_id, channel_id)
-            sql_remove_entry = delete(UserInTwitchAlert).where(and_(UserInTwitchAlert.twitch_username == twitch_username,
-                                                                UserInTwitchAlert.channel_id == channel_id))
-            session.execute(sql_remove_entry)
-            session.commit()
+                session.delete(message)
+                session.commit()
 
     async def delete_message(self, message_id, channel_id):
         """
@@ -197,7 +195,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :param channel_id: The channel ID of the Twitch Alert
         :return: The sql results of the users
         """
-        sql_get_users = select(UserInTwitchAlert.twitch_username).where(UserInTwitchAlert.channel_id == channel_id)
+        sql_get_users = select(UserInTwitchAlert.twitch_username).filter_by(channel_id=channel_id)
         with session_manager() as session:
             return session.execute(sql_get_users).all()
 
@@ -207,7 +205,7 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :param channel_id: The channel ID of the Twitch Alert
         :return: The sql results of the teams
         """
-        sql_get_teams = select(TeamInTwitchAlert.twitch_team_name).where(TeamInTwitchAlert.channel_id == channel_id)
+        sql_get_teams = select(TeamInTwitchAlert.twitch_team_name).filter_by(channel_id=channel_id)
         with session_manager() as session:
             return session.execute(sql_get_teams).all()
 
@@ -223,16 +221,13 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :raises: KeyError if channel ID is not defined in TwitchAlerts and guild_id is not provided
         """
         self.new_ta(guild_id, channel_id)
-
-        if custom_message:
-            sql_insert_team_twitch_alert = insert(TeamInTwitchAlert).values(channel_id=channel_id,
-                                                                            twitch_team_name=str.lower(twitch_team),
-                                                                            custom_message=custom_message)
-        else:
-            sql_insert_team_twitch_alert = insert(TeamInTwitchAlert).values(channel_id=channel_id,
-                                                                            twitch_team_name=str.lower(twitch_team))
         with session_manager() as session:
-            session.execute(sql_insert_team_twitch_alert)
+            new_team = TeamInTwitchAlert(channel_id=channel_id, twitch_team_name=str.lower(twitch_team))
+
+            if custom_message:
+                new_team.custom_message = custom_message
+
+            session.add(new_team)
             session.commit()
 
     async def remove_team_from_ta(self, channel_id, team_name):
@@ -243,25 +238,21 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :return:
         """
         with session_manager() as session:
-            sql_get_team_alert_id = select(TeamInTwitchAlert.team_twitch_alert_id).where(
-                and_(TeamInTwitchAlert.twitch_team_name == team_name,
-                     TeamInTwitchAlert.channel_id == channel_id))
-            result = session.execute(sql_get_team_alert_id).fetchone()
-            if not result:
+            team = session.execute(select(TeamInTwitchAlert)
+                                   .filter_by(twitch_team_name=team_name, channel_id=channel_id)
+                                   ).scalars().one_or_none()
+            if not team:
                 raise AttributeError("Team name not found")
-            team_alert_id = result.team_twitch_alert_id
-            sql_get_message_id = select(UserInTwitchTeam.message_id).where(
-                UserInTwitchTeam.team_twitch_alert_id == team_alert_id)
 
-            messages = session.execute(sql_get_message_id).all()
-            if messages is not None:
-                for message in messages:
-                    if message.message_id is not None:
-                        await self.delete_message(message.message_id, channel_id)
-            sql_remove_users = delete(UserInTwitchTeam).where(UserInTwitchTeam.team_twitch_alert_id == team_alert_id)
-            sql_remove_team = delete(TeamInTwitchAlert).where(TeamInTwitchAlert.team_twitch_alert_id == team_alert_id)
-            session.execute(sql_remove_users)
-            session.execute(sql_remove_team)
+            users = session.execute(select(UserInTwitchTeam)
+                                    .filter_by(team_twitch_alert_id=team.team_twitch_alert_id)).scalars().all()
+            if users is not None:
+                for user in users:
+                    if user.message_id is not None:
+                        await self.delete_message(user.message_id, channel_id)
+                    session.delete(user)
+
+            session.delete(team)
             session.commit()
 
     def update_team_members(self, twitch_team_id, team_name):
@@ -273,70 +264,76 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         """
         if re.search(TWITCH_USERNAME_REGEX, team_name):
             users = self.twitch_handler.get_team_users(team_name)
-            for user in users:
-                sql_add_user = insert(UserInTwitchTeam)\
-                    .values(team_twitch_alert_id=twitch_team_id,
-                            twitch_username=user.get("user_login"))\
-                    .prefix_with("OR IGNORE")
+            for user_info in users:
+                with session_manager() as session:
+                    user = session.execute(
+                        select(UserInTwitchTeam)
+                        .filter_by(team_twitch_alert_id=twitch_team_id, twitch_username=user_info.get("user_login")))\
+                        .scalars()\
+                        .one_or_none()
 
-                try:
-                    with session_manager() as session:
-                        session.execute(sql_add_user)
+                    if user is None:
+                        session.add(UserInTwitchTeam(
+                            team_twitch_alert_id=twitch_team_id, twitch_username=user_info.get("user_login")))
                         session.commit()
-                except KoalaDBManager.sqlite3.IntegrityError as err:
-                    logger.error(f"Twitch Alert: 238: {err}")
 
     def update_all_teams_members(self):
         """
         Updates all teams with the current team members
         :return:
         """
-        sql_get_teams = select(TeamInTwitchAlert.team_twitch_alert_id, TeamInTwitchAlert.twitch_team_name)
-        # """SELECT team_twitch_alert_id, twitch_team_name FROM TeamInTwitchAlert"""
         with session_manager() as session:
-            teams_info = session.execute(sql_get_teams).all()
-        if not teams_info:
-            return
+            teams_info = session.execute(select(TeamInTwitchAlert)).scalars().all()
+
         for team_info in teams_info:
             self.update_team_members(team_info.team_twitch_alert_id, team_info.twitch_team_name)
 
-    async def delete_all_offline_streams(self, team: bool, usernames):
+    async def delete_all_offline_team_streams(self, usernames):
         """
         A method that deletes all currently offline streams
-        :param team: True if the users are from teams, false if individuals
         :param usernames: The usernames of the team members
         :return:
         """
-        if team:
-            sql_select_offline_streams_with_message_ids = select(
-                TeamInTwitchAlert.channel_id,
-                UserInTwitchTeam.message_id)\
-                .join(UserInTwitchTeam,
-                      TeamInTwitchAlert.team_twitch_alert_id == UserInTwitchTeam.team_twitch_alert_id)\
-                .where(
-                and_(UserInTwitchTeam.message_id != null(),
-                     UserInTwitchTeam.twitch_username.in_(usernames)))
-
-            sql_update_offline_streams = update(UserInTwitchTeam).where(
-                UserInTwitchTeam.twitch_username.in_(usernames)).values(message_id=None)
-
-        else:
-            sql_select_offline_streams_with_message_ids = select(UserInTwitchAlert.channel_id,
-                                                                 UserInTwitchAlert.message_id) \
-                .where(and_(UserInTwitchAlert.message_id != null(),
-                            UserInTwitchAlert.twitch_username.in_(usernames)))
-
-            sql_update_offline_streams = update(UserInTwitchAlert).where(
-                UserInTwitchAlert.twitch_username.in_(usernames)).values(message_id=None)
-
         with session_manager() as session:
-            results = session.execute(sql_select_offline_streams_with_message_ids).all()
+            results = session.execute(
+                select(UserInTwitchTeam).where(
+                    and_(
+                        UserInTwitchTeam.message_id != null(),
+                        UserInTwitchTeam.twitch_username.in_(usernames))
+                    ).options(
+                        selectinload(UserInTwitchTeam.team)
+                    )
+            ).scalars().all()
+
+            if results is None:
+                return
+            for result in results:
+                await self.delete_message(result.message_id, result.team.channel_id)
+                result.message_id = None
+
+            session.commit()
+
+    async def delete_all_offline_streams(self, usernames):
+        """
+        A method that deletes all currently offline streams
+        :param usernames: The usernames of the twitch members
+        :return:
+        """
+        with session_manager() as session:
+            results = session.execute(
+                select(
+                    UserInTwitchAlert
+                ).where(
+                    and_(
+                        UserInTwitchAlert.message_id != null(),
+                        UserInTwitchAlert.twitch_username.in_(usernames)))
+            ).scalars().all()
 
             if results is None:
                 return
             for result in results:
                 await self.delete_message(result.message_id, result.channel_id)
-            session.execute(sql_update_offline_streams)
+                result.message_id = None
             session.commit()
 
     # def translate_names_to_ids(self):

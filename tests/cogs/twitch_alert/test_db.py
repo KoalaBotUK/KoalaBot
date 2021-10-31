@@ -264,12 +264,12 @@ async def test_delete_all_offline_streams(twitch_alert_db_manager_tables, bot: d
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_streams(False, ['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_streams(['monstercat'])
 
-        sql_select_messages = select(UserInTwitchAlert.message_id).where(and_(
+        sql_select_messages = select(UserInTwitchAlert).where(and_(
             UserInTwitchAlert.twitch_username == 'monstercat',
             UserInTwitchAlert.channel_id == bot.guilds[0].channels[0].id))
-        result = session.execute(sql_select_messages).one_or_none()
+        result = session.execute(sql_select_messages).scalars().one_or_none()
 
         assert result is not None
         assert result.message_id is None
@@ -289,7 +289,7 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_streams(True, ['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'])
 
         sql_select_messages = select(UserInTwitchTeam.message_id, UserInTwitchTeam.twitch_username).where(
             and_(or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
