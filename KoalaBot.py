@@ -6,7 +6,7 @@ Run this to start the Bot
 
 Commented using reStructuredText (reST)
 """
-__author__ = "KoalaBot.uk"
+__author__ = "KoalaBotUK"
 __copyright__ = "Copyright (c) 2020 KoalaBot"
 __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh", "Harry Nelson", "Bill Cao",
                "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila", "see full list of developers at: https://koalabot.uk/"]
