@@ -49,7 +49,7 @@ class MigrateData:
             file_name = "backup_" + str(self.get_largest_file_number() + 1)
             src = pathlib.Path(f'KoalaDBBackups/{file_name}')
             if not src.is_dir():
-                src.mkdir()
+                src.mkdir(exist_ok=True, parents=True)
             shutil.copy(self.database_manager.db_file_path, src)
             return True
         except Exception as e:
@@ -94,6 +94,9 @@ class MigrateData:
                     logging.error(f"Error in MigrateDatabase: {e}")
                     self.rollback_database()
                     sys.exit(3)
+        else:
+            logging.error(f"Error in MigrateDatabase: backing up database")
+            sys.exit(4)
 
     def remake_guilds(self):
         """
@@ -147,10 +150,9 @@ class MigrateData:
                             REFERENCES Guilds (guild_id)
                         );"""
             if count[0][0] == 1:
-                # TODO: Continue this down for each method. Make new test for each method for if this is not true
-                # (cid, name, type, notnull, dflt_value, pk)
                 if not self.database_manager.db_execute_select("""PRAGMA table_info(GuildExtensions);""") == \
                        [(0, 'extension_id', 'text', 1, None, 1), (1, 'guild_id', 'text', 1, None, 2)]:
+                    # (cid, name, type, notnull, dflt_value, pk)
                     data = self.database_manager.db_execute_select("""SELECT * FROM GuildExtensions;""")
                     self.database_manager.db_execute_commit("""DROP TABLE IF EXISTS GuildExtensions;""")
                     self.database_manager.db_execute_commit(sql_create_guild_extensions_table)
