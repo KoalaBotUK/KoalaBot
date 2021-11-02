@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Other
+- Updated the credits and authors.
 
 ## [0.4.5] - 25-08-2021
 ### Other
