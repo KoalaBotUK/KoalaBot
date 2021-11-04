@@ -13,7 +13,7 @@ from contextlib import contextmanager
 
 # Libs
 from pathlib import Path
-from sqlalchemy import select, update, insert, delete, and_, func, create_engine
+from sqlalchemy import select, update, delete, and_, func, create_engine
 from sqlalchemy.orm import sessionmaker
 
 

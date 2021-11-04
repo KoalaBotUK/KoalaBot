@@ -160,13 +160,14 @@ def check_guild_has_ext(ctx, extension_id):
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=error_embed(description=error))
-    # elif isinstance(error, commands.CommandInvokeError):
-    #     await ctx.send(embed=error_embed(description=error.original))
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
                                                      f"{str(error.retry_after)}s."))
     elif isinstance(error, commands.errors.ChannelNotFound):
         await ctx.send(embed=error_embed(description=f"The channel ID provided is either invalid, or not in this server."))
+    elif isinstance(error, commands.CommandInvokeError):
+        # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
+        await ctx.send(embed=error_embed(description=error.original))
     else:
         await ctx.send(embed=error_embed(
             description=f"An unexpected error occured, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp

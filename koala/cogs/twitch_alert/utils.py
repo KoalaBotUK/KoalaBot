@@ -12,7 +12,7 @@ from koala.utils.KoalaColours import KOALA_GREEN
 DEFAULT_MESSAGE = ""
 TWITCH_ICON = "https://cdn3.iconfinder.com/data/icons/social-messaging-ui-color-shapes-2-free" \
               "/128/social-twitch-circle-512.png"
-TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_]{3,24}$"
+TWITCH_USERNAME_REGEX = "^[a-z0-9][a-z0-9_-]{3,24}$"
 
 LOOP_CHECK_LIVE_DELAY = 1
 TEAMS_LOOP_CHECK_LIVE_DELAY = 1
