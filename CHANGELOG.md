@@ -14,7 +14,7 @@ administrators
 - ./config is the new default config directory and is set in env
 - /config/logs/<date> is now used for logs
 - refactor koala file structure
-- 
+- Updated the credits and authors.
 
 ## [0.4.5] - 25-08-2021
 ### Other
