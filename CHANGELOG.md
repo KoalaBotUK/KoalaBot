@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### ColourRole
+- Fix unexpected error due to cooldown
 ### Other
 - Updated the credits and authors.
 
