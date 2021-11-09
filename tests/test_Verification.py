@@ -9,6 +9,9 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import asyncio
 # Libs
+import csv
+from unittest import mock
+
 import discord.ext.test as dpytest
 import pytest
 from discord.ext import commands
@@ -59,7 +62,22 @@ def cog(bot):
     db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
     db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
     db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
+    drop_universities = "DROP TABLE Universities"
+    db_manager.db_execute_commit(drop_universities)
+    db_manager.db_execute_commit("""
+        CREATE TABLE IF NOT EXISTS Universities(
+        name text NOT NULL,
+        email_suffix text NOT NULL,
+        PRIMARY KEY (name)
+        );
+        """)
     db_manager.insert_extension("Verify", 0, True, True)
+    f = open(Verification.UNI_LIST_CSV)
+    rows = csv.reader(f)
+    for row in list(rows):
+        print(row[0])
+        insert_universities = "INSERT INTO Universities VALUES (?,?)"
+        db_manager.db_execute_commit(insert_universities, args=row)
     print("Tests starting")
     return cog
 
@@ -211,6 +229,50 @@ async def test_re_verify():
     db_manager.db_execute_commit(f"DELETE FROM verified_emails WHERE u_id={member.id}")
     db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
     db_manager.db_execute_commit(f"DELETE FROM to_re_verify WHERE u_id={member.id}")
+
+
+@pytest.mark.asyncio
+async def test_verify_no_uni_role():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    with mock.patch('cogs.Verification.Verification.prompt_for_input',
+                    mock.AsyncMock(return_value="Y")):
+        with mock.patch('cogs.Verification.Verification.prompt_for_input',
+                        mock.AsyncMock(return_value="Y")):
+            await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
+            assert Verification.check_if_role_exists(guild, "Southampton") is not None
+            assert dpytest.verify().message()
+            assert dpytest.verify().message()
+            db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
+
+
+@pytest.mark.asyncio
+async def test_verify_yes_uni_role():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    await guild.create_role(name="Southampton")
+    with mock.patch('cogs.Verification.Verification.prompt_for_input',
+                    mock.AsyncMock(side_effect=["enable verification", "Y"])):
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "verifyAddUni Southampton")
+        assert dpytest.verify().message()
+        assert dpytest.verify().message()
+        db_manager.db_execute_commit(f"DELETE FROM roles WHERE s_id={guild.id}")
+
+
+@pytest.mark.asyncio
+async def test_role_exists():
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    await guild.create_role(name="Southampton")
+    assert Verification.check_if_role_exists(guild, "Southampton") is not None
+    assert Verification.check_if_role_exists(guild, "TesterRole") is None
+
+"""
+@pytest.mark.asyncio
+async def test_insert_university_csv():
+    Verification.insert_university_csv()
+    assert Verification.get_email_suffix("Southampton") == 'soton.ac.uk'
+"""
 
 
 @pytest.fixture(scope='session', autouse=True)

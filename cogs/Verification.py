@@ -7,10 +7,13 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
+import csv
 import random
 import string
 import smtplib
 from email.message import EmailMessage
+from typing import Union
+
 from dotenv import load_dotenv
 import os
 
@@ -22,9 +25,12 @@ from discord.ext import commands
 import KoalaBot
 
 # Constants
+from utils import KoalaUtils
+
 load_dotenv()
 GMAIL_EMAIL = os.environ.get('GMAIL_EMAIL')
 GMAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD')
+UNI_LIST_CSV = "./utils/fake_uni_list.csv"
 # Variables
 
 
@@ -44,6 +50,13 @@ def verify_is_enabled(ctx):
 
     return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
 
+
+def check_if_role_exists(guild, university):
+    for role in guild.roles:
+        if role.name == university:
+            return role
+
+
 class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot, db_manager=None):
@@ -52,6 +65,7 @@ class Verification(commands.Cog, name="Verify"):
             self.DBManager = KoalaBot.database_manager
             self.set_up_tables()
             self.DBManager.insert_extension("Verify", 0, True, True)
+            self.insert_university_csv()
         else:
             self.DBManager = db_manager
 
@@ -95,10 +109,21 @@ class Verification(commands.Cog, name="Verify"):
         );
         """
 
+        sql_create_universities_table = """
+        CREATE TABLE IF NOT EXISTS Universities(
+        name text NOT NULL,
+        email_suffix text NOT NULL,
+        PRIMARY KEY (name)
+        );
+        """
+
         self.DBManager.db_execute_commit(verified_table)
         self.DBManager.db_execute_commit(non_verified_table)
         self.DBManager.db_execute_commit(role_table)
         self.DBManager.db_execute_commit(re_verify_table)
+        drop_universities = "DROP TABLE Universities"
+        self.DBManager.db_execute_commit(drop_universities)
+        self.DBManager.db_execute_commit(sql_create_universities_table)
 
     @staticmethod
     def send_email(email, token):
@@ -166,6 +191,9 @@ This email is stored so you don't need to verify it multiple times across server
         :param role: the role to give users with that email verified (e.g. @students)
         :return:
         """
+        role = role
+        if not suffix:
+            await ctx.send("hi")
         if not role or not suffix:
             raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
@@ -357,6 +385,83 @@ This email is stored so you don't need to verify it multiple times across server
                 self.DBManager.db_execute_commit("INSERT INTO to_re_verify VALUES (?, ?)",
                                                  (member.id, role.id))
         await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
+
+    async def verify_university(self, ctx, email_suffix, role_id, university):
+        """
+        This will enable verification for a university role in a server.
+        :param ctx: Context of the discord message.
+        :param email_suffix: The suffix of the email of which to verify with.
+        :param role_id: The role's id that you wish to verify.
+        :param university: The name of the university you wish to verify.
+        """
+        await ctx.send(f"Do you want to enable verification using {email_suffix} addresses for @{university}")
+        if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+            await ctx.send("Okay, enabling verification")
+            await self.enable_verification(ctx, email_suffix, role_id)
+        else:
+            await ctx.send("Okay, won't enable verification.")
+
+    async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> Union[discord.Attachment, str]:
+        """
+        Prompts a user for input in the form of a message. Has a forced timer of 60 seconds, because it basically just
+        deals with the rfr specific stuff. Returns whatever was input, or cancels the calling command
+        :param ctx: Context of the command that calls this
+        :param input_type: Name of whatever info is needed from a user, just so that the message looks nice/clear
+        :return: User's response's content
+        """
+        await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
+        msg, channel = await KoalaUtils.wait_for_message(self.bot, ctx)
+        if not msg:
+            await channel.send("Okay, I'll cancel the command.")
+            return ""
+        elif len(msg.attachments) > 0:
+            return msg.attachments[0]
+        else:
+            return msg.content
+
+    def get_email_suffix(self, university):
+        """
+        Gets email address from the sql database using the university name
+        :param university: University name to query the database with.
+        """
+        sql_select_uni_statement = ("""
+        SELECT email_suffix FROM Universities where name = ?""")
+        university_address = self.DBManager.db_execute_select(sql_select_uni_statement, args=[university])
+        return university_address[0][0]
+
+    @commands.check(KoalaBot.is_admin)
+    @commands.check(verify_is_enabled)
+    @commands.command(name="verifyAddUni")
+    async def add_uni_command(self, ctx, university):
+        """
+        If a university with the input exists then it will enable verification for that university. Otherwise, it will
+        create a role for that university and enable verification for this role. This command can be cancelled using "N"
+        :param ctx: Context of the discord message
+        :param university: The name of the university to enable verification for
+        """
+        email_suffix = self.get_email_suffix(university)
+        role = check_if_role_exists(ctx.guild, university)
+        if role is None:
+            await ctx.send(f"This will make a new role: {university}. Please confirm that you'd like this change.")
+            if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
+                guild = ctx.guild
+                role = await guild.create_role(name=university)
+                role_id = f"<@&{str(role.id)}>"
+                await self.verify_university(ctx, email_suffix, role_id, university)
+            else:
+                await ctx.send("Okay, cancelling command.")
+        else:
+            role_id = f"<@&{str(role.id)}>"
+            await self.verify_university(ctx, email_suffix, role_id, university)
+
+    def insert_university_csv(self):
+        """Inserts the universities from the university csv into the SQL database"""
+        f = open(UNI_LIST_CSV)
+        rows = csv.reader(f)
+        for row in list(rows):
+            print(row[0])
+            insert_universities = "INSERT INTO Universities VALUES (?,?)"
+            self.DBManager.db_execute_commit(insert_universities, args=row)
 
     class InvalidArgumentError(Exception):
         pass
