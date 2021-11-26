@@ -8,8 +8,8 @@ coverage:
         base: auto
         flags:
           - unit
-#        paths:
-#          - "src"
+        #        paths:
+        #          - "src"
         # advanced settings
         branches:
           - master
