@@ -10,14 +10,11 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
-import inspect
-
 import discord
 from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from utils.KoalaUtils import extract_id, error_embed
 from utils.KoalaColours import *
 
 
@@ -228,6 +225,14 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         embed = list_ext_embed(guild_id)
 
         await ctx.send(embed=embed)
+
+    @commands.command(name="version")
+    @commands.check(KoalaBot.is_owner)
+    async def version(self, ctx):
+        """
+        Get the version of KoalaBot
+        """
+        await ctx.send("version: "+KoalaBot.__version__)
 
 
 def setup(bot: KoalaBot) -> None:

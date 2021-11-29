@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 from random import randint
 import time
 import logging
-logging.basicConfig(filename='Vote.log')
 
 # Libs
 import discord
@@ -20,6 +19,7 @@ import parsedatetime.parsedatetime
 import KoalaBot
 
 # Constants
+logging.basicConfig(filename=KoalaBot.CONFIG_DIR+'Vote.log')
 load_dotenv()
 MIN_ID_VALUE = 100000000000000000
 MAX_ID_VALUE = 999999999999999999
@@ -443,7 +443,6 @@ class Voting(commands.Cog, name="Vote"):
                 await add_reactions(vote, msg)
             except discord.Forbidden:
                 logging.error(f"tried to send vote to user {user.id} but direct messages are turned off.")
-                pass
         await ctx.send(f"Sent vote to {len(users)} users")
 
     @commands.check(vote_is_enabled)

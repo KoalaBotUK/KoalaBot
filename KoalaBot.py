@@ -6,14 +6,14 @@ Run this to start the Bot
 
 Commented using reStructuredText (reST)
 """
-__author__ = "Jack Draper, Kieran Allinson, Viraj Shah," \
-             " Anan Venkatesh, Harry Nelson, Robert Slawik, Rurda Malik, Stefan Cooper"
-__copyright__ = "Copyright (c) 2020 KoalaBot"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah",
-               "Anan Venkatesh", "Harry Nelson", "Robert Slawik", "Rurda Malik", "Stefan Cooper"]
+__author__ = "KoalaBotUK"
+__copyright__ = "Copyright (c) 2020 KoalaBotUK"
+__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh", "Harry Nelson",
+               "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
+               "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.0.3"
-__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah"
+__version__ = "0.4.5"
+__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
 
@@ -23,6 +23,8 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import os
 import logging
 import sys
+import argparse
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 # Libs
 import discord
@@ -34,13 +36,48 @@ from utils.KoalaDBManager import KoalaDBManager as DBManager
 from utils.KoalaUtils import error_embed
 
 # Constants
-logging.basicConfig(filename='KoalaBot.log')
+def parse_args(args):
+    """
+    Uses argparse to return a parser of all given arguments when running KoalaBot.py
+
+    :param args: sys.argv[1:]
+    :return: parsed argparse
+    """
+    parser = argparse.ArgumentParser(description='Start the KoalaBot Discord bot')
+    parser.add_argument('--config', help="Config & database directory")
+    args, unknown = parser.parse_known_args(args)
+    return args
+
+
+def get_config_from_argv():
+    """
+    Gets config directory if given from arguments when running KoalaBot.py
+
+    :return: Valid config dir
+    """
+    config_dir = vars(parse_args(sys.argv[1:])).get("config")
+    if config_dir and os.name == 'nt' and config_dir[1] != ":":
+        config_dir = os.getcwd() + config_dir
+    elif config_dir is None:
+        config_dir = ""
+    if os.name == 'nt':
+        return str(PureWindowsPath(config_dir))
+    elif os.name == 'posix':
+        return str(PurePosixPath(config_dir))
+    else:
+        return str(Path(config_dir))
+
+
+CONFIG_DIR = get_config_from_argv()
+
+logging.basicConfig(filename=CONFIG_DIR+'KoalaBot.log')
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 load_dotenv()
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER = os.environ.get('BOT_OWNER')
 DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
 COMMAND_PREFIX = "k!"
+OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/jaydwee"
 COGS_DIR = "cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
@@ -51,22 +88,20 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
+
 # Variables
 started = False
-if discord.__version__ != "1.3.4":
-    logging.info("Intents Enabled")
-    intent = discord.Intents.default()
-    intent.members = True
-    intent.guilds = True
-    intent.messages = True
-    client = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intent)
-else:
-    logging.info("discord.py v1.3.4: Intents Disabled")
-    client = commands.Bot(command_prefix=COMMAND_PREFIX)
-database_manager = DBManager(DATABASE_PATH, DB_KEY)
+logging.info("Intents Enabled")
+intent = discord.Intents.default()
+intent.members = True
+intent.guilds = True
+intent.messages = True
+client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
+database_manager = DBManager(DATABASE_PATH, DB_KEY, CONFIG_DIR)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)-8s %(message)s')
 logger = logging.getLogger('discord')
 is_dpytest = False
+
 
 
 def is_owner(ctx):
@@ -166,7 +201,6 @@ async def on_command_error(ctx, error):
 
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
-    database_manager.create_base_tables()
     load_all_cogs()
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)

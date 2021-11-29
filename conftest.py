@@ -5,15 +5,14 @@ A configuration file for methods useful in all testing with pytest
 
 # Built-in/Generic Imports
 
+# Libs
+import pytest
 import discord
 import discord.ext.commands as commands
 import discord.ext.test as dpytest
-# Libs
-import pytest
 
 # Own modules
 import KoalaBot
-
 
 # Constants
 
