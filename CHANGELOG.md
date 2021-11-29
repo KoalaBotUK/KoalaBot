@@ -100,6 +100,11 @@ manually if a timer is deleted.
 - Fix regex incorrectly being used on some messages
 
 
+### Insights
+#### Added
+- `insights` Displays the insights for KoalaBot
+- `servers <text>` Displays the servers that the bot is in with the given text in their name. (If left blank, displays all servers)
+
 ## [0.2.0] - 15-10-2020
 ### Text Filter
 ##### Added

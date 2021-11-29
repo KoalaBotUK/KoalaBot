@@ -28,6 +28,20 @@ async def bot(event_loop):
     return b
 
 
+@pytest.fixture(autouse=False)
+async def bot_no_configure(event_loop):
+    """
+    The bot conftest method but with no dpytest.configure() method call
+    """
+    intents = discord.Intents.default()
+    intents.members = True
+    intents.guilds = True
+    intents.messages = True
+    b = commands.Bot(KoalaBot.COMMAND_PREFIX, loop=event_loop, intents=intents)
+    await dpytest.empty_queue()
+    return b
+
+
 @pytest.fixture(autouse=True)
 def setup_is_dpytest():
     KoalaBot.is_dpytest = True
