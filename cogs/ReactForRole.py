@@ -59,6 +59,23 @@ class ReactForRole(commands.Cog):
         self.rfr_database_manager = ReactForRoleDBManager(KoalaBot.database_manager)
         self.rfr_database_manager.create_tables()
 
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        """
+        On bot joining guild, add this guild to the database of inline statuses.
+        :param guild: Guild KoalaBot just joined
+        """
+        self.rfr_database_manager.create_tables()
+        self.rfr_database_manager.add_guild_inline_status(str(guild.id))
+
+    @commands.Cog.listener()
+    async def on_guild_leave(self, guild: discord.Guild):
+        """
+        On bot leaving guild, remove this guild from the database of inline statuses.
+        :param guild: Guild KoalaBot just left
+        """
+        self.rfr_database_manager.remove_guild_inline_status(str(guild.id))
+
     @commands.check(KoalaBot.is_guild_channel)
     @commands.check(KoalaBot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -192,6 +209,7 @@ class ReactForRole(commands.Cog):
             embed.set_footer(text="ReactForRole")
             embed.set_thumbnail(
                 url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
+            await self.set_inline(ctx, embed)
             rfr_msg: discord.Message = await channel.send(embed=embed)
             self.rfr_database_manager.add_rfr_message(ctx.guild.id, channel.id, rfr_msg.id)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
@@ -362,6 +380,7 @@ class ReactForRole(commands.Cog):
                     guild: discord.Guild = ctx.guild
                     text_channels: List[discord.TextChannel] = guild.text_channels
                     guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
+                    self.rfr_database_manager.update_guild_inline_status(guild.id, change_all)
                     for rfr_message in guild_rfr_messages:
                         channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
                         msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
@@ -526,7 +545,7 @@ class ReactForRole(commands.Cog):
                     KoalaBot.logger.info(
                         f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
                         f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji.id}.")
-
+        await self.set_inline(ctx, embed=rfr_embed)
         await msg.edit(embed=rfr_embed)
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
@@ -985,6 +1004,19 @@ class ReactForRole(commands.Cog):
         """
         return len(embed.fields)
 
+    async def set_inline(self, ctx, embed):
+        """
+        Sets the inline of all fields in an embed
+        :param ctx: Context of the embed
+        :param embed: The embed to be edited
+        """
+        length = self.get_number_of_embed_fields(embed)
+        if length > 0:
+            for i in range(length):
+                field = embed.fields[i]
+                embed.set_field_at(i, name=field.name, value=field.value,
+                                  inline=self.rfr_database_manager.get_guild_inline_status(ctx.guild.id)[0] == 'Y')
+
     async def get_first_emoji_from_str(self, ctx: commands.Context, content: str) -> Optional[
         Union[discord.Emoji, str]]:
         """
@@ -1083,9 +1115,19 @@ class ReactForRoleDBManager:
         UNIQUE (guild_id, role_id)
         );
         """
+        sql_create_inline_all_status_table = """
+        CREATE TABLE IF NOT EXISTS InlineAllStatus (
+        guild_id text NOT NULL,
+        inline_status text,
+        PRIMARY KEY (guild_id),
+        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id),
+        UNIQUE (guild_id)
+        );
+        """
         self.database_manager.db_execute_commit(sql_create_guild_rfr_message_ids_table)
         self.database_manager.db_execute_commit(sql_create_rfr_message_emoji_roles_table)
         self.database_manager.db_execute_commit(sql_create_rfr_required_roles_table)
+        self.database_manager.db_execute_commit(sql_create_inline_all_status_table)
 
     def add_rfr_message(self, guild_id: int, channel_id: int, message_id: int):
         """
@@ -1277,6 +1319,41 @@ class ReactForRoleDBManager:
         if not role_ids:
             return []
         return role_ids
+
+    def add_guild_inline_status(self, guild_id):
+        """
+        Add an inline status for all rfr messages in a guild
+        :param guild_id: guild ID
+        """
+        self.database_manager.db_execute_commit(
+            "INSERT INTO InlineAllStatus (guild_id, inline_status) VALUES (?, ?);",
+            args=[str(guild_id), "N"])
+
+    def update_guild_inline_status(self, guild_id, status):
+        """
+        Updates the inline status for all rfr messages in a guild
+        :param guild_id: guild ID
+        :param status: inline all status "Y" or "N"
+        """
+        self.database_manager.db_execute_commit(
+            "UPDATE InlineAllStatus SET inline_status = ? WHERE guild_id = ?;", args=[status, str(guild_id)])
+
+    def get_guild_inline_status(self, guild_id):
+        """
+        Gets the inline status for the specific guild
+        :param guild_id: guild ID
+        :return: Inline All Status for that guild
+        """
+        return self.database_manager.db_execute_select("SELECT inline_status FROM InlineAllStatus WHERE guild_id = ?",
+                                                       args=[str(guild_id)])[0]
+
+    def remove_guild_inline_status(self, guild_id):
+        """
+        Removes the guild's inline status from the database
+        :param guild_id: guild ID
+        """
+        self.database_manager.db_execute_commit("DELETE FROM InlineAllStatus WHERE guild_id = ?",
+                                                args=[str(guild_id)])
 
 
 def setup(bot: KoalaBot) -> None:
