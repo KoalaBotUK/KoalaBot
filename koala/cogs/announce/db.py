@@ -1,21 +1,11 @@
 # Built-in/Generic Imports
-import re
-from sqlalchemy import select, delete, and_, null
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select
 
 # Own modules
-from koala.utils import KoalaDBManager
-from koala.db import setup, session_manager, DATABASE_PATH
-from koala.env import DB_KEY
-
+from koala.db import setup, session_manager
 from .models import GuildUsage
-from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, TIMEOUT_TIME, MAX_MESSAGE_LENGTH
-from .log import logger
-
 
 # Libs
-import discord
-
 
 
 class AnnounceDBManager:

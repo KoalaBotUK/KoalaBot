@@ -27,7 +27,7 @@ def se5tup_function():
     """ setup any state specific to the execution of the given module."""
     global base_cog, tf_cog, utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    base_cog = BaseCog.BaseCog(bot)
+    base_cog = BaseCog(bot)
     tf_cog = TextFilter.TextFilter(bot)
     tf_cog.tf_database_manager.create_tables()
     utils_cog = LastCtxCog.LastCtxCog(bot)
@@ -48,7 +48,7 @@ def utils_cog(bot):
 
 @pytest.fixture(scope="function", autouse=True)
 def base_cog(bot):
-    base_cog = BaseCog.BaseCog(bot)
+    base_cog = BaseCog(bot)
     bot.add_cog(base_cog)
     dpytest.configure(bot)
     print("Tests starting")

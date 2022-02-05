@@ -49,7 +49,7 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
-ENABLED_COGS = ["koala.cogs.twitch_alert.cog", "koala.cogs.announce.cog"]
+ENABLED_COGS = ["koala.cogs.BaseCog", "koala.cogs.Announce", "koala.cogs.TwitchAlert"]
 
 # Variables
 started = False
@@ -170,7 +170,7 @@ async def on_command_error(ctx, error):
         await ctx.send(embed=error_embed(description=error.original))
     else:
         await ctx.send(embed=error_embed(
-            description=f"An unexpected error occured, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
+            description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error
 
 

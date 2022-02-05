@@ -13,8 +13,6 @@ from koala.cogs import announce
 from tests.tests_utils import LastCtxCog
 
 
-# Varibales
-
 @pytest.fixture(autouse=True)
 def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
@@ -72,7 +70,7 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
         assert announce_cog.messages[guild.id].title == ""
 
 
-# tets dm guild with members who cannot recieve dm's
+# tests dm guild with members who cannot receive dms
 @pytest.mark.asyncio
 async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
     guild: discord.Guild = bot.guilds[0]
