@@ -1,1 +1,3 @@
-from . import utils, cog, db, twitch_handler, log, models
+from . import utils, db, twitch_handler, log, models
+from .cog import TwitchAlert
+

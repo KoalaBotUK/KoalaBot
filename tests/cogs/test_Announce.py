@@ -9,7 +9,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from koala.cogs import Announce
+from koala.cogs import announce
 from tests.tests_utils import LastCtxCog
 
 # Varibales
@@ -27,7 +27,7 @@ def utils_cog(bot: discord.ext.commands.Bot):
 
 @pytest.fixture(autouse=True)
 def announce_cog(bot: discord.ext.commands.Bot):
-    announce_cog = Announce.Announce(bot)
+    announce_cog = announce.Announce(bot)
     bot.add_cog(announce_cog)
     dpytest.configure(bot, 2, 1, 2)
     print("Tests starting")
@@ -41,7 +41,7 @@ def clean_message_list(guild_id):
 
 
 def make_message(guild, announce_cog):
-    announce_cog.messages[guild.id] = Announce.AnnounceMessage(f"This announcement is from {guild.name}",
+    announce_cog.messages[guild.id] = announce.AnnounceMessage(f"This announcement is from {guild.name}",
                                                                "testMessage",
                                                                guild.icon_url)
     announce_cog.roles[guild.id] = []
@@ -488,7 +488,7 @@ async def test_remove_non_existent_role(announce_cog):
 
 def test_embed_consistent(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    announce_cog.messages[guild.id] = Announce.AnnounceMessage(f"This announcement is from {guild.name}",
+    announce_cog.messages[guild.id] = announce.AnnounceMessage(f"This announcement is from {guild.name}",
                                                                "testMessage",
                                                                guild.icon_url)
     embed: discord.Embed = announce_cog.construct_embed(guild)
@@ -499,7 +499,7 @@ def test_embed_consistent(announce_cog):
 
 def test_embed_consistent_with_url(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    announce_cog.messages[guild.id] = Announce.AnnounceMessage(f"This announcement is from {guild.name}",
+    announce_cog.messages[guild.id] = announce.AnnounceMessage(f"This announcement is from {guild.name}",
                                                                "testMessage",
                                                                "test_url")
     embed: discord.Embed = announce_cog.construct_embed(guild)
@@ -579,9 +579,9 @@ async def test_announce_db_update_time_from_legal_use(announce_cog):
     channel: discord.TextChannel = guild.channels[0]
     assert announce_cog.announce_database_manager.get_last_use_date(guild.id) is None
     announce_cog.announce_database_manager.set_last_use_date(guild.id, int(
-        time.time()) - Announce.ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60 - 1)
+        time.time()) - announce.utils.ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60 - 1)
     assert announce_cog.announce_database_manager.get_last_use_date(guild.id) == int(
-        time.time()) - Announce.ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60 - 1
+        time.time()) - announce.utils.ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60 - 1
     msg_mock: discord.Message = dpytest.back.make_message('testMessage', author, channel)
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
@@ -593,7 +593,7 @@ async def test_announce_db_update_time_from_legal_use(announce_cog):
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.announce_database_manager.get_last_use_date(guild.id) == int(
-            time.time()) - Announce.ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60 - 1
+            time.time()) - announce.utils.ANNOUNCE_SEPARATION_DAYS * 24 * 60 * 60 - 1
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
                               channel=channel)
         for _ in guild.members:

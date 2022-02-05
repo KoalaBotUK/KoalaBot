@@ -1,34 +1,19 @@
-#!/usr/bin/env python
-
-"""
-Koala Bot Announce feature
-Created by: Bill Cao
-"""
-
 # Built-in/Generic Imports
-import math
 import time
-
-# Libs
-import discord
-import logging
-from discord.ext import commands
-from koala.utils.KoalaUtils import extract_id, wait_for_message
-from koala.utils import KoalaColours
-
-# logging.basicConfig(filename='Announce.log')
-# logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+import math
 
 # Own modules
 import KoalaBot
+from koala.utils import KoalaColours
+from koala.utils.KoalaUtils import extract_id, wait_for_message
+from .db import AnnounceDBManager
+from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, TIMEOUT_TIME, MAX_MESSAGE_LENGTH
+from .announce_message import AnnounceMessage
+from .log import logger
 
-# constants
-ANNOUNCE_SEPARATION_DAYS = 30
-SECONDS_IN_A_DAY = 86400
-TIMEOUT_TIME = 60.0
-MAX_MESSAGE_LENGTH = 2000
-
-
+# Libs
+import discord
+from discord.ext import commands
 
 
 def announce_is_enabled(ctx):
@@ -57,8 +42,7 @@ class Announce(commands.Cog):
         self.messages = {}
         self.roles = {}
         KoalaBot.database_manager.insert_extension("Announce", 0, True, True)
-        self.announce_database_manager = AnnounceDBManager(KoalaBot.database_manager)
-        self.announce_database_manager.create_tables()
+        self.announce_database_manager = AnnounceDBManager()
 
     def not_exceeded_limit(self, guild_id):
         """
@@ -285,13 +269,13 @@ class Announce(commands.Cog):
                     try:
                         await receiver.send(embed=embed)
                     except (discord.Forbidden, AttributeError, discord.HTTPException) as e:
-                        logging.error(f'User {receiver.id} cannot recieve dms')
+                        logger.error(f'User {receiver.id} cannot recieve dms')
             else:
                 for receiver in ctx.guild.members:
                     try:
                         await receiver.send(embed=embed)
                     except (discord.Forbidden, AttributeError, discord.HTTPException) as e:
-                        logging.error(f'User {receiver.id} cannot recieve dms')
+                        logger.error(f'User {receiver.id} cannot recieve dms')
 
             self.messages.pop(ctx.guild.id)
             self.roles.pop(ctx.guild.id)
@@ -316,98 +300,10 @@ class Announce(commands.Cog):
             await ctx.send("There is currently no active announcement")
 
 
-class AnnounceDBManager:
-    """
-    A class for interacting with the KoalaBot announcement database
-    """
-
-    def __init__(self, database_manager: KoalaBot.database_manager):
-        """
-        initiate variables
-        :param database_manager:
-        """
-        self.database_manager = database_manager
-
-    def create_tables(self):
-        """
-        create all the tables related to the announce database
-        """
-        sql_create_usage_tables = """
-        CREATE TABLE IF NOT EXISTS GuildUsage (
-        guild_id integer NOT NULL,
-        last_message_epoch_time integer NOT NULL,
-        PRIMARY KEY (guild_id),
-        FOREIGN KEY (guild_id) REFERENCES GuildExtensions(guild_id)
-        );
-        """
-        self.database_manager.db_execute_commit(sql_create_usage_tables)
-
-    def get_last_use_date(self, guild_id: int):
-        """
-        Gets the last time when this function was used
-        :param guild_id: id of the target guild
-        :return:
-        """
-        row = self.database_manager.db_execute_select(
-            """SELECT * FROM GuildUsage WHERE guild_id = ?""", args=[guild_id])
-        if not row:
-            return
-        return row[0][1]
-
-    def set_last_use_date(self, guild_id: int, last_time: int):
-        """
-        Set the last time when this function was used
-        :param guild_id: id of the guild
-        :param last_time: time when the function was used
-        :return:
-        """
-        if (self.database_manager.db_execute_select("""SELECT last_message_epoch_time FROM GuildUsage where 
-        guild_id = ?""", args=[guild_id])):
-            self.database_manager.db_execute_commit(
-                """UPDATE GuildUsage SET last_message_epoch_time = ? WHERE guild_id = ?""", args=[last_time, guild_id])
-        else:
-            self.database_manager.db_execute_commit(
-                """INSERT INTO GuildUsage (guild_id,last_message_epoch_time) VALUES (?,?)""",
-                args=[guild_id, last_time])
-
-
-class AnnounceMessage:
-    """
-    A class consisting the information about a announcement message
-    """
-
-    def __init__(self, title, message, thumbnail):
-        """
-        Initiate the message with default thumbnail, title and description
-        :param title: The title of the announcement
-        :param message: The message included in the announcement
-        :param thumbnail: The logo of the server
-        """
-        self.title = title
-        self.description = message
-        self.thumbnail = thumbnail
-
-    def set_title(self, title):
-        """
-        Changing the title of the announcement
-        :param title: A string consisting the title
-        :return:
-        """
-        self.title = title
-
-    def set_description(self, message):
-        """
-        Changing the message in the announcement
-        :param message: A string consisting the message
-        :return:
-        """
-        self.description = message
-
-
 def setup(bot: KoalaBot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(Announce(bot))
-    print("Announce is ready.")
+    print("announce is ready.")
