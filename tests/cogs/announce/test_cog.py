@@ -12,9 +12,8 @@ import KoalaBot
 from koala.cogs import announce
 from tests.tests_utils import LastCtxCog
 
-# Varibales
-KoalaBot.is_dpytest = True
 
+# Varibales
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot: discord.ext.commands.Bot):
@@ -32,12 +31,6 @@ def announce_cog(bot: discord.ext.commands.Bot):
     dpytest.configure(bot, 2, 1, 2)
     print("Tests starting")
     return announce_cog
-
-
-def clean_message_list(guild_id):
-    if announce_cog.has_active_msg(guild_id):
-        announce_cog.messages.pop(guild_id)
-        announce_cog.roles.pop(guild_id)
 
 
 def make_message(guild, announce_cog):
@@ -78,7 +71,8 @@ async def test_create_legal_message(bot: discord.Client, announce_cog):
         assert announce_cog.messages[guild.id].description == "testMessage"
         assert announce_cog.messages[guild.id].title == ""
 
-#tets dm guild with members who cannot recieve dm's
+
+# tets dm guild with members who cannot recieve dm's
 @pytest.mark.asyncio
 async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
     guild: discord.Guild = bot.guilds[0]
@@ -99,9 +93,9 @@ async def test_create_message_to_no_dm_user(bot: discord.Client, announce_cog):
         assert announce_cog.messages[guild.id].title == ""
         # sending the message
         with mock.patch('discord.Member.send',
-                    mock.Mock(side_effect=Exception('AttributeError'))):
+                        mock.Mock(side_effect=Exception('AttributeError'))):
             with pytest.raises(discord.ext.commands.errors.CommandInvokeError) as e_info:
-                await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',channel=channel)
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send', channel=channel)
 
 
 @pytest.mark.asyncio
@@ -118,7 +112,8 @@ async def test_create_illegal_message(announce_cog):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
                               channel=channel)
         assert dpytest.verify().message().content("Please enter a message, I'll wait for 60 seconds, no rush.")
-        assert dpytest.verify().message().content("The content is more than 2000 characters long, and exceeds the limit")
+        assert dpytest.verify().message().content(
+            "The content is more than 2000 characters long, and exceeds the limit")
         assert not announce_cog.has_active_msg(guild.id)
 
 
@@ -145,8 +140,9 @@ async def test_create_multiple_message(announce_cog):
                         mock.AsyncMock(return_value=msg2_mock)):
             await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
                                   channel=channel)
-            assert dpytest.verify().message().content("There is currently an active announcement being created, you can use 'k!announce cancel' "
-                                                               "or 'k!announce send' to complete it")
+            assert dpytest.verify().message().content(
+                "There is currently an active announcement being created, you can use 'k!announce cancel' "
+                "or 'k!announce send' to complete it")
             assert announce_cog.has_active_msg(guild.id)
             assert announce_cog.messages[guild.id].description == "testMessage"
             assert announce_cog.messages[guild.id].title == ""
@@ -180,8 +176,10 @@ async def test_create_message_after_send_before_30_days(announce_cog):
                         mock.AsyncMock(return_value=msg_mock)):
             await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
                                   channel=channel)
-            assert dpytest.verify().message().content("You have recently sent an announcement and cannot use this function for 30 days")
+            assert dpytest.verify().message().content(
+                "You have recently sent an announcement and cannot use this function for 30 days")
             assert not announce_cog.has_active_msg(guild.id)
+
 
 @pytest.mark.asyncio
 async def test_create_message_timeout():
@@ -195,15 +193,21 @@ async def test_create_message_timeout():
         assert dpytest.verify().message().content("Okay, I'll cancel the command.")
 
 
-@pytest.mark.parametrize("command_word, prompt_message", [("changeTitle", "Please enter the new title, I'll wait for 60 seconds, no rush."),
-                                                          ("changeContent", "Please enter the new message, I'll wait for 60 seconds, no rush."), ("addRole",
-                                                                                                              "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush."),
-                                                          ("add",
-                                                           "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush."),
-                                                          ("remove",
-                                                           "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush."),
-                                                          ("removeRole",
-                                                           "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")])
+@pytest.mark.parametrize("command_word, prompt_message",
+                         [("changeTitle", "Please enter the new title, I'll wait for 60 seconds, no rush."),
+                          ("changeContent", "Please enter the new message, I'll wait for 60 seconds, no rush."),
+                          ("addRole",
+                           "Please enter the roles you want to tag separated by space, "
+                           "I'll wait for 60 seconds, no rush."),
+                          ("add",
+                           "Please enter the roles you want to tag separated by space, "
+                           "I'll wait for 60 seconds, no rush."),
+                          ("remove",
+                           "Please enter the roles you want to remove separated by space, "
+                           "I'll wait for 60 seconds, no rush."),
+                          ("removeRole",
+                           "Please enter the roles you want to remove separated by space, "
+                           "I'll wait for 60 seconds, no rush.")])
 @pytest.mark.asyncio
 async def test_other_timeout(command_word, prompt_message, announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -290,7 +294,8 @@ async def test_change_long_message(announce_cog):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce changeContent',
                               channel=channel)
         assert dpytest.verify().message().content("Please enter the new message, I'll wait for 60 seconds, no rush.")
-        assert dpytest.verify().message().content("The content is more than 2000 characters long, and exceeds the limit")
+        assert dpytest.verify().message().content(
+            "The content is more than 2000 characters long, and exceeds the limit")
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.messages[guild.id].description == "testMessage"
 
@@ -314,10 +319,12 @@ async def test_add_possible_role(number_of_roles, announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == role_id_list
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("number_of_roles", [0, 1])
@@ -338,7 +345,8 @@ async def test_send_announce_roles(bot: discord.Client, number_of_roles, announc
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == role_id_list
@@ -347,7 +355,8 @@ async def test_send_announce_roles(bot: discord.Client, number_of_roles, announc
         for _ in guild.members:
             assert dpytest.verify().message()
         assert dpytest.verify().message().content("The announcement was made successfully")
-        
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("number_of_roles", [0, 1])
 async def test_send_announce_roles_with_no_dm_user(bot: discord.Client, number_of_roles, announce_cog):
@@ -367,15 +376,16 @@ async def test_send_announce_roles_with_no_dm_user(bot: discord.Client, number_o
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == role_id_list
         # sending the message
         with mock.patch('discord.Member.send',
-                    mock.Mock(side_effect=Exception('AttributeError'))):
+                        mock.Mock(side_effect=Exception('AttributeError'))):
             with pytest.raises(discord.ext.commands.errors.CommandInvokeError) as e_info:
-                await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',channel=channel)
+                await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send', channel=channel)
 
 
 @pytest.mark.asyncio
@@ -390,7 +400,8 @@ async def test_add_non_existent_role(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == []
@@ -410,7 +421,8 @@ async def test_add_same_role(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce add',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == [roles[0].id]
@@ -429,7 +441,8 @@ async def test_remove_role_from_none(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce remove',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == []
@@ -438,7 +451,8 @@ async def test_remove_role_from_none(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce remove',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == []
@@ -458,7 +472,8 @@ async def test_remove_existing_role(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce remove',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == []
@@ -480,7 +495,8 @@ async def test_remove_non_existent_role(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce remove',
                               channel=channel)
-        assert dpytest.verify().message().content("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
+        assert dpytest.verify().message().content(
+            "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
         assert dpytest.verify().message()
         assert announce_cog.has_active_msg(guild.id)
         assert announce_cog.roles[guild.id] == [roles[0].id]
@@ -617,7 +633,8 @@ async def test_announce_db_no_update_time_from_illegal_use(announce_cog):
                     mock.AsyncMock(return_value=msg_mock)):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce create',
                               channel=channel)
-        assert dpytest.verify().message().content("You have recently sent an announcement and cannot use this function for 30 days")
+        assert dpytest.verify().message().content(
+            "You have recently sent an announcement and cannot use this function for 30 days")
         assert not announce_cog.has_active_msg(guild.id)
         assert announce_cog.announce_database_manager.get_last_use_date(guild.id) == current_time
         await dpytest.message(KoalaBot.COMMAND_PREFIX + 'announce send',
