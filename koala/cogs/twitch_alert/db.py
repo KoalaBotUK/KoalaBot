@@ -2,8 +2,6 @@
 
 # Built-in/Generic Imports
 import re
-from sqlalchemy import select, delete, and_, null
-from sqlalchemy.orm import selectinload
 
 # Own modules
 from koala.utils import KoalaDBManager
@@ -18,6 +16,8 @@ from .env import TWITCH_KEY, TWITCH_SECRET
 
 # Libs
 import discord
+from sqlalchemy import select, delete, and_, null
+from sqlalchemy.orm import selectinload
 
 
 # Constants

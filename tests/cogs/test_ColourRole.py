@@ -18,21 +18,22 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 from discord.ext import commands
+from sqlalchemy import delete, select
 
 # Own modules
 import KoalaBot
+from koala.db import session_manager
 from koala.cogs import ColourRole
-from koala.cogs.ColourRole import ColourRoleDBManager
+from koala.cogs import colour_role
+from koala.cogs.colour_role.utils import COLOUR_ROLE_NAMING
+from koala.cogs.colour_role.db import ColourRoleDBManager
+from koala.cogs.colour_role.models import GuildColourChangePermissions, GuildInvalidCustomColourRoles
 from tests.tests_utils import LastCtxCog
-from koala.utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 
 # Variables
-#role_colour_cog: ColourRole.ColourRole = None
-#utils_cog: TestUtilsCog.TestUtilsCog = None
-DBManager = ColourRoleDBManager(KoalaBot.database_manager)
-DBManager.create_tables()
+DBManager = ColourRoleDBManager()
 
 
 @pytest.fixture(autouse=True)
@@ -45,7 +46,7 @@ def utils_cog(bot):
 
 @pytest.fixture(autouse=True)
 def role_colour_cog(bot):
-    role_colour_cog = ColourRole.ColourRole(bot)
+    role_colour_cog = ColourRole(bot)
     bot.add_cog(role_colour_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -100,19 +101,15 @@ async def make_list_of_protected_colour_roles(guild: discord.Guild, length: int)
 
 
 def independent_get_protected_colours(guild_id):
-    dbm: KoalaDBManager = KoalaBot.database_manager
-    rows = dbm.db_execute_select(f"""SELECT * FROM GuildInvalidCustomColourRoles WHERE guild_id = {guild_id};""")
-    if not rows:
-        return []
-    return [row[1] for row in rows]
+    with session_manager() as session:
+        rows = session.execute(select(GuildInvalidCustomColourRoles.role_id).filter_by(guild_id=guild_id)).all()
+        return [row.role_id for row in rows]
 
 
 def independent_get_colour_change_roles(guild_id):
-    dbm: KoalaDBManager = KoalaBot.database_manager
-    rows = dbm.db_execute_select(f"""SELECT * FROM GuildColourChangePermissions WHERE guild_id = {guild_id};""")
-    if not rows:
-        return []
-    return [row[1] for row in rows]
+    with session_manager() as session:
+        rows = session.execute(select(GuildColourChangePermissions.role_id).filter_by(guild_id=guild_id)).all()
+        return [row.role_id for row in rows]
 
 
 @pytest.mark.parametrize("length", [0, 1, 2, 5])
@@ -160,7 +157,7 @@ async def test_cr_db_functions_colour_change_roles(length):
 async def test_is_allowed_to_change_colour_no_guild_roles(utils_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    assert not ColourRole.is_allowed_to_change_colour(ctx)
+    assert not colour_role.cog.is_allowed_to_change_colour(ctx)
 
 
 @pytest.mark.asyncio
@@ -170,7 +167,7 @@ async def test_is_allowed_to_change_colour_false(utils_cog):
     roles = await make_list_of_roles(ctx.guild, 1)
     role = roles[0]
     DBManager.add_colour_change_role_perms(ctx.guild.id, role.id)
-    assert not ColourRole.is_allowed_to_change_colour(ctx)
+    assert not colour_role.cog.is_allowed_to_change_colour(ctx)
 
 
 @pytest.mark.asyncio
@@ -182,7 +179,7 @@ async def test_is_allowed_to_change_colour_true(utils_cog):
     member: discord.Member = ctx.author
     DBManager.add_colour_change_role_perms(ctx.guild.id, role.id)
     await member.add_roles(role)
-    assert ColourRole.is_allowed_to_change_colour(ctx)
+    assert colour_role.cog.is_allowed_to_change_colour(ctx)
 
 
 @pytest.mark.parametrize("hex_str, value",
@@ -280,7 +277,7 @@ async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = await make_list_of_roles(guild, 5)
     # add num_roles roles to the protected roles
-    chosen = random.choices(roles, k=2)
+    chosen = random.sample(roles, k=num_roles)
     lowest_protected = 2000000000
     for r in chosen:
         DBManager.add_guild_protected_colour_role(guild.id, r.id)
@@ -300,10 +297,10 @@ async def test_create_custom_colour_role(role_colour_cog, utils_cog):
     ctx: commands.Context = utils_cog.get_last_ctx()
     colour: discord.Colour = discord.Colour.from_rgb(16, 16, 16)
     colour_str = "101010"
-    with mock.patch('koala.cogs.ColourRole.ColourRole.calculate_custom_colour_role_position', return_value=2) as mock_calc:
+    with mock.patch('koala.cogs.ColourRole.calculate_custom_colour_role_position', return_value=2) as mock_calc:
         role = await role_colour_cog.create_custom_colour_role(colour, colour_str, ctx)
         assert role in guild.roles
-        assert re.match(ColourRole.COLOUR_ROLE_NAMING, role.name), role.name
+        assert re.match(COLOUR_ROLE_NAMING, role.name), role.name
         assert role.colour.value == colour.value
         assert role.position == 2
         mock_calc.assert_called_once_with(guild)
@@ -317,8 +314,8 @@ async def test_get_guild_protected_colours(num_roles, utils_cog, role_colour_cog
     ctx: commands.Context = utils_cog.get_last_ctx()
     roles = await make_list_of_custom_colour_roles(guild, num_roles)
     colours = [role.colour for role in roles]
-    with mock.patch('koala.cogs.ColourRole.ColourRole.get_protected_roles', return_value=roles) as mock_roles:
-        with mock.patch('koala.cogs.ColourRole.ColourRole.get_role_colours', return_value=colours) as mock_colours:
+    with mock.patch('koala.cogs.ColourRole.get_protected_roles', return_value=roles) as mock_roles:
+        with mock.patch('koala.cogs.ColourRole.get_role_colours', return_value=colours) as mock_colours:
             result = role_colour_cog.get_guild_protected_colours(ctx)
             mock_roles.assert_called_once_with(guild)
             mock_colours.assert_called_once_with(roles)
@@ -563,9 +560,10 @@ async def test_custom_colour_valid():
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    DBManager.get_parent_database_manager().clear_all_tables(DBManager.get_parent_database_manager().fetch_all_tables())
-    yield DBManager
-
+    with session_manager() as session:
+        session.execute(delete(GuildColourChangePermissions))
+        session.execute(delete(GuildInvalidCustomColourRoles))
+        session.commit()
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_is_dpytest():
