@@ -13,72 +13,18 @@ Commented using reStructuredText (reST)
 import asyncio
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 # Own modules
 import KoalaBot
-from KoalaBot import database_manager as DBManager
+
+from .db import get_guild_welcome_message, update_guild_welcome_message, new_guild_welcome_message, \
+    remove_guild_welcome_message
+from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, \
+    BASE_LEGAL_MESSAGE
 
 # Constants
 
-load_dotenv()
-BASE_LEGAL_MESSAGE = """This server utilizes KoalaBot. In joining this server, you agree to the Terms & Conditions of 
-KoalaBot and confirm you have read and understand our Privacy Policy. For legal documents relating to this, please view 
-the following link: http://legal.koalabot.uk/"""
-DEFAULT_WELCOME_MESSAGE = "Hello. This is a default welcome message because the guild that this came from did not configure a welcome message! Please see below."
 # Variables
-
-
-def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout=60.0) -> (discord.Message, discord.TextChannel):
-    try:
-        confirmation = bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
-        return confirmation
-    except Exception:
-        confirmation = None
-    return confirmation, ctx.channel
-
-
-async def ask_for_confirmation(confirmation: discord.Message, channel: discord.TextChannel):
-    if confirmation is None:
-        await channel.send('Timed out.')
-        return False
-    else:
-        channel = confirmation.channel
-        x = await confirm_message(confirmation)
-        if x is None:
-            await channel.send('Invalid input, please redo the command.')
-            return False
-        return x
-
-
-async def confirm_message(message: discord.Message):
-    conf_message = message.content.rstrip().strip().lower()
-    if conf_message not in ['y', 'n']:
-        return
-    else:
-        if conf_message == 'y':
-            return True
-        else:
-            return False
-
-
-def get_guild_welcome_message(guild_id: int):
-    """
-    Retrieves a guild's customised welcome message from the database. Includes the basic legal message constant
-    :param guild_id: ID of the guild
-    :return: The particular guild's welcome message : str
-    """
-    msg = DBManager.fetch_guild_welcome_message(guild_id)
-    if msg is None:
-        msg = DBManager.new_guild_welcome_message(guild_id)
-    return f"{msg}\r\n{BASE_LEGAL_MESSAGE}"
-
-
-def get_non_bot_members(guild: discord.Guild):
-    if KoalaBot.is_dpytest:
-        return [member for member in guild.members if not member.bot and str(member) != KoalaBot.TEST_BOT_USER]
-    else:
-        return [member for member in guild.members if not member.bot]
 
 
 class IntroCog(commands.Cog, name="KoalaBot"):
@@ -95,7 +41,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         On bot joining guild, add this guild to the database of guild welcome messages.
         :param guild: Guild KoalaBot just joined
         """
-        DBManager.new_guild_welcome_message(guild.id)
+        new_guild_welcome_message(guild.id)
         KoalaBot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
 
     @commands.Cog.listener()
@@ -113,7 +59,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         On bot leaving guild, remove the guild from the database of guild welcome messages
         :param guild: Guild KoalaBot just left
         """
-        count = DBManager.remove_guild_welcome_message(guild.id)
+        count = remove_guild_welcome_message(guild.id)
         KoalaBot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
@@ -169,7 +115,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
                 try:
                     await ctx.send("Okay, updating the welcome message of the guild in the database now.")
                     new_message = new_message.lstrip()
-                    updated_entry = DBManager.update_guild_welcome_message(ctx.guild.id, new_message)
+                    updated_entry = update_guild_welcome_message(ctx.guild.id, new_message)
                     await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
                 except None:
                     await ctx.send("Something went wrong, please contact the bot developers for support.")
