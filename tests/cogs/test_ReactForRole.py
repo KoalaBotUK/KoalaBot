@@ -18,24 +18,29 @@ import discord.ext.test as dpytest
 import emoji
 import mock
 import pytest
+import sqlalchemy.orm
+from sqlalchemy import select, delete
 from discord.ext import commands
 from discord.ext.test import factories as dpyfactory
-from tests.tests_utils import LastCtxCog
-from tests.tests_utils import TestUtils as testutils
 
 # Own modules
 import KoalaBot
 from koala.cogs import ReactForRole
-from koala.cogs.ReactForRole import ReactForRoleDBManager
+from koala.cogs.react_for_role.db import ReactForRoleDBManager
+from koala.db import session_manager
 from koala.utils import KoalaColours
 from koala.utils.KoalaDBManager import KoalaDBManager
 from koala.utils.KoalaUtils import wait_for_message
 
+from koala.cogs.react_for_role.models import GuildRFRRequiredRoles, GuildRFRMessages, RFRMessageEmojiRoles
+
+from tests.tests_utils import LastCtxCog
+from tests.tests_utils import TestUtils as testutils
+
 # Constants
 
 # Variables
-DBManager = ReactForRoleDBManager(KoalaBot.database_manager)
-DBManager.create_tables()
+DBManager = ReactForRoleDBManager()
 
 
 @pytest.fixture(autouse=True)
@@ -49,282 +54,270 @@ def utils_cog(bot):
 
 @pytest.fixture(autouse=True)
 def rfr_cog(bot):
-    rfr_cog = ReactForRole.ReactForRole(bot)
+    rfr_cog = ReactForRole(bot)
     bot.add_cog(rfr_cog)
     dpytest.configure(bot)
     print("Tests starting")
     return rfr_cog
 
 
-def independent_get_guild_rfr_message(guild_id=None, channel_id=None, message_id=None) -> List[
-    Tuple[int, int, int, int]]:
-    sql_select_str = "SELECT * FROM GuildRFRMessages WHERE "
+def independent_get_guild_rfr_message(session: sqlalchemy.orm.Session, guild_id=None, channel_id=None, message_id=None
+                                      ) -> List[Tuple[int, int, int, int]]:
+    sql_select = select(GuildRFRMessages)
     if guild_id is not None:
-        sql_select_str += f"guild_id = {guild_id} AND "
+        sql_select = sql_select.filter_by(guild_id=guild_id)
     if channel_id is not None:
-        sql_select_str += f"channel_id = {channel_id} AND "
+        sql_select = sql_select.filter_by(channel_id=channel_id)
     if message_id is not None:
-        sql_select_str += f"message_id = {message_id} AND "
-    if not guild_id and not channel_id and not message_id:
-        sql_select_str = sql_select_str[:-7] + ";"
-    else:
-        sql_select_str = sql_select_str[:-5] + ";"
-    dbm: KoalaDBManager = KoalaBot.database_manager
-    rows = dbm.db_execute_select(sql_select_str)
-    if not rows:
-        return []
-    return rows
+        sql_select = sql_select.filter_by(message_id=message_id)
+    rows = session.execute(sql_select).scalars()
+    return [row.old_format() for row in rows]
 
 
-def independent_get_rfr_message_emoji_role(emoji_role_id=None, emoji_raw=None, role_id=None) -> List[
+def independent_get_rfr_message_emoji_role(session: sqlalchemy.orm.Session, emoji_role_id=None, emoji_raw=None, role_id=None) -> List[
     Tuple[int, str, int]]:
-    sql_select_str = "SELECT emoji_role_id, emoji_raw, role_id FROM RFRMessageEmojiRoles WHERE "
+    sql_select = select(RFRMessageEmojiRoles)
     if emoji_role_id is not None:
-        sql_select_str += f"emoji_role_id = {emoji_role_id} AND "
+        sql_select = sql_select.filter_by(emoji_role_id=emoji_role_id)
     if emoji_raw is not None:
-        sql_select_str += f"emoji_raw = '{emoji_raw}' AND "
+        sql_select = sql_select.filter_by(emoji_raw=emoji_raw)
     if role_id is not None:
-        sql_select_str += f"role_id = {role_id} AND "
-    if not emoji_role_id and not emoji_raw and not role_id:
-        sql_select_str = sql_select_str[:-7] + ";"
-    else:
-        sql_select_str = sql_select_str[:-5] + ";"
-    dbm: KoalaDBManager = KoalaBot.database_manager
-    rows = dbm.db_execute_select(sql_select_str)
-    if not rows:
-        return []
-    return rows
+        sql_select = sql_select.filter_by(role_id=role_id)
+
+    rows = session.execute(sql_select).scalars().all()
+    return [(row.emoji_role_id, row.emoji_raw, row.role_id) for row in rows]
 
 
-def independent_get_guild_rfr_required_role(guild_id=None, role_id=None) -> List[Tuple[int, int]]:
-    sql_select_str = "SELECT * FROM GuildRFRRequiredRoles WHERE "
+def independent_get_guild_rfr_required_role(session: sqlalchemy.orm.Session, guild_id=None, role_id=None
+                                            ) -> List[Tuple[int, int]]:
+    sql_select = select(GuildRFRRequiredRoles)
     if guild_id is not None:
-        sql_select_str += f"guild_id = {guild_id} AND "
+        sql_select = sql_select.filter_by(guild_id=guild_id)
     if role_id is not None:
-        sql_select_str += f"role_id = {role_id} AND "
-    if not guild_id and not role_id:
-        sql_select_str = sql_select_str[:-7] + ";"
+        sql_select = sql_select.filter_by(role_id=role_id)
+    rows = session.execute(sql_select).scalars().all()
+
+    return [(row.guild_id, row.role_id) for row in rows]
+
+
+def get_rfr_reaction_role_by_role_id(session: sqlalchemy.orm.Session, emoji_role_id: int, role_id: int
+                                     ) -> Optional[int]:
+    row = session.execute(select(RFRMessageEmojiRoles.role_id)
+                          .filter_by(emoji_role_id=emoji_role_id, role_id=role_id)).one_or_none()
+    if row:
+        return row.role_id
     else:
-        sql_select_str = sql_select_str[:-5] + ";"
-    rows = DBManager.get_parent_database_manager().db_execute_select(sql_select_str)
-    if not rows:
-        return []
-    return rows
-
-
-def get_rfr_reaction_role_by_role_id(emoji_role_id: int, role_id: int) -> Optional[int]:
-    rows: Tuple[int, str, int] = DBManager.get_parent_database_manager().db_execute_select(
-        f"""SELECT * FROM RFRMessageEmojiRoles WHERE emoji_role_id = {emoji_role_id} AND role_id = {role_id};""")
-    if not rows:
         return
-    return rows[0][2]
 
 
 @pytest.mark.asyncio
 async def test_rfr_db_functions_guild_rfr_messages():
-    guild: discord.Guild = dpytest.get_config().guilds[0]
-    channel: discord.TextChannel = dpytest.get_config().channels[0]
-    msg_id = dpyfactory.make_id()
-    # Test when no messages exist
-    expected_full_list: List[Tuple[int, int, int, int]] = []
-    assert independent_get_guild_rfr_message(
-        guild.id, channel.id, msg_id) == expected_full_list
-    assert independent_get_guild_rfr_message() == expected_full_list
-    # Test on adding first message, 1 message, 1 channel, 1 guild
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
-    expected_full_list.append((guild.id, channel.id, msg_id, 1))
-    assert independent_get_guild_rfr_message() == expected_full_list
-    assert independent_get_guild_rfr_message(guild.id, channel.id, msg_id) == [
-        expected_full_list[0]]
-    # 2 guilds, 1 channel each, 2 messages
-    guild2: discord.Guild = dpytest.back.make_guild("TestGuild2")
-    channel2: discord.TextChannel = dpytest.back.make_text_channel(
-        "TestGuild2Channel1", guild2)
-    msg_id = dpyfactory.make_id()
-    dpytest.get_config().guilds.append(guild2)
-    DBManager.add_rfr_message(guild2.id, channel2.id, msg_id)
-    expected_full_list.append((guild2.id, channel2.id, msg_id, 2))
-    assert independent_get_guild_rfr_message(guild2.id, channel2.id, msg_id) == [
-        expected_full_list[1]]
-    assert independent_get_guild_rfr_message(guild2.id, channel2.id, msg_id)[0] == DBManager.get_rfr_message(guild2.id,
-                                                                                                             channel2.id,
-                                                                                                             msg_id)
-    assert independent_get_guild_rfr_message() == expected_full_list
-    # 1 guild, 2 channels with 1 message each
-    guild1channel2: discord.TextChannel = dpytest.back.make_text_channel(
-        "TestGuild1Channel2", guild)
-    msg_id = dpyfactory.make_id()
-    DBManager.add_rfr_message(guild.id, guild1channel2.id, msg_id)
-    expected_full_list.append((guild.id, guild1channel2.id, msg_id, 3))
-    assert independent_get_guild_rfr_message(
-        guild.id, guild1channel2.id, msg_id) == [expected_full_list[2]]
-    assert independent_get_guild_rfr_message(guild.id, guild1channel2.id, msg_id)[0] == DBManager.get_rfr_message(
-        guild.id, guild1channel2.id, msg_id)
-    assert independent_get_guild_rfr_message() == expected_full_list
-    assert independent_get_guild_rfr_message(
-        guild.id) == [expected_full_list[0], expected_full_list[2]]
-    # 1 guild, 1 channel, with 2 messages
-    msg_id = dpyfactory.make_id()
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
-    expected_full_list.append((guild.id, channel.id, msg_id, 4))
-    assert independent_get_guild_rfr_message(guild.id, channel.id, msg_id) == [
-        expected_full_list[3]]
-    assert independent_get_guild_rfr_message(guild.id, channel.id, msg_id)[0] == DBManager.get_rfr_message(guild.id,
-                                                                                                           channel.id,
-                                                                                                           msg_id)
-    assert independent_get_guild_rfr_message() == expected_full_list
-    assert independent_get_guild_rfr_message(guild.id, channel.id) == [
-        expected_full_list[0], expected_full_list[3]]
-    # remove all messages
-    guild_rfr_messages = independent_get_guild_rfr_message()
-    for guild_rfr_message in guild_rfr_messages:
-        assert guild_rfr_message in guild_rfr_messages
-        DBManager.remove_rfr_message(
-            guild_rfr_message[0], guild_rfr_message[1], guild_rfr_message[2])
-        assert guild_rfr_message not in independent_get_guild_rfr_message()
-    assert independent_get_guild_rfr_message() == []
+    with session_manager() as session:
+        guild: discord.Guild = dpytest.get_config().guilds[0]
+        channel: discord.TextChannel = dpytest.get_config().channels[0]
+        msg_id = dpyfactory.make_id()
+        # Test when no messages exist
+        expected_full_list: List[Tuple[int, int, int, int]] = []
+        assert independent_get_guild_rfr_message(
+            session, guild.id, channel.id, msg_id) == expected_full_list
+        assert independent_get_guild_rfr_message(session) == expected_full_list
+        # Test on adding first message, 1 message, 1 channel, 1 guild
+        DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+        expected_full_list.append((guild.id, channel.id, msg_id, 1))
+        assert independent_get_guild_rfr_message(session) == expected_full_list
+        assert independent_get_guild_rfr_message(session, guild.id, channel.id, msg_id) == [
+            expected_full_list[0]]
+        # 2 guilds, 1 channel each, 2 messages
+        guild2: discord.Guild = dpytest.back.make_guild("TestGuild2")
+        channel2: discord.TextChannel = dpytest.back.make_text_channel(
+            "TestGuild2Channel1", guild2)
+        msg_id = dpyfactory.make_id()
+        dpytest.get_config().guilds.append(guild2)
+        DBManager.add_rfr_message(guild2.id, channel2.id, msg_id)
+        expected_full_list.append((guild2.id, channel2.id, msg_id, 2))
+        assert independent_get_guild_rfr_message(session, guild2.id, channel2.id, msg_id) == [
+            expected_full_list[1]]
+        assert independent_get_guild_rfr_message(session, guild2.id, channel2.id, msg_id)[0] == DBManager.get_rfr_message(guild2.id,
+                                                                                                                 channel2.id,
+                                                                                                                 msg_id)
+        assert independent_get_guild_rfr_message(session) == expected_full_list
+        # 1 guild, 2 channels with 1 message each
+        guild1channel2: discord.TextChannel = dpytest.back.make_text_channel(
+            "TestGuild1Channel2", guild)
+        msg_id = dpyfactory.make_id()
+        DBManager.add_rfr_message(guild.id, guild1channel2.id, msg_id)
+        expected_full_list.append((guild.id, guild1channel2.id, msg_id, 3))
+        assert independent_get_guild_rfr_message(
+            session, guild.id, guild1channel2.id, msg_id) == [expected_full_list[2]]
+        assert independent_get_guild_rfr_message(session, guild.id, guild1channel2.id, msg_id)[0] == DBManager.get_rfr_message(
+            guild.id, guild1channel2.id, msg_id)
+        assert independent_get_guild_rfr_message(session) == expected_full_list
+        assert independent_get_guild_rfr_message(session,
+            guild.id) == [expected_full_list[0], expected_full_list[2]]
+        # 1 guild, 1 channel, with 2 messages
+        msg_id = dpyfactory.make_id()
+        DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+        expected_full_list.append((guild.id, channel.id, msg_id, 4))
+        assert independent_get_guild_rfr_message(session, guild.id, channel.id, msg_id) == [
+            expected_full_list[3]]
+        assert independent_get_guild_rfr_message(session, guild.id, channel.id, msg_id)[0] == DBManager.get_rfr_message(guild.id,
+                                                                                                               channel.id,
+                                                                                                               msg_id)
+        assert independent_get_guild_rfr_message(session) == expected_full_list
+        assert independent_get_guild_rfr_message(session, guild.id, channel.id) == [
+            expected_full_list[0], expected_full_list[3]]
+        # remove all messages
+        guild_rfr_messages = independent_get_guild_rfr_message(session)
+        for guild_rfr_message in guild_rfr_messages:
+            assert guild_rfr_message in guild_rfr_messages
+            DBManager.remove_rfr_message(
+                guild_rfr_message[0], guild_rfr_message[1], guild_rfr_message[2])
+            assert guild_rfr_message not in independent_get_guild_rfr_message(session)
+        assert independent_get_guild_rfr_message(session) == []
 
 
 @pytest.mark.asyncio
 async def test_rfr_db_functions_rfr_message_emoji_roles():
-    guild: discord.Guild = dpytest.get_config().guilds[0]
-    channel: discord.TextChannel = dpytest.get_config().channels[0]
-    msg_id = dpyfactory.make_id()
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
-    guild_rfr_message = independent_get_guild_rfr_message()[0]
-    expected_full_list: List[Tuple[int, str, int]] = []
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
-    # 1 unicode, 1 role
-    fake_emoji_1 = testutils.fake_unicode_emoji()
-    fake_role_id_1 = dpyfactory.make_id()
-    expected_full_list.append((1, fake_emoji_1, fake_role_id_1))
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message[3], fake_emoji_1, fake_role_id_1)
-    assert independent_get_rfr_message_emoji_role() == expected_full_list, DBManager.get_rfr_message_emoji_roles(1)
-    assert independent_get_rfr_message_emoji_role(1) == expected_full_list
-    assert independent_get_rfr_message_emoji_role(guild_rfr_message[3], fake_emoji_1,
-                                                  fake_role_id_1) == [DBManager.get_rfr_reaction_role(
-        guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
-    # 1 unicode, 1 custom, trying to get same role
-    fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message[3], fake_emoji_2, fake_role_id_1)
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
-    assert independent_get_rfr_message_emoji_role(guild_rfr_message[3]) == DBManager.get_rfr_message_emoji_roles(
-        guild_rfr_message[3])
-    assert [DBManager.get_rfr_reaction_role(
-        guild_rfr_message[3], fake_emoji_2, fake_role_id_1)] == [None]
-    # 2 roles, with 1 emoji trying to give both roles
-    fake_role_id_2 = dpyfactory.make_id()
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message[3], fake_emoji_1, fake_role_id_2)
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
-    assert independent_get_rfr_message_emoji_role(guild_rfr_message[3]) == DBManager.get_rfr_message_emoji_roles(
-        guild_rfr_message[3])
-    assert [DBManager.get_rfr_reaction_role(
-        guild_rfr_message[3], fake_emoji_1, fake_role_id_2)] == [None]
+    with session_manager() as session:
+        guild: discord.Guild = dpytest.get_config().guilds[0]
+        channel: discord.TextChannel = dpytest.get_config().channels[0]
+        msg_id = dpyfactory.make_id()
+        DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+        guild_rfr_message = independent_get_guild_rfr_message(session)[0]
+        expected_full_list: List[Tuple[int, str, int]] = []
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list
+        # 1 unicode, 1 role
+        fake_emoji_1 = testutils.fake_unicode_emoji()
+        fake_role_id_1 = dpyfactory.make_id()
+        expected_full_list.append((1, fake_emoji_1, fake_role_id_1))
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message[3], fake_emoji_1, fake_role_id_1)
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list, DBManager.get_rfr_message_emoji_roles(1)
+        assert independent_get_rfr_message_emoji_role(session, 1) == expected_full_list
+        assert independent_get_rfr_message_emoji_role(session, guild_rfr_message[3], fake_emoji_1,
+                                                      fake_role_id_1) == [DBManager.get_rfr_reaction_role(
+            guild_rfr_message[3], fake_emoji_1, fake_role_id_1)]
+        # 1 unicode, 1 custom, trying to get same role
+        fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message[3], fake_emoji_2, fake_role_id_1)
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list
+        assert independent_get_rfr_message_emoji_role(session, guild_rfr_message[3]) == DBManager.get_rfr_message_emoji_roles(
+            guild_rfr_message[3])
+        assert [DBManager.get_rfr_reaction_role(
+            guild_rfr_message[3], fake_emoji_2, fake_role_id_1)] == [None]
+        # 2 roles, with 1 emoji trying to give both roles
+        fake_role_id_2 = dpyfactory.make_id()
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message[3], fake_emoji_1, fake_role_id_2)
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list
+        assert independent_get_rfr_message_emoji_role(session, guild_rfr_message[3]) == DBManager.get_rfr_message_emoji_roles(
+            guild_rfr_message[3])
+        assert [DBManager.get_rfr_reaction_role(
+            guild_rfr_message[3], fake_emoji_1, fake_role_id_2)] == [None]
 
-    # 2 roles, 2 emojis, 1 message. split between them
-    fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
-    fake_role_id_2 = dpyfactory.make_id()
-    expected_full_list.append((1, fake_emoji_2, fake_role_id_2))
-    DBManager.add_rfr_message_emoji_role(*expected_full_list[1])
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
-    assert independent_get_rfr_message_emoji_role(
-        1, fake_emoji_1) == [(1, fake_emoji_1, fake_role_id_1)]
-    assert independent_get_rfr_message_emoji_role(
-        1, fake_emoji_2) == [(1, fake_emoji_2, fake_role_id_2)]
-    assert independent_get_rfr_message_emoji_role(1, fake_emoji_1)[0][
-               2] == DBManager.get_rfr_reaction_role_by_emoji_str(1,
-                                                                  fake_emoji_1)
-    assert independent_get_rfr_message_emoji_role(
-        1) == DBManager.get_rfr_message_emoji_roles(1)
-    assert independent_get_rfr_message_emoji_role(1, role_id=fake_role_id_2)[0][
-               2] == get_rfr_reaction_role_by_role_id(emoji_role_id=1, role_id=fake_role_id_2)
+        # 2 roles, 2 emojis, 1 message. split between them
+        fake_emoji_2 = testutils.fake_custom_emoji_str_rep()
+        fake_role_id_2 = dpyfactory.make_id()
+        expected_full_list.append((1, fake_emoji_2, fake_role_id_2))
+        DBManager.add_rfr_message_emoji_role(*expected_full_list[1])
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list
+        assert independent_get_rfr_message_emoji_role(session,
+            1, fake_emoji_1) == [(1, fake_emoji_1, fake_role_id_1)]
+        assert independent_get_rfr_message_emoji_role(session,
+            1, fake_emoji_2) == [(1, fake_emoji_2, fake_role_id_2)]
+        assert independent_get_rfr_message_emoji_role(session, 1, fake_emoji_1)[0][
+                   2] == DBManager.get_rfr_reaction_role_by_emoji_str(1,
+                                                                      fake_emoji_1)
+        assert independent_get_rfr_message_emoji_role(session,
+            1) == DBManager.get_rfr_message_emoji_roles(1)
+        assert independent_get_rfr_message_emoji_role(session, 1, role_id=fake_role_id_2)[0][
+                   2] == get_rfr_reaction_role_by_role_id(session, emoji_role_id=1, role_id=fake_role_id_2)
 
-    # 2 roles 2 emojis, 2 messages. duplicated messages
-    msg2_id = dpyfactory.make_id()
-    DBManager.add_rfr_message(guild.id, channel.id, msg2_id)
-    assert independent_get_guild_rfr_message(
-    ) == [guild_rfr_message, (guild.id, channel.id, msg2_id, 2)]
-    guild_rfr_message_2 = independent_get_guild_rfr_message()[1]
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message_2[3], fake_emoji_1, fake_role_id_1)
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message_2[3], fake_emoji_2, fake_role_id_2)
-    expected_full_list.extend([(guild_rfr_message_2[3], fake_emoji_1, fake_role_id_1),
-                               (guild_rfr_message_2[3], fake_emoji_2, fake_role_id_2)])
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
-    assert independent_get_rfr_message_emoji_role(
-        2) == DBManager.get_rfr_message_emoji_roles(2)
-    assert independent_get_rfr_message_emoji_role(
-        1) == DBManager.get_rfr_message_emoji_roles(1)
+        # 2 roles 2 emojis, 2 messages. duplicated messages
+        msg2_id = dpyfactory.make_id()
+        DBManager.add_rfr_message(guild.id, channel.id, msg2_id)
+        assert independent_get_guild_rfr_message(session
+        ) == [guild_rfr_message, (guild.id, channel.id, msg2_id, 2)]
+        guild_rfr_message_2 = independent_get_guild_rfr_message(session)[1]
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message_2[3], fake_emoji_1, fake_role_id_1)
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message_2[3], fake_emoji_2, fake_role_id_2)
+        expected_full_list.extend([(guild_rfr_message_2[3], fake_emoji_1, fake_role_id_1),
+                                   (guild_rfr_message_2[3], fake_emoji_2, fake_role_id_2)])
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list
+        assert independent_get_rfr_message_emoji_role(session,
+            2) == DBManager.get_rfr_message_emoji_roles(2)
+        assert independent_get_rfr_message_emoji_role(session,
+            1) == DBManager.get_rfr_message_emoji_roles(1)
 
-    # 2 roles 2 emojis 2 messages. Swapped
-    msg3_id = dpyfactory.make_id()
-    DBManager.add_rfr_message(guild.id, channel.id, msg3_id)
-    assert independent_get_guild_rfr_message() == [guild_rfr_message, (guild.id, channel.id, msg2_id, 2),
-                                                   (guild.id, channel.id, msg3_id, 3)]
-    guild_rfr_message_3 = independent_get_guild_rfr_message()[2]
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message_3[3], fake_emoji_1, fake_role_id_2)
-    DBManager.add_rfr_message_emoji_role(
-        guild_rfr_message_3[3], fake_emoji_2, fake_role_id_1)
-    expected_full_list.extend([(guild_rfr_message_3[3], fake_emoji_1, fake_role_id_2),
-                               (guild_rfr_message_3[3], fake_emoji_2, fake_role_id_1)])
-    assert independent_get_rfr_message_emoji_role() == expected_full_list
-    assert independent_get_rfr_message_emoji_role(
-        3) == DBManager.get_rfr_message_emoji_roles(3)
-    assert [x[2] for x in independent_get_rfr_message_emoji_role(emoji_raw=fake_emoji_1)] == [
-        DBManager.get_rfr_reaction_role_by_emoji_str(1, fake_emoji_1),
-        DBManager.get_rfr_reaction_role_by_emoji_str(2, fake_emoji_1),
-        DBManager.get_rfr_reaction_role_by_emoji_str(3, fake_emoji_1)]
-    assert [x[2] for x in independent_get_rfr_message_emoji_role(emoji_raw=fake_emoji_2)] == [
-        DBManager.get_rfr_reaction_role_by_emoji_str(1, fake_emoji_2),
-        DBManager.get_rfr_reaction_role_by_emoji_str(2, fake_emoji_2),
-        DBManager.get_rfr_reaction_role_by_emoji_str(3, fake_emoji_2)]
-    # test deletion works from rfr message
-    rfr_message_emoji_roles = independent_get_rfr_message_emoji_role(3)
-    DBManager.remove_rfr_message(guild.id, channel.id, msg3_id)
-    for row in rfr_message_emoji_roles:
-        assert row not in independent_get_rfr_message_emoji_role(
-        ), independent_get_guild_rfr_message()
-    # test deleting just emoji role combos
-    rfr_message_emoji_roles = independent_get_rfr_message_emoji_role(2)
-    DBManager.remove_rfr_message_emoji_roles(2)
-    for row in rfr_message_emoji_roles:
-        assert row not in independent_get_rfr_message_emoji_role(
-        ), independent_get_guild_rfr_message()
-    # test deleteing specific
-    rfr_message_emoji_roles = independent_get_rfr_message_emoji_role(1)
-    DBManager.remove_rfr_message_emoji_role(
-        1, emoji_raw=rfr_message_emoji_roles[0][1])
-    assert (rfr_message_emoji_roles[0][0], rfr_message_emoji_roles[0][1],
-            rfr_message_emoji_roles[0][2]) not in independent_get_rfr_message_emoji_role()
-    DBManager.remove_rfr_message_emoji_role(
-        1, role_id=rfr_message_emoji_roles[1][2])
-    assert (rfr_message_emoji_roles[1][0], rfr_message_emoji_roles[1][1],
-            rfr_message_emoji_roles[1][2]) not in independent_get_rfr_message_emoji_role()
+        # 2 roles 2 emojis 2 messages. Swapped
+        msg3_id = dpyfactory.make_id()
+        DBManager.add_rfr_message(guild.id, channel.id, msg3_id)
+        assert independent_get_guild_rfr_message(session) == [guild_rfr_message, (guild.id, channel.id, msg2_id, 2),
+                                                       (guild.id, channel.id, msg3_id, 3)]
+        guild_rfr_message_3 = independent_get_guild_rfr_message(session)[2]
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message_3[3], fake_emoji_1, fake_role_id_2)
+        DBManager.add_rfr_message_emoji_role(
+            guild_rfr_message_3[3], fake_emoji_2, fake_role_id_1)
+        expected_full_list.extend([(guild_rfr_message_3[3], fake_emoji_1, fake_role_id_2),
+                                   (guild_rfr_message_3[3], fake_emoji_2, fake_role_id_1)])
+        assert independent_get_rfr_message_emoji_role(session) == expected_full_list
+        assert independent_get_rfr_message_emoji_role(session,
+            3) == DBManager.get_rfr_message_emoji_roles(3)
+        assert [x[2] for x in independent_get_rfr_message_emoji_role(session, emoji_raw=fake_emoji_1)] == [
+            DBManager.get_rfr_reaction_role_by_emoji_str(1, fake_emoji_1),
+            DBManager.get_rfr_reaction_role_by_emoji_str(2, fake_emoji_1),
+            DBManager.get_rfr_reaction_role_by_emoji_str(3, fake_emoji_1)]
+        assert [x[2] for x in independent_get_rfr_message_emoji_role(session, emoji_raw=fake_emoji_2)] == [
+            DBManager.get_rfr_reaction_role_by_emoji_str(1, fake_emoji_2),
+            DBManager.get_rfr_reaction_role_by_emoji_str(2, fake_emoji_2),
+            DBManager.get_rfr_reaction_role_by_emoji_str(3, fake_emoji_2)]
+        # test deletion works from rfr message
+        rfr_message_emoji_roles = independent_get_rfr_message_emoji_role(session, 3)
+        DBManager.remove_rfr_message(guild.id, channel.id, msg3_id)
+        for row in rfr_message_emoji_roles:
+            assert row not in independent_get_rfr_message_emoji_role(session
+            ), independent_get_guild_rfr_message(session)
+        # test deleting just emoji role combos
+        rfr_message_emoji_roles = independent_get_rfr_message_emoji_role(session, 2)
+        DBManager.remove_rfr_message_emoji_roles(2)
+        for row in rfr_message_emoji_roles:
+            assert row not in independent_get_rfr_message_emoji_role(session
+            ), independent_get_guild_rfr_message(session)
+        # test deleteing specific
+        rfr_message_emoji_roles = independent_get_rfr_message_emoji_role(session, 1)
+        DBManager.remove_rfr_message_emoji_role(
+            1, emoji_raw=rfr_message_emoji_roles[0][1])
+        assert (rfr_message_emoji_roles[0][0], rfr_message_emoji_roles[0][1],
+                rfr_message_emoji_roles[0][2]) not in independent_get_rfr_message_emoji_role(session)
+        DBManager.remove_rfr_message_emoji_role(
+            1, role_id=rfr_message_emoji_roles[1][2])
+        assert (rfr_message_emoji_roles[1][0], rfr_message_emoji_roles[1][1],
+                rfr_message_emoji_roles[1][2]) not in independent_get_rfr_message_emoji_role(session)
 
 
 @pytest.mark.asyncio
 async def test_rfr_db_functions_guild_rfr_required_roles():
-    guild: discord.Guild = dpytest.get_config().guilds[0]
-    roles = []
-    for i in range(50):
-        role: discord.Role = testutils.fake_guild_role(guild)
-        roles.append(role)
-        DBManager.add_guild_rfr_required_role(guild.id, role.id)
-        assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], i
-        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
-            guild.id), i
+    with session_manager() as session:
+        guild: discord.Guild = dpytest.get_config().guilds[0]
+        roles = []
+        for i in range(50):
+            role: discord.Role = testutils.fake_guild_role(guild)
+            roles.append(role)
+            DBManager.add_guild_rfr_required_role(guild.id, role.id)
+            assert [x[1] for x in independent_get_guild_rfr_required_role(session)] == [x.id for x in roles], i
+            assert [x[1] for x in independent_get_guild_rfr_required_role(session)] == DBManager.get_guild_rfr_required_roles(
+                guild.id), i
 
-    while len(roles) > 0:
-        role: discord.Role = roles.pop()
-        DBManager.remove_guild_rfr_required_role(guild.id, role.id)
-        assert [x[1] for x in independent_get_guild_rfr_required_role()] == [x.id for x in roles], len(roles)
-        assert [x[1] for x in independent_get_guild_rfr_required_role()] == DBManager.get_guild_rfr_required_roles(
-            guild.id), len(roles)
+        while len(roles) > 0:
+            role: discord.Role = roles.pop()
+            DBManager.remove_guild_rfr_required_role(guild.id, role.id)
+            assert [x[1] for x in independent_get_guild_rfr_required_role(session)] == [x.id for x in roles], len(roles)
+            assert [x[1] for x in independent_get_guild_rfr_required_role(session)] == DBManager.get_guild_rfr_required_roles(
+                guild.id), len(roles)
 
 
 @pytest.mark.asyncio
@@ -339,13 +332,13 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input',
+    with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     side_effect=[str(channel_id), str(546542131)]) as mock_input:
         with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=None)):
             with pytest.raises(commands.CommandError) as exc:
                 await rfr_cog.get_rfr_message_from_prompts(ctx)
             assert str(exc.value) == "Invalid Message ID given."
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input',
+    with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     side_effect=[str(channel_id), str(msg_id)]) as mock_input:
         with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=msg)):
             with pytest.raises(commands.CommandError) as exc:
@@ -353,7 +346,7 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
             assert str(
                 exc.value) == "Message ID given is not that of a react for role message."
     DBManager.add_rfr_message(msg.guild.id, channel_id, msg_id)
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input',
+    with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     side_effect=[str(channel_id), str(msg_id)]) as mock_input:
         with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=msg)):
             rfr_msg, rfr_msg_channel = await rfr_cog.get_rfr_message_from_prompts(ctx)
@@ -615,13 +608,13 @@ async def test_rfr_create_message(bot):
     test_embed.set_footer(text="ReactForRole")
     test_embed.set_thumbnail(
         url=KoalaBot.KOALA_IMAGE_URL)
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input',
+    with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     mock.AsyncMock(return_value=embed_channel.mention)):
         with mock.patch('koala.utils.KoalaUtils.wait_for_message',
                         mock.AsyncMock(return_value=(None, channel))):
-            with mock.patch('koala.cogs.ReactForRole.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
+            with mock.patch('koala.cogs.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
                 with mock.patch(
-                        'koala.cogs.ReactForRole.ReactForRole.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
+                        'koala.cogs.ReactForRole.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
                     with mock.patch('discord.Message.delete') as mock_delete:
                         await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr createMessage")
                         mock_edit_channel_perms.assert_called_once_with(guild, embed_channel)
@@ -653,25 +646,26 @@ async def test_rfr_create_message(bot):
 
 @pytest.mark.asyncio
 async def test_rfr_delete_message():
-    config: dpytest.RunnerConfig = dpytest.get_config()
-    guild: discord.Guild = config.guilds[0]
-    channel: discord.TextChannel = guild.text_channels[0]
-    message: discord.Message = await dpytest.message("rfr")
-    msg_id = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
-    await dpytest.empty_queue()
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
-                    mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input', mock.AsyncMock(return_value="Y")):
-            with mock.patch('discord.Message.delete') as mock_msg_delete:
-                await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr deleteMessage")
-                mock_msg_delete.assert_called_once()
-                assert dpytest.verify().message().content(
-                    "Okay, this will delete an existing react for role message. I'll need some details first though.")
-                assert dpytest.verify().message()
-                assert dpytest.verify().message()
-                assert dpytest.verify().message()
-                assert not independent_get_guild_rfr_message(guild.id, channel.id, msg_id)
+    with session_manager() as session:
+        config: dpytest.RunnerConfig = dpytest.get_config()
+        guild: discord.Guild = config.guilds[0]
+        channel: discord.TextChannel = guild.text_channels[0]
+        message: discord.Message = await dpytest.message("rfr")
+        msg_id = message.id
+        DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+        await dpytest.empty_queue()
+        with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
+                        mock.AsyncMock(return_value=(message, channel))):
+            with mock.patch('koala.cogs.ReactForRole.prompt_for_input', mock.AsyncMock(return_value="Y")):
+                with mock.patch('discord.Message.delete') as mock_msg_delete:
+                    await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr deleteMessage")
+                    mock_msg_delete.assert_called_once()
+                    assert dpytest.verify().message().content(
+                        "Okay, this will delete an existing react for role message. I'll need some details first though.")
+                    assert dpytest.verify().message()
+                    assert dpytest.verify().message()
+                    assert dpytest.verify().message()
+                    assert not independent_get_guild_rfr_message(session, guild.id, channel.id, msg_id)
 
 
 @pytest.mark.asyncio
@@ -685,11 +679,11 @@ async def test_rfr_edit_description():
     msg_id = message.id
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.description == 'description'
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input',
+        with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new description", "Y"])):
-            with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
                 await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit description")
                 assert embed.description == 'new description'
                 assert dpytest.verify().message()
@@ -708,11 +702,11 @@ async def test_rfr_edit_title():
     msg_id = message.id
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.title == 'title'
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input',
+        with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new title", "Y"])):
-            with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
                 await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit title")
                 assert embed.title == 'new title'
                 assert dpytest.verify().message()
@@ -741,10 +735,10 @@ async def test_rfr_edit_thumbnail_attach():
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
-            with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
+        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=attach):
                 await dpytest.message("k!rfr edit image")
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
             embed.set_thumbnail(
@@ -766,10 +760,10 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
-            with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=attach):
+        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=attach):
                 with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument,
                                     commands.CommandInvokeError)) as exc:
                     await dpytest.message("k!rfr edit thumbnail")
@@ -795,10 +789,10 @@ async def test_rfr_edit_thumbnail_links(image_url):
     DBManager.add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
-            with mock.patch('koala.cogs.ReactForRole.ReactForRole.prompt_for_input', return_value=image_url):
+        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=image_url):
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
                 await dpytest.message("k!rfr edit image")
                 assert embed.thumbnail.url != "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
@@ -824,9 +818,9 @@ async def test_rfr_edit_inline_all(arg):
     await dpytest.sent_queue.empty()
     calls = [mock.call(0, name="field1", value="value1", inline=(arg == "Y")),
              mock.call(0, name="field2", value="value2", inline=(arg == "Y"))]
-    with mock.patch("koala.cogs.ReactForRole.ReactForRole.prompt_for_input", side_effects=["all", arg]):
+    with mock.patch("koala.cogs.ReactForRole.prompt_for_input", side_effects=["all", arg]):
         with mock.patch("discord.abc.Messageable.fetch_message", side_effects=[message1, message2]):
-            with mock.patch("koala.cogs.ReactForRole.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
+            with mock.patch("koala.cogs.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
                 with mock.patch('discord.Embed.set_field_at') as mock_call:
                     await dpytest.message("k!rfr edit inline")
                     assert dpytest.verify().message()
@@ -863,9 +857,9 @@ async def test_rfr_add_roles_to_msg():
         ro_list.append(ro.mention)
     input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
 
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
             with mock.patch('koala.utils.KoalaUtils.wait_for_message', return_value=(input_em_ro_msg, None)):
                 with mock.patch('discord.Embed.add_field') as add_field:
                     await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr addRoles")
@@ -897,13 +891,13 @@ async def test_rfr_remove_roles_from_msg():
         DBManager.add_rfr_message_emoji_role(1, str(em), ro.id)
 
     input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
-    with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_rfr_message_from_prompts',
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
             with mock.patch('koala.utils.KoalaUtils.wait_for_message', return_value=(input_em_ro_msg, None)):
                 with mock.patch('discord.Embed.add_field') as add_field:
                     with mock.patch(
-                            'koala.cogs.ReactForRole.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
+                            'koala.cogs.react_for_role.db.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
                         add_field.reset_mock()
                         await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr removeRoles")
                         add_field.assert_not_called()
@@ -918,119 +912,122 @@ async def test_rfr_remove_roles_from_msg():
                          [(0, 0), (1, 0), (1, 1), (2, 0), (2, 1), (2, 2), (5, 1), (5, 2), (20, 5)])
 @pytest.mark.asyncio
 async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
-    config: dpytest.RunnerConfig = dpytest.get_config()
-    guild: discord.Guild = config.guilds[0]
-    r_list = []
-    for i in range(num_roles):
-        role = testutils.fake_guild_role(guild)
-        r_list.append(role)
-    required = random.sample(list(r_list), num_required)
-    for r in required:
-        DBManager.add_guild_rfr_required_role(guild.id, r.id)
-        assert independent_get_guild_rfr_required_role(guild.id, r.id) is not None
-    for i in range(num_roles):
-        mem_roles = []
-        member: discord.Member = await dpytest.member_join()
-        for j in range(i):
-            mem_roles.append(r_list[j])
-            await member.add_roles(r_list[j])
+    with session_manager() as session:
+        config: dpytest.RunnerConfig = dpytest.get_config()
+        guild: discord.Guild = config.guilds[0]
+        r_list = []
+        for i in range(num_roles):
+            role = testutils.fake_guild_role(guild)
+            r_list.append(role)
+        required = random.sample(list(r_list), num_required)
+        for r in required:
+            DBManager.add_guild_rfr_required_role(guild.id, r.id)
+            assert independent_get_guild_rfr_required_role(session, guild.id, r.id) is not None
+        for i in range(num_roles):
+            mem_roles = []
+            member: discord.Member = await dpytest.member_join()
+            for j in range(i):
+                mem_roles.append(r_list[j])
+                await member.add_roles(r_list[j])
 
-        assert len(mem_roles) == i
-        if len(required) == 0:
-            assert rfr_cog.can_have_rfr_role(member)
-        else:
-            assert rfr_cog.can_have_rfr_role(member) == any(
-                x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
+            assert len(mem_roles) == i
+            if len(required) == 0:
+                assert rfr_cog.can_have_rfr_role(member)
+            else:
+                assert rfr_cog.can_have_rfr_role(member) == any(
+                    x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
 
 
 @pytest.mark.parametrize("num_roles, num_required",
                          [(1, 1), (2, 1), (2, 2), (5, 1), (5, 2), (20, 5), (100, 20), (200, 20)])
 @pytest.mark.asyncio
 async def test_rfr_without_req_role(num_roles, num_required, rfr_cog):
-    config: dpytest.RunnerConfig = dpytest.get_config()
-    test_guild: discord.Guild = config.guilds[0]
+    with session_manager() as session:
+        config: dpytest.RunnerConfig = dpytest.get_config()
+        test_guild: discord.Guild = config.guilds[0]
 
-    r_list = []
-    for i in range(num_roles):
-        role = testutils.fake_guild_role(test_guild)
-        r_list.append(role)
-    required = random.sample(list(r_list), num_required)
-    for r in required:
-        DBManager.add_guild_rfr_required_role(test_guild.id, r.id)
-        assert independent_get_guild_rfr_required_role(test_guild.id, r.id) is not None
+        r_list = []
+        for i in range(num_roles):
+            role = testutils.fake_guild_role(test_guild)
+            r_list.append(role)
+        required = random.sample(list(r_list), num_required)
+        for r in required:
+            DBManager.add_guild_rfr_required_role(test_guild.id, r.id)
+            assert independent_get_guild_rfr_required_role(session, test_guild.id, r.id) is not None
 
-    member: discord.Member = await dpytest.member_join()
-    await member.add_roles(*[r for r in r_list if r not in required])
-    mem_roles = member.roles
-    role_to_add = testutils.fake_guild_role(test_guild)
+        member: discord.Member = await dpytest.member_join()
+        await member.add_roles(*[r for r in r_list if r not in required])
+        mem_roles = member.roles
+        role_to_add = testutils.fake_guild_role(test_guild)
 
-    # Create RFR message for test
-    rfr_message = dpytest.back.make_message("FakeContent", config.client.user, test_guild.text_channels[0])
-    DBManager.add_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
-    assert DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id) is not None
+        # Create RFR message for test
+        rfr_message = dpytest.back.make_message("FakeContent", config.client.user, test_guild.text_channels[0])
+        DBManager.add_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
+        assert DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id) is not None
 
-    # Add emoji role combo to db
-    _, _, _, er_id = DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
-    react_emoji: str = testutils.fake_unicode_emoji()
-    DBManager.add_rfr_message_emoji_role(er_id, emoji.demojize(react_emoji), role_to_add.id)
+        # Add emoji role combo to db
+        _, _, _, er_id = DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
+        react_emoji: str = testutils.fake_unicode_emoji()
+        DBManager.add_rfr_message_emoji_role(er_id, emoji.demojize(react_emoji), role_to_add.id)
 
-    with mock.patch("koala.cogs.ReactForRole.ReactForRole.get_role_member_info",
-                    mock.AsyncMock(return_value=(member, role_to_add))):
-        with mock.patch("discord.Member.add_roles", mock.AsyncMock()) as add_role_mock:
-            await dpytest.add_reaction(member, rfr_message, react_emoji)
-            assert all([m in member.roles for m in mem_roles])
-            add_role_mock.assert_not_called()
-            assert role_to_add not in member.roles
+        with mock.patch("koala.cogs.ReactForRole.get_role_member_info",
+                        mock.AsyncMock(return_value=(member, role_to_add))):
+            with mock.patch("discord.Member.add_roles", mock.AsyncMock()) as add_role_mock:
+                await dpytest.add_reaction(member, rfr_message, react_emoji)
+                assert all([m in member.roles for m in mem_roles])
+                add_role_mock.assert_not_called()
+                assert role_to_add not in member.roles
 
 
 @pytest.mark.parametrize("num_roles, num_required",
                          [(1, 1), (2, 1), (2, 2), (5, 1), (5, 2), (20, 5), (100, 20), (200, 20)])
 @pytest.mark.asyncio
 async def test_rfr_with_req_role(num_roles, num_required, rfr_cog):
-    config: dpytest.RunnerConfig = dpytest.get_config()
-    test_guild: discord.Guild = config.guilds[0]
+    with session_manager() as session:
+        config: dpytest.RunnerConfig = dpytest.get_config()
+        test_guild: discord.Guild = config.guilds[0]
 
-    # Create RFR message for test
-    rfr_message = dpytest.back.make_message("FakeContent", config.client.user, test_guild.text_channels[0])
-    DBManager.add_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
-    assert DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id) is not None
+        # Create RFR message for test
+        rfr_message = dpytest.back.make_message("FakeContent", config.client.user, test_guild.text_channels[0])
+        DBManager.add_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
+        assert DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id) is not None
 
-    r_list = []
-    for i in range(num_roles):
-        role = testutils.fake_guild_role(test_guild)
-        r_list.append(role)
-    required = random.sample(r_list, num_required)
-    role_to_add = testutils.fake_guild_role(test_guild)
+        r_list = []
+        for i in range(num_roles):
+            role = testutils.fake_guild_role(test_guild)
+            r_list.append(role)
+        required = random.sample(r_list, num_required)
+        role_to_add = testutils.fake_guild_role(test_guild)
 
-    # Add emoji role combo to db
-    _, _, _, er_id = DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
-    react_emoji: str = testutils.fake_unicode_emoji()
-    DBManager.add_rfr_message_emoji_role(er_id, emoji.demojize(react_emoji), role_to_add.id)
+        # Add emoji role combo to db
+        _, _, _, er_id = DBManager.get_rfr_message(test_guild.id, rfr_message.channel.id, rfr_message.id)
+        react_emoji: str = testutils.fake_unicode_emoji()
+        DBManager.add_rfr_message_emoji_role(er_id, emoji.demojize(react_emoji), role_to_add.id)
 
-    for r in required:
-        DBManager.add_guild_rfr_required_role(test_guild.id, r.id)
-        assert independent_get_guild_rfr_required_role(test_guild.id, r.id) is not None
+        for r in required:
+            DBManager.add_guild_rfr_required_role(test_guild.id, r.id)
+            assert independent_get_guild_rfr_required_role(session, test_guild.id, r.id) is not None
 
-    member: discord.Member = await dpytest.member_join()
-    await member.add_roles(*(random.sample(r_list, random.randint(1, num_roles))))
-    print(f"required = {[r.name for r in required]}, mem_roles pre-add are {[member.roles]}")
-    if not any([r in required for r in member.roles]):
-        x = random.choice(required)
-        await member.add_roles(x)
-        print(f"added role {x.name} to {member.display_name}")
-    mem_roles = member.roles
-    with mock.patch("koala.cogs.ReactForRole.ReactForRole.get_role_member_info",
-                    mock.AsyncMock(return_value=(member, role_to_add))):
-        await dpytest.add_reaction(member, rfr_message, react_emoji)
-        assert all([m in member.roles for m in mem_roles])
-        assert role_to_add in member.roles
+        member: discord.Member = await dpytest.member_join()
+        await member.add_roles(*(random.sample(r_list, random.randint(1, num_roles))))
+        print(f"required = {[r.name for r in required]}, mem_roles pre-add are {[member.roles]}")
+        if not any([r in required for r in member.roles]):
+            x = random.choice(required)
+            await member.add_roles(x)
+            print(f"added role {x.name} to {member.display_name}")
+        mem_roles = member.roles
+        with mock.patch("koala.cogs.ReactForRole.get_role_member_info",
+                        mock.AsyncMock(return_value=(member, role_to_add))):
+            await dpytest.add_reaction(member, rfr_message, react_emoji)
+            assert all([m in member.roles for m in mem_roles])
+            assert role_to_add in member.roles
 
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    DBManager.get_parent_database_manager().clear_all_tables(
-        DBManager.get_parent_database_manager().fetch_all_tables())
-    yield DBManager
+    KoalaBot.database_manager.clear_all_tables(
+        KoalaBot.database_manager.fetch_all_tables())
+    yield KoalaDBManager
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -1044,3 +1041,11 @@ def setup_is_dpytest():
 async def setup_clean_messages():
     await dpytest.empty_queue()
     yield dpytest
+
+
+@pytest.fixture(scope='function', autouse=True)
+async def setup_clean_db():
+    with session_manager() as session:
+        session.execute(delete(GuildRFRMessages))
+        session.execute(delete(RFRMessageEmojiRoles))
+        session.execute(delete(GuildRFRRequiredRoles))
