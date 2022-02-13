@@ -42,8 +42,8 @@ class GuildRFRRequiredRoles:
     __table_args__ = (UniqueConstraint('guild_id', 'role_id'),)
 
     def __repr__(self):
-        return "GuildRFRRequiredRoles(%s, %s, %s)>" % \
-               (self.emoji_role_id, self.emoji_raw, self.role_id)
+        return "GuildRFRRequiredRoles(%s, %s)>" % \
+               (self.guild_id, self.role_id)
 
 
 setup()

@@ -10,13 +10,15 @@ import re
 
 # Libs
 from discord.ext import commands
-import discord
 
 # Own modules
 import KoalaBot
-from koala.utils.KoalaColours import *
+from koala.utils.KoalaColours import KOALA_GREEN
 from koala.utils.KoalaUtils import extract_id
-from koala.utils.KoalaDBManager import KoalaDBManager
+
+from .db import TextFilterDBManager
+from .utils import type_exists, build_word_list_embed, build_moderation_channel_embed, \
+    create_default_embed, build_moderation_deleted_embed
 
 
 def text_filter_is_enabled(ctx):
@@ -46,8 +48,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.bot = bot
         database_manager.create_base_tables()
         database_manager.insert_extension("TextFilter", 0, True, True)
-        self.tf_database_manager = TextFilterDBManager(database_manager, bot)
-        self.tf_database_manager.create_tables()
+        self.tf_database_manager = TextFilterDBManager(bot)
 
     @commands.command(name="filter", aliases=["filter_word"])
     @commands.check(KoalaBot.is_admin)
@@ -66,7 +67,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
                 command incorrectly. Try again with: `k!filter [filtered_text] [[risky] or [banned]]`"""
         if too_many_arguments is None and type_exists(filter_type):
             await self.filter_text(ctx, word, filter_type, False)
-            await ctx.channel.send("*" + word + "* has been filtered as **"+filter_type+"**.")
+            await ctx.channel.send("*" + word + "* has been filtered as **" + filter_type + "**.")
             return
         raise Exception(error)
 
@@ -91,10 +92,10 @@ class TextFilter(commands.Cog, name="TextFilter"):
             try:
                 re.compile(regex)
                 await self.filter_text(ctx, regex, filter_type, True)
-                await ctx.channel.send("*" + regex + "* has been filtered as **"+filter_type+"**.")
+                await ctx.channel.send("*" + regex + "* has been filtered as **" + filter_type + "**.")
                 return
             except:
-                raise Exception(error)    
+                raise Exception(error)
         raise Exception(error)
 
     @commands.command(name="unfilter", aliases=["unfilter_word"])
@@ -112,7 +113,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         error = "Too many arguments, please try again using the following arguments: `k!unfilter [filtered_word]`"
         if too_many_arguments is None:
             await self.unfilter_text(ctx, word)
-            await ctx.channel.send("*"+word+"* has been unfiltered.")
+            await ctx.channel.send("*" + word + "* has been unfiltered.")
             return
         raise Exception(error)
 
@@ -149,8 +150,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
             self.tf_database_manager.new_mod_channel(ctx.guild.id, channel.id)
             await ctx.channel.send(embed=build_moderation_channel_embed(ctx, channel, "Added"))
             return
-        raise(Exception(error))
-    
+        raise (Exception(error))
+
     @commands.command(name="modChannelRemove", aliases=["remove_mod_channel", "deleteModChannel", "removeModChannel"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
@@ -205,7 +206,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
             self.tf_database_manager.new_ignore(ctx.guild.id, 'user', ignore_id)
             await ctx.channel.send("New ignore added: " + user)
             return
-        raise(Exception(error))
+        raise (Exception(error))
 
     @commands.command(name="ignoreChannel")
     @commands.check(KoalaBot.is_admin)
@@ -227,7 +228,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
             self.tf_database_manager.new_ignore(ctx.guild.id, 'channel', ignore_id)
             await ctx.channel.send("New ignore added: " + channel)
             return
-        raise(Exception(error))
+        raise (Exception(error))
 
     @commands.command(name="unignore", aliases=["remove_ignore", "removeIgnore"])
     @commands.check(KoalaBot.is_admin)
@@ -250,7 +251,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.tf_database_manager.remove_ignore(ctx.guild.id, ignore_id)
         await ctx.channel.send("Ignore removed: " + str(ignore))
         return
-    
+
     @commands.command(name="ignoreList", aliases=["list_ignored", "listIgnored"])
     @commands.check(KoalaBot.is_admin)
     @commands.check(text_filter_is_enabled)
@@ -274,23 +275,24 @@ class TextFilter(commands.Cog, name="TextFilter"):
         """
         if message.author.bot:
             return
-        if message.content.startswith(KoalaBot.COMMAND_PREFIX+"filter") or \
-                message.content.startswith(KoalaBot.COMMAND_PREFIX+"unfilter") or \
-                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX+"filter") or \
-                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX+"unfilter"):
+        if message.content.startswith(KoalaBot.COMMAND_PREFIX + "filter") or \
+                message.content.startswith(KoalaBot.COMMAND_PREFIX + "unfilter") or \
+                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX + "filter") or \
+                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX + "unfilter"):
             return
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
             for word, filter_type, is_regex in censor_list:
-                if (word in message.content or (is_regex == '1' and re.search(word, message.content))) and not self.is_ignored(message):
+                if (word in message.content or (
+                        is_regex == '1' and re.search(word, message.content))) and not self.is_ignored(message):
                     if filter_type == "risky":
-                        await message.author.send("Watch your language! Your message: '*"+message.content+"*' in " +
-                                                  message.channel.mention+" contains a 'risky' word. "
-                                                  "This is a warning.")
+                        await message.author.send("Watch your language! Your message: '*" + message.content + "*' in " +
+                                                  message.channel.mention + " contains a 'risky' word. "
+                                                                            "This is a warning.")
                         return
                     elif filter_type == "banned":
-                        await message.author.send("Watch your language! Your message: '*"+message.content+"*' in " +
-                                                  message.channel.mention+" has been deleted by KoalaBot.")
+                        await message.author.send("Watch your language! Your message: '*" + message.content + "*' in " +
+                                                  message.channel.mention + " has been deleted by KoalaBot.")
                         await self.send_to_moderation_channels(message)
                         await message.delete()
                         return
@@ -299,7 +301,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         """
         Builds a list of mod channels and adds them to the embed
 
-        :param channels: list of mod channels 
+        :param channels: list of mod channels
         :param embed: The pre-existing embed to add the channel list fields to
         :return embed: the updated embed with the list of channels appended to
         """
@@ -426,304 +428,6 @@ class TextFilter(commands.Cog, name="TextFilter"):
         embed.title = "Koala Moderation - Ignored Users/Channels"
         embed = self.build_ignore_list(channels, embed)
         return embed
-
-
-def type_exists(filter_type):
-    """
-    Validates the inputted filter_type
-
-    :param filter_type: The filter type to be checked
-    :return: boolean checking if the filter type can be handled by the system, checks for risky, banned or email
-    """
-    return filter_type == "risky" or filter_type == "banned"
-
-
-def build_moderation_channel_embed(ctx, channel, action):
-    """
-    Builds a moderation embed which display some information about the mod channel being created/removed
-
-    :param ctx: The discord context
-    :param channel: The channel to be created/removed
-    :param action: either "Added" or "Removed" to tell the user what happened to the mod channel
-    :return embed: The moderation embed to be sent to the user
-    """
-    embed = create_default_embed(ctx)
-    embed.title = "Koala Moderation - Mod Channel " + action
-    embed.add_field(name="Channel Name", value=channel.mention)
-    embed.add_field(name="Channel ID", value=channel.id)
-    return embed
-
-
-def build_word_list_embed(ctx, all_words, all_types, all_regex):
-    """
-    Builds the embed that is sent to list all the filtered words
-
-    :param ctx: The discord context
-    :param all_words: List of all the filtered words in the guild
-    :param all_types: List of all the corresponding filter types for the words in the guild
-    :param all_regex: List of all regex in the guild
-    :return embed with information about the deleted message:
-    """
-    embed = create_default_embed(ctx)
-    embed.title = "Koala Moderation - Filtered Words"
-    if not all_words and not all_types and not all_regex:
-        embed.add_field(name="No words found", value="For more help with using the Text Filter try k!help TextFilter")
-    else:
-        embed.add_field(name="Banned Words", value=all_words)
-        embed.add_field(name="Filter Types", value=all_types)
-        embed.add_field(name="Is Regex?", value=all_regex)
-    return embed
-
-
-def create_default_embed(ctx):
-    """
-    Creates a default embed that all embeds share
-
-    :param ctx: The discord context
-    :return embed with basic information which should be built upon:
-    """
-    embed = discord.Embed()
-    embed.colour = KOALA_GREEN
-    embed.set_footer(text=f"Guild ID: {ctx.guild.id}")
-    return embed
-
-
-def build_moderation_deleted_embed(message):
-    """
-    Builds the embed that is sent after a message is deleted for containing a banned word
-
-    :param message: the message object to be deleted
-    :return embed with information about the deleted message:
-    """
-    embed = create_default_embed(message)
-    embed.title = "Koala Moderation - Message Deleted"
-    embed.add_field(name="Reason", value="Contained banned word")
-    embed.add_field(name="User", value=message.author.mention)
-    embed.add_field(name="Channel", value=message.channel.mention)
-    embed.add_field(name="Message", value=message.content)
-    embed.add_field(name="Timestamp", value=message.created_at)
-    return embed
-
-
-class TextFilterDBManager:
-    """
-    A class for interacting with the Koala text filter database
-    """
-
-    def __init__(self, database_manager: KoalaDBManager, bot_client: discord.client):
-        """
-        Initialises local variables
-
-        :param database_manager:
-        :param bot_client:
-        """
-        self.database_manager = database_manager
-        self.bot = bot_client
-
-    def create_tables(self):
-        """
-        Creates all the tables associated with TextFilter
-
-        :return:
-        """
-        sql_create_text_filter_table = """
-        CREATE TABLE IF NOT EXISTS TextFilter (
-        filtered_text_id text NOT NULL,
-        guild_id integer NOT NULL,
-        filtered_text text NOT NULL,
-        filter_type text NOT NULL,
-        is_regex boolean NOT NULL,
-        PRIMARY KEY (filtered_text_id)
-        );"""
-
-        sql_create_mod_table = """
-        CREATE TABLE IF NOT EXISTS TextFilterModeration (
-        channel_id text NOT NULL,
-        guild_id integer NOT NULL,
-        PRIMARY KEY (channel_id)
-        );"""
-
-        sql_create_ignore_list_table = """
-        CREATE TABLE IF NOT EXISTS TextFilterIgnoreList (
-        ignore_id text NOT NULL,
-        guild_id integer NOT NULL,
-        ignore_type text NOT NULL,
-        ignore integer NOT NULL,
-        PRIMARY KEY (ignore_id)
-        );"""
-
-        self.database_manager.db_execute_commit(sql_create_text_filter_table)
-        self.database_manager.db_execute_commit(sql_create_mod_table)
-        self.database_manager.db_execute_commit(sql_create_ignore_list_table)
-
-    def new_mod_channel(self, guild_id, channel_id):
-        """
-        Adds new filtered word for a guild
-
-        :param guild_id: Guild ID to retrieve filtered words from
-        :param channel_id: The new channel for moderation
-        :return:
-        """
-        self.database_manager.db_execute_commit(
-            "INSERT INTO TextFilterModeration (channel_id, guild_id) VALUES (?,?)", args=[channel_id, guild_id])
-
-    def new_filtered_text(self, guild_id, filtered_text, filter_type, is_regex):
-        """
-        Adds new filtered word for a guild
-
-        :param guild_id: Guild ID to retrieve filtered words from
-        :param filtered_text: The new word to be filtered
-        :param filter_type: The filter type (banned or risky)
-        :param is_regex: Boolean if filtered text is regex
-        :return:
-        """
-        ft_id = str(guild_id) + filtered_text
-        if not self.does_word_exist(ft_id):
-            self.database_manager.db_execute_commit(
-                "INSERT INTO TextFilter (filtered_text_id, guild_id, filtered_text, filter_type, is_regex)"
-                " VALUES (?,?,?,?,?)",
-                args=[ft_id, guild_id, filtered_text, filter_type, is_regex])
-            return 
-        raise Exception("Filtered word already exists")
-            
-    def remove_filter_text(self, guild_id, filtered_text):
-        """
-        Remove filtered word from a guild
-
-        :param guild_id: Guild ID to retrieve filtered words from
-        :param filtered_text: The new word to be filtered
-        :return:
-        """
-        ft_id = str(guild_id) + filtered_text
-        if self.does_word_exist(ft_id):
-            self.database_manager.db_execute_commit(
-                "DELETE FROM TextFilter WHERE filtered_text_id = ?", args=[ft_id])
-            return
-        raise Exception("Filtered word does not exist")
-
-    def new_ignore(self, guild_id, ignore_type, ignore):
-        """
-        Add new ignore to database
-
-        :param guild_id: Guild ID to associate ignore to
-        :param ignore_type: The type of ignore to add
-        :param ignore: Ignore ID to be added
-        """
-        ignore_id = str(guild_id) + str(ignore)
-        if not self.does_ignore_exist(ignore_id):
-            self.database_manager.db_execute_commit(
-                "INSERT INTO TextFilterIgnoreList (ignore_id, guild_id, ignore_type, ignore) VALUES (?,?,?,?)",
-                args=[ignore_id, guild_id, ignore_type, ignore])
-            return
-        raise Exception("Ignore already exists")
-
-    def remove_ignore(self, guild_id, ignore):
-        """
-        Remove ignore from database
-
-        :param guild_id: The guild_id to delete the ignore from
-        :param ignore: the ignore id to be deleted
-        """
-        ignore_id = str(guild_id) + str(ignore)
-        if self.does_ignore_exist(ignore_id):
-            self.database_manager.db_execute_commit(
-                "DELETE FROM TextFilterIgnoreList WHERE ignore_id=?", args=[ignore_id])
-            return
-        raise Exception("Ignore does not exist")
-
-    def get_filtered_text_for_guild(self, guild_id):
-        """
-        Retrieves all filtered words for a specific guild and formats into a nice list of words
-
-        :param guild_id: Guild ID to retrieve filtered words from:
-        :return: list of filtered words
-        """
-        rows = self.database_manager.db_execute_select("SELECT * FROM TextFilter WHERE guild_id = ?", args=[guild_id])
-        censor_list = []
-        for row in rows:
-            censor_list.append((row[2], row[3], str(row[4])))
-        return censor_list
-
-    def get_ignore_list_channels(self, guild_id):
-        """
-        Get lists of ignored channels
-
-        :param guild_id: The guild id to get the list from
-        :return: list of ignored channels
-        """
-        rows = self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"])
-        channels = []
-        for row in rows:
-            channels.append((row[3]))
-        return channels
-    
-    def get_ignore_list_users(self, guild_id):
-        """
-        Get lists of ignored users
-
-        :param guild_id: The guild id to get the list from
-        :return: list of ignored users
-        """
-        rows = self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "user"])
-        channels = []
-        for row in rows:
-            channels.append((row[3]))
-        return channels
-    
-    def get_all_ignored(self, guild_id):
-        ignored = []
-        users = self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "user"])
-        for row in users:
-            ignored.append(row)
-        channels = self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilterIgnoreList WHERE guild_id = ? AND ignore_type = ? ", args=[guild_id, "channel"])
-        for row in channels:
-            ignored.append(row)
-        return ignored
-
-    def get_mod_channel(self, guild_id):
-        """
-        Gets specific mod channels given a guild id
-
-        :param guild_id: Guild ID to retrieve mod channel from
-        :return: list of mod channels
-        """
-        return self.database_manager.db_execute_select(
-            "SELECT channel_id FROM TextFilterModeration WHERE guild_id = ?;", args=[guild_id])
-
-    def remove_mod_channel(self, guild_id, channel_id):
-        """
-        Removes a specific mod channel in a guild
-
-        :param guild_id: Guild ID to remove mod channel from
-        :param channel_id: Mod channel to be removed
-        :return:
-        """
-        self.database_manager.db_execute_commit(
-            "DELETE FROM TextFilterModeration WHERE guild_id = ? AND channel_id = (?);", args=[guild_id, channel_id])
-
-    def does_word_exist(self, ft_id):
-        """
-        Checks if word exists in database given an ID
-
-        :param ft_id: filtered text id of word to be removed
-        :return boolean of whether the word exists or not:
-        """
-        return len(self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilter WHERE filtered_text_id = ?", args=[ft_id])) > 0
-
-    def does_ignore_exist(self, ignore_id):
-        """
-        Checks if ignore exists in database given an ID
-
-        :param ignore_id: ignore id of ignore to be removed
-        :return boolean of whether the ignore exists or not:
-        """
-        return len(self.database_manager.db_execute_select(
-            "SELECT * FROM TextFilterIgnoreList WHERE ignore_id = ?", args=[ignore_id])) > 0
 
 
 def setup(bot: KoalaBot) -> None:

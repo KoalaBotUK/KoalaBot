@@ -14,11 +14,12 @@ from discord.ext import commands
 # Own modules
 import KoalaBot
 from koala.cogs import BaseCog
-from koala.cogs import TextFilter
 from tests.tests_utils import LastCtxCog
 from koala.utils import KoalaDBManager
 from koala.utils.KoalaColours import KOALA_GREEN
 from koala.utils.KoalaUtils import is_int
+from koala.cogs import TextFilter
+from koala.cogs.text_filter.db import TextFilterDBManager
 
 # Variables
 
@@ -28,7 +29,7 @@ def se5tup_function():
     global base_cog, tf_cog, utils_cog
     bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
     base_cog = BaseCog(bot)
-    tf_cog = TextFilter.TextFilter(bot)
+    tf_cog = TextFilter(bot)
     tf_cog.tf_database_manager.create_tables()
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(base_cog)
@@ -56,8 +57,7 @@ def base_cog(bot):
 
 @pytest.fixture(scope="function", autouse=True)
 async def tf_cog(bot):
-    tf_cog = TextFilter.TextFilter(bot)
-    tf_cog.tf_database_manager.create_tables()
+    tf_cog = TextFilter(bot)
     bot.add_cog(tf_cog)
     dpytest.configure(bot)
     print("Tests starting")
@@ -142,14 +142,14 @@ def filteredWordsEmbed(words,filter,regex):
     return embed
 
 def cleanup(guildId, tf_cog):
-    tf_cog.tf_database_manager.database_manager.db_execute_commit(f"DELETE FROM TextFilter WHERE guild_id=(\"{guildId}\");")
+    KoalaBot.database_manager.db_execute_commit(f"DELETE FROM TextFilter WHERE guild_id=(\"{guildId}\");")
 
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_database(tf_cog):
-    old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';"))
+    old = len(KoalaBot.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';"))
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no", channel=dpytest.get_config().guilds[0].channels[0])
     assertFilteredConfirmation("no","banned")
-    assert len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';")) == old + 1
+    assert len(KoalaBot.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';")) == old + 1
     cleanup(dpytest.get_config().guilds[0].id, tf_cog)
 
 @pytest.mark.asyncio()
@@ -225,10 +225,10 @@ async def test_unfilter_word_correct_database(tf_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
     assertFilteredConfirmation("unfilterboi","banned")
     
-    old = len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
+    old = len(KoalaBot.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
     
-    assert len(tf_cog.tf_database_manager.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1  
+    assert len(KoalaBot.database_manager.db_execute_select(f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1  
     assert dpytest.verify().message().content("*unfilterboi* has been unfiltered.")
     cleanup(dpytest.get_config().guilds[0].id, tf_cog)
 
@@ -274,7 +274,7 @@ async def test_add_mod_channel(tf_cog):
 
 @pytest.fixture
 def text_filter_db_manager():
-    return TextFilter.TextFilterDBManager(KoalaDBManager.KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY), dpytest.get_config())
+    return TextFilterDBManager(dpytest.get_config())
 
 
 @pytest.mark.asyncio()
@@ -286,7 +286,7 @@ async def test_add_mod_channel_tag(text_filter_db_manager, tf_cog):
     assert_embed = createNewModChannelEmbed(channel)
     assert dpytest.verify().message().embed(embed=assert_embed)
 
-    result = text_filter_db_manager.database_manager.db_execute_select("SELECT channel_id FROM TextFilterModeration WHERE guild_id = ?;", args=[channel.guild.id])
+    result = KoalaBot.database_manager.db_execute_select("SELECT channel_id FROM TextFilterModeration WHERE guild_id = ?;", args=[channel.guild.id])
     assert is_int(result[0][0])
     cleanup(dpytest.get_config().guilds[0].id, tf_cog)
 
