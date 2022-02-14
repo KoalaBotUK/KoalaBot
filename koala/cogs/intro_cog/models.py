@@ -10,7 +10,7 @@ class GuildWelcomeMessages:
     welcome_message = Column(String, nullable=True)
 
     def __repr__(self):
-        return "GuildWelcomeMessages(%s, %s)>" % \
+        return "<GuildWelcomeMessages(%s, %s)>" % \
                (self.guild_id, self.welcome_message)
 
 

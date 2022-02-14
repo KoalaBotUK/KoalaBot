@@ -9,5 +9,5 @@ class GuildUsage:
     last_message_epoch_time = Column(Integer)
 
     def __repr__(self):
-        return "GuildUsage(%s, %s)>" % \
+        return "<GuildUsage(%s, %s)>" % \
                (self.guild_id, self.last_message_epoch_time)

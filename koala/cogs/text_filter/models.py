@@ -13,7 +13,7 @@ class TextFilter:
     is_regex = Column(Boolean)
 
     def __repr__(self):
-        return "TextFilter(%s, %s, %s, %s, %s)>" % \
+        return "<TextFilter(%s, %s, %s, %s, %s)>" % \
                (self.filtered_text_id, self.guild_id, self.filtered_text, self.filter_type, self.is_regex)
 
 
@@ -24,7 +24,7 @@ class TextFilterModeration:
     guild_id = Column(Integer)
 
     def __repr__(self):
-        return "TextFilterModeration(%s, %s)>" % \
+        return "<TextFilterModeration(%s, %s)>" % \
                (self.channel_id, self.guild_id)
 
 
@@ -37,7 +37,7 @@ class TextFilterIgnoreList:
     ignore = Column(Integer)
 
     def __repr__(self):
-        return "TextFilterIgnoreList(%s, %s, %s, %s)>" % \
+        return "<TextFilterIgnoreList(%s, %s, %s, %s)>" % \
                (self.ignore_id, self.guild_id, self.ignore_type, self.ignore)
 
 

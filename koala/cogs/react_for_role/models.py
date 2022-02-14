@@ -13,7 +13,7 @@ class GuildRFRMessages:
     __table_args__ = (UniqueConstraint('guild_id', 'channel_id', 'message_id'),)
 
     def __repr__(self):
-        return "GuildRFRMessages(%s, %s, %s, %s)>" % \
+        return "<GuildRFRMessages(%s, %s, %s, %s)>" % \
                (self.emoji_role_id, self.guild_id, self.channel_id, self.message_id)
 
     def old_format(self):
@@ -30,7 +30,7 @@ class RFRMessageEmojiRoles:
                       UniqueConstraint('emoji_role_id', 'role_id'))
 
     def __repr__(self):
-        return "RFRMessageEmojiRoles(%s, %s, %s)>" % \
+        return "<RFRMessageEmojiRoles(%s, %s, %s)>" % \
                (self.emoji_role_id, self.emoji_raw, self.role_id)
 
 
@@ -42,7 +42,7 @@ class GuildRFRRequiredRoles:
     __table_args__ = (UniqueConstraint('guild_id', 'role_id'),)
 
     def __repr__(self):
-        return "GuildRFRRequiredRoles(%s, %s)>" % \
+        return "<GuildRFRRequiredRoles(%s, %s)>" % \
                (self.guild_id, self.role_id)
 
 

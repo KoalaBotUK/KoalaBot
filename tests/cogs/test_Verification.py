@@ -25,43 +25,23 @@ TEST_EMAIL = 'verify_test@koalabot.uk'
 TEST_EMAIL_DOMAIN = 'koalabot.uk'
 
 # Variables
-cog = None
-db_manager = KoalaDBManager(format_config_path(CONFIG_PATH, "verifyTest.db"), KoalaBot.DB_KEY)
+db_manager = KoalaBot.database_manager
 db_manager.create_base_tables()
-
-
-def setup_function():
-    """ setup any state specific to the execution of the given module."""
-    global cog
-    bot = commands.Bot(command_prefix=KoalaBot.COMMAND_PREFIX)
-    cog = Verification.Verification(bot, db_manager)
-    bot.add_cog(cog)
-    dpytest.configure(bot)
-    db_manager.db_execute_commit("DROP TABLE verified_emails")
-    db_manager.db_execute_commit("DROP TABLE non_verified_emails")
-    db_manager.db_execute_commit("DROP TABLE to_re_verify")
-    db_manager.db_execute_commit("DROP TABLE roles")
-    db_manager.db_execute_commit("CREATE TABLE verified_emails (u_id, email)")
-    db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
-    db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
-    db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
-    db_manager.insert_extension("Verify", 0, True, True)
-    print("Tests starting")
 
 @pytest.fixture(autouse=True)
 def cog(bot):
-    cog = Verification.Verification(bot, db_manager)
+    cog = Verification(bot)
     bot.add_cog(cog)
     dpytest.configure(bot)
-    db_manager.db_execute_commit("DROP TABLE verified_emails")
-    db_manager.db_execute_commit("DROP TABLE non_verified_emails")
-    db_manager.db_execute_commit("DROP TABLE to_re_verify")
-    db_manager.db_execute_commit("DROP TABLE roles")
-    db_manager.db_execute_commit("CREATE TABLE verified_emails (u_id, email)")
-    db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
-    db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
-    db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
-    db_manager.insert_extension("Verify", 0, True, True)
+    # db_manager.db_execute_commit("DROP TABLE verified_emails")
+    # db_manager.db_execute_commit("DROP TABLE non_verified_emails")
+    # db_manager.db_execute_commit("DROP TABLE to_re_verify")
+    # db_manager.db_execute_commit("DROP TABLE roles")
+    # db_manager.db_execute_commit("CREATE TABLE verified_emails (u_id, email)")
+    # db_manager.db_execute_commit("CREATE TABLE non_verified_emails (u_id, email, token)")
+    # db_manager.db_execute_commit("CREATE TABLE to_re_verify (u_id, r_id)")
+    # db_manager.db_execute_commit("CREATE TABLE roles (s_id, r_id, email_suffix)")
+    # db_manager.insert_extension("Verify", 0, True, True)
     print("Tests starting")
     return cog
 

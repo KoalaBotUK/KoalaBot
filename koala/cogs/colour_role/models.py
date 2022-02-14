@@ -9,7 +9,7 @@ class GuildColourChangePermissions:
     role_id = Column(Integer, primary_key=True)
 
     def __repr__(self):
-        return "GuildColourChangePermissions(%s, %s)>" % \
+        return "<GuildColourChangePermissions(%s, %s)>" % \
                (self.guild_id, self.role_id)
 
 
@@ -20,5 +20,5 @@ class GuildInvalidCustomColourRoles:
     role_id = Column(Integer, primary_key=True)
 
     def __repr__(self):
-        return "GuildColourChangePermissions(%s, %s)>" % \
+        return "<GuildColourChangePermissions(%s, %s)>" % \
                (self.guild_id, self.role_id)

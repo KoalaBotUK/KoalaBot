@@ -10,7 +10,7 @@ class TwitchAlerts:
     default_message = Column(String)
 
     def __repr__(self):
-        return "TwitchAlerts(%s, %s, %s)>" % \
+        return "<TwitchAlerts(%s, %s, %s)>" % \
                (self.guild_id, self.channel_id, self.default_message)
 
 
@@ -24,7 +24,7 @@ class UserInTwitchAlert:
     twitch_alert = orm.relationship("TwitchAlerts")
 
     def __repr__(self):
-        return "UserInTwitchAlert(%s, %s, %s, %s)>" % \
+        return "<UserInTwitchAlert(%s, %s, %s, %s)>" % \
                (self.channel_id, self.twitch_username, self.custom_message, self.message_id)
 
 
@@ -38,7 +38,7 @@ class TeamInTwitchAlert:
     twitch_alert = orm.relationship("TwitchAlerts")
 
     def __repr__(self):
-        return "TeamInTwitchAlert(%s, %s, %s, %s)>" % \
+        return "<TeamInTwitchAlert(%s, %s, %s, %s)>" % \
                (self.team_twitch_alert_id, self.channel_id, self.twitch_team_name, self.custom_message)
 
 
@@ -51,5 +51,5 @@ class UserInTwitchTeam:
     team = orm.relationship("TeamInTwitchAlert")
 
     def __repr__(self):
-        return "UserInTwitchTeam(%s, %s, %s)>" % \
+        return "<UserInTwitchTeam(%s, %s, %s)>" % \
                (self.team_twitch_alert_id, self.twitch_username, self.message_id)
