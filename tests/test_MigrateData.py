@@ -370,7 +370,7 @@ def create_old_user_in_twitch_team():
 
     sql_create_user_in_twitch_team_table = """
             CREATE TABLE IF NOT EXISTS UserInTwitchTeam (
-            team_twitch_alert_id text NOT NULL,
+            team_twitch_alert_id integer NOT NULL,
             twitch_username text NOT NULL,
             message_id integer,
             PRIMARY KEY (team_twitch_alert_id, twitch_username),
@@ -1005,8 +1005,8 @@ async def test_remake_user_in_twitch_team():
     before_data_stored = database_manager.db_execute_select(user_in_twitch_team_select)
     assert before_data_stored == before_expected_result
     migrate_database.remake_user_in_twitch_team()
-    after_expected_result = [("1", "USERNAME1", "1"), ("2", "USERNAME2", "2"), ("3", "USERNAME3", "3"),
-                             ("4", "USERNAME4", "4")]
+    after_expected_result = [(1, "USERNAME1", "1"), (2, "USERNAME2", "2"), (3, "USERNAME3", "3"),
+                             (4, "USERNAME4", "4")]
     after_data_stored = database_manager.db_execute_select(user_in_twitch_team_select)
     assert after_data_stored == after_expected_result
 
@@ -1312,7 +1312,6 @@ async def test_remake_guilds_both_exist_table():
 @pytest.mark.asyncio()
 async def test_get_largest_file_number():
     """
-    Gets the largest number associated with a file in the database backups folder.
     First tests the folder is empty, creates 10 sequential files and tests the largest is gotten, finally creates 10 random files and tests largest is gotten.
 
     :return:

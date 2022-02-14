@@ -604,7 +604,7 @@ class MigrateData:
                 """SELECT count(name) FROM sqlite_master WHERE type='table' AND name='UserInTwitchTeam'""")
             sql_create_user_in_twitch_team_table = """
                 CREATE TABLE IF NOT EXISTS UserInTwitchTeam (
-                team_twitch_alert_id text NOT NULL,
+                team_twitch_alert_id integer NOT NULL,
                 twitch_username text NOT NULL,
                 message_id text,
                 PRIMARY KEY (team_twitch_alert_id, twitch_username),
