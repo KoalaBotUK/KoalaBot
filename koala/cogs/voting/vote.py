@@ -1,3 +1,32 @@
+#!/usr/bin/env python
+
+"""
+Koala Bot Vote Cog code and additional base cog functions
+Commented using reStructuredText (reST)
+"""
+# Built-in/Generic Imports
+import time
+
+# Libs
+import discord
+import parsedatetime.parsedatetime
+from discord.ext import commands, tasks
+from sqlalchemy import select, delete, update
+
+# Own modules
+import KoalaBot
+from koala.db import session_manager
+from .log import logger
+from .models import Votes, VoteTargetRoles, VoteSent, VoteOptions
+from .option import Option
+from .utils import make_result_embed
+
+
+# Constants
+
+# Variables
+
+
 class Vote:
     def __init__(self, v_id, title, author_id, guild_id, db_manager):
         """
@@ -34,12 +63,14 @@ class Vote:
         :param role_id: target role
         :return: None
         """
-        if self.sent_to:
-            return
-        self.target_roles.append(role_id)
-        in_db = self.DBManager.db_execute_select("SELECT * FROM VoteTargetRoles WHERE vote_id=? AND role_id=?", (self.id, role_id))
-        if not in_db:
-            self.DBManager.db_execute_commit("INSERT INTO VoteTargetRoles VALUES (?, ?)", (self.id, role_id))
+        with session_manager() as session:
+            if self.sent_to:
+                return
+            self.target_roles.append(role_id)
+            in_db = session.execute(select(VoteTargetRoles).filter_by(vote_id=self.id, role_id=role_id)).all()
+            if not in_db:
+                session.add(VoteTargetRoles(vote_id=self.id, role_id=role_id))
+                session.commit()
 
     def remove_role(self, role_id):
         """
@@ -47,10 +78,12 @@ class Vote:
         :param role_id: target role
         :return: None
         """
-        if self.sent_to:
-            return
-        self.target_roles.remove(role_id)
-        self.DBManager.db_execute_commit("DELETE FROM VoteTargetRoles WHERE vote_id=? AND role_id=?", (self.id, role_id))
+        with session_manager() as session:
+            if self.sent_to:
+                return
+            self.target_roles.remove(role_id)
+            session.execute(delete(VoteTargetRoles).filter_by(vote_id=self.id, role_id=role_id))
+            session.commit()
 
     def set_end_time(self, time=None):
         """
@@ -58,8 +91,10 @@ class Vote:
         :param time: time in unix time
         :return:
         """
-        self.end_time = time
-        self.DBManager.db_execute_commit("UPDATE votes SET end_time=? WHERE vote_id=?", (time, self.id))
+        with session_manager() as session:
+            self.end_time = time
+            session.execute(update(Votes).filter_by(vote_id=self.id).values(end_time=time))
+            session.commit()
 
     def set_chair(self, chair_id=None):
         """
@@ -67,10 +102,12 @@ class Vote:
         :param chair_id: target chair
         :return: None
         """
-        if self.sent_to:
-            return
-        self.chair = chair_id
-        self.DBManager.db_execute_commit("UPDATE Votes SET chair_id=? WHERE vote_id=?", (chair_id, self.id))
+        with session_manager() as session:
+            if self.sent_to:
+                return
+            self.chair = chair_id
+            session.execute(update(Votes).filter_by(vote_id=self.id).values(chair_id=chair_id))
+            session.commit()
 
     def set_vc(self, channel_id=None):
         """
@@ -78,10 +115,12 @@ class Vote:
         :param channel_id: target discord voice channel id
         :return: None
         """
-        if self.sent_to:
-            return
-        self.target_voice_channel = channel_id
-        self.DBManager.db_execute_commit("UPDATE Votes SET voice_id=? WHERE vote_id=?", (channel_id, self.id))
+        with session_manager() as session:
+            if self.sent_to:
+                return
+            self.target_voice_channel = channel_id
+            session.execute(update(Votes).filter_by(vote_id=self.id).values(voice_id=channel_id))
+            session.commit()
 
     def add_option(self, option):
         """
@@ -89,12 +128,14 @@ class Vote:
         :param option: Option object
         :return: None
         """
-        if self.sent_to:
-            return
-        self.options.append(option)
-        in_db = self.DBManager.db_execute_select("SELECT * FROM VoteOptions WHERE opt_id=?", (option.id,))
-        if not in_db:
-            self.DBManager.db_execute_commit("INSERT INTO VoteOptions VALUES (?, ?, ?, ?)", (self.id, option.id, option.head, option.body))
+        with session_manager() as session:
+            if self.sent_to:
+                return
+            self.options.append(option)
+            in_db = session.execute(select(VoteOptions).filter_by(opt_id=option.id)).all()
+            if not in_db:
+                session.add(VoteOptions(vote_id=self.id, opt_id=option.id, option_title=option.head, option_desc=option.body))
+                session.commit()
 
     def remove_option(self, index):
         """
@@ -102,10 +143,12 @@ class Vote:
         :param index: the location in the list of options to remove
         :return: None
         """
-        if self.sent_to:
-            return
-        opt = self.options.pop(index-1)
-        self.DBManager.db_execute_commit("DELETE FROM VoteOptions WHERE vote_id=? AND opt_id=?", (self.id, opt.id))
+        with session_manager() as session:
+            if self.sent_to:
+                return
+            opt = self.options.pop(index-1)
+            session.execute(delete(VoteOptions).filter_by(vote_id=self.id, opt_id=opt.id))
+            session.commit()
 
     def register_sent(self, user_id, msg_id):
         """
@@ -114,7 +157,9 @@ class Vote:
         :param msg_id: the id of the message that was sent
         :return:
         """
-        self.sent_to[user_id] = msg_id
-        in_db = self.DBManager.db_execute_select("SELECT * FROM VoteSent WHERE vote_receiver_message=?", (msg_id,))
-        if not in_db:
-            self.DBManager.db_execute_commit("INSERT INTO VoteSent VALUES (?, ?, ?)", (self.id, user_id, msg_id))
+        with session_manager() as session:
+            self.sent_to[user_id] = msg_id
+            in_db = session.execute(select(VoteSent).filter_by(vote_receiver_message=msg_id)).all()
+            if not in_db:
+                session.add(VoteSent(vote_id=self.id, vote_receiver_id=user_id, vote_receiver_message=msg_id))
+                session.commit()
