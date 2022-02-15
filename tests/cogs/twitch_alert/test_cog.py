@@ -20,7 +20,7 @@ from koala.cogs import twitch_alert
 from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.colours import KOALA_GREEN
-from tests.tests_utils.LastCtxCog import LastCtxCog
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 
 # Constants
 DB_PATH = "Koala.db"

@@ -19,7 +19,7 @@ import koalabot
 from koala.cogs import ReactForRole
 from koala.cogs.react_for_role.models import GuildRFRRequiredRoles, GuildRFRMessages, RFRMessageEmojiRoles
 from koala.db import session_manager
-from tests.tests_utils import LastCtxCog
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 
 from tests.log import logger
 
@@ -30,7 +30,7 @@ from tests.log import logger
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = LastCtxCog.LastCtxCog(bot)
+    utils_cog = LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")

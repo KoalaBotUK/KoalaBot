@@ -28,7 +28,7 @@ from koala.cogs import colour_role
 from koala.cogs.colour_role.utils import COLOUR_ROLE_NAMING
 from koala.cogs.colour_role.db import ColourRoleDBManager
 from koala.cogs.colour_role.models import GuildColourChangePermissions, GuildInvalidCustomColourRoles
-from tests.tests_utils import LastCtxCog
+from tests.tests_utils import last_ctx_cog
 
 # Constants
 

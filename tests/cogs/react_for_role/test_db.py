@@ -22,7 +22,7 @@ from discord.ext.test import factories as dpyfactory
 # Own modules
 from koala.cogs.react_for_role.db import ReactForRoleDBManager
 from koala.db import session_manager
-from tests.tests_utils import TestUtils as testutils
+from tests.tests_utils import utils as testutils
 
 from tests.log import logger
 from .utils import DBManager, independent_get_guild_rfr_message, independent_get_rfr_message_emoji_role, \

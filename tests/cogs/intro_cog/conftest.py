@@ -14,7 +14,7 @@ import pytest
 
 # Own modules
 from koala.cogs import IntroCog
-from tests.tests_utils.LastCtxCog import LastCtxCog
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 from tests.log import logger
 
 

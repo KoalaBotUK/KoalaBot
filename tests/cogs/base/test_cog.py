@@ -25,7 +25,7 @@ from koala.cogs.base.utils import new_discord_activity
 from koala.db import session_manager
 from koala.colours import KOALA_GREEN
 from koala.models import KoalaExtensions, GuildExtensions
-from tests.tests_utils.TestUtils import assert_activity
+from tests.tests_utils.utils import assert_activity
 
 
 # Constants

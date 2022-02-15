@@ -23,7 +23,7 @@ from discord.ext.test import factories as dpyfactory
 import koalabot
 from koala.colours import KOALA_GREEN
 from koala.db import session_manager
-from tests.tests_utils import TestUtils as testutils
+from tests.tests_utils import utils as testutils
 from .utils import DBManager, independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
 from tests.log import logger
 

@@ -1,1 +1,1 @@
-from . import Greetings
+from . import greetings_cog

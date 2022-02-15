@@ -12,7 +12,7 @@ from sqlalchemy import select, delete
 # Own modules
 import koalabot
 from koala.cogs import BaseCog
-from tests.tests_utils import LastCtxCog
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 from koala.colours import KOALA_GREEN
 from koala.utils import is_int
 from koala.db import session_manager
@@ -27,7 +27,7 @@ from tests.log import logger
 
 @pytest.fixture(scope="function", autouse=True)
 def utils_cog(bot: discord.ext.commands.Bot):
-    utils_cog = LastCtxCog.LastCtxCog(bot)
+    utils_cog = LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")

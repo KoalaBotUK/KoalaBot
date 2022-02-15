@@ -21,8 +21,8 @@ from discord.ext import commands
 import koalabot
 from koala.db import clear_all_tables, fetch_all_tables
 
-from tests.tests_utils.TestUtils import FakeAuthor
-from tests.tests_utils.LastCtxCog import LastCtxCog
+from tests.tests_utils.utils import FakeAuthor
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 
 # Constants
 
@@ -100,7 +100,7 @@ def test_not_admin_is_admin(test_ctx):
 def test_load_all_cogs():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
         koalabot.load_all_cogs()
-    mock1.assert_called_with("tests.tests_utils.fake_load_all_cogs.Greetings")
+    mock1.assert_called_with("tests.tests_utils.fake_load_all_cogs.greetings_cog")
 
 
 @pytest.mark.asyncio

@@ -24,7 +24,7 @@ from koala.cogs import ColourRole
 from koala.cogs import colour_role
 from koala.cogs.colour_role.utils import COLOUR_ROLE_NAMING
 
-from tests.tests_utils import LastCtxCog
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 from tests.log import logger
 from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_list_of_protected_colour_roles,\
     random_colour, independent_get_protected_colours, independent_get_colour_change_roles, DBManager
@@ -36,7 +36,7 @@ from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_lis
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = LastCtxCog.LastCtxCog(bot)
+    utils_cog = LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")

@@ -20,7 +20,7 @@ from discord.ext import commands
 # Own modules
 import koalabot
 from koala.utils import __parse_args, get_arg_config_path, format_config_path, wait_for_message
-from tests.tests_utils import LastCtxCog
+from tests.tests_utils.last_ctx_cog import LastCtxCog
 from tests.log import logger
 # Constants
 
@@ -86,7 +86,7 @@ async def test_wait_for_message_none(utils_cog):
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot):
-    utils_cog = LastCtxCog.LastCtxCog(bot)
+    utils_cog = LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
