@@ -9,6 +9,7 @@ import asyncio
 import discord
 import discord.ext.test as dpytest
 import pytest
+from sqlalchemy import select, delete
 
 # Own modules
 import KoalaBot
@@ -16,15 +17,18 @@ from koala.cogs import BaseCog
 from tests.tests_utils import LastCtxCog
 from koala.utils.KoalaColours import KOALA_GREEN
 from koala.utils.KoalaUtils import is_int
-from koala.cogs import TextFilter
+from koala.db import session_manager
+
+from koala.cogs import TextFilter as TextFilterCog
 from koala.cogs.text_filter.db import TextFilterDBManager
+from koala.cogs.text_filter.models import TextFilter, TextFilterModeration, TextFilterIgnoreList
 
 
 # Variables
 
 
 @pytest.fixture(scope="function", autouse=True)
-def utils_cog(bot):
+def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
@@ -33,7 +37,7 @@ def utils_cog(bot):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def base_cog(bot):
+def base_cog(bot: discord.ext.commands.Bot):
     base_cog = BaseCog(bot)
     bot.add_cog(base_cog)
     dpytest.configure(bot)
@@ -42,45 +46,45 @@ def base_cog(bot):
 
 
 @pytest.fixture(scope="function", autouse=True)
-async def tf_cog(bot):
-    tf_cog = TextFilter(bot)
+async def tf_cog(bot: discord.ext.commands.Bot):
+    tf_cog = TextFilterCog(bot)
     bot.add_cog(tf_cog)
     dpytest.configure(bot)
     print("Tests starting")
     return tf_cog
 
 
-def assertBannedWarning(word):
+def assert_banned_warning(word):
     assert dpytest.verify().message().content(
         "Watch your language! Your message: '*" + word + "*' in " + dpytest.get_config().guilds[0].channels[
             0].mention + " has been deleted by KoalaBot.")
 
 
-def assertRiskyWarning(word):
+def assert_risky_warning(word):
     assert dpytest.verify().message().content(
         "Watch your language! Your message: '*" + word + "*' in " + dpytest.get_config().guilds[0].channels[
             0].mention + " contains a 'risky' word. This is a warning.")
 
 
-def assertEmailWarning(word):
+def assert_email_warning(word):
     assert dpytest.verify().message().content(
         "Be careful! Your message: '*" + word + "*' in " + dpytest.get_config().guilds[0].channels[
             0].mention + " includes personal information and has been deleted by KoalaBot.")
 
 
-def assertFilteredConfirmation(word, type):
+def assert_filtered_confirmation(word, type):
     assert dpytest.verify().message().content("*" + word + "* has been filtered as **" + type + "**.")
 
 
-def assertNewIgnore(id):
+def assert_new_ignore(id):
     assert dpytest.verify().message().content("New ignore added: " + id)
 
 
-def assertRemoveIgnore(id):
+def assert_remove_ignore(id):
     assert dpytest.verify().message().content("Ignore removed: " + id)
 
 
-def createNewModChannelEmbed(channel):
+def create_new_mod_channel_embed(channel):
     embed = discord.Embed()
     embed.title = "Koala Moderation - Mod Channel Added"
     embed.colour = KOALA_GREEN
@@ -90,7 +94,7 @@ def createNewModChannelEmbed(channel):
     return embed
 
 
-def listModChannelEmbed(channels):
+def list_mod_channel_embed(channels):
     embed = discord.Embed()
     embed.title = "Koala Moderation - Mod Channels"
     embed.colour = KOALA_GREEN
@@ -100,7 +104,7 @@ def listModChannelEmbed(channels):
     return embed
 
 
-def listIgnoredEmbed(ignored):
+def list_ignored_embed(ignored):
     embed = discord.Embed()
     embed.title = "Koala Moderation - Ignored Users/Channels"
     embed.colour = KOALA_GREEN
@@ -110,7 +114,7 @@ def listIgnoredEmbed(ignored):
     return embed
 
 
-def removeModChannelEmbed(channel):
+def remove_mod_channel_embed(channel):
     embed = discord.Embed()
     embed.title = "Koala Moderation - Mod Channel Removed"
     embed.colour = KOALA_GREEN
@@ -120,41 +124,40 @@ def removeModChannelEmbed(channel):
     return embed
 
 
-def createFilteredString(text):
-    createTextString = ""
+def create_filtered_string(text):
+    create_text_string = ""
     for current in text:
-        createTextString += current + "\n"
-    return createTextString
+        create_text_string += current + "\n"
+    return create_text_string
 
 
-def filteredWordsEmbed(words, filter, regex):
-    wordString = createFilteredString(words)
-    filterString = createFilteredString(filter)
-    regexString = createFilteredString(regex)
+def filtered_words_embed(words, filter, regex):
+    word_string = create_filtered_string(words)
+    filter_string = create_filtered_string(filter)
+    regex_string = create_filtered_string(regex)
     embed = discord.Embed()
     embed.title = "Koala Moderation - Filtered Words"
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
-    embed.add_field(name="Banned Words", value=wordString)
-    embed.add_field(name="Filter Type", value=filterString)
-    embed.add_field(name="Is Regex", value=regexString)
+    embed.add_field(name="Banned Words", value=word_string)
+    embed.add_field(name="Filter Type", value=filter_string)
+    embed.add_field(name="Is Regex", value=regex_string)
     return embed
 
 
-def cleanup(guildId, tf_cog):
-    KoalaBot.database_manager.db_execute_commit(f"DELETE FROM TextFilter WHERE guild_id=(\"{guildId}\");")
+def cleanup(guild_id, tf_cog, session):
+    session.execute(delete(TextFilter).filter_by(guild_id=guild_id))
 
 
 @pytest.mark.asyncio()
 async def test_filter_new_word_correct_database(tf_cog):
-    old = len(KoalaBot.database_manager.db_execute_select(
-        f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';"))
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no",
-                          channel=dpytest.get_config().guilds[0].channels[0])
-    assertFilteredConfirmation("no", "banned")
-    assert len(KoalaBot.database_manager.db_execute_select(
-        f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'no';")) == old + 1
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+    with session_manager() as session:
+        old = len(session.execute(select(TextFilter.filtered_text).filter_by(filtered_text="no")).all())
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word no",
+                              channel=dpytest.get_config().guilds[0].channels[0])
+        assert_filtered_confirmation("no", "banned")
+        assert len(session.execute(select(TextFilter.filtered_text).filter_by(filtered_text="no")).all()) == old + 1
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
@@ -171,13 +174,14 @@ async def test_filter_too_many_arguments():
 
 @pytest.mark.asyncio()
 async def test_filter_risky_word(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
-    assertFilteredConfirmation("yup", "risky")
+    with session_manager() as session:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word yup risky")
+        assert_filtered_confirmation("yup", "risky")
 
-    await dpytest.message("yup test")
-    assertRiskyWarning("yup test")
+        await dpytest.message("yup test")
+        assert_risky_warning("yup test")
 
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
@@ -188,22 +192,24 @@ async def test_unrecognised_filter_type():
 
 @pytest.mark.asyncio()
 async def test_filter_email_regex(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
-    assertFilteredConfirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]", "banned")
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+    with session_manager() as session:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
+        assert_filtered_confirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]", "banned")
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_invalid_regex(tf_cog):
-    with pytest.raises(Exception):
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [")
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+    with session_manager() as session:
+        with pytest.raises(Exception):
+            await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_regex [")
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_normal_filter_does_not_recognise_regex():
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter \"^verify [a-zA-Z0-9]+@soton.ac.uk$\"")
-    assertFilteredConfirmation("^verify [a-zA-Z0-9]+@soton.ac.uk$", "banned")
+    assert_filtered_confirmation("^verify [a-zA-Z0-9]+@soton.ac.uk$", "banned")
 
     await dpytest.message("verify abc@soton.ac.uk")
     assert dpytest.verify().message().nothing()
@@ -211,41 +217,43 @@ async def test_normal_filter_does_not_recognise_regex():
 
 @pytest.mark.asyncio()
 async def test_filter_various_emails_with_regex(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
-    assertFilteredConfirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]", "banned")
+    with session_manager() as session:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + r"filter_regex [a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]")
+        assert_filtered_confirmation(r"[a-z0-9]+[\._]?[a-z0-9]+[@]+[herts]+[.ac.uk]", "banned")
 
-    # Should delete and warn
-    await dpytest.message("hey stefan@herts.ac.uk")
-    assertBannedWarning("hey stefan@herts.ac.uk")
+        # Should delete and warn
+        await dpytest.message("hey stefan@herts.ac.uk")
+        assert_banned_warning("hey stefan@herts.ac.uk")
 
-    # Should delete and warn
-    await dpytest.message("hey stefan.c.27.abc@herts.ac.uk")
-    assertBannedWarning("hey stefan.c.27.abc@herts.ac.uk")
+        # Should delete and warn
+        await dpytest.message("hey stefan.c.27.abc@herts.ac.uk")
+        assert_banned_warning("hey stefan.c.27.abc@herts.ac.uk")
 
-    # Should not warn
-    await dpytest.message("hey herts.ac.uk")
-    assert dpytest.verify().message().nothing()
+        # Should not warn
+        await dpytest.message("hey herts.ac.uk")
+        assert dpytest.verify().message().nothing()
 
-    # Should not warn
-    await dpytest.message("hey stefan@herts")
-    assert dpytest.verify().message().nothing()
+        # Should not warn
+        await dpytest.message("hey stefan@herts")
+        assert dpytest.verify().message().nothing()
 
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_unfilter_word_correct_database(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
-    assertFilteredConfirmation("unfilterboi", "banned")
+    with session_manager() as session:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
+        assert_filtered_confirmation("unfilterboi", "banned")
 
-    old = len(KoalaBot.database_manager.db_execute_select(
-        f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
+        old = len(KoalaBot.database_manager.db_execute_select(
+            f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
 
-    assert len(KoalaBot.database_manager.db_execute_select(
-        f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1
-    assert dpytest.verify().message().content("*unfilterboi* has been unfiltered.")
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        assert len(KoalaBot.database_manager.db_execute_select(
+            f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1
+        assert dpytest.verify().message().content("*unfilterboi* has been unfiltered.")
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
@@ -262,34 +270,37 @@ async def test_unfilter_too_many_arguments():
 
 @pytest.mark.asyncio()
 async def test_list_filtered_words(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing1")
-    assertFilteredConfirmation("listing1", "banned")
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing2 risky")
-    assertFilteredConfirmation("listing2", "risky")
+    with session_manager() as session:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing1")
+        assert_filtered_confirmation("listing1", "banned")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word listing2 risky")
+        assert_filtered_confirmation("listing2", "risky")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "check_filtered_words")
-    assert_embed = filteredWordsEmbed(['listing1', 'listing2'], ['banned', 'risky'], ['0', '0'])
-    assert dpytest.verify().message().embed(embed=assert_embed)
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "check_filtered_words")
+        assert_embed = filtered_words_embed(['listing1', 'listing2'], ['banned', 'risky'], ['0', '0'])
+        assert dpytest.verify().message().embed(embed=assert_embed)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_list_filtered_words_empty(tf_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "check_filtered_words")
-    assert_embed = filteredWordsEmbed([], [], [])
-    assert dpytest.verify().message().embed(embed=assert_embed)
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+    with session_manager() as session:
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "check_filtered_words")
+        assert_embed = filtered_words_embed([], [], [])
+        assert dpytest.verify().message().embed(embed=assert_embed)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel(tf_cog):
-    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
-    dpytest.get_config().channels.append(channel)
+    with session_manager() as session:
+        channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
+        dpytest.get_config().channels.append(channel)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel.id))
-    assert_embed = createNewModChannelEmbed(channel)
-    assert dpytest.verify().message().embed(embed=assert_embed)
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel.id))
+        assert_embed = create_new_mod_channel_embed(channel)
+        assert dpytest.verify().message().embed(embed=assert_embed)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.fixture
@@ -299,17 +310,17 @@ def text_filter_db_manager():
 
 @pytest.mark.asyncio()
 async def test_add_mod_channel_tag(text_filter_db_manager, tf_cog):
-    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
-    dpytest.get_config().channels.append(channel)
+    with session_manager() as session:
+        channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
+        dpytest.get_config().channels.append(channel)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel <#" + str(channel.id) + ">")
-    assert_embed = createNewModChannelEmbed(channel)
-    assert dpytest.verify().message().embed(embed=assert_embed)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel <#" + str(channel.id) + ">")
+        assert_embed = create_new_mod_channel_embed(channel)
+        assert dpytest.verify().message().embed(embed=assert_embed)
 
-    result = KoalaBot.database_manager.db_execute_select(
-        "SELECT channel_id FROM TextFilterModeration WHERE guild_id = ?;", args=[channel.guild.id])
-    assert is_int(result[0][0])
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        result = session.execute(select(TextFilterModeration.channel_id).filter_by(guild_id=channel.guild.id)).all()
+        assert is_int(result[0][0])
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
@@ -334,18 +345,19 @@ async def test_add_mod_channel_too_many_arguments():
 
 @pytest.mark.asyncio()
 async def test_remove_mod_channel(tf_cog):
-    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
-    channelId = str(channel.id)
-    dpytest.get_config().channels.append(channel)
+    with session_manager() as session:
+        channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
+        channel_id = str(channel.id)
+        dpytest.get_config().channels.append(channel)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + channelId)
-    assert_embed = createNewModChannelEmbed(channel)
-    assert dpytest.verify().message().embed(embed=assert_embed)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + channel_id)
+        assert_embed = create_new_mod_channel_embed(channel)
+        assert dpytest.verify().message().embed(embed=assert_embed)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeModChannel " + channelId)
-    assert_embed = removeModChannelEmbed(channel)
-    assert dpytest.verify().message().embed(embed=assert_embed)
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeModChannel " + channel_id)
+        assert_embed = remove_mod_channel_embed(channel)
+        assert dpytest.verify().message().embed(embed=assert_embed)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
@@ -368,75 +380,79 @@ async def test_remove_mod_channel_unrecognised_channel():
 
 @pytest.mark.asyncio()
 async def test_list_channels(tf_cog):
-    channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
-    dpytest.get_config().channels.append(channel)
+    with session_manager() as session:
+        channel = dpytest.backend.make_text_channel(name="TestChannel", guild=dpytest.get_config().guilds[0])
+        dpytest.get_config().channels.append(channel)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel.id))
-    assert_embed = createNewModChannelEmbed(channel)
-    assert dpytest.verify().message().embed(embed=assert_embed)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel.id))
+        assert_embed = create_new_mod_channel_embed(channel)
+        assert dpytest.verify().message().embed(embed=assert_embed)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "listModChannels")
-    assert_embed = listModChannelEmbed([channel])
-    assert dpytest.verify().message().embed(embed=assert_embed)
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "listModChannels")
+        assert_embed = list_mod_channel_embed([channel])
+        assert dpytest.verify().message().embed(embed=assert_embed)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_list_multiple_channels(tf_cog):
-    channel1 = dpytest.backend.make_text_channel(name="TestChannel1", guild=dpytest.get_config().guilds[0])
-    channel2 = dpytest.backend.make_text_channel(name="TestChannel2", guild=dpytest.get_config().guilds[0])
-    dpytest.get_config().channels.append(channel1)
-    dpytest.get_config().channels.append(channel2)
+    with session_manager() as session:
+        channel1 = dpytest.backend.make_text_channel(name="TestChannel1", guild=dpytest.get_config().guilds[0])
+        channel2 = dpytest.backend.make_text_channel(name="TestChannel2", guild=dpytest.get_config().guilds[0])
+        dpytest.get_config().channels.append(channel1)
+        dpytest.get_config().channels.append(channel2)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel1.id))
-    assert_embed = createNewModChannelEmbed(channel1)
-    assert dpytest.verify().message().embed(embed=assert_embed)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel1.id))
+        assert_embed = create_new_mod_channel_embed(channel1)
+        assert dpytest.verify().message().embed(embed=assert_embed)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel2.id))
-    assert_embed = createNewModChannelEmbed(channel2)
-    assert dpytest.verify().message().embed(embed=assert_embed)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "setupModChannel " + str(channel2.id))
+        assert_embed = create_new_mod_channel_embed(channel2)
+        assert dpytest.verify().message().embed(embed=assert_embed)
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "listModChannels")
-    assert_embed = listModChannelEmbed([channel1, channel2])
-    assert dpytest.verify().message().embed(embed=assert_embed)
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "listModChannels")
+        assert_embed = list_mod_channel_embed([channel1, channel2])
+        assert dpytest.verify().message().embed(embed=assert_embed)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_ignore_channel(tf_cog):
-    channel1 = dpytest.backend.make_text_channel(name="TestChannel1", guild=dpytest.get_config().guilds[0])
+    with session_manager() as session:
+        channel1 = dpytest.backend.make_text_channel(name="TestChannel1", guild=dpytest.get_config().guilds[0])
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreme")
-    assertFilteredConfirmation("ignoreme", "banned")
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreme")
+        assert_filtered_confirmation("ignoreme", "banned")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + channel1.mention)
-    assertNewIgnore(channel1.mention)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreChannel " + channel1.mention)
+        assert_new_ignore(channel1.mention)
 
-    # Should be ignored
-    await dpytest.message("ignoreme", channel=channel1)
+        # Should be ignored
+        await dpytest.message("ignoreme", channel=channel1)
 
-    # Should be deleted and warned
-    await dpytest.message("ignoreme")
-    assertBannedWarning("ignoreme")
+        # Should be deleted and warned
+        await dpytest.message("ignoreme")
+        assert_banned_warning("ignoreme")
 
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
 async def test_ignore_user(tf_cog):
-    message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
-    assertFilteredConfirmation("ignoreuser", "banned")
+    with session_manager() as session:
+        message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
+        assert_filtered_confirmation("ignoreuser", "banned")
 
-    # Should be deleted and warned
-    await dpytest.message("ignoreuser")
-    assertBannedWarning("ignoreuser")
+        # Should be deleted and warned
+        await dpytest.message("ignoreuser")
+        assert_banned_warning("ignoreuser")
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser " + message.author.mention)
-    assertNewIgnore(message.author.mention)
+        await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser " + message.author.mention)
+        assert_new_ignore(message.author.mention)
 
-    # Should be ignored
-    await dpytest.message("ignoreuser")
-    cleanup(dpytest.get_config().guilds[0].id, tf_cog)
+        # Should be ignored
+        await dpytest.message("ignoreuser")
+        cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
 
 @pytest.mark.asyncio()
@@ -447,35 +463,35 @@ async def test_ignore_empty_user():
 
 @pytest.mark.asyncio()
 async def test_unignore_channel():
-    message = await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
-    assertFilteredConfirmation("ignoreuser", "banned")
+    await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word ignoreuser")
+    assert_filtered_confirmation("ignoreuser", "banned")
 
     await dpytest.message(
         KoalaBot.COMMAND_PREFIX + "ignoreChannel " + dpytest.get_config().guilds[0].channels[0].mention)
-    assertNewIgnore(dpytest.get_config().guilds[0].channels[0].mention)
+    assert_new_ignore(dpytest.get_config().guilds[0].channels[0].mention)
 
     # Should be ignored
     await dpytest.message("ignoreuser")
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "unignore " + dpytest.get_config().guilds[0].channels[0].mention)
-    assertRemoveIgnore(dpytest.get_config().guilds[0].channels[0].mention)
+    assert_remove_ignore(dpytest.get_config().guilds[0].channels[0].mention)
 
     # Should be deleted and warned
     await dpytest.message("ignoreuser")
-    assertBannedWarning("ignoreuser")
+    assert_banned_warning("ignoreuser")
 
 
 @pytest.mark.asyncio()
 async def test_list_ignored():
     mes = await dpytest.message(
         KoalaBot.COMMAND_PREFIX + "ignoreChannel " + dpytest.get_config().guilds[0].channels[0].mention)
-    assertNewIgnore(dpytest.get_config().guilds[0].channels[0].mention)
+    assert_new_ignore(dpytest.get_config().guilds[0].channels[0].mention)
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "ignoreUser " + mes.author.mention)
-    assertNewIgnore(mes.author.mention)
+    assert_new_ignore(mes.author.mention)
 
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "listIgnored")
-    assert listIgnoredEmbed([dpytest.get_config().guilds[0].channels[0], mes.author])
+    assert list_ignored_embed([dpytest.get_config().guilds[0].channels[0], mes.author])
 
 
 @pytest.fixture(autouse=True)
