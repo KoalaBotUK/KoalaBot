@@ -66,14 +66,12 @@ class TwitchAlertDBManager:
     A class for interacting with the Koala twitch database
     """
 
-    def __init__(self, bot_client: discord.client, database_path=None):
+    def __init__(self, bot_client: discord.client):
         """
         Initialises local variables
         :param bot_client:
         """
         delete_invalid_accounts()
-        if not database_path:
-            database_path = DATABASE_PATH
 
         self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client

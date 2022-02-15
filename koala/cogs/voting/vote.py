@@ -5,21 +5,13 @@ Koala Bot Vote Cog code and additional base cog functions
 Commented using reStructuredText (reST)
 """
 # Built-in/Generic Imports
-import time
 
 # Libs
-import discord
-import parsedatetime.parsedatetime
-from discord.ext import commands, tasks
 from sqlalchemy import select, delete, update
 
 # Own modules
-import KoalaBot
 from koala.db import session_manager
-from .log import logger
 from .models import Votes, VoteTargetRoles, VoteSent, VoteOptions
-from .option import Option
-from .utils import make_result_embed
 
 
 # Constants
