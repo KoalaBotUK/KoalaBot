@@ -102,7 +102,7 @@ async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
 @pytest.mark.skip("dpytest has non-implemented functionality for construction of guild custom emojis")
 @pytest.mark.parametrize("num_rows", [0, 1, 2, 20])
 @pytest.mark.asyncio
-async def test_parse_emoji_or_roles_input_str(num_rows):
+async def test_parse_emoji_or_roles_input_str(num_rows, utils_cog, rfr_cog):
     import emoji
     image = discord.File("utils/discord.png", filename="discord.png")
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -259,7 +259,7 @@ async def test_get_number_of_embed_fields(rfr_cog):
 
 @pytest.mark.skip('dpytest currently has non-implemented functionality for construction of guild custom emojis')
 @pytest.mark.asyncio
-async def test_get_first_emoji_from_str():
+async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
