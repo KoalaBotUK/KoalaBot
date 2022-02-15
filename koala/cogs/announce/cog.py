@@ -1,19 +1,19 @@
 # Built-in/Generic Imports
-import time
 import math
+import time
+
+# Libs
+import discord
+from discord.ext import commands
 
 # Own modules
 import KoalaBot
 from koala.utils import KoalaColours
 from koala.utils.KoalaUtils import extract_id, wait_for_message
-from .db import AnnounceDBManager
-from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, TIMEOUT_TIME, MAX_MESSAGE_LENGTH
 from .announce_message import AnnounceMessage
+from .db import AnnounceDBManager
 from .log import logger
-
-# Libs
-import discord
-from discord.ext import commands
+from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, MAX_MESSAGE_LENGTH
 
 
 def announce_is_enabled(ctx):

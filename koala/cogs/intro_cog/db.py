@@ -1,17 +1,15 @@
 # Futures
 
 # Built-in/Generic Imports
-import re
 
 # Libs
-import discord
 from sqlalchemy import select, update
 
 # Own modules
 from koala.db import session_manager
-
 from .models import GuildWelcomeMessages
 from .utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE
+
 
 # Constants
 

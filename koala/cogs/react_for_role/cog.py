@@ -9,7 +9,6 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import re
 from io import BytesIO
 from typing import *
 
@@ -20,8 +19,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from koala.utils import KoalaDBManager, KoalaColours, KoalaUtils
-
+from koala.utils import KoalaColours, KoalaUtils
 from .db import ReactForRoleDBManager
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 

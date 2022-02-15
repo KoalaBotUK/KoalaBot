@@ -9,18 +9,17 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
-from contextlib import contextmanager
-
 # Libs
+from contextlib import contextmanager
 from pathlib import Path
-from sqlalchemy import select, update, delete, and_, func, create_engine
+from sqlalchemy import select, delete, and_, func, create_engine
 from sqlalchemy.orm import sessionmaker
 
-
 # Own modules
-from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
 from koala.env import DB_KEY, ENCRYPTED_DB
+from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
 from koala.utils.KoalaUtils import get_arg_config_path, format_config_path
+
 
 # Constants
 

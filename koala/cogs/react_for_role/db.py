@@ -9,24 +9,16 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import re
-from io import BytesIO
 from typing import *
 
-import aiohttp
-import discord
-import emoji
 import sqlalchemy.exc
-from discord.ext import commands
-from sqlalchemy import select, update, delete, and_
+from sqlalchemy import select, delete, and_
 
 # Own modules
-import KoalaBot
-from koala.utils import KoalaDBManager, KoalaColours, KoalaUtils
 from koala.db import session_manager
-
-from .models import GuildRFRMessages, RFRMessageEmojiRoles, GuildRFRRequiredRoles
 from .log import logger
+from .models import GuildRFRMessages, RFRMessageEmojiRoles, GuildRFRRequiredRoles
+
 
 # Libs
 

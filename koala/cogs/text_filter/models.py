@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, orm, UniqueConstraint
-from koala.models import mapper_registry
+from sqlalchemy import Column, Integer, String, Boolean
+
 from koala.db import setup
+from koala.models import mapper_registry
 
 
 @mapper_registry.mapped

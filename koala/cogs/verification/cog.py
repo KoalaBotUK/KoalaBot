@@ -8,24 +8,22 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import random
-import string
 import smtplib
+import string
 from email.message import EmailMessage
-from dotenv import load_dotenv
-import os
 
 # Libs
 import discord
 from discord.ext import commands
-from sqlalchemy import select, delete, or_, and_, text
+from sqlalchemy import select, delete, and_, text
 
 # Own modules
 import KoalaBot
 from koala.db import session_manager
-
-from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
 from .log import logger
+from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
+
 
 # Constants
 
