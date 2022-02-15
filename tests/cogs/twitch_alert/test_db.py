@@ -24,7 +24,6 @@ from koala.cogs.twitch_alert.db import TwitchAlertDBManager
 from koala.cogs.twitch_alert import utils
 from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from koala.db import session_manager, setup
-from koala.utils import KoalaDBManager
 
 # Constants
 DB_PATH = "Koala.db"

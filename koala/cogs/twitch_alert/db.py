@@ -4,9 +4,7 @@
 import re
 
 # Own modules
-from koala.utils import KoalaDBManager
 from koala.db import session_manager, DATABASE_PATH
-from koala.env import DB_KEY
 
 from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
