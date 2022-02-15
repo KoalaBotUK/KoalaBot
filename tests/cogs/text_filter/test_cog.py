@@ -246,12 +246,11 @@ async def test_unfilter_word_correct_database(tf_cog):
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "filter_word unfilterboi")
         assert_filtered_confirmation("unfilterboi", "banned")
 
-        old = len(KoalaBot.database_manager.db_execute_select(
-            f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';"))
+        old = len(session.execute(select(TextFilter.filtered_text).filter_by(filtered_text='unfilterboi')).all())
         await dpytest.message(KoalaBot.COMMAND_PREFIX + "unfilter_word unfilterboi")
 
-        assert len(KoalaBot.database_manager.db_execute_select(
-            f"SELECT filtered_text FROM TextFilter WHERE filtered_text = 'unfilterboi';")) == old - 1
+        assert len(session.execute(select(TextFilter.filtered_text)
+                                   .filter_by(filtered_text='unfilterboi')).all()) == old - 1
         assert dpytest.verify().message().content("*unfilterboi* has been unfiltered.")
         cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 
