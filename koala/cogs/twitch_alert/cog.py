@@ -9,7 +9,7 @@ from .log import logger
 import KoalaBot
 from KoalaBot import COMMAND_PREFIX as CP
 from koala.models import GuildExtensions
-from koala.db import session_manager
+from koala.db import session_manager, insert_extension
 from koala.utils.KoalaColours import KOALA_GREEN
 from koala.utils.KoalaUtils import error_embed, is_channel_in_guild
 from .models import UserInTwitchAlert, TwitchAlerts, UserInTwitchTeam, TeamInTwitchAlert
@@ -51,17 +51,14 @@ class TwitchAlert(commands.Cog):
         A discord.py cog for alerting when someone goes live on twitch
     """
 
-    def __init__(self, bot: discord.ext.commands.Bot, database_manager=None):
+    def __init__(self, bot: discord.ext.commands.Bot):
 
         """
         Initialises local variables
         :param bot: The bot client for this cog
         """
-        if not database_manager:
-            database_manager = KoalaBot.database_manager
         self.bot = bot
-        database_manager.create_base_tables()
-        database_manager.insert_extension("TwitchAlert", 0, True, True)
+        insert_extension("TwitchAlert", 0, True, True)
         self.ta_database_manager = TwitchAlertDBManager(bot)
         # self.ta_database_manager.translate_names_to_ids()
         self.loop_thread = None
@@ -666,7 +663,7 @@ def setup(bot: KoalaBot) -> None:
     """
     if TWITCH_SECRET is None or TWITCH_KEY is None:
         logger.error("TwitchAlert not started. API keys not found in environment.")
-        KoalaBot.database_manager.insert_extension("TwitchAlert", 0, False, False)
+        insert_extension("TwitchAlert", 0, False, False)
     else:
         bot.add_cog(TwitchAlert(bot))
         logger.info("TwitchAlert is ready.")

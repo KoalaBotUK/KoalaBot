@@ -19,7 +19,7 @@ from sqlalchemy import select, delete, and_, text
 
 # Own modules
 import KoalaBot
-from koala.db import session_manager
+from koala.db import session_manager, insert_extension
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
 from .log import logger
 from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
@@ -52,7 +52,7 @@ class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot):
         self.bot = bot
-        KoalaBot.database_manager.insert_extension("Verify", 0, True, True)
+        insert_extension("Verify", 0, True, True)
 
     @staticmethod
     def send_email(email, token):
@@ -422,7 +422,7 @@ def setup(bot: KoalaBot) -> None:
     """
     if GMAIL_EMAIL is None or GMAIL_PASSWORD is None:
         logger.warning("Verification not started. API keys not found in environment.")
-        KoalaBot.database_manager.insert_extension("Verify", 0, False, False)
+        insert_extension("Verify", 0, False, False)
     else:
         bot.add_cog(Verification(bot))
         logger.info("Verification is ready.")

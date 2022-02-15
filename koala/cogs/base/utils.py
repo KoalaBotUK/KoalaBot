@@ -14,6 +14,7 @@ import discord
 
 # Own modules
 import KoalaBot
+from koala.db import get_enabled_guild_extensions, get_all_available_guild_extensions
 from koala.utils.KoalaColours import KOALA_GREEN
 
 
@@ -59,8 +60,8 @@ def list_ext_embed(guild_id):
     embed.title = "Enabled extensions"
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {guild_id}")
-    enabled_results = KoalaBot.database_manager.get_enabled_guild_extensions(guild_id)
-    all_results = KoalaBot.database_manager.get_all_available_guild_extensions(guild_id)
+    enabled_results = get_enabled_guild_extensions(guild_id)
+    all_results = get_all_available_guild_extensions(guild_id)
     enabled = ""
     disabled = ""
     for result in enabled_results:

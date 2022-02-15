@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey
+from koala.db import setup
 from koala.models import mapper_registry
 
 
@@ -22,3 +23,5 @@ class GuildInvalidCustomColourRoles:
     def __repr__(self):
         return "<GuildColourChangePermissions(%s, %s)>" % \
                (self.guild_id, self.role_id)
+
+setup()

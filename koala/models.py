@@ -7,6 +7,7 @@ from sqlalchemy.orm import registry
 # Own modules
 
 # Constants
+
 # Variables
 
 mapper_registry = registry()
@@ -34,3 +35,4 @@ class GuildExtensions:
     def __repr__(self):
         return "GuildExtensions(%s, %s)>" % \
                (self.extension_id, self.guild_id)
+

@@ -69,14 +69,13 @@ async def get_results(bot, vote):
 
 
 class VoteManager:
-    def __init__(self, db_manager):
+    def __init__(self):
         """
         Manages votes for the bot
         """
         self.configuring_votes = {}
         self.sent_votes = {}
         self.vote_lookup = {}
-        self.DBManager = db_manager
 
     emote_reference = TwoWay({0: "1️⃣", 1: "2️⃣", 2: "3️⃣",
                               3: "4️⃣", 4: "5️⃣", 5: "6️⃣",
@@ -103,7 +102,7 @@ class VoteManager:
             existing_votes = session.execute(select(Votes.vote_id, Votes.author_id, Votes.guild_id,
                                                     Votes.title, Votes.chair_id, Votes.voice_id, Votes.end_time)).all()
             for v_id, a_id, g_id, title, chair_id, voice_id, end_time in existing_votes:
-                vote = Vote(v_id, title, a_id, g_id, self.DBManager)
+                vote = Vote(v_id, title, a_id, g_id)
                 vote.set_chair(chair_id)
                 vote.set_vc(voice_id)
                 self.vote_lookup[(a_id, title)] = v_id
@@ -157,7 +156,7 @@ class VoteManager:
         """
         with session_manager() as session:
             v_id = self.gen_vote_id()
-            vote = Vote(v_id, title, author_id, guild_id, self.DBManager)
+            vote = Vote(v_id, title, author_id, guild_id)
             self.vote_lookup[(author_id, title)] = v_id
             self.configuring_votes[author_id] = vote
             session.add(Votes(vote_id=vote.id, author_id=author_id, guild_id=vote.guild, title=vote.title,

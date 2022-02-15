@@ -19,6 +19,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import insert_extension
 from koala.utils import KoalaColours, KoalaUtils
 from .db import ReactForRoleDBManager
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
@@ -46,8 +47,7 @@ class ReactForRole(commands.Cog):
 
     def __init__(self, bot: discord.Client):
         self.bot = bot
-        KoalaBot.database_manager.create_base_tables()
-        KoalaBot.database_manager.insert_extension("ReactForRole", 0, True, True)
+        insert_extension("ReactForRole", 0, True, True)
         self.rfr_database_manager = ReactForRoleDBManager()
 
     @commands.check(KoalaBot.is_guild_channel)

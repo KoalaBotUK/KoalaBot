@@ -18,14 +18,13 @@ from sqlalchemy import select
 import KoalaBot
 from koala.cogs import Voting
 from koala.cogs.voting.models import Votes
-from koala.db import session_manager
-from .utils import db_manager
+from koala.db import session_manager, insert_extension
 
 
 @pytest.fixture(autouse=True)
 def cog(bot: commands.Bot):
-    cog = Voting(bot, db_manager)
-    db_manager.insert_extension("Vote", 0, True, True)
+    cog = Voting(bot)
+    insert_extension("Vote", 0, True, True)
     bot.add_cog(cog)
     dpytest.configure(bot)
     print("Tests starting")

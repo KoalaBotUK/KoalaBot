@@ -213,3 +213,6 @@ def clear_all_tables(tables):
         for table in tables:
             session.execute('DELETE FROM ' + table + ';')
             session.commit()
+
+
+setup()

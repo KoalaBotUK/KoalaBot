@@ -15,7 +15,7 @@ from sqlalchemy import select, delete, update
 
 # Own modules
 import KoalaBot
-from koala.db import session_manager
+from koala.db import session_manager, insert_extension
 from .db import VoteManager, get_results, create_embed, add_reactions
 from .log import logger
 from .models import Votes
@@ -68,19 +68,15 @@ def vote_is_enabled(ctx):
 
 
 class Voting(commands.Cog, name="Vote"):
-    def __init__(self, bot, db_manager=None):
+    def __init__(self, bot):
         """
         discord cog to manage the voting interface
         :param bot: the bot that the cog is being run on
         :param db_manager: a database manager (allows testing on a clean database)
         """
         self.bot = bot
-        if not db_manager:
-            self.DBManager = KoalaBot.database_manager
-            self.DBManager.insert_extension("Vote", 0, True, True)
-        else:
-            self.DBManager = db_manager
-        self.vote_manager = VoteManager(self.DBManager)
+        insert_extension("Vote", 0, True, True)
+        self.vote_manager = VoteManager()
         self.vote_manager.load_from_db()
         self.running = False
 

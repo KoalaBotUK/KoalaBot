@@ -19,6 +19,8 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import clear_all_tables, fetch_all_tables
+
 from tests.tests_utils.TestUtils import FakeAuthor
 from tests.tests_utils.LastCtxCog import LastCtxCog
 
@@ -26,8 +28,6 @@ from tests.tests_utils.LastCtxCog import LastCtxCog
 
 # Variables
 utils_cog = None
-DBManager = KoalaBot.database_manager
-DBManager.create_base_tables()
 
 
 @pytest.fixture(autouse=True)
@@ -42,8 +42,7 @@ async def test_ctx(bot):
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    DBManager.clear_all_tables(DBManager.fetch_all_tables())
-    yield DBManager
+    clear_all_tables(fetch_all_tables())
 
 
 @pytest.fixture(scope='function', autouse=True)

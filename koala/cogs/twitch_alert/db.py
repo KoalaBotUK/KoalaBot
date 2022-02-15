@@ -5,7 +5,7 @@ import re
 
 # Own modules
 from koala.utils import KoalaDBManager
-from koala.db import setup, session_manager, DATABASE_PATH
+from koala.db import session_manager, DATABASE_PATH
 from koala.env import DB_KEY
 
 from .twitch_handler import TwitchAPIHandler
@@ -63,7 +63,7 @@ def delete_invalid_accounts():
         session.commit()
 
 
-class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
+class TwitchAlertDBManager:
     """
     A class for interacting with the Koala twitch database
     """
@@ -74,11 +74,8 @@ class TwitchAlertDBManager(KoalaDBManager.KoalaDBManager):
         :param bot_client:
         """
         delete_invalid_accounts()
-        setup()
         if not database_path:
             database_path = DATABASE_PATH
-
-        super().__init__(database_path, DB_KEY)
 
         self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client

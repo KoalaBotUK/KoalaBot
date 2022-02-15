@@ -28,8 +28,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
+from koala.db import extension_enabled
 from koala.utils.KoalaUtils import error_embed
-from koala.utils.KoalaDBManager import KoalaDBManager as DBManager
 from koala.log import logger
 from koala.env import DB_KEY, BOT_TOKEN, BOT_OWNER
 from koala.db import DATABASE_PATH
@@ -60,7 +60,6 @@ intent.members = True
 intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
-database_manager = DBManager(DATABASE_PATH, DB_KEY)
 is_dpytest = False
 
 
@@ -153,7 +152,7 @@ def check_guild_has_ext(ctx, extension_id):
     """
     if is_dm_channel(ctx):
         return False
-    if (not database_manager.extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
+    if (not extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 

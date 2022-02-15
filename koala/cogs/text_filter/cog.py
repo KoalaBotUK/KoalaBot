@@ -13,6 +13,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import insert_extension
 from koala.utils.KoalaColours import KOALA_GREEN
 from koala.utils.KoalaUtils import extract_id
 
@@ -42,12 +43,9 @@ class TextFilter(commands.Cog, name="TextFilter"):
     A discord.py cog with commands pertaining to the a Text Filter for admins to monitor their server
     """
 
-    def __init__(self, bot, database_manager=None):
-        if not database_manager:
-            database_manager = KoalaBot.database_manager
+    def __init__(self, bot):
         self.bot = bot
-        database_manager.create_base_tables()
-        database_manager.insert_extension("TextFilter", 0, True, True)
+        insert_extension("TextFilter", 0, True, True)
         self.tf_database_manager = TextFilterDBManager(bot)
 
     @commands.command(name="filter", aliases=["filter_word"])

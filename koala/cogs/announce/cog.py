@@ -8,6 +8,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import insert_extension
 from koala.utils import KoalaColours
 from koala.utils.KoalaUtils import extract_id, wait_for_message
 from .announce_message import AnnounceMessage
@@ -41,7 +42,7 @@ class Announce(commands.Cog):
         self.bot = bot
         self.messages = {}
         self.roles = {}
-        KoalaBot.database_manager.insert_extension("Announce", 0, True, True)
+        insert_extension("Announce", 0, True, True)
         self.announce_database_manager = AnnounceDBManager()
 
     def not_exceeded_limit(self, guild_id):

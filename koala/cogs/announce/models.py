@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, ForeignKey
 
+from koala.db import setup
 from koala.models import mapper_registry
 
 
@@ -12,3 +13,5 @@ class GuildUsage:
     def __repr__(self):
         return "<GuildUsage(%s, %s)>" % \
                (self.guild_id, self.last_message_epoch_time)
+
+setup()

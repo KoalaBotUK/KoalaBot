@@ -15,7 +15,6 @@ import discord.ext.test.factories as dpyfactory
 
 # Own modules
 import KoalaBot
-from koala.utils.KoalaDBManager import KoalaDBManager
 from koala.db import session_manager
 from koala.cogs.intro_cog import db as intro_db
 from koala.cogs.intro_cog.models import GuildWelcomeMessages
@@ -25,8 +24,6 @@ fake_guild_id = 1000
 non_existent_guild_id = 9999
 
 # Variables
-DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
-DBManager.create_base_tables()
 
 
 async def add_fake_guild_to_db(id=-1):

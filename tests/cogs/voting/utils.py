@@ -26,9 +26,7 @@ ctx = Fake()
 ctx.author.id = 1234
 ctx.guild.id = 4567
 cog = None
-db_manager = KoalaBot.database_manager
-db_manager.create_base_tables()
-vote_manager = VoteManager(db_manager)
+vote_manager = VoteManager()
 
 
 def populate_vote_tables(session):

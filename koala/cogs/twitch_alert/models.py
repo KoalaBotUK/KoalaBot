@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, orm
+from koala.db import setup
 from koala.models import mapper_registry
 
 
@@ -53,3 +54,6 @@ class UserInTwitchTeam:
     def __repr__(self):
         return "<UserInTwitchTeam(%s, %s, %s)>" % \
                (self.team_twitch_alert_id, self.twitch_username, self.message_id)
+
+
+setup()

@@ -17,6 +17,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import insert_extension
 from .db import ColourRoleDBManager
 from .utils import COLOUR_ROLE_NAMING
 
@@ -68,7 +69,7 @@ class ColourRole(commands.Cog):
         :param bot: The bot client for this cog
         """
         self.bot = bot
-        KoalaBot.database_manager.insert_extension("ColourRole", 0, True, True)
+        insert_extension("ColourRole", 0, True, True)
         self.cr_database_manager = ColourRoleDBManager()
 
     @commands.Cog.listener()

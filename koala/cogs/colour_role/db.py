@@ -10,7 +10,7 @@ KoalaBot Cog for guild members wishing to change their role colour
 from typing import List, Optional
 
 # Own modules
-from koala.db import setup, session_manager
+from koala.db import session_manager
 
 # Libs
 from sqlalchemy import select, delete, and_
@@ -26,9 +26,6 @@ class ColourRoleDBManager:
     """
     A class for interacting with the Koala Colour Role database
     """
-
-    def __init__(self):
-        setup()
 
     def add_colour_change_role_perms(self, guild_id, role_id):
         with session_manager() as session:

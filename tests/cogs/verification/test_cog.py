@@ -27,8 +27,6 @@ TEST_EMAIL = 'verify_test@koalabot.uk'
 TEST_EMAIL_DOMAIN = 'koalabot.uk'
 
 # Variables
-db_manager = KoalaBot.database_manager
-db_manager.create_base_tables()
 
 
 @pytest.fixture(autouse=True)

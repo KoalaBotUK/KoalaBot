@@ -21,15 +21,12 @@ import KoalaBot
 from koala.cogs.intro_cog import db as intro_db
 from koala.cogs.intro_cog.db import get_guild_welcome_message
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, wait_for_message
-from koala.utils.KoalaDBManager import KoalaDBManager
 
 # Constants
 fake_guild_id = 1000
 non_existent_guild_id = 9999
 
 # Variables
-DBManager = KoalaDBManager(KoalaBot.DATABASE_PATH, KoalaBot.DB_KEY)
-DBManager.create_base_tables()
 
 
 @pytest.mark.asyncio

@@ -14,10 +14,11 @@ import asyncio
 import discord.ext.test as dpytest
 import pytest
 
-from koala.cogs.intro_cog import db as intro_db
 # Own modules
+from koala import db as koala_db
+from koala.cogs.intro_cog import db as intro_db
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, get_non_bot_members
-from .utils import fake_guild_id, non_existent_guild_id, DBManager, add_fake_guild_to_db
+from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
 
 
 # Constants
@@ -136,5 +137,4 @@ async def test_on_member_join():
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    DBManager.clear_all_tables(DBManager.fetch_all_tables())
-    yield DBManager
+    koala_db.clear_all_tables(koala_db.fetch_all_tables())

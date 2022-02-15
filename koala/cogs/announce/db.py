@@ -2,7 +2,7 @@
 from sqlalchemy import select
 
 # Own modules
-from koala.db import setup, session_manager
+from koala.db import session_manager
 from .models import GuildUsage
 
 # Libs
@@ -12,14 +12,6 @@ class AnnounceDBManager:
     """
     A class for interacting with the KoalaBot announcement database
     """
-
-    def __init__(self):
-        """
-        initiate variables
-        :param database_manager:
-        """
-        setup()
-
     def get_last_use_date(self, guild_id: int):
         """
         Gets the last time when this function was used

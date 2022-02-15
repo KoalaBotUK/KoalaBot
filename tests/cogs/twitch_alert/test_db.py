@@ -60,10 +60,6 @@ def twitch_alert_db_manager_tables(twitch_alert_db_manager):
         return twitch_alert_db_manager
 
 
-def test_get_parent_database_manager(twitch_alert_db_manager):
-    assert isinstance(twitch_alert_db_manager, KoalaDBManager.KoalaDBManager)
-
-
 def test_create_tables():
     setup()
     tables = ['TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam']

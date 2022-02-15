@@ -14,6 +14,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.db import get_all_available_guild_extensions, give_guild_extension, get_enabled_guild_extensions, remove_guild_extension
 from .utils import new_discord_activity, list_ext_embed
 
 # Constants
@@ -122,14 +123,14 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         guild_id = ctx.message.guild.id
 
         if koala_extension.lower() in ["all"]:
-            available_extensions = KoalaBot.database_manager.get_all_available_guild_extensions(guild_id)
+            available_extensions = get_all_available_guild_extensions(guild_id)
             for extension in available_extensions:
-                KoalaBot.database_manager.give_guild_extension(guild_id, extension)
+                give_guild_extension(guild_id, extension)
             embed = list_ext_embed(guild_id)
             embed.title = "All extensions enabled"
 
         else:
-            KoalaBot.database_manager.give_guild_extension(guild_id, koala_extension)
+            give_guild_extension(guild_id, koala_extension)
             embed = list_ext_embed(guild_id)
             embed.title = koala_extension + " enabled"
 
@@ -144,13 +145,13 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param koala_extension: The name of the koala
         """
         guild_id = ctx.message.guild.id
-        all_ext = KoalaBot.database_manager.get_enabled_guild_extensions(guild_id)
+        all_ext = get_enabled_guild_extensions(guild_id)
         if koala_extension.lower() in ["all"]:
             for ext in all_ext:
-                KoalaBot.database_manager.remove_guild_extension(guild_id, ext)
+                remove_guild_extension(guild_id, ext)
         elif koala_extension not in all_ext:
             raise NotImplementedError(f"{koala_extension} is not an enabled extension")
-        KoalaBot.database_manager.remove_guild_extension(guild_id, koala_extension)
+        remove_guild_extension(guild_id, koala_extension)
         embed = list_ext_embed(guild_id)
         embed.title = koala_extension + " disabled"
         await ctx.send(embed=embed)

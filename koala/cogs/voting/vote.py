@@ -28,7 +28,7 @@ from .utils import make_result_embed
 
 
 class Vote:
-    def __init__(self, v_id, title, author_id, guild_id, db_manager):
+    def __init__(self, v_id, title, author_id, guild_id):
         """
         An object containing methods and attributes of an active vote
         :param title: title of the vote
@@ -39,7 +39,6 @@ class Vote:
         self.id = v_id
         self.author = author_id
         self.title = title
-        self.DBManager = db_manager
 
         self.target_roles = []
         self.chair = None
