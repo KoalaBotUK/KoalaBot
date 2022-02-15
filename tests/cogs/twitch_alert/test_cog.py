@@ -19,7 +19,7 @@ from koala.db import session_manager
 from koala.cogs import twitch_alert
 from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
-from koala.utils.KoalaColours import KOALA_GREEN
+from koala.colours import KOALA_GREEN
 from tests.tests_utils.LastCtxCog import LastCtxCog
 
 # Constants
@@ -67,7 +67,7 @@ async def test_twitch_is_enabled_false(twitch_cog: cog.TwitchAlert):
     assert not cog.twitch_is_enabled(ctx)
 
 
-# @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
+# @mock.patch("koala.utils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=1)
 async def test_edit_default_message_default_from_none(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
@@ -80,7 +80,7 @@ async def test_edit_default_message_default_from_none(twitch_cog):
     assert dpytest.verify().message().embed(embed=assert_embed)
 
 
-# @mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7357))
+# @mock.patch("koala.utils.random_id", mock.MagicMock(return_value=7357))
 @pytest.mark.asyncio(order=2)
 async def test_edit_default_message_existing(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
@@ -308,7 +308,7 @@ async def test_on_ready(twitch_cog: twitch_alert.cog.TwitchAlert):
     mock1.assert_called_with()
 
 
-@mock.patch("utils.KoalaUtils.random_id", mock.MagicMock(return_value=7363))
+@mock.patch("koala.utils.random_id", mock.MagicMock(return_value=7363))
 @mock.patch("cogs.twitch_alert.TwitchAPIHandler.get_streams_data",
             mock.MagicMock(return_value={'id': '3215560150671170227', 'user_id': '27446517',
                                          "user_name": "Monstercat", 'game_id': "26936", 'type': 'live',

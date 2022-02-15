@@ -11,7 +11,7 @@ Created by: Stefan Cooper
 import discord
 
 # Own modules
-from koala.utils.KoalaColours import KOALA_GREEN
+from koala.colours import KOALA_GREEN
 
 
 def type_exists(filter_type):

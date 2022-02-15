@@ -29,10 +29,9 @@ from dotenv import load_dotenv
 
 # Own modules
 from koala.db import extension_enabled
-from koala.utils.KoalaUtils import error_embed
+from koala.utils import error_embed
 from koala.log import logger
-from koala.env import DB_KEY, BOT_TOKEN, BOT_OWNER
-from koala.db import DATABASE_PATH
+from koala.env import BOT_TOKEN, BOT_OWNER
 
 # Constants
 load_dotenv()

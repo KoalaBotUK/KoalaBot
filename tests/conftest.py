@@ -4,18 +4,14 @@ A configuration file for methods useful in all testing with pytest
 # Futures
 
 # Built-in/Generic Imports
-import os
-import sys
 import shutil
-import time
 
 # Libs
-from dotenv import load_dotenv
 import pytest
 import discord
 import discord.ext.commands as commands
 import discord.ext.test as dpytest
-from pathlib import Path
+
 
 # Own modules
 
@@ -31,7 +27,7 @@ def teardown_config():
     # tear_down: then clear table at the end of the scope
     print("Tearing down session")
 
-    from koala.utils.KoalaUtils import get_arg_config_path
+    from koala.utils import get_arg_config_path
 
     shutil.rmtree(get_arg_config_path(), ignore_errors=True)
 

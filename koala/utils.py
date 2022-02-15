@@ -19,7 +19,7 @@ from discord.ext import commands
 
 # Own modules
 from koala.env import CONFIG_PATH
-from koala.utils.KoalaColours import ERROR_RED
+from koala.colours import ERROR_RED
 
 # Constants
 ID_LENGTH = 18

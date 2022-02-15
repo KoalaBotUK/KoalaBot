@@ -3,8 +3,6 @@
 Testing KoalaBot TextFilter
 """
 
-import asyncio
-
 # Libs
 import discord
 import discord.ext.test as dpytest
@@ -15,13 +13,13 @@ from sqlalchemy import select, delete
 import KoalaBot
 from koala.cogs import BaseCog
 from tests.tests_utils import LastCtxCog
-from koala.utils.KoalaColours import KOALA_GREEN
-from koala.utils.KoalaUtils import is_int
+from koala.colours import KOALA_GREEN
+from koala.utils import is_int
 from koala.db import session_manager
 
 from koala.cogs import TextFilter as TextFilterCog
 from koala.cogs.text_filter.db import TextFilterDBManager
-from koala.cogs.text_filter.models import TextFilter, TextFilterModeration, TextFilterIgnoreList
+from koala.cogs.text_filter.models import TextFilter, TextFilterModeration
 
 
 # Variables

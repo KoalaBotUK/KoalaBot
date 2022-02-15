@@ -6,7 +6,7 @@
 import discord
 
 # Own modules
-from koala.utils.KoalaColours import KOALA_GREEN
+from koala.colours import KOALA_GREEN
 
 # Constants
 DEFAULT_MESSAGE = ""

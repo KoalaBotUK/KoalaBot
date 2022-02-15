@@ -4,7 +4,7 @@ from datetime import date
 
 from pathlib import Path
 
-from koala.utils.KoalaUtils import format_config_path
+from koala.utils import format_config_path
 from koala.env import CONFIG_PATH, LOGGING_FILE
 
 # load_dotenv()

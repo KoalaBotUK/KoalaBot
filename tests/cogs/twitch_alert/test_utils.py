@@ -8,7 +8,7 @@ import discord
 
 # Own modules
 from koala.cogs.twitch_alert import utils
-from koala.utils.KoalaColours import KOALA_GREEN
+from koala.colours import KOALA_GREEN
 
 # Constants
 DB_PATH = "Koala.db"

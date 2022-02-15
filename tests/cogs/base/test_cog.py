@@ -21,11 +21,11 @@ from sqlalchemy import delete
 import KoalaBot
 from koala.cogs import BaseCog
 from koala.cogs.base.cog import setup as setup_cog
-from koala.cogs.base.utils import new_discord_activity, list_ext_embed
+from koala.cogs.base.utils import new_discord_activity
 from koala.db import session_manager
+from koala.colours import KOALA_GREEN
 from koala.models import KoalaExtensions, GuildExtensions
 from tests.tests_utils.TestUtils import assert_activity
-from koala.utils import KoalaColours
 
 
 # Constants
@@ -64,7 +64,7 @@ async def test_list_koala_ext_disabled(base_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "listExt")
     expected_embed = discord.Embed()
     expected_embed.title = "Enabled extensions"
-    expected_embed.colour = KoalaColours.KOALA_GREEN
+    expected_embed.colour = KOALA_GREEN
     expected_embed.add_field(name=":negative_squared_cross_mark: Disabled", value="Greetings\n")
     expected_embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
     assert dpytest.verify().message().embed(embed=expected_embed)
@@ -78,7 +78,7 @@ async def test_enable_koala_ext(base_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "enableExt Greetings")
     expected_embed = discord.Embed()
     expected_embed.title = "Greetings enabled"
-    expected_embed.colour = KoalaColours.KOALA_GREEN
+    expected_embed.colour = KOALA_GREEN
     expected_embed.add_field(name=":white_check_mark: Enabled", value="Greetings\n")
     expected_embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
     assert dpytest.verify().message().embed(embed=expected_embed)
@@ -92,7 +92,7 @@ async def test_disable_koala_ext(base_cog):
     await dpytest.message(KoalaBot.COMMAND_PREFIX + "disableExt Greetings")
     expected_embed = discord.Embed()
     expected_embed.title = "Greetings disabled"
-    expected_embed.colour = KoalaColours.KOALA_GREEN
+    expected_embed.colour = KOALA_GREEN
     expected_embed.add_field(name=":negative_squared_cross_mark: Disabled", value="Greetings\n")
     expected_embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
     assert dpytest.verify().message().embed(embed=expected_embed)

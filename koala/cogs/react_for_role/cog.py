@@ -19,8 +19,9 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.colours import KOALA_GREEN
+from koala.utils import wait_for_message
 from koala.db import insert_extension
-from koala.utils import KoalaColours, KoalaUtils
 from .db import ReactForRoleDBManager
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 
@@ -142,7 +143,7 @@ class ReactForRole(commands.Cog):
             await ctx.send(
                 "Okay, what would you like the title of the react for role message to be? Please enter within 60"
                 " seconds.")
-            x = await KoalaUtils.wait_for_message(self.bot, ctx)
+            x = await wait_for_message(self.bot, ctx)
             msg: discord.Message = x[0]
             if not x[0]:
                 await ctx.send(
@@ -161,7 +162,7 @@ class ReactForRole(commands.Cog):
             await ctx.send(
                 f"Okay, the title of the message will be \"{title}\". What do you want the description to be? "
                 f"I'll wait 60 seconds, don't worry")
-            y = await KoalaUtils.wait_for_message(self.bot, ctx)
+            y = await wait_for_message(self.bot, ctx)
             msg: discord.Message = y[0]
             if not y[0]:
                 await ctx.send(
@@ -179,7 +180,7 @@ class ReactForRole(commands.Cog):
                 desc: str = msg.content
             await ctx.send(f"Okay, the description of the message will be \"{desc}\".\n Okay, "
                            f"I'll create the react for role message now.")
-            embed: discord.Embed = discord.Embed(title=title, description=desc, colour=KoalaColours.KOALA_GREEN)
+            embed: discord.Embed = discord.Embed(title=title, description=desc, colour=KOALA_GREEN)
             embed.set_footer(text="ReactForRole")
             embed.set_thumbnail(
                 url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
@@ -418,7 +419,7 @@ class ReactForRole(commands.Cog):
                         combos += er[1] + ", " + str(er[2]) + "\n"
                     er_list = await self.parse_emoji_and_role_input_str(ctx, combos, 20)
                     embed: discord.Embed = discord.Embed(title=emb.title, description=emb.description,
-                                                         colour=KoalaColours.KOALA_GREEN)
+                                                         colour=KOALA_GREEN)
                     embed.set_footer(text=emb.footer)
                     embed.set_thumbnail(url=emb.thumbnail.url)
                     emb.set_image(url=emb.image.url)
@@ -488,7 +489,7 @@ class ReactForRole(commands.Cog):
             f"Please note however that you've only got {remaining_slots} emoji-role combinations you can enter. I'll "
             f"therefore only take the first {remaining_slots} you do. I'll wait for 3 minutes.")
 
-        input_role_emojis = (await KoalaUtils.wait_for_message(self.bot, ctx, 180))[0].content
+        input_role_emojis = (await wait_for_message(self.bot, ctx, 180))[0].content
         emoji_role_list = await self.parse_emoji_and_role_input_str(ctx, input_role_emojis, remaining_slots)
         rfr_embed = self.get_embed_from_message(msg)
 
@@ -567,12 +568,12 @@ class ReactForRole(commands.Cog):
                 "separated by new lines (SHIFT+ENTER). You can enter either the emojis used or the roles' ID/mention/"
                 "name, for each one.")
 
-            input_emoji_roles = (await KoalaUtils.wait_for_message(self.bot, ctx, 120))[0].content
+            input_emoji_roles = (await wait_for_message(self.bot, ctx, 120))[0].content
             wanted_removals = await self.parse_emoji_or_roles_input_str(ctx, input_emoji_roles)
             rfr_embed: discord.Embed = self.get_embed_from_message(msg)
             rfr_embed_fields = rfr_embed.fields
             new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description,
-                                      colour=KoalaColours.KOALA_GREEN)
+                                      colour=KOALA_GREEN)
             new_embed.set_thumbnail(
                 url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
             new_embed.set_footer(text="ReactForRole")
@@ -913,7 +914,7 @@ class ReactForRole(commands.Cog):
         :return: User's response's content
         """
         await ctx.send(f"Please enter {input_type} so I can progress further. I'll wait 60 seconds, don't worry.")
-        msg, channel = await KoalaUtils.wait_for_message(self.bot, ctx)
+        msg, channel = await wait_for_message(self.bot, ctx)
         if not msg:
             await channel.send("Okay, I'll cancel the command.")
             return ""
@@ -947,7 +948,7 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command that calls this
         :return: True if message received, False otherwise.
         """
-        msg = await KoalaUtils.wait_for_message(self.bot, ctx, 10)
+        msg = await wait_for_message(self.bot, ctx, 10)
         if not msg[0]:
             return False
         return True

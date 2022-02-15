@@ -10,8 +10,8 @@ import KoalaBot
 from KoalaBot import COMMAND_PREFIX as CP
 from koala.models import GuildExtensions
 from koala.db import session_manager, insert_extension
-from koala.utils.KoalaColours import KOALA_GREEN
-from koala.utils.KoalaUtils import error_embed, is_channel_in_guild
+from koala.colours import KOALA_GREEN
+from koala.utils import error_embed, is_channel_in_guild
 from .models import UserInTwitchAlert, TwitchAlerts, UserInTwitchTeam, TeamInTwitchAlert
 from .utils import create_live_embed
 from .db import TwitchAlertDBManager

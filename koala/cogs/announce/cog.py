@@ -8,9 +8,9 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
+from koala.colours import KOALA_GREEN
 from koala.db import insert_extension
-from koala.utils import KoalaColours
-from koala.utils.KoalaUtils import extract_id, wait_for_message
+from koala.utils import extract_id, wait_for_message
 from .announce_message import AnnounceMessage
 from .db import AnnounceDBManager
 from .log import logger
@@ -105,7 +105,7 @@ class Announce(commands.Cog):
         """
         message = self.messages[guild.id]
         embed: discord.Embed = discord.Embed(title=message.title,
-                                             description=message.description, colour=KoalaColours.KOALA_GREEN)
+                                             description=message.description, colour=KOALA_GREEN)
         embed.set_author(name="Announcement from " + guild.name)
         if message.thumbnail != 'https://cdn.discordapp.com/':
             embed.set_thumbnail(url=message.thumbnail)

@@ -19,7 +19,7 @@ from discord.ext import commands
 
 # Own modules
 import KoalaBot
-from koala.utils.KoalaUtils import __parse_args, get_arg_config_path, format_config_path, wait_for_message
+from koala.utils import __parse_args, get_arg_config_path, format_config_path, wait_for_message
 from tests.tests_utils import LastCtxCog
 
 # Constants
@@ -27,13 +27,13 @@ from tests.tests_utils import LastCtxCog
 # Variables
 
 
-@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", None)
+@mock.patch("koala.utils.CONFIG_PATH", None)
 @mock.patch("pathlib.Path.mkdir", mock.MagicMock(return_value=False))
 def test_get_arg_config_path_default():
     assert get_arg_config_path() == os.getcwd()+"\\config" or get_arg_config_path() == os.getcwd()+"/config"
 
 
-@mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", "./config2")
+@mock.patch("koala.utils.CONFIG_PATH", "./config2")
 @mock.patch("pathlib.Path.mkdir", mock.MagicMock(return_value=False))
 def test_get_arg_config_path_custom():
     assert get_arg_config_path() == os.getcwd()+"\\config2" or get_arg_config_path() == os.getcwd()+"/config2"
