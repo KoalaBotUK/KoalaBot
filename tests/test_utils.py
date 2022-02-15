@@ -21,7 +21,7 @@ from discord.ext import commands
 import koalabot
 from koala.utils import __parse_args, get_arg_config_path, format_config_path, wait_for_message
 from tests.tests_utils import LastCtxCog
-
+from tests.log import logger
 # Constants
 
 # Variables
@@ -89,5 +89,5 @@ def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return utils_cog

@@ -20,6 +20,8 @@ from koala.cogs import Voting
 from koala.cogs.voting.models import Votes
 from koala.db import session_manager, insert_extension
 
+from tests.log import logger
+
 
 @pytest.fixture(autouse=True)
 def cog(bot: commands.Bot):
@@ -27,7 +29,7 @@ def cog(bot: commands.Bot):
     insert_extension("Vote", 0, True, True)
     bot.add_cog(cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return cog
 
 

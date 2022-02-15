@@ -15,7 +15,7 @@ import discord.ext.test as dpytest
 
 # Own modules
 import koalabot
-
+from tests.log import logger
 # Constants
 
 
@@ -26,7 +26,7 @@ def teardown_config():
     yield
 
     # tear_down: then clear table at the end of the scope
-    print("Tearing down session")
+    logger.info("Tearing down session")
 
     from koala.utils import get_arg_config_path
 

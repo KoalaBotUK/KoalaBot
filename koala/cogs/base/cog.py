@@ -14,8 +14,10 @@ from discord.ext import commands
 
 # Own modules
 import koalabot
-from koala.db import get_all_available_guild_extensions, give_guild_extension, get_enabled_guild_extensions, remove_guild_extension
+from koala.db import get_all_available_guild_extensions, give_guild_extension, \
+    get_enabled_guild_extensions, remove_guild_extension
 from .utils import new_discord_activity, list_ext_embed
+from .log import logger
 
 # Constants
 
@@ -44,7 +46,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         await self.bot.change_presence(activity=new_discord_activity("playing", f"{koalabot.COMMAND_PREFIX}help"))
         self.started = True
-        print("Bot is ready.")
+        logger.info("Bot is ready.")
 
     @commands.command(name="activity", aliases=["change_activity"])
     @commands.check(koalabot.is_owner)
@@ -183,4 +185,4 @@ def setup(bot: koalabot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(BaseCog(bot))
-    print("BaseCog is ready.")
+    logger.info("BaseCog is ready.")

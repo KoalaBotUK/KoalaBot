@@ -22,6 +22,8 @@ from koala.db import session_manager
 from koala.cogs import Verification
 from koala.cogs.verification.models import VerifiedEmails, ToReVerify, NonVerifiedEmails, Roles
 
+from tests.log import logger
+
 # Constants
 TEST_EMAIL = 'verify_test@koalabot.uk'
 TEST_EMAIL_DOMAIN = 'koalabot.uk'
@@ -34,7 +36,7 @@ def cog(bot: commands.Bot):
     cog = Verification(bot)
     bot.add_cog(cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return cog
 
 

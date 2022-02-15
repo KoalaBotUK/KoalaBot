@@ -25,6 +25,7 @@ from koala.cogs import colour_role
 from koala.cogs.colour_role.utils import COLOUR_ROLE_NAMING
 
 from tests.tests_utils import LastCtxCog
+from tests.log import logger
 from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_list_of_protected_colour_roles,\
     random_colour, independent_get_protected_colours, independent_get_colour_change_roles, DBManager
 
@@ -38,7 +39,7 @@ def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return utils_cog
 
 
@@ -47,7 +48,7 @@ def role_colour_cog(bot):
     role_colour_cog = ColourRole(bot)
     bot.add_cog(role_colour_cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return role_colour_cog
 
 
@@ -306,7 +307,7 @@ async def test_is_valid_custom_colour(num_total, num_protected, test_colour, rol
     lowest_colour_dist = 1000
     for colour in protected_colours:
         d = role_colour_cog.get_rgb_colour_distance(colour, test_colour)
-        print(f"\r\ndist={str(d)}. lowest dist={str(lowest_colour_dist)}. {hex(colour.value)} is protected. "
+        logger.debug(f"\r\ndist={str(d)}. lowest dist={str(lowest_colour_dist)}. {hex(colour.value)} is protected. "
               f"{hex(test_colour.value)} is custom")
         if d < lowest_colour_dist:
             lowest_colour_dist = d

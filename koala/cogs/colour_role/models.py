@@ -24,4 +24,5 @@ class GuildInvalidCustomColourRoles:
         return "<GuildColourChangePermissions(%s, %s)>" % \
                (self.guild_id, self.role_id)
 
+
 setup()

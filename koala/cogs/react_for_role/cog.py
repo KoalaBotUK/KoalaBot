@@ -23,6 +23,7 @@ from koala.colours import KOALA_GREEN
 from koala.utils import wait_for_message
 from koala.db import insert_extension
 from .db import ReactForRoleDBManager
+from .log import logger
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 
 
@@ -91,7 +92,7 @@ class ReactForRole(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
-                    koalabot.logger.error(
+                    logger.error(
                         "RFR: HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
                     raise aiohttp.ClientError(
                         "HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
@@ -99,7 +100,7 @@ class ReactForRole(commands.Cog):
                 data = BytesIO(image_bytes)
                 ftype: str = await file_type_from_hdr(response)
                 if not ftype:
-                    koalabot.logger.error(
+                    logger.error(
                         "RFR: Couldn't verify image file type from " + url + " due to missing/different Content-Type header")
                     raise commands.BadArgument("Couldn't get an image from the message you sent.")
                 msg: discord.Message = await ctx.send(file=discord.File(data, f"thumbnail.{ftype}"))
@@ -108,7 +109,7 @@ class ReactForRole(commands.Cog):
                     await msg.delete()
                     return img
                 except Exception as e:
-                    koalabot.logger.error("RFR " + str(e))
+                    logger.error("RFR " + str(e))
                     raise e
 
     @staticmethod
@@ -287,7 +288,7 @@ class ReactForRole(commands.Cog):
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
         embed = self.get_embed_from_message(msg)
         if not embed:
-            koalabot.logger.error(
+            logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {channel.id}, guild id {ctx.guild.id}.")
         await ctx.send(f"Your current image here is {embed.thumbnail.url}")
         image = await self.prompt_for_input(ctx, "image you'd like to use as a thumbnail")
@@ -296,7 +297,7 @@ class ReactForRole(commands.Cog):
         if isinstance(image, discord.Attachment) and self.attachment_img_content_type(image.content_type):
             # correct type
             if not image.url:
-                koalabot.logger.error(f"Attachment url not found, details : {image}")
+                logger.error(f"Attachment url not found, details : {image}")
                 raise commands.BadArgument("Couldn't get an image from the message you sent.")
             else:
                 embed.set_thumbnail(url=str(image.url))
@@ -401,17 +402,17 @@ class ReactForRole(commands.Cog):
         emb = self.get_embed_from_message(msg)
         reacts: List[Union[discord.PartialEmoji, discord.Emoji, str]] = [x.emoji for x in msg.reactions]
         if not emb:
-            koalabot.logger.error(
+            logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
         else:
             er_id, _, _, _ = self.rfr_database_manager.get_rfr_message(ctx.guild.id, chnl.id, msg.id)
             if not er_id:
-                koalabot.logger.error(
+                logger.error(
                     f"RFR: Can't find rfr message with {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}. DB ER_ID : {er_id}")
             else:
                 rfr_er = self.rfr_database_manager.get_rfr_message_emoji_roles(er_id)
                 if not rfr_er:
-                    koalabot.logger.error(
+                    logger.error(
                         f"RFR: Can't retrieve RFR message (ER_ID: {er_id})'s emoji role combinations.")
                 else:
                     combos = ""
@@ -511,11 +512,11 @@ class ReactForRole(commands.Cog):
                 await msg.add_reaction(discord_emoji)
 
                 if isinstance(discord_emoji, str):
-                    koalabot.logger.info(
+                    logger.info(
                         f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
                         f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji}.")
                 else:
-                    koalabot.logger.info(
+                    logger.info(
                         f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
                         f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji.id}.")
 
@@ -662,7 +663,7 @@ class ReactForRole(commands.Cog):
                         # Remove members' reaction from all rfr messages in guild
                         guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
                         if not guild_rfr_messages:
-                            koalabot.logger.error(
+                            logger.error(
                                 f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
                                 f" guild ID {payload.guild_id}")
 
@@ -729,7 +730,7 @@ class ReactForRole(commands.Cog):
 
             role: discord.Role = discord.utils.get(ctx.guild.roles, id=role_id)
             if not role:
-                koalabot.logger.error(f"ReactForRole: Couldn't find role {role_id} in guild {ctx.guild.id}. Please "
+                logger.error(f"ReactForRole: Couldn't find role {role_id} in guild {ctx.guild.id}. Please "
                                       f"check.")
             else:
                 msg_str += f"{role.mention}\n"
@@ -843,7 +844,7 @@ class ReactForRole(commands.Cog):
             role_str = field
             role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
         else:
-            koalabot.logger.error(
+            logger.error(
                 f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
                 f"{message_id} in channel_id {channel_id}. Please check this.")
             return
@@ -1023,8 +1024,6 @@ class ReactForRole(commands.Cog):
             if not field:
                 return
             return field.value
-
-
 
 
 def setup(bot: koalabot) -> None:

@@ -24,6 +24,7 @@ from koala.cogs.react_for_role.db import ReactForRoleDBManager
 from koala.db import session_manager
 from tests.tests_utils import TestUtils as testutils
 
+from tests.log import logger
 from .utils import DBManager, independent_get_guild_rfr_message, independent_get_rfr_message_emoji_role, \
     independent_get_guild_rfr_required_role, get_rfr_reaction_role_by_role_id
 
@@ -323,11 +324,11 @@ async def test_rfr_with_req_role(num_roles, num_required, rfr_cog):
 
         member: discord.Member = await dpytest.member_join()
         await member.add_roles(*(random.sample(r_list, random.randint(1, num_roles))))
-        print(f"required = {[r.name for r in required]}, mem_roles pre-add are {[member.roles]}")
+        logger.debug(f"required = {[r.name for r in required]}, mem_roles pre-add are {[member.roles]}")
         if not any([r in required for r in member.roles]):
             x = random.choice(required)
             await member.add_roles(x)
-            print(f"added role {x.name} to {member.display_name}")
+            logger.debug(f"added role {x.name} to {member.display_name}")
         mem_roles = member.roles
         with mock.patch("koala.cogs.ReactForRole.get_role_member_info",
                         mock.AsyncMock(return_value=(member, role_to_add))):

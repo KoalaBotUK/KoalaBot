@@ -350,7 +350,7 @@ This email is stored so you don't need to verify it multiple times across server
                     await self.assign_role_to_guild(guild, role, suffix)
                 except AttributeError as e:
                     # bot not in guild
-                    print(e)
+                    logger.error(e)
 
     async def assign_roles_for_user(self, user_id, email):
         with session_manager() as session:
@@ -371,9 +371,9 @@ This email is stored so you don't need to verify it multiple times across server
                     await member.add_roles(role)
                 except AttributeError as e:
                     # bot not in guild
-                    print(e)
+                    logger.error(e)
                 except discord.errors.NotFound:
-                    print(f"user with id {user_id} not found")
+                    logger.error(f"user with id {user_id} not found")
 
     async def remove_roles_for_user(self, user_id, email):
         with session_manager() as session:
@@ -390,9 +390,9 @@ This email is stored so you don't need to verify it multiple times across server
                     await member.remove_roles(role)
                 except AttributeError as e:
                     # bot not in guild
-                    print(e)
+                    logger.error(e)
                 except discord.errors.NotFound:
-                    print(f"user with id {user_id} not found in {guild}")
+                    logger.error(f"user with id {user_id} not found in {guild}")
 
     async def assign_role_to_guild(self, guild, role, suffix):
         with session_manager() as session:
@@ -410,9 +410,9 @@ This email is stored so you don't need to verify it multiple times across server
                     await member.add_roles(role)
                 except AttributeError as e:
                     # bot not in guild
-                    print(e)
+                    logger.error(e)
                 except discord.errors.NotFound:
-                    print(f"user with id {user_id} not found in {guild}")
+                    logger.error(f"user with id {user_id} not found in {guild}")
 
 
 def setup(bot: koalabot) -> None:

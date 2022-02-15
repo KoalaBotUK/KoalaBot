@@ -19,6 +19,7 @@ from discord.ext import commands
 import koalabot
 from koala.db import insert_extension
 from .db import ColourRoleDBManager
+from .log import logger
 from .utils import COLOUR_ROLE_NAMING
 
 # Variables
@@ -171,7 +172,7 @@ class ColourRole(commands.Cog):
             await ctx.send("You don't have the required role to use this command.")
         else:
             import time
-            koalabot.logger.error(f"Unexpected error occurred in Guild {ctx.guild.id}, channel {ctx.channel.id}. "
+            logger.error(f"Unexpected error occurred in Guild {ctx.guild.id}, channel {ctx.channel.id}. "
                                   f"Error was of type {str(type(error))}. Cause was {error.__cause__}.")
             await ctx.send(
                 f"Unexpected error occurred. Please contact bot developers with the timestamp {time.time()}, "
@@ -188,7 +189,7 @@ class ColourRole(commands.Cog):
         roles: List[discord.Role] = [role for role in author.roles if
                                      re.match(COLOUR_ROLE_NAMING, role.name)]
         if not roles:
-            koalabot.logger.debug(
+            logger.debug(
                 f"User {author.id} in guild {ctx.guild.id} changed their colour. Found no old colour roles to prune.")
             return False
         await author.remove_roles(*roles)
@@ -197,7 +198,7 @@ class ColourRole(commands.Cog):
             msg += str(i.id)
             msg += ", "
         msg = msg[:-2] + "."
-        koalabot.logger.debug(
+        logger.debug(
             f"User {author.id} in guild {ctx.guild.id} changed their colour. {msg}")
         return True
 
@@ -211,14 +212,14 @@ class ColourRole(commands.Cog):
         roles: List[discord.Role] = [role for role in guild.roles if
                                      re.match(COLOUR_ROLE_NAMING, role.name) and len(role.members) == 0]
         if not roles:
-            koalabot.logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
+            logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
         else:
             msg = "Role IDs were "
             for role in roles:
                 msg += str(role.id) + ", "
                 await role.delete(reason="Pruned since empty colour role")
             msg = msg[:-2]
-            koalabot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
+            logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
 
     async def prune_members_old_colour_roles(self, members: List[discord.Member]) -> bool:
         """
@@ -239,13 +240,13 @@ class ColourRole(commands.Cog):
             roles: List[discord.Role] = [role for role in member.roles if
                                          re.match(COLOUR_ROLE_NAMING, role.name)]
             if not roles:
-                koalabot.logger.debug(
+                logger.debug(
                     f"Guild {member.guild.id} removed a role from their roles allowed to have custom colours. Found no newly illegal custom colour roles to prune from member {member.id}.")
             await member.remove_roles(*roles)
             count += 1
             msg += str(member.id) + ", "
         msg = msg[:-2] + "."
-        koalabot.logger.debug(
+        logger.debug(
             f"Guild {guild.id} removed a role from their roles allowed to have custom colours. {msg}")
         if count == 0:
             return False
@@ -379,7 +380,7 @@ class ColourRole(commands.Cog):
             return True, None
         for protected_colour in protected_colours:
             colour_distance = ColourRole.get_rgb_colour_distance(custom_colour, protected_colour)
-            koalabot.logger.info(
+            logger.info(
                 f"Colour distance between {hex(custom_colour.value)} and {hex(protected_colour.value)} is {colour_distance}.")
             if colour_distance < 38.4:
                 return False, protected_colour
@@ -412,7 +413,7 @@ class ColourRole(commands.Cog):
         :return: Sends a message with the mentions of the roles that are protected in a guild
         """
         roles = self.get_protected_roles(ctx.guild)
-        # print(roles)
+        # logger.debug(roles)
         msg = "Roles whose colour is protected are:\r\n"
         for role in roles:
             msg += f"{role.mention}\n"
@@ -431,7 +432,7 @@ class ColourRole(commands.Cog):
         :return: Sends a message with the mentions of the roles that are protected in a guild.
         """
         roles = self.get_custom_colour_allowed_roles(ctx)
-        # print(roles)
+        # logger.debug(roles)
         msg = "Roles allowed to have a custom colour are:\r\n"
         for role in roles:
             msg += f"{role.mention}\n"
@@ -445,7 +446,7 @@ class ColourRole(commands.Cog):
         :return: List of roles allowed to use the custom_colour command/have a custom colour
         """
         role_ids = self.cr_database_manager.get_colour_change_roles(ctx.guild.id)
-        # print(role_ids)
+        # logger.debug(role_ids)
         if not role_ids:
             return []
         guild: discord.Guild = ctx.guild
@@ -460,7 +461,7 @@ class ColourRole(commands.Cog):
         :return: List of roles which are protected
         """
         role_ids = self.cr_database_manager.get_protected_colour_roles(guild.id)
-        # print(role_ids)
+        # logger.debug(role_ids)
         if not role_ids:
             return []
         roles = [guild.get_role(role_id) for role_id in role_ids]
@@ -557,4 +558,4 @@ def setup(bot: koalabot) -> None:
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(ColourRole(bot))
-    print("ColourRole is ready.")
+    logger.info("ColourRole is ready.")

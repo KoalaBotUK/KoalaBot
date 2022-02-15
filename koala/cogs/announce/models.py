@@ -14,4 +14,5 @@ class GuildUsage:
         return "<GuildUsage(%s, %s)>" % \
                (self.guild_id, self.last_message_epoch_time)
 
+
 setup()

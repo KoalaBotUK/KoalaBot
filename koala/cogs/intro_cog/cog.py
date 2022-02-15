@@ -17,6 +17,7 @@ from discord.ext import commands
 # Own modules
 import koalabot
 
+from .log import logger
 from .db import get_guild_welcome_message, update_guild_welcome_message, new_guild_welcome_message, \
     remove_guild_welcome_message
 from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, \
@@ -42,7 +43,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         :param guild: Guild KoalaBot just joined
         """
         new_guild_welcome_message(guild.id)
-        koalabot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
+        logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -51,7 +52,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         :param member: Member which just joined guild
         """
         await koalabot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
-        koalabot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
+        logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -60,7 +61,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         :param guild: Guild KoalaBot just left
         """
         count = remove_guild_welcome_message(guild.id)
-        koalabot.logger.info(
+        logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
@@ -142,4 +143,4 @@ def setup(bot: koalabot) -> None:
     :param bot: The client of the KoalaBot
     """
     bot.add_cog(IntroCog(bot))
-    print("IntroCog is ready.")
+    logger.info("IntroCog is ready.")

@@ -21,6 +21,8 @@ from koala.cogs.react_for_role.models import GuildRFRRequiredRoles, GuildRFRMess
 from koala.db import session_manager
 from tests.tests_utils import LastCtxCog
 
+from tests.log import logger
+
 # Constants
 
 # Variables
@@ -31,7 +33,7 @@ def utils_cog(bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return utils_cog
 
 
@@ -40,7 +42,7 @@ def rfr_cog(bot):
     rfr_cog = ReactForRole(bot)
     bot.add_cog(rfr_cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return rfr_cog
 
 

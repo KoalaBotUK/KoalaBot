@@ -19,7 +19,7 @@ from koala import db as koala_db
 from koala.cogs.intro_cog import db as intro_db
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, get_non_bot_members
 from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
-
+from tests.log import logger
 
 # Constants
 
@@ -108,12 +108,12 @@ async def test_get_non_bot_members():
         await dpytest.member_join(name=f'TestUser{str(i)}')
     assert len(get_non_bot_members(guild)) == 5, [non_bot_member.name for non_bot_member in
                                                   get_non_bot_members(guild)]
-    print(
+    logger.debug(
         [str(non_bot_member) + " " + str(non_bot_member.bot) for non_bot_member in get_non_bot_members(guild)])
     dpytest.backend.delete_member(guild.get_member(client.user.id))
     assert len(get_non_bot_members(guild)) == 5, [non_bot_member.name for non_bot_member in
                                                   get_non_bot_members(guild)]
-    print(
+    logger.debug(
         [str(non_bot_member) + " " + str(non_bot_member.bot) for non_bot_member in get_non_bot_members(guild)])
 
 

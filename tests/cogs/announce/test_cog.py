@@ -12,13 +12,14 @@ import koalabot
 from koala.cogs import announce
 from tests.tests_utils import LastCtxCog
 
+from tests.log import logger
 
 @pytest.fixture(autouse=True)
 def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog.LastCtxCog(bot)
     bot.add_cog(utils_cog)
     dpytest.configure(bot)
-    print("Tests starting")
+    logger.info("Tests starting")
     return utils_cog
 
 
@@ -27,7 +28,7 @@ def announce_cog(bot: discord.ext.commands.Bot):
     announce_cog = announce.Announce(bot)
     bot.add_cog(announce_cog)
     dpytest.configure(bot, 2, 1, 2)
-    print("Tests starting")
+    logger.info("Tests starting")
     return announce_cog
 
 

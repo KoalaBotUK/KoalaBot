@@ -25,7 +25,7 @@ from koala.colours import KOALA_GREEN
 from koala.db import session_manager
 from tests.tests_utils import TestUtils as testutils
 from .utils import DBManager, independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
-
+from tests.log import logger
 
 # Constants
 
@@ -117,13 +117,13 @@ async def test_parse_emoji_or_roles_input_str(num_rows, utils_cog, rfr_cog):
                 fake_emoji = testutils.fake_emoji_unicode()
                 input_str += fake_emoji + "\n\r"
                 expected_list.append(fake_emoji)
-                print(f"Unicode emoji {j} in test {num_rows}: {emoji.emojize(fake_emoji)}")
+                logger.debug(f"Unicode emoji {j} in test {num_rows}: {emoji.emojize(fake_emoji)}")
             else:
                 fake_emoji_name = testutils.fake_custom_emoji_name_str()
                 fake_emoji = await guild.create_custom_emoji(name=fake_emoji_name, image=testutils.random_image())
                 expected_list.append(fake_emoji)
                 input_str += str(fake_emoji) + "\n\r"
-                print(f"Custom emoji {j} in test {num_rows}: {str(fake_emoji)}")
+                logger.debug(f"Custom emoji {j} in test {num_rows}: {str(fake_emoji)}")
         else:
             role_name = testutils.fake_custom_emoji_name_str()
             await guild.create_role(name=role_name, mentionable=True, hoist=True)
@@ -131,10 +131,10 @@ async def test_parse_emoji_or_roles_input_str(num_rows, utils_cog, rfr_cog):
             expected_list.append(fake_role)
             role_str = str(random.choice([fake_role.name, fake_role.id, fake_role.mention]))
             input_str += role_str + "\n\r"
-            print(f"Role {j} in test {num_rows}: {fake_role}")
+            logger.debug(f"Role {j} in test {num_rows}: {fake_role}")
 
-    print(f"Test {num_rows} input_str")
-    print(input_str)
+    logger.debug(f"Test {num_rows} input_str")
+    logger.debug(input_str)
     result_list = await rfr_cog.parse_emoji_or_roles_input_str(ctx, input_str)
     for k in range(len(expected_list)):
         assert str(expected_list[k]) == str(result_list[k])
@@ -280,7 +280,7 @@ async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
     channel: discord.TextChannel = guild.text_channels[0]
     msg: discord.Message = dpytest.back.make_message(str(guild_emoji), author, channel)
     result = await rfr_cog.get_first_emoji_from_str(ctx, msg.content)
-    print(result)
+    logger.debug(result)
     assert isinstance(result, discord.Emoji), msg.content
     assert guild_emoji == result
 

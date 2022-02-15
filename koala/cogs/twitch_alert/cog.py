@@ -5,13 +5,13 @@ import time
 import re
 
 # Own modules
-from .log import logger
 import koalabot
 from koalabot import COMMAND_PREFIX as CP
 from koala.models import GuildExtensions
 from koala.db import session_manager, insert_extension
 from koala.colours import KOALA_GREEN
 from koala.utils import error_embed, is_channel_in_guild
+from .log import logger
 from .models import UserInTwitchAlert, TwitchAlerts, UserInTwitchTeam, TeamInTwitchAlert
 from .utils import create_live_embed
 from .db import TwitchAlertDBManager
