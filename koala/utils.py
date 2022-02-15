@@ -25,11 +25,10 @@ from koala.colours import ERROR_RED
 ID_LENGTH = 18
 TIMEOUT_TIME = 60
 
+
 # Variables
 
 # Koala Constants
-
-
 
 
 def error_embed(description, error_type=None):
@@ -70,8 +69,8 @@ def extract_id(raw_id):
         raise TypeError("ID given is not a valid ID")
 
 
-async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = TIMEOUT_TIME) -> Tuple[
-    Optional[discord.Message], Optional[discord.TextChannel]]:
+async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = TIMEOUT_TIME) \
+        -> Tuple[Optional[discord.Message], Optional[discord.TextChannel]]:
     """
         Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
         timeout of 60 seconds.
@@ -130,6 +129,3 @@ def get_arg_config_path():
     path = Path(config_dir)
     path.mkdir(exist_ok=True, parents=True)
     return str(path.absolute())
-
-
-
