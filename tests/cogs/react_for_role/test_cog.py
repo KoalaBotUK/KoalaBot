@@ -20,7 +20,7 @@ from discord.ext import commands
 from discord.ext.test import factories as dpyfactory
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.colours import KOALA_GREEN
 from koala.db import session_manager
 from tests.tests_utils import TestUtils as testutils
@@ -41,7 +41,7 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
     channel_id = msg.channel.id
     msg_id = msg.id
 
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     side_effect=[str(channel_id), str(546542131)]) as mock_input:
@@ -71,7 +71,7 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
 async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     for i in range(5):
         input_str = ""
@@ -107,7 +107,7 @@ async def test_parse_emoji_or_roles_input_str(num_rows, utils_cog, rfr_cog):
     image = discord.File("utils/discord.png", filename="discord.png")
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     input_str = ""
     expected_list = []
@@ -147,7 +147,7 @@ async def test_prompt_for_input_str(msg_content, utils_cog, rfr_cog):
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     await dpytest.empty_queue()
     if not msg_content:
@@ -174,7 +174,7 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     await dpytest.empty_queue()
     attach: discord.Attachment = discord.Attachment(state=dpytest.back.get_state(),
@@ -212,7 +212,7 @@ async def test_overwrite_channel_add_reaction_perms(rfr_cog):
 
 @pytest.mark.asyncio
 async def test_is_user_alive(utils_cog, rfr_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=None)):
@@ -263,7 +263,7 @@ async def test_get_number_of_embed_fields(rfr_cog):
 @pytest.mark.skip('dpytest currently has non-implemented functionality for construction of guild custom emojis')
 @pytest.mark.asyncio
 async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
@@ -295,7 +295,7 @@ async def test_rfr_create_message(bot):
     test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KOALA_GREEN)
     test_embed.set_footer(text="ReactForRole")
     test_embed.set_thumbnail(
-        url=KoalaBot.KOALA_IMAGE_URL)
+        url=koalabot.KOALA_IMAGE_URL)
     with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     mock.AsyncMock(return_value=embed_channel.mention)):
         with mock.patch('discord.client.Client.wait_for',
@@ -304,7 +304,7 @@ async def test_rfr_create_message(bot):
                 with mock.patch(
                         'koala.cogs.ReactForRole.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
                     with mock.patch('discord.Message.delete') as mock_delete:
-                        await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr createMessage")
+                        await dpytest.message(koalabot.COMMAND_PREFIX + "rfr createMessage")
                         mock_edit_channel_perms.assert_called_once_with(guild, embed_channel)
                         assert dpytest.verify().message().content(
                             "Okay, this will create a new react for role message in a channel of your choice."
@@ -346,7 +346,7 @@ async def test_rfr_delete_message():
                         mock.AsyncMock(return_value=(message, channel))):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', mock.AsyncMock(return_value="Y")):
                 with mock.patch('discord.Message.delete') as mock_msg_delete:
-                    await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr deleteMessage")
+                    await dpytest.message(koalabot.COMMAND_PREFIX + "rfr deleteMessage")
                     mock_msg_delete.assert_called_once()
                     assert dpytest.verify().message().content(
                         "Okay, this will delete an existing react for role message. I'll need some details first though.")
@@ -372,7 +372,7 @@ async def test_rfr_edit_description():
         with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new description", "Y"])):
             with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
-                await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit description")
+                await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit description")
                 assert embed.description == 'new description'
                 assert dpytest.verify().message()
                 assert dpytest.verify().message()
@@ -395,7 +395,7 @@ async def test_rfr_edit_title():
         with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new title", "Y"])):
             with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
-                await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr edit title")
+                await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit title")
                 assert embed.title == 'new title'
                 assert dpytest.verify().message()
                 assert dpytest.verify().message()
@@ -551,7 +551,7 @@ async def test_rfr_add_roles_to_msg():
             with mock.patch('discord.client.Client.wait_for',
                             mock.AsyncMock(return_value=input_em_ro_msg)):
                 with mock.patch('discord.Embed.add_field') as add_field:
-                    await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr addRoles")
+                    await dpytest.message(koalabot.COMMAND_PREFIX + "rfr addRoles")
                     calls = []
                     for i in range(5):
                         calls.append(mock.call(name=str(em_list[i]), value=ro_list[i], inline=False))
@@ -589,7 +589,7 @@ async def test_rfr_remove_roles_from_msg():
                     with mock.patch(
                             'koala.cogs.react_for_role.db.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
                         add_field.reset_mock()
-                        await dpytest.message(KoalaBot.COMMAND_PREFIX + "rfr removeRoles")
+                        await dpytest.message(koalabot.COMMAND_PREFIX + "rfr removeRoles")
                         add_field.assert_not_called()
                         calls = []
                         for i in range(5):

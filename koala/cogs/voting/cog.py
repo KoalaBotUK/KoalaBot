@@ -14,7 +14,7 @@ from discord.ext import commands, tasks
 from sqlalchemy import select, delete, update
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import session_manager, insert_extension
 from .db import VoteManager, get_results, create_embed, add_reactions
 from .log import logger
@@ -35,7 +35,7 @@ def currently_configuring():
     """
     async def predicate(ctx):
         cog = ctx.command.cog
-        if KoalaBot.is_dm_channel(ctx):
+        if koalabot.is_dm_channel(ctx):
             return False
         return ctx.author.id in cog.vote_manager.configuring_votes.keys() and cog.vote_manager.configuring_votes[ctx.author.id].guild == ctx.guild.id
 
@@ -45,7 +45,7 @@ def currently_configuring():
 def has_current_votes():
     async def predicate(ctx):
         cog = ctx.command.cog
-        if KoalaBot.is_dm_channel(ctx):
+        if koalabot.is_dm_channel(ctx):
             return False
         return ctx.author.id in map(lambda x: x[0], cog.vote_manager.vote_lookup.keys())
 
@@ -60,11 +60,11 @@ def vote_is_enabled(ctx):
     :return: True if enabled or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "Vote")
+        result = koalabot.check_guild_has_ext(ctx, "Vote")
     except PermissionError:
         result = False
 
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class Voting(commands.Cog, name="Vote"):
@@ -149,7 +149,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         await self.update_vote_message(payload.message_id, payload.user_id)
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(vote_is_enabled)
     @commands.group(name="vote")
     async def vote(self, ctx):
@@ -157,9 +157,9 @@ class Voting(commands.Cog, name="Vote"):
         Use k!vote create <title> to create a vote!
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help vote` for more information")
+            await ctx.send(f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(vote_is_enabled)
     @vote.command(name="create")
     async def start_vote(self, ctx, *, title):
@@ -170,7 +170,7 @@ class Voting(commands.Cog, name="Vote"):
         with session_manager() as session:
             if self.vote_manager.has_active_vote(ctx.author.id):
                 guild_name = self.bot.get_guild(self.vote_manager.get_configuring_vote(ctx.author.id).guild)
-                await ctx.send(f"You already have an active vote in {guild_name}. Please send that with `{KoalaBot.COMMAND_PREFIX}vote send` before creating a new one.")
+                await ctx.send(f"You already have an active vote in {guild_name}. Please send that with `{koalabot.COMMAND_PREFIX}vote send` before creating a new one.")
                 return
 
             in_db = session.execute(select(Votes).filter_by(title=title, author_id=ctx.author.id)).all()
@@ -183,7 +183,7 @@ class Voting(commands.Cog, name="Vote"):
                 return
 
             self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title)
-            await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{KoalaBot.COMMAND_PREFIX}help vote` to see how to configure it.")
+            await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it.")
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -396,7 +396,7 @@ class Voting(commands.Cog, name="Vote"):
         vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
-                await ctx.send(f"That vote has not been sent yet. Please send it to your audience with {KoalaBot.COMMAND_PREFIX}vote send {title}")
+                await ctx.send(f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}")
             else:
                 await ctx.send("You have no votes of that title to close")
             return
@@ -427,7 +427,7 @@ class Voting(commands.Cog, name="Vote"):
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
                 await ctx.send(
-                    f"That vote has not been sent yet. Please send it to your audience with {KoalaBot.COMMAND_PREFIX}vote send {title}")
+                    f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}")
             else:
                 await ctx.send("You have no votes of that title to check")
             return
@@ -460,7 +460,7 @@ class Voting(commands.Cog, name="Vote"):
             await msg.edit(embed=embed)
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot

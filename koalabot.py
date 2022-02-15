@@ -65,7 +65,7 @@ is_dpytest = False
 def is_owner(ctx):
     """
     A command used to check if the user of a command is the owner, or the testing bot
-    e.g. @commands.check(KoalaBot.is_owner)
+    e.g. @commands.check(koalabot.is_owner)
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
     """
@@ -80,7 +80,7 @@ def is_owner(ctx):
 def is_admin(ctx):
     """
     A command used to check if the user of a command is the admin, or the testing bot
-    e.g. @commands.check(KoalaBot.is_admin)
+    e.g. @commands.check(koalabot.is_admin)
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """

@@ -18,7 +18,7 @@ from discord.ext import commands
 from sqlalchemy import select, delete, and_, text
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import session_manager, insert_extension
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
 from .log import logger
@@ -40,11 +40,11 @@ def verify_is_enabled(ctx):
     :return: True if enabled or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "Verify")
+        result = koalabot.check_guild_has_ext(ctx, "Verify")
     except PermissionError:
         result = False
 
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 # FIXME: Move database commands to db.py
@@ -68,7 +68,7 @@ class Verification(commands.Cog, name="Verify"):
         password = GMAIL_PASSWORD
 
         msg = EmailMessage()
-        msg.set_content(f"Please send the bot the command:\n\n{KoalaBot.COMMAND_PREFIX}confirm {token}")
+        msg.set_content(f"Please send the bot the command:\n\n{koalabot.COMMAND_PREFIX}confirm {token}")
         msg['Subject'] = "Koalabot Verification"
         msg['From'] = username
         msg['To'] = email
@@ -109,12 +109,12 @@ class Verification(commands.Cog, name="Verify"):
                     if results and not blacklisted:
                         await member.add_roles(role)
                 message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+Please verify one of the following emails to get the appropriate role using `{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers."""
                 await member.send(
                     content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
     @commands.check(verify_is_enabled)
     async def enable_verification(self, ctx, suffix=None, role=None):
@@ -127,7 +127,7 @@ This email is stored so you don't need to verify it multiple times across server
         """
         with session_manager() as session:
             if not role or not suffix:
-                raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+                raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{koalabot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
             try:
                 role_id = int(role[3:-1])
@@ -151,7 +151,7 @@ This email is stored so you don't need to verify it multiple times across server
             await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
             await self.assign_role_to_guild(ctx.guild, role_valid, suffix)
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
     @commands.check(verify_is_enabled)
     async def disable_verification(self, ctx, suffix=None, role=None):
@@ -165,7 +165,7 @@ This email is stored so you don't need to verify it multiple times across server
         with session_manager() as session:
             if not role or not suffix:
                 raise self.InvalidArgumentError(
-                    f"Please provide the correct arguments\n(`{KoalaBot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+                    f"Please provide the correct arguments\n(`{koalabot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
             try:
                 role_id = int(role[3:-1])
@@ -180,7 +180,7 @@ This email is stored so you don't need to verify it multiple times across server
             await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
 
-    @commands.check(KoalaBot.is_dm_channel)
+    @commands.check(koalabot.is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email):
         """
@@ -204,7 +204,7 @@ This email is stored so you don't need to verify it multiple times across server
             self.send_email(email, verification_code)
             await ctx.send("Please verify yourself using the command you have been emailed")
 
-    @commands.check(KoalaBot.is_dm_channel)
+    @commands.check(koalabot.is_dm_channel)
     @commands.command(name="unVerify")
     async def un_verify(self, ctx, email):
         """
@@ -225,7 +225,7 @@ This email is stored so you don't need to verify it multiple times across server
             await self.remove_roles_for_user(ctx.author.id, email)
             await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
 
-    @commands.check(KoalaBot.is_dm_channel)
+    @commands.check(koalabot.is_dm_channel)
     @commands.command(name="confirm")
     async def confirm(self, ctx, token):
         """
@@ -259,7 +259,7 @@ This email is stored so you don't need to verify it multiple times across server
             await ctx.send("Your email has been verified, thank you")
             await self.assign_roles_for_user(ctx.author.id, entry.email)
 
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(koalabot.is_owner)
     @commands.command(name="getEmails")
     async def get_emails(self, ctx, user_id: int):
         """
@@ -303,7 +303,7 @@ This email is stored so you don't need to verify it multiple times across server
 
             await ctx.send(embed=embed)
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.command(name="reVerify")
     @commands.check(verify_is_enabled)
     async def re_verify(self, ctx, role):
@@ -415,9 +415,9 @@ This email is stored so you don't need to verify it multiple times across server
                     print(f"user with id {user_id} not found in {guild}")
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
-    Load this cog to the KoalaBot.
+    Load this cog to the koalabot.
     :param bot: the bot client for KoalaBot
     """
     if GMAIL_EMAIL is None or GMAIL_PASSWORD is None:

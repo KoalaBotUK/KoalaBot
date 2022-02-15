@@ -1,5 +1,5 @@
 """
-A test Cog to only be used for testing KoalaBot.load_all_cogs
+A test Cog to only be used for testing koalabot.load_all_cogs
 
 Commented using reStructuredText (reST)
 """
@@ -12,7 +12,7 @@ import discord
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import insert_extension
 
 
@@ -58,7 +58,7 @@ class Greetings(commands.Cog):
         await ctx.send(f'Hi {ctx.author}')
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot

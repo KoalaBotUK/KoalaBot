@@ -16,7 +16,7 @@ from discord.ext import commands
 from sqlalchemy import select, delete
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import session_manager
 
 from koala.cogs import Verification
@@ -55,7 +55,7 @@ async def test_member_join_verif_enabled():
         session.add(test_role)
         session.commit()
         welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+Please verify one of the following emails to get the appropriate role using `{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers.
 `{TEST_EMAIL_DOMAIN}` for `@testRole`"""
         await dpytest.member_join(1)
@@ -82,7 +82,7 @@ async def test_member_join_already_verified(bot: commands.Bot):
         await dpytest.member_join(guild, test_user)
         await asyncio.sleep(0.25)
         welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using `{KoalaBot.COMMAND_PREFIX}verify your_email@example.com`.
+Please verify one of the following emails to get the appropriate role using `{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers.
 `{TEST_EMAIL_DOMAIN}` for `@testRole`"""
         assert dpytest.verify().message().content(welcome_message)
@@ -100,7 +100,7 @@ async def test_enable_verification():
         config = dpytest.get_config()
         guild = config.guilds[0]
         role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} <@&555>")
         assert dpytest.verify().message().content(
             f"Verification enabled for <@&555> for emails ending with `{TEST_EMAIL_DOMAIN}`")
         entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
@@ -117,7 +117,7 @@ async def test_disable_verification():
         role = dpytest.back.make_role("testRole", guild, id_num=555)
         session.add(Roles(s_id=guild.id, r_id=555, email_suffix="egg.com"))
         session.commit()
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "removeVerification egg.com <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "removeVerification egg.com <@&555>")
         assert dpytest.verify().message().content("Emails ending with egg.com no longer give <@&555>")
         entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
         assert not entry
@@ -130,7 +130,7 @@ async def test_verify():
         guild = test_config.guilds[0]
         member = guild.members[0]
         dm = await member.create_dm()
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
+        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
         assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
         entry = session.execute(select(NonVerifiedEmails).filter_by(u_id=member.id, email=TEST_EMAIL)).all()
         assert entry
@@ -150,7 +150,7 @@ async def test_confirm():
         session.commit()
 
         dm = await member.create_dm()
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "confirm testtoken", dm)
+        await dpytest.message(koalabot.COMMAND_PREFIX + "confirm testtoken", dm)
         verified = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
         exists = session.execute(select(NonVerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
         assert verified
@@ -178,7 +178,7 @@ async def test_un_verify():
         session.commit()
 
         dm = await member.create_dm()
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "unVerify test@egg.com", dm)
+        await dpytest.message(koalabot.COMMAND_PREFIX + "unVerify test@egg.com", dm)
         assert dpytest.verify().message().content(
             "test@egg.com has been un-verified and relevant roles have been removed")
         entry = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
@@ -194,7 +194,7 @@ async def test_get_emails():
         test_verified_email = VerifiedEmails(u_id=123, email=TEST_EMAIL)
         session.add(test_verified_email)
         session.commit()
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "getEmails 123")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "getEmails 123")
         assert dpytest.verify().message().content(f"""This user has registered with:\n{TEST_EMAIL}""")
         session.delete(test_verified_email)
         session.commit()
@@ -214,7 +214,7 @@ async def test_re_verify():
         session.add(test_role)
         session.commit()
 
-        await dpytest.message(KoalaBot.COMMAND_PREFIX + "reVerify <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555>")
         assert role not in member.roles
         blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
         assert blacklisted
@@ -224,10 +224,3 @@ async def test_re_verify():
         session.delete(test_role)
         session.execute(delete(ToReVerify).filter_by(u_id=member.id))
         session.commit()
-
-
-@pytest.fixture(scope='session', autouse=True)
-def setup_is_dpytest():
-    KoalaBot.is_dpytest = True
-    yield
-    KoalaBot.is_dpytest = False

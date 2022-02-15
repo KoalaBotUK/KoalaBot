@@ -18,7 +18,7 @@ import emoji
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.colours import KOALA_GREEN
 from koala.utils import wait_for_message
 from koala.db import insert_extension
@@ -34,11 +34,11 @@ def rfr_is_enabled(ctx):
     :return: True if enabled or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "ReactForRole")
+        result = koalabot.check_guild_has_ext(ctx, "ReactForRole")
     except PermissionError:
         result = False
 
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class ReactForRole(commands.Cog):
@@ -51,8 +51,8 @@ class ReactForRole(commands.Cog):
         insert_extension("ReactForRole", 0, True, True)
         self.rfr_database_manager = ReactForRoleDBManager()
 
-    @commands.check(KoalaBot.is_guild_channel)
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_guild_channel)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
@@ -91,7 +91,7 @@ class ReactForRole(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 if response.status != 200:
-                    KoalaBot.logger.error(
+                    koalabot.logger.error(
                         "RFR: HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
                     raise aiohttp.ClientError(
                         "HTTP error Access code " + str(response.status) + " when attempting GET on " + url)
@@ -99,7 +99,7 @@ class ReactForRole(commands.Cog):
                 data = BytesIO(image_bytes)
                 ftype: str = await file_type_from_hdr(response)
                 if not ftype:
-                    KoalaBot.logger.error(
+                    koalabot.logger.error(
                         "RFR: Couldn't verify image file type from " + url + " due to missing/different Content-Type header")
                     raise commands.BadArgument("Couldn't get an image from the message you sent.")
                 msg: discord.Message = await ctx.send(file=discord.File(data, f"thumbnail.{ftype}"))
@@ -108,7 +108,7 @@ class ReactForRole(commands.Cog):
                     await msg.delete()
                     return img
                 except Exception as e:
-                    KoalaBot.logger.error("RFR " + str(e))
+                    koalabot.logger.error("RFR " + str(e))
                     raise e
 
     @staticmethod
@@ -118,7 +118,7 @@ class ReactForRole(commands.Cog):
         else:
             return mime.startswith("image/")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="create", aliases=["createMsg", "createMessage"])
     async def rfr_create_message(self, ctx: commands.Context):
@@ -192,7 +192,7 @@ class ReactForRole(commands.Cog):
                 "k!rfr subcommands to change the message and add functionality as required.")
             await del_msg.delete()
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="delete", aliases=["deleteMsg", "deleteMessage"])
     async def rfr_delete_message(self, ctx: commands.Context):
@@ -220,7 +220,7 @@ class ReactForRole(commands.Cog):
     async def edit_group(self, ctx: commands.Context):
         return
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="description", aliases=["desc"])
     async def rfr_edit_description(self, ctx: commands.Context):
@@ -246,7 +246,7 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="title")
     async def rfr_edit_title(self, ctx: commands.Context):
@@ -272,7 +272,7 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="thumbnail", aliases=["image", "picture"])
     async def rfr_edit_thumbnail(self, ctx: commands.Context):
@@ -287,7 +287,7 @@ class ReactForRole(commands.Cog):
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
         embed = self.get_embed_from_message(msg)
         if not embed:
-            KoalaBot.logger.error(
+            koalabot.logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {channel.id}, guild id {ctx.guild.id}.")
         await ctx.send(f"Your current image here is {embed.thumbnail.url}")
         image = await self.prompt_for_input(ctx, "image you'd like to use as a thumbnail")
@@ -296,7 +296,7 @@ class ReactForRole(commands.Cog):
         if isinstance(image, discord.Attachment) and self.attachment_img_content_type(image.content_type):
             # correct type
             if not image.url:
-                KoalaBot.logger.error(f"Attachment url not found, details : {image}")
+                koalabot.logger.error(f"Attachment url not found, details : {image}")
                 raise commands.BadArgument("Couldn't get an image from the message you sent.")
             else:
                 embed.set_thumbnail(url=str(image.url))
@@ -312,7 +312,7 @@ class ReactForRole(commands.Cog):
         else:
             raise commands.BadArgument("Couldn't get an image from the message you sent.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="inline")
     async def rfr_edit_inline(self, ctx: commands.Context):
@@ -389,7 +389,7 @@ class ReactForRole(commands.Cog):
                         await msg.edit(embed=embed)
                         await ctx.send("Okay, should be done. Please check.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="fixEmbed")
     async def rfr_fix_embed(self, ctx: commands.Context):
@@ -401,17 +401,17 @@ class ReactForRole(commands.Cog):
         emb = self.get_embed_from_message(msg)
         reacts: List[Union[discord.PartialEmoji, discord.Emoji, str]] = [x.emoji for x in msg.reactions]
         if not emb:
-            KoalaBot.logger.error(
+            koalabot.logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
         else:
             er_id, _, _, _ = self.rfr_database_manager.get_rfr_message(ctx.guild.id, chnl.id, msg.id)
             if not er_id:
-                KoalaBot.logger.error(
+                koalabot.logger.error(
                     f"RFR: Can't find rfr message with {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}. DB ER_ID : {er_id}")
             else:
                 rfr_er = self.rfr_database_manager.get_rfr_message_emoji_roles(er_id)
                 if not rfr_er:
-                    KoalaBot.logger.error(
+                    koalabot.logger.error(
                         f"RFR: Can't retrieve RFR message (ER_ID: {er_id})'s emoji role combinations.")
                 else:
                     combos = ""
@@ -433,7 +433,7 @@ class ReactForRole(commands.Cog):
                     await msg.edit(embed=embed)
                     await ctx.send("Tried fixing the message, please check that it's fixed.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
@@ -471,7 +471,7 @@ class ReactForRole(commands.Cog):
                 old_embed = self.get_embed_from_message(msg)
                 embed: discord.Embed = discord.Embed(title=old_embed.title, description=old_embed.description)
                 embed.set_thumbnail(
-                    url=KoalaBot.KOALA_IMAGE_URL)
+                    url=koalabot.KOALA_IMAGE_URL)
                 msg: discord.Message = await channel.send(embed=embed)
                 msg_id = msg.id
                 channel = msg.channel
@@ -511,18 +511,18 @@ class ReactForRole(commands.Cog):
                 await msg.add_reaction(discord_emoji)
 
                 if isinstance(discord_emoji, str):
-                    KoalaBot.logger.info(
+                    koalabot.logger.info(
                         f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
                         f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji}.")
                 else:
-                    KoalaBot.logger.info(
+                    koalabot.logger.info(
                         f"ReactForRole: Added role ID {str(role.id)} to rfr message (channel, guild) {msg.id} "
                         f"({str(channel.id)}, {str(ctx.guild.id)}) with emoji {discord_emoji.id}.")
 
         await msg.edit(embed=rfr_embed)
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @edit_group.command(name="removeRoles")
     async def rfr_remove_roles_from_msg(self, ctx: commands.Context):
@@ -621,7 +621,7 @@ class ReactForRole(commands.Cog):
             await ctx.send("Okay, I've removed those options from the react for role message.")
 
     @commands.Cog.listener()
-    @commands.check(KoalaBot.is_guild_channel)
+    @commands.check(koalabot.is_guild_channel)
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         """
         Event listener for adding a reaction. Doesn't need message to be in loaded cache.
@@ -662,7 +662,7 @@ class ReactForRole(commands.Cog):
                         # Remove members' reaction from all rfr messages in guild
                         guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
                         if not guild_rfr_messages:
-                            KoalaBot.logger.error(
+                            koalabot.logger.error(
                                 f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
                                 f" guild ID {payload.guild_id}")
 
@@ -674,7 +674,7 @@ class ReactForRole(commands.Cog):
                                 for x in msg.reactions:
                                     await x.remove(payload.member)
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
@@ -693,7 +693,7 @@ class ReactForRole(commands.Cog):
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("removeRequiredRole")
     async def rfr_remove_guild_required_role(self, ctx: commands.Context, role_str: str):
@@ -713,7 +713,7 @@ class ReactForRole(commands.Cog):
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("listRequiredRoles")
     async def rfr_list_guild_required_roles(self, ctx: commands.Context):
@@ -729,7 +729,7 @@ class ReactForRole(commands.Cog):
 
             role: discord.Role = discord.utils.get(ctx.guild.roles, id=role_id)
             if not role:
-                KoalaBot.logger.error(f"ReactForRole: Couldn't find role {role_id} in guild {ctx.guild.id}. Please "
+                koalabot.logger.error(f"ReactForRole: Couldn't find role {role_id} in guild {ctx.guild.id}. Please "
                                       f"check.")
             else:
                 msg_str += f"{role.mention}\n"
@@ -738,7 +738,7 @@ class ReactForRole(commands.Cog):
         await ctx.send(msg_str)
 
     @commands.Cog.listener()
-    @commands.check(KoalaBot.is_guild_channel)
+    @commands.check(koalabot.is_guild_channel)
     async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent):
         """
         Event listener for removing a reaction. Doesn't need message to be in loaded cache. Removes the role from the
@@ -843,7 +843,7 @@ class ReactForRole(commands.Cog):
             role_str = field
             role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
         else:
-            KoalaBot.logger.error(
+            koalabot.logger.error(
                 f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
                 f"{message_id} in channel_id {channel_id}. Please check this.")
             return
@@ -1027,7 +1027,7 @@ class ReactForRole(commands.Cog):
 
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot

@@ -6,8 +6,8 @@ import re
 
 # Own modules
 from .log import logger
-import KoalaBot
-from KoalaBot import COMMAND_PREFIX as CP
+import koalabot
+from koalabot import COMMAND_PREFIX as CP
 from koala.models import GuildExtensions
 from koala.db import session_manager, insert_extension
 from koala.colours import KOALA_GREEN
@@ -34,12 +34,12 @@ from sqlalchemy import select, or_, delete, and_, update, null
 def twitch_is_enabled(ctx):
     """
     A command used to check if the guild has enabled twitch alert
-    e.g. @commands.check(KoalaBot.is_admin)
+    e.g. @commands.check(koalabot.is_admin)
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "TwitchAlert")
+        result = koalabot.check_guild_has_ext(ctx, "TwitchAlert")
     except PermissionError:
         result = False
 
@@ -66,8 +66,8 @@ class TwitchAlert(commands.Cog):
         self.running = False
         self.stop_loop = False
 
-    @commands.check(KoalaBot.is_guild_channel)
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_guild_channel)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     @commands.group(name="twitch", short_doc="Group of commands for Twitch Alert functionality.")
     async def twitch_group(self, ctx: commands.Context):
@@ -86,7 +86,7 @@ class TwitchAlert(commands.Cog):
                                 f"""(e.g. Your favourite stream is now live!)
                                 
                                 Example: {CP}twitch editMsg #text-channel \"Your favourite stream is now live!\""""))
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def edit_default_message(self, ctx, channel: discord.TextChannel, *default_live_message):
         """
@@ -133,7 +133,7 @@ class TwitchAlert(commands.Cog):
                           <channel>: The channel to be modified (e.g. #text-channel)
                           
                           Example: {CP}twitch viewMsg #text-channel""")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def view_default_message(self, ctx, channel: discord.TextChannel):
         """
@@ -171,7 +171,7 @@ class TwitchAlert(commands.Cog):
                           f"""(e.g. Your favourite streamer is now live!)
                           
                           Example: {CP}twitch add thenuel #text-channel \"Come watch us play games!\"""")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def add_user_to_twitch_alert(self, ctx, twitch_username,
                                        channel: discord.TextChannel, *custom_live_message):
@@ -226,7 +226,7 @@ class TwitchAlert(commands.Cog):
                           <channel> : The channel to be modified (e.g. #text-channel)
                           
                           Example: {CP}twitch remove thenuel #text-channel""")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def remove_user_from_twitch_alert(self, ctx, twitch_username, channel: discord.TextChannel):
         """
@@ -263,7 +263,7 @@ class TwitchAlert(commands.Cog):
                           f"""(e.g. Your favourite streamer is now live!)
                           
                           Example: {CP}twitch addTeam thenuel #text-channel \"Come watch us play games!\"""")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def add_team_to_twitch_alert(self, ctx, team_name, channel: discord.TextChannel, *custom_live_message):
         """
@@ -317,7 +317,7 @@ class TwitchAlert(commands.Cog):
                           <channel> : The channel to be modified (e.g. #text-channel)
                           
                           Example: {CP}twitch removeTeam thenuel #text-channel""")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def remove_team_from_twitch_alert(self, ctx, team_name, channel: discord.TextChannel):
         """
@@ -351,7 +351,7 @@ class TwitchAlert(commands.Cog):
                           <channel> : The discord channel (e.g. #text-channel)
                           
                           Example: {CP}twitch list #text-channel""")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel):
         """
@@ -656,7 +656,7 @@ class TwitchAlert(commands.Cog):
             logger.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot

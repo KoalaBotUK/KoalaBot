@@ -15,7 +15,7 @@ import discord
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 
 from .db import get_guild_welcome_message, update_guild_welcome_message, new_guild_welcome_message, \
     remove_guild_welcome_message
@@ -42,7 +42,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         :param guild: Guild KoalaBot just joined
         """
         new_guild_welcome_message(guild.id)
-        KoalaBot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
+        koalabot.logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -50,8 +50,8 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         On member joining guild, send DM to member with welcome message.
         :param member: Member which just joined guild
         """
-        await KoalaBot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
-        KoalaBot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
+        await koalabot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
+        koalabot.logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -60,11 +60,11 @@ class IntroCog(commands.Cog, name="KoalaBot"):
         :param guild: Guild KoalaBot just left
         """
         count = remove_guild_welcome_message(guild.id)
-        KoalaBot.logger.info(
+        koalabot.logger.info(
             f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.command(name="welcomeSendMsg", aliases=["send_welcome_message"])
     async def send_welcome_message(self, ctx):
         """
@@ -83,14 +83,14 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             confirmation_received = False
         if confirmation_received:
             await ctx.send("Okay, sending out the welcome message now.")
-            await KoalaBot.dm_group_message(non_bot_members, get_guild_welcome_message(ctx.guild.id))
+            await koalabot.dm_group_message(non_bot_members, get_guild_welcome_message(ctx.guild.id))
             return True
         else:
             await ctx.send("Okay, I won't send out the welcome message then.")
             return False
 
     @commands.cooldown(1, 60, commands.BucketType.guild)
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
     async def update_welcome_message(self, ctx, *, new_message: str):
         """
@@ -122,7 +122,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             else:
                 await ctx.send("Okay, I won't update the welcome message then.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.command(name="welcomeViewMsg")
     async def view_welcome_message(self, ctx):
         """
@@ -136,7 +136,7 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             await ctx.send('Please put in a welcome message to update to.')
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot

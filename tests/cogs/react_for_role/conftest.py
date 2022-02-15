@@ -15,7 +15,7 @@ import pytest
 from sqlalchemy import delete
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.cogs import ReactForRole
 from koala.cogs.react_for_role.models import GuildRFRRequiredRoles, GuildRFRMessages, RFRMessageEmojiRoles
 from koala.db import session_manager
@@ -42,19 +42,6 @@ def rfr_cog(bot):
     dpytest.configure(bot)
     print("Tests starting")
     return rfr_cog
-
-
-@pytest.fixture(scope='session', autouse=True)
-def setup_is_dpytest():
-    KoalaBot.is_dpytest = True
-    yield
-    KoalaBot.is_dpytest = False
-
-
-@pytest.fixture(scope='function', autouse=True)
-async def setup_clean_messages():
-    await dpytest.empty_queue()
-    yield dpytest
 
 
 @pytest.fixture(scope='function', autouse=True)

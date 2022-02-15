@@ -13,7 +13,7 @@ Commented using reStructuredText (reST)
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import get_all_available_guild_extensions, give_guild_extension, get_enabled_guild_extensions, remove_guild_extension
 from .utils import new_discord_activity, list_ext_embed
 
@@ -35,19 +35,19 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self.bot = bot
         self._last_member = None
         self.started = False
-        self.COGS_DIR = KoalaBot.COGS_DIR
+        self.COGS_DIR = koalabot.COGS_DIR
 
     @commands.Cog.listener()
     async def on_ready(self):
         """
         Ran after all cogs have been started and bot is ready
         """
-        await self.bot.change_presence(activity=new_discord_activity("playing", f"{KoalaBot.COMMAND_PREFIX}help"))
+        await self.bot.change_presence(activity=new_discord_activity("playing", f"{koalabot.COMMAND_PREFIX}help"))
         self.started = True
         print("Bot is ready.")
 
     @commands.command(name="activity", aliases=["change_activity"])
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(koalabot.is_owner)
     async def change_activity(self, ctx, new_activity, name):
         """
         Change the activity of the bot
@@ -78,7 +78,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(f"Join our support server for more help! https://discord.gg/5etEjVd")
 
     @commands.command(name="clear")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     async def clear(self, ctx, amount: int = 1):
         """
         Clears a given number of messages from the given channel
@@ -88,7 +88,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.channel.purge(limit=amount + 1)
 
     @commands.command(name="loadCog", aliases=["load_cog"])
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(koalabot.is_owner)
     async def load_cog(self, ctx, extension):
         """
         Loads a cog from the cogs folder
@@ -99,7 +99,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(f'{extension} Cog Loaded')
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(koalabot.is_owner)
     async def unload_cog(self, ctx, extension):
         """
         Unloads a running cog
@@ -113,7 +113,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             await ctx.send(f'{extension} Cog Unloaded')
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     async def enable_koala_ext(self, ctx, koala_extension):
         """
         Enables a koala extension onto a server, all grants all extensions
@@ -137,7 +137,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(embed=embed)
 
     @commands.command(name="disableExt", aliases=["disable_koala_ext"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     async def disable_koala_ext(self, ctx, koala_extension):
         """
         Disables a koala extension onto a server
@@ -157,7 +157,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(embed=embed)
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     async def list_koala_ext(self, ctx):
         """
         Lists the enabled koala extensions of a server
@@ -169,15 +169,15 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(embed=embed)
 
     @commands.command(name="version")
-    @commands.check(KoalaBot.is_owner)
+    @commands.check(koalabot.is_owner)
     async def version(self, ctx):
         """
         Get the version of KoalaBot
         """
-        await ctx.send("version: "+KoalaBot.__version__)
+        await ctx.send("version: "+koalabot.__version__)
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot

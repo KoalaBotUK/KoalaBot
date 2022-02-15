@@ -14,7 +14,7 @@ import discord
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 
 # Constants
 
@@ -60,7 +60,7 @@ async def confirm_message(message: discord.Message):
 
 
 def get_non_bot_members(guild: discord.Guild):
-    if KoalaBot.is_dpytest:
-        return [member for member in guild.members if not member.bot and str(member) != KoalaBot.TEST_BOT_USER]
+    if koalabot.is_dpytest:
+        return [member for member in guild.members if not member.bot and str(member) != koalabot.TEST_BOT_USER]
     else:
         return [member for member in guild.members if not member.bot]

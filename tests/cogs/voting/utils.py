@@ -11,7 +11,7 @@ Commented using reStructuredText (reST)
 # Libs
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.cogs.voting.db import VoteManager
 from koala.cogs.voting.models import Votes, VoteSent, VoteOptions, VoteTargetRoles
 

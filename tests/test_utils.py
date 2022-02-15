@@ -18,7 +18,7 @@ import pytest
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.utils import __parse_args, get_arg_config_path, format_config_path, wait_for_message
 from tests.tests_utils import LastCtxCog
 
@@ -62,7 +62,7 @@ def test_format_db_path_windows():
 @pytest.mark.parametrize("msg_content", [" ", "something"])
 @pytest.mark.asyncio
 async def test_wait_for_message_not_none(msg_content, utils_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client
@@ -76,7 +76,7 @@ async def test_wait_for_message_not_none(msg_content, utils_cog):
 
 @pytest.mark.asyncio
 async def test_wait_for_message_none(utils_cog):
-    await dpytest.message(KoalaBot.COMMAND_PREFIX + "store_ctx")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
     bot: discord.Client = config.client

@@ -13,7 +13,7 @@ Commented using reStructuredText (reST)
 import discord
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import get_enabled_guild_extensions, get_all_available_guild_extensions
 from koala.colours import KOALA_GREEN
 
@@ -33,7 +33,7 @@ def new_discord_activity(activity, name):
     :param name: The name of the activity
     :return: The custom activity created
     """
-    name = name + KoalaBot.KOALA_PLUG  # Added to every presence change, do not alter
+    name = name + koalabot.KOALA_PLUG  # Added to every presence change, do not alter
     lower_activity = str.lower(activity)
     if lower_activity == "playing":
         activity_type = discord.ActivityType.playing
@@ -42,7 +42,7 @@ def new_discord_activity(activity, name):
     elif lower_activity == "listening":
         activity_type = discord.ActivityType.listening
     elif lower_activity == "streaming":
-        return discord.Activity(type=discord.ActivityType.streaming, name=name, url=KoalaBot.STREAMING_URL)
+        return discord.Activity(type=discord.ActivityType.streaming, name=name, url=koalabot.STREAMING_URL)
     elif lower_activity == "custom":
         return discord.Activity(type=discord.ActivityType.custom, name=name)
     else:

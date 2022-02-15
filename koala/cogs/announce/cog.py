@@ -7,7 +7,7 @@ import discord
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.colours import KOALA_GREEN
 from koala.db import insert_extension
 from koala.utils import extract_id, wait_for_message
@@ -26,11 +26,11 @@ def announce_is_enabled(ctx):
     :return: True if enabled or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "Announce")
+        result = koalabot.check_guild_has_ext(ctx, "Announce")
     except PermissionError:
         result = False
 
-    return result or (str(ctx.guild) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class Announce(commands.Cog):
@@ -118,7 +118,7 @@ class Announce(commands.Cog):
         Use k!announce create to create an announcement
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{KoalaBot.COMMAND_PREFIX}help announce` for more information")
+            await ctx.send(f"Please use `{koalabot.COMMAND_PREFIX}help announce` for more information")
 
     @commands.check(announce_is_enabled)
     @announce.command(name="create")
@@ -301,7 +301,7 @@ class Announce(commands.Cog):
             await ctx.send("There is currently no active announcement")
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot

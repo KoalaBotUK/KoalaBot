@@ -14,6 +14,7 @@ import discord.ext.test as dpytest
 
 
 # Own modules
+import koalabot
 
 # Constants
 
@@ -34,12 +35,12 @@ def teardown_config():
 
 @pytest.fixture
 async def bot(event_loop):
-    import KoalaBot
+    import koalabot
     intents = discord.Intents.default()
     intents.members = True
     intents.guilds = True
     intents.messages = True
-    b = commands.Bot(KoalaBot.COMMAND_PREFIX, loop=event_loop, intents=intents)
+    b = commands.Bot(koalabot.COMMAND_PREFIX, loop=event_loop, intents=intents)
     await dpytest.empty_queue()
     dpytest.configure(b)
     return b
@@ -47,8 +48,7 @@ async def bot(event_loop):
 
 @pytest.fixture(autouse=True)
 def setup_is_dpytest():
-    import KoalaBot
-    KoalaBot.is_dpytest = True
+    koalabot.is_dpytest = True
     yield
-    KoalaBot.is_dpytest = False
+    koalabot.is_dpytest = False
 

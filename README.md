@@ -79,7 +79,7 @@ $ pytest tests
 ## Running KoalaBot
 If all prerequisites have been followed, you can start KoalaBot with the following command
 ```bash
-$ python3 KoalaBot.py
+$ python3 koalabot.py
 ```
 
 ## Running KoalaBot with Docker

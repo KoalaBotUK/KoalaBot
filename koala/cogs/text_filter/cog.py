@@ -12,7 +12,7 @@ import re
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import insert_extension
 from koala.colours import KOALA_GREEN
 from koala.utils import extract_id
@@ -25,17 +25,17 @@ from .utils import type_exists, build_word_list_embed, build_moderation_channel_
 def text_filter_is_enabled(ctx):
     """
     A command used to check if the guild has enabled TextFilter
-    e.g. @commands.check(KoalaBot.is_admin)
+    e.g. @commands.check(koalabot.is_admin)
 
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "TextFilter")
+        result = koalabot.check_guild_has_ext(ctx, "TextFilter")
     except PermissionError:
         result = False
 
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class TextFilter(commands.Cog, name="TextFilter"):
@@ -49,7 +49,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.tf_database_manager = TextFilterDBManager(bot)
 
     @commands.command(name="filter", aliases=["filter_word"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def filter_new_word(self, ctx, word, filter_type="banned", too_many_arguments=None):
         """
@@ -70,7 +70,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="filterRegex", aliases=["filter_regex"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def filter_new_regex(self, ctx, regex, filter_type="banned", too_many_arguments=None):
         """
@@ -97,7 +97,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="unfilter", aliases=["unfilter_word"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def unfilter_word(self, ctx, word, too_many_arguments=None):
         """
@@ -116,7 +116,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="filterList", aliases=["check_filtered_words", "checkFilteredWords"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def check_filtered_words(self, ctx):
         """
@@ -131,7 +131,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
 
     @commands.command(name="modChannelAdd", aliases=["setup_mod_channel", "setupModChannel",
                                                      "add_mod_channel", "addModChannel"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def setup_mod_channel(self, ctx, channel_id, too_many_arguments=None):
         """
@@ -151,7 +151,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise (Exception(error))
 
     @commands.command(name="modChannelRemove", aliases=["remove_mod_channel", "deleteModChannel", "removeModChannel"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def remove_mod_channel(self, ctx, channel_id, too_many_arguments=None):
         """
@@ -172,7 +172,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="modChannelList", aliases=["list_mod_channels", "listModChannels"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def list_mod_channels(self, ctx):
         """
@@ -185,7 +185,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         await ctx.channel.send(embed=self.build_channel_list_embed(ctx, channels))
 
     @commands.command(name="ignoreUser")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def ignore_user(self, ctx, user, too_many_arguments=None):
         """
@@ -207,7 +207,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise (Exception(error))
 
     @commands.command(name="ignoreChannel")
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def ignore_channel(self, ctx, channel, too_many_arguments=None):
         """
@@ -229,7 +229,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise (Exception(error))
 
     @commands.command(name="unignore", aliases=["remove_ignore", "removeIgnore"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def remove_ignore(self, ctx, ignore, too_many_arguments=None):
         """
@@ -251,7 +251,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         return
 
     @commands.command(name="ignoreList", aliases=["list_ignored", "listIgnored"])
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
     async def list_ignored(self, ctx):
         """
@@ -273,10 +273,10 @@ class TextFilter(commands.Cog, name="TextFilter"):
         """
         if message.author.bot:
             return
-        if message.content.startswith(KoalaBot.COMMAND_PREFIX + "filter") or \
-                message.content.startswith(KoalaBot.COMMAND_PREFIX + "unfilter") or \
-                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX + "filter") or \
-                message.content.startswith(KoalaBot.OPT_COMMAND_PREFIX + "unfilter"):
+        if message.content.startswith(koalabot.COMMAND_PREFIX + "filter") or \
+                message.content.startswith(koalabot.COMMAND_PREFIX + "unfilter") or \
+                message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "filter") or \
+                message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "unfilter"):
             return
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
@@ -428,7 +428,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         return embed
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
 

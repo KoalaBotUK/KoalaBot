@@ -21,7 +21,7 @@ from discord.ext import commands
 from sqlalchemy import delete, select
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import session_manager
 from koala.cogs import ColourRole
 from koala.cogs import colour_role

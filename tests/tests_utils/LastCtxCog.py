@@ -13,7 +13,7 @@ Commented using reStructuredText (reST)
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 
 
 # Constants
@@ -51,7 +51,7 @@ class LastCtxCog(commands.Cog):
         return self.last_ctx
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot

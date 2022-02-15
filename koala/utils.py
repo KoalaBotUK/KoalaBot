@@ -105,7 +105,7 @@ def format_config_path(directory: str, *filename: str):
 
 def __parse_args(args):
     """
-    Uses argparse to return a parser of all given arguments when running KoalaBot.py
+    Uses argparse to return a parser of all given arguments when running koalabot.py
 
     :param args: sys.argv[1:]
     :return: parsed argparse
@@ -118,7 +118,7 @@ def __parse_args(args):
 
 def get_arg_config_path():
     """
-    Gets config directory if given from arguments when running KoalaBot.py
+    Gets config directory if given from arguments when running koalabot.py
 
     :return: Valid config dir
     """

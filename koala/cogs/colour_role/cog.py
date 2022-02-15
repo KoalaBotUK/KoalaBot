@@ -16,7 +16,7 @@ import discord
 from discord.ext import commands
 
 # Own modules
-import KoalaBot
+import koalabot
 from koala.db import insert_extension
 from .db import ColourRoleDBManager
 from .utils import COLOUR_ROLE_NAMING
@@ -46,16 +46,16 @@ def is_allowed_to_change_colour(ctx: commands.Context):
 def colour_is_enabled(ctx):
     """
     A command used to check if the guild has enabled twitch alert
-    e.g. @commands.check(KoalaBot.is_admin)
+    e.g. @commands.check(koalabot.is_admin)
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
     try:
-        result = KoalaBot.check_guild_has_ext(ctx, "ColourRole")
+        result = koalabot.check_guild_has_ext(ctx, "ColourRole")
     except PermissionError:
         result = False
 
-    return result or (str(ctx.author) == KoalaBot.TEST_USER and KoalaBot.is_dpytest)
+    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class ColourRole(commands.Cog):
@@ -171,7 +171,7 @@ class ColourRole(commands.Cog):
             await ctx.send("You don't have the required role to use this command.")
         else:
             import time
-            KoalaBot.logger.error(f"Unexpected error occurred in Guild {ctx.guild.id}, channel {ctx.channel.id}. "
+            koalabot.logger.error(f"Unexpected error occurred in Guild {ctx.guild.id}, channel {ctx.channel.id}. "
                                   f"Error was of type {str(type(error))}. Cause was {error.__cause__}.")
             await ctx.send(
                 f"Unexpected error occurred. Please contact bot developers with the timestamp {time.time()}, "
@@ -188,7 +188,7 @@ class ColourRole(commands.Cog):
         roles: List[discord.Role] = [role for role in author.roles if
                                      re.match(COLOUR_ROLE_NAMING, role.name)]
         if not roles:
-            KoalaBot.logger.debug(
+            koalabot.logger.debug(
                 f"User {author.id} in guild {ctx.guild.id} changed their colour. Found no old colour roles to prune.")
             return False
         await author.remove_roles(*roles)
@@ -197,7 +197,7 @@ class ColourRole(commands.Cog):
             msg += str(i.id)
             msg += ", "
         msg = msg[:-2] + "."
-        KoalaBot.logger.debug(
+        koalabot.logger.debug(
             f"User {author.id} in guild {ctx.guild.id} changed their colour. {msg}")
         return True
 
@@ -211,14 +211,14 @@ class ColourRole(commands.Cog):
         roles: List[discord.Role] = [role for role in guild.roles if
                                      re.match(COLOUR_ROLE_NAMING, role.name) and len(role.members) == 0]
         if not roles:
-            KoalaBot.logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
+            koalabot.logger.debug(f"Found no empty colour roles to prune in guild {guild.id}.")
         else:
             msg = "Role IDs were "
             for role in roles:
                 msg += str(role.id) + ", "
                 await role.delete(reason="Pruned since empty colour role")
             msg = msg[:-2]
-            KoalaBot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
+            koalabot.logger.debug(f"Guild id {guild.id}. Pruned {len(roles)} colour roles with no members. {msg}")
 
     async def prune_members_old_colour_roles(self, members: List[discord.Member]) -> bool:
         """
@@ -239,13 +239,13 @@ class ColourRole(commands.Cog):
             roles: List[discord.Role] = [role for role in member.roles if
                                          re.match(COLOUR_ROLE_NAMING, role.name)]
             if not roles:
-                KoalaBot.logger.debug(
+                koalabot.logger.debug(
                     f"Guild {member.guild.id} removed a role from their roles allowed to have custom colours. Found no newly illegal custom colour roles to prune from member {member.id}.")
             await member.remove_roles(*roles)
             count += 1
             msg += str(member.id) + ", "
         msg = msg[:-2] + "."
-        KoalaBot.logger.debug(
+        koalabot.logger.debug(
             f"Guild {guild.id} removed a role from their roles allowed to have custom colours. {msg}")
         if count == 0:
             return False
@@ -379,7 +379,7 @@ class ColourRole(commands.Cog):
             return True, None
         for protected_colour in protected_colours:
             colour_distance = ColourRole.get_rgb_colour_distance(custom_colour, protected_colour)
-            KoalaBot.logger.info(
+            koalabot.logger.info(
                 f"Colour distance between {hex(custom_colour.value)} and {hex(protected_colour.value)} is {colour_distance}.")
             if colour_distance < 38.4:
                 return False, protected_colour
@@ -398,7 +398,7 @@ class ColourRole(commands.Cog):
         guild: discord.Guild = ctx.guild
         return role_name in [role.name for role in guild.roles]
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(colour_is_enabled)
     @commands.command(name="listProtectedRoleColours",
                       aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors",
@@ -418,7 +418,7 @@ class ColourRole(commands.Cog):
             msg += f"{role.mention}\n"
         await ctx.send(msg[:-1])
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(colour_is_enabled)
     @commands.command(name="listCustomColourAllowedRoles",
                       aliases=["list_custom_colour_allowed_roles"])
@@ -466,7 +466,7 @@ class ColourRole(commands.Cog):
         roles = [guild.get_role(role_id) for role_id in role_ids]
         return roles
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(colour_is_enabled)
     @commands.command(name="addProtectedRoleColour",
                       aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole",
@@ -487,7 +487,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles whose colours are protected.")
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(colour_is_enabled)
     @commands.command(name="removeProtectedRoleColour",
                       aliases=["remove_protected_role_colour", "removeProtectedRoleColor",
@@ -508,7 +508,7 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Removed {role.mention} from the list of roles whose colours are protected.")
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(colour_is_enabled)
     @commands.command(name="addCustomColourAllowedRole",
                       aliases=["add_custom_colour_allowed_role", "addCustomColorAllowedRole"])
@@ -527,7 +527,7 @@ class ColourRole(commands.Cog):
             self.cr_database_manager.add_colour_change_role_perms(ctx.guild.id, role.id)
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
-    @commands.check(KoalaBot.is_admin)
+    @commands.check(koalabot.is_admin)
     @commands.check(colour_is_enabled)
     @commands.command(name="removeCustomColourAllowedRole",
                       aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
@@ -551,7 +551,7 @@ class ColourRole(commands.Cog):
             await self.prune_guild_empty_colour_roles(ctx)
 
 
-def setup(bot: KoalaBot) -> None:
+def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
