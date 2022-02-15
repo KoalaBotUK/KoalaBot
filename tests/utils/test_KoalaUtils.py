@@ -26,6 +26,7 @@ from tests.tests_utils import LastCtxCog
 
 # Variables
 
+
 @mock.patch("koala.utils.KoalaUtils.CONFIG_PATH", None)
 @mock.patch("pathlib.Path.mkdir", mock.MagicMock(return_value=False))
 def test_get_arg_config_path_default():

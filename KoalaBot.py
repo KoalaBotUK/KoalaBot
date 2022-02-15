@@ -50,7 +50,8 @@ PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to 
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 ENABLED_COGS = ["koala.cogs.BaseCog", "koala.cogs.Announce", "koala.cogs.TwitchAlert", "koala.cogs.ColourRole",
-                "koala.cogs.IntroCog", "koala.cogs.ReactForRole", "koala.cogs.TextFilter", "koala.cogs.Verification"]
+                "koala.cogs.IntroCog", "koala.cogs.ReactForRole", "koala.cogs.TextFilter", "koala.cogs.Verification",
+                "koala.cogs.Voting"]
 
 # Variables
 started = False
