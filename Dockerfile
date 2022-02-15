@@ -32,6 +32,7 @@ RUN python3 -m venv /opt/venv
 
 RUN /opt/venv/bin/python -m pip install --upgrade pip
 RUN /opt/venv/bin/pip install -r requirements.txt
+RUN /opt/venv/bin/python -m pip install pysqlcipher3
 
 
 # docker settings
