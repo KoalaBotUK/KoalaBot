@@ -565,7 +565,7 @@ async def test_remake_guild_extensions():
     # TODO; Put this in rest of tests
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_extensions()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildExtensions")
     create_old_guild_extensions()
@@ -589,7 +589,7 @@ async def test_remake_guild_welcome_message():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_welcome_messages()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildWelcomeMessages")
     create_old_guild_welcome_message()
@@ -615,7 +615,7 @@ async def test_remake_votes():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_votes()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("Votes")
     create_old_votes()
@@ -640,7 +640,7 @@ async def test_remake_vote_sent():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_vote_sent()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("VoteSent")
     create_old_vote_sent()
@@ -666,7 +666,7 @@ async def test_remake_vote_options():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_vote_options()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildExtensions")
     create_old_vote_options()
@@ -690,7 +690,7 @@ async def test_remake_vote_target_roles():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_vote_target_roles()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("VoteTargetRoles")
     create_old_vote_target_roles()
@@ -716,7 +716,7 @@ async def test_remake_verified_emails_old_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_verified_emails()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("VerifiedEmails")
     create_old_verified_emails()
@@ -743,7 +743,7 @@ async def test_remake_verified_emails_new_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_verified_emails()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("VerifiedEmails")
     create_old_verified_emails()
@@ -771,7 +771,7 @@ async def test_remake_not_verified_emails_old_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_non_verified_emails()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("NonVerifiedEmails")
     create_old_non_verified_emails()
@@ -799,7 +799,7 @@ async def test_remake_not_verified_emails_new_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_non_verified_emails()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("NonVerifiedEmails")
     create_old_non_verified_emails()
@@ -827,7 +827,7 @@ async def test_remake_role_old_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_role_table()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("Roles")
     create_old_roles()
@@ -855,7 +855,7 @@ async def test_remake_role_new_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_role_table()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("Roles")
     create_old_roles()
@@ -881,7 +881,7 @@ async def test_remake_to_re_verify_old_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_to_re_verify()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("ToReVerify")
     create_old_to_re_verify()
@@ -909,7 +909,7 @@ async def test_remake_to_re_verify_new_name():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_to_re_verify()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("ToReVerify")
     create_old_to_re_verify()
@@ -934,7 +934,7 @@ async def test_remake_twitch_alert():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_twitch_alerts()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("TwitchAlerts")
     create_old_twitch_alerts()
@@ -960,7 +960,7 @@ async def test_remake_user_in_twitch_alert():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_user_in_twitch_alert()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("UserInTwitchAlert")
     create_old_user_in_twitch_alerts()
@@ -986,7 +986,7 @@ async def test_remake_team_in_twitch_alert():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_team_in_twitch_alert()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("TeamInTwitchAlert")
     create_old_team_in_twitch_alerts()
@@ -1000,8 +1000,8 @@ async def test_remake_user_in_twitch_team():
     create_old_user_in_twitch_team()
     populate_old_user_in_twitch_team()
 
-    before_expected_result = [("1", "USERNAME1", 1), ("2", "USERNAME2", 2), ("3", "USERNAME3", 3),
-                              ("4", "USERNAME4", 4)]
+    before_expected_result = [(1, "USERNAME1", 1), (2, "USERNAME2", 2), (3, "USERNAME3", 3),
+                              (4, "USERNAME4", 4)]
     before_data_stored = database_manager.db_execute_select(user_in_twitch_team_select)
     assert before_data_stored == before_expected_result
     migrate_database.remake_user_in_twitch_team()
@@ -1012,7 +1012,7 @@ async def test_remake_user_in_twitch_team():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_user_in_twitch_team()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("UserInTwitchTeam")
     create_old_user_in_twitch_team()
@@ -1038,7 +1038,7 @@ async def test_remake_text_filter():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_text_filter()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("TextFilter")
     create_old_text_filter()
@@ -1062,7 +1062,7 @@ async def test_remake_text_filter_moderation():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_text_filter_moderation()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("TextFilterModeration")
     create_old_text_filter_moderation()
@@ -1087,7 +1087,7 @@ async def test_remake_text_filter_ignore_list():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_text_filter_ignore_list()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("TextFilterIgnoreList")
     create_old_text_filter_ignore_list()
@@ -1111,7 +1111,7 @@ async def test_remake_guild_rfr_messages():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_rfr_messages()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildRFRMessages")
     create_old_guild_rfr_messages()
@@ -1135,7 +1135,7 @@ async def test_remake_rfr_message_emoji_roles():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_rfr_message_emoji_roles()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("RFRMessageEmojiRoles")
     create_old_rfr_message_emoji_roles()
@@ -1159,7 +1159,7 @@ async def test_remake_guild_rfr_required_roles():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_rfr_required_roles()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildRFRRequiredRoles")
     create_old_guild_rfr_required_roles()
@@ -1183,7 +1183,7 @@ async def test_remake_guild_colour_change_permissions():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_colour_change_permissions()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildColourChangePermissions")
     create_old_guild_colour_change_permissions()
@@ -1207,7 +1207,7 @@ async def test_remake_guild_invalid_custom_colour_roles():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_invalid_custom_colour_roles()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildInvalidCustomColourRoles")
     create_old_guild_invalid_custom_colour_roles()
@@ -1231,7 +1231,7 @@ async def test_remake_guild_usage():
 
     with mock.patch.object(KoalaDBManager, "db_execute_commit") as mock1:
         migrate_database.remake_guild_usage()
-    mock1.assert_not_called()
+        mock1.assert_not_called()
 
     drop_table("GuildUsage")
     create_old_guild_usage()
