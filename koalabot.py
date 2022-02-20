@@ -48,9 +48,8 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
-ENABLED_COGS = ["koala.cogs.BaseCog", "koala.cogs.Announce", "koala.cogs.TwitchAlert", "koala.cogs.ColourRole",
-                "koala.cogs.IntroCog", "koala.cogs.ReactForRole", "koala.cogs.TextFilter", "koala.cogs.Verification",
-                "koala.cogs.Voting"]
+ENABLED_COGS = ["base", "announce", "colour_role", "intro_cog", "react_for_role", "text_filter", "twitch_alert",
+                "verification", "voting"]
 
 # Variables
 started = False
@@ -113,10 +112,11 @@ def load_all_cogs():
 
     # New Approach
     for cog in ENABLED_COGS:
+        module_name = 'koala.cogs.'+cog+'.cog'
         try:
-            client.load_extension(cog)
+            client.load_extension(module_name)
         except commands.errors.ExtensionAlreadyLoaded:
-            client.reload_extension(cog)
+            client.reload_extension(module_name)
 
     logger.info("All cogs loaded")
 
@@ -169,6 +169,7 @@ async def on_command_error(ctx, error):
         # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
         await ctx.send(embed=error_embed(description=error.original))
     else:
+        logger.error(f"Unexpected Error in guild {ctx.guild.name}: {error.original}")
         await ctx.send(embed=error_embed(
             description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error
