@@ -157,7 +157,7 @@ def check_guild_has_ext(ctx, extension_id):
 
 
 @client.event
-async def on_command_error(ctx, error):
+async def on_command_error(ctx, error: Exception):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=error_embed(description=error))
     elif isinstance(error, commands.CommandOnCooldown):
@@ -168,8 +168,10 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandInvokeError):
         # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
         await ctx.send(embed=error_embed(description=error.original))
+    elif isinstance(error, commands.CommandNotFound):
+        await ctx.send(embed=error_embed(description=error))
     else:
-        logger.error(f"Unexpected Error in guild {ctx.guild.name}: {error.original}")
+        logger.error(f"Unexpected Error in guild {ctx.guild.name}: {error}")
         await ctx.send(embed=error_embed(
             description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error

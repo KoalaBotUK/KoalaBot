@@ -347,7 +347,7 @@ class Voting(commands.Cog, name="Vote"):
             votes = session.execute(select(Votes.title).filter_by(author_id=ctx.author.id, guild_id=ctx.guild.id)).all()
             body_string = ""
             for title in votes:
-                body_string += f"{title}\n"
+                body_string += f"{title[0]}\n"
             embed.add_field(name="Vote Title", value=body_string, inline=False)
             await ctx.send(embed=embed)
 
