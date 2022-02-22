@@ -124,6 +124,8 @@ class ColourRole(commands.Cog):
         :param colour_str: The colour hex string specified, or "no" in case of cancelling colour
         """
         colour_str = colour_str.upper()
+        if colour_str[0] == "#":
+            colour_str = colour_str[1:]
         if colour_str == "NO":
             removed = await self.prune_author_old_colour_roles(ctx)
             await ctx.send("Okay, removing your old custom colour role then, if you have one.")
@@ -153,7 +155,6 @@ class ColourRole(commands.Cog):
                     # create the role
                     role: discord.Role = await self.create_custom_colour_role(colour, colour_str, ctx)
                     # add that role to the person
-                    await ctx.author.add_roles(role)
                     await ctx.author.add_roles(role)
                 await ctx.send(f"Your new custom role colour is #{colour_str}, with the role {role.mention}")
                 # prune any empty guild colour roles then
