@@ -21,11 +21,14 @@ pyparsing==2.4.7
 pysqlcipher3==1.0.4
 pytest==6.2.5
 pytest-asyncio==0.16.0
+pytest-env==0.6.2
 pytest-ordering==0.6
 python-dotenv==0.19.2
 requests==2.26.0
 six==1.16.0
+sqlalchemy==1.4.25
 toml==0.10.2
+twitchAPI==2.4.1
 urllib3==1.26.7
 wcwidth==0.2.5
 websockets==10.0

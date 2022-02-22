@@ -58,6 +58,7 @@ BOT_OWNER = 123456789 # (optional) A discord ID for the person who should have a
 # Encryption (optional)
 ENCRYPTED = False # or True (default) for disabling/enabling the database encryption
 SQLITE_KEY = 123EXAMPLE456ENCRYPTION789KEY0 # A custom SQLcipher key
+CONFIG_PATH = ./config # directory of logs and database (default=./config)
 
 # Twitch Alert (Required for TwitchAlert Extension)
 TWITCH_TOKEN = tw1tch70k3n # Twitch Token taken from the twitch developers portal
@@ -72,13 +73,13 @@ GMAIL_PASSWORD = example_password123 # password for the same gmail account
 ## Running the tests
 Tests are run using the pytest library
 ```bash
-$ pytest
+$ pytest tests
 ```
 
 ## Running KoalaBot
 If all prerequisites have been followed, you can start KoalaBot with the following command
 ```bash
-$ python3 KoalaBot.py
+$ python3 koalabot.py
 ```
 
 ## Running KoalaBot with Docker
