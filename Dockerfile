@@ -40,7 +40,6 @@ RUN /opt/venv/bin/python -m pip install pysqlcipher3
 
 # map /config to host defined config path (used to store configuration from app)
 VOLUME /config
-ENV CONFIG_DIR=/config/
 
 # Expose port
 # EXPOSE 5000

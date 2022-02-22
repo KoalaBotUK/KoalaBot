@@ -8,7 +8,7 @@ from koala.utils import format_config_path
 from koala.env import CONFIG_PATH, LOGGING_FILE
 
 # load_dotenv()
-_LOG_LEVEL = logging.INFO
+_LOG_LEVEL = logging.DEBUG
 _FORMATTER = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
 _LOG_DIR = format_config_path(CONFIG_PATH, "logs", str(date.today()))
 
