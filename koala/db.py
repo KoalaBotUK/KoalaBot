@@ -19,7 +19,7 @@ from sqlalchemy.orm import sessionmaker
 from koala.env import DB_KEY, ENCRYPTED_DB
 from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
 from koala.utils import get_arg_config_path, format_config_path
-
+from koala.log import logger
 
 # Constants
 
@@ -35,7 +35,7 @@ def _get_sql_url(db_path, encrypted: bool, db_key=None):
 
 CONFIG_DIR = get_arg_config_path()
 DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
-
+logger.debug("Database Path: "+DATABASE_PATH)
 engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
                                     encrypted=ENCRYPTED_DB,
                                     db_key=DB_KEY), future=True)
