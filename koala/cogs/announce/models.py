@@ -1,14 +1,14 @@
-from sqlalchemy import Column, Integer, ForeignKey
+from sqlalchemy import Column, INT, ForeignKey
 
 from koala.db import setup
-from koala.models import mapper_registry
+from koala.models import mapper_registry, DiscordSnowflake
 
 
 @mapper_registry.mapped
 class GuildUsage:
     __tablename__ = 'GuildUsage'
-    guild_id = Column(Integer, ForeignKey("GuildExtensions.guild_id"), primary_key=True)
-    last_message_epoch_time = Column(Integer)
+    guild_id = Column(DiscordSnowflake, ForeignKey("GuildExtensions.guild_id"), primary_key=True)
+    last_message_epoch_time = Column(INT)
 
     def __repr__(self):
         return "<GuildUsage(%s, %s)>" % \

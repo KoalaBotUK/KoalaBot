@@ -262,8 +262,8 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send("Vote has maximum number of options already (10)")
             return
         current_option_length = sum([len(x.head) + len(x.body) for x in vote.options])
-        if current_option_length + len(option_string) > 1500:
-            await ctx.send(f"Option string is too long. The total length of all the vote options cannot be over 1500 characters.")
+        if current_option_length + len(option_string) > 150:
+            await ctx.send(f"Option string is too long. The total length of all the vote options cannot be over 150 characters.")
             return
         if "+" not in option_string:
             await ctx.send("Example usage: k!vote addOption option title+option description")

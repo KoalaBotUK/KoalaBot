@@ -20,9 +20,9 @@ from koala.db import session_manager
 
 def test_vote_is_ready():
     vote = Vote(111, "Test Vote", 222, 333)
-    vote.add_option(Option(111, "head", "body"))
+    vote.add_option(Option("head", "body", 111))
     assert not vote.is_ready()
-    vote.add_option(Option(122, "head", "body"))
+    vote.add_option(Option("head", "body", 122))
     assert vote.is_ready()
 
 

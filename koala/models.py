@@ -1,8 +1,9 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
-from sqlalchemy.orm import registry
+from sqlalchemy import Column, INT, VARCHAR, BOOLEAN, ForeignKey
+import sqlalchemy.types as types
+from sqlalchemy.orm import registry, validates
 
 # Own modules
 
@@ -13,13 +14,39 @@ from sqlalchemy.orm import registry
 mapper_registry = registry()
 
 
+class DiscordSnowflake(types.TypeDecorator):
+    """
+    Uses int for python, but VARCHAR(18) for storing in db
+    """
+
+    impl = types.VARCHAR(18)
+
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        return str(value) if value else None
+
+    def process_literal_param(self, value, dialect):
+        return str(value) if value else None
+
+    def process_result_value(self, value, dialect):
+        return int(value) if value else None
+
+    def copy(self, **kw):
+        return DiscordSnowflake(self.impl.length)
+
+    @property
+    def python_type(self):
+        return int
+
+
 @mapper_registry.mapped
 class KoalaExtensions:
     __tablename__ = 'KoalaExtensions'
-    extension_id = Column(String, primary_key=True)
-    subscription_required = Column(Integer)
-    available = Column(Boolean)
-    enabled = Column(Boolean)
+    extension_id = Column(VARCHAR(20), primary_key=True)
+    subscription_required = Column(INT)
+    available = Column(BOOLEAN)
+    enabled = Column(BOOLEAN)
 
     def __repr__(self):
         return "KoalaExtensions(%s, %s, %s, %s)>" % \
@@ -29,8 +56,12 @@ class KoalaExtensions:
 @mapper_registry.mapped
 class GuildExtensions:
     __tablename__ = 'GuildExtensions'
-    extension_id = Column(String, ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
-    guild_id = Column(Integer, primary_key=True)
+    extension_id = Column(VARCHAR(20), ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
+    guild_id = Column(DiscordSnowflake, primary_key=True)
+
+    @validates("guild_id")
+    def validate_discord_snowflake(self, key, guild_id):
+        return int(guild_id)
 
     def __repr__(self):
         return "GuildExtensions(%s, %s)>" % \

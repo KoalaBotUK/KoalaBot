@@ -1,14 +1,14 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, VARCHAR
 
 from koala.db import setup
-from koala.models import mapper_registry
+from koala.models import mapper_registry, DiscordSnowflake
 
 
 @mapper_registry.mapped
 class GuildWelcomeMessages:
     __tablename__ = 'GuildWelcomeMessages'
-    guild_id = Column(Integer, primary_key=True)
-    welcome_message = Column(String, nullable=True)
+    guild_id = Column(DiscordSnowflake, primary_key=True)
+    welcome_message = Column(VARCHAR(2000), nullable=True)
 
     def __repr__(self):
         return "<GuildWelcomeMessages(%s, %s)>" % \

@@ -1,17 +1,17 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column,  VARCHAR, BOOLEAN
 
 from koala.db import setup
-from koala.models import mapper_registry
+from koala.models import mapper_registry, DiscordSnowflake
 
 
 @mapper_registry.mapped
 class TextFilter:
     __tablename__ = 'TextFilter'
-    filtered_text_id = Column(String, primary_key=True)
-    guild_id = Column(Integer)
-    filtered_text = Column(String)
-    filter_type = Column(String)
-    is_regex = Column(Boolean)
+    filtered_text_id = Column(VARCHAR(100), primary_key=True)
+    guild_id = Column(DiscordSnowflake)
+    filtered_text = Column(VARCHAR(100))
+    filter_type = Column(VARCHAR(10))
+    is_regex = Column(BOOLEAN)
 
     def __repr__(self):
         return "<TextFilter(%s, %s, %s, %s, %s)>" % \
@@ -21,8 +21,8 @@ class TextFilter:
 @mapper_registry.mapped
 class TextFilterModeration:
     __tablename__ = 'TextFilterModeration'
-    channel_id = Column(Integer, primary_key=True)
-    guild_id = Column(Integer)
+    channel_id = Column(DiscordSnowflake, primary_key=True)
+    guild_id = Column(DiscordSnowflake)
 
     def __repr__(self):
         return "<TextFilterModeration(%s, %s)>" % \
@@ -32,10 +32,10 @@ class TextFilterModeration:
 @mapper_registry.mapped
 class TextFilterIgnoreList:
     __tablename__ = 'TextFilterIgnoreList'
-    ignore_id = Column(String, primary_key=True)
-    guild_id = Column(Integer)
-    ignore_type = Column(String)
-    ignore = Column(Integer)
+    ignore_id = Column(VARCHAR(36), primary_key=True)
+    guild_id = Column(DiscordSnowflake)
+    ignore_type = Column(VARCHAR(10))
+    ignore = Column(DiscordSnowflake)
 
     def __repr__(self):
         return "<TextFilterIgnoreList(%s, %s, %s, %s)>" % \
