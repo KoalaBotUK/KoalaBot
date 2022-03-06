@@ -41,6 +41,17 @@ class DiscordSnowflake(types.TypeDecorator):
 
 
 @mapper_registry.mapped
+class Guilds:
+    __tablename__ = 'Guilds'
+    guild_id = Column(DiscordSnowflake, primary_key=True)
+    subscription = Column(INT)
+
+    def __repr__(self):
+        return "<Guilds(%s, %s)>" % \
+               (self.guild_id, self.subscription)
+
+
+@mapper_registry.mapped
 class KoalaExtensions:
     __tablename__ = 'KoalaExtensions'
     extension_id = Column(VARCHAR(20), primary_key=True)
@@ -49,7 +60,7 @@ class KoalaExtensions:
     enabled = Column(BOOLEAN)
 
     def __repr__(self):
-        return "KoalaExtensions(%s, %s, %s, %s)>" % \
+        return "<KoalaExtensions(%s, %s, %s, %s)>" % \
                (self.extension_id, self.subscription_required, self.available, self.enabled)
 
 
@@ -64,6 +75,6 @@ class GuildExtensions:
         return int(guild_id)
 
     def __repr__(self):
-        return "GuildExtensions(%s, %s)>" % \
+        return "<GuildExtensions(%s, %s)>" % \
                (self.extension_id, self.guild_id)
 

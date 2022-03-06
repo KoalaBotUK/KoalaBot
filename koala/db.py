@@ -8,37 +8,20 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import os
 # Libs
 from contextlib import contextmanager
-from pathlib import Path
-from sqlalchemy import select, delete, and_, func, create_engine
+from sqlalchemy import select, delete, and_, func, create_engine, VARCHAR
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
-from koala.env import DB_KEY, ENCRYPTED_DB
+from koala.env import DB_URL
 from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
-from koala.utils import get_arg_config_path, format_config_path
 from koala.log import logger
 
 # Constants
 
 # Variables
-
-
-def _get_sql_url(db_path, encrypted: bool, db_key=None):
-    if encrypted:
-        return "sqlite+pysqlcipher://:x'" + db_key + "'@/" + db_path
-    else:
-        return "sqlite:///" + db_path
-
-
-CONFIG_DIR = get_arg_config_path()
-DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
-logger.debug("Database Path: "+DATABASE_PATH)
-engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
-                                    encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
+engine = create_engine(DB_URL, future=True)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 
@@ -58,31 +41,19 @@ def session_manager():
         session.close()
 
 
-def setup():
-    """
-    Creates the database and tables
-    """
-    __create_db(DATABASE_PATH)
-    __create_tables()
-
-
-def __create_db(file_path):
-    """
-    Creates the database, with correct permissions on unix
-    :param file_path: The file path of the database
-    """
-    Path(get_arg_config_path()).mkdir(exist_ok=True)
-    Path(file_path).touch()
-    if ENCRYPTED_DB:
-        os.system("chown www-data "+file_path)
-        os.system("chmod 777 "+file_path)
-
-
-def __create_tables():
+def __create_sqlite_tables():
     """
     Creates all tables currently in the metadata of Base
     """
-    mapper_registry.metadata.create_all(engine, mapper_registry.metadata.tables.values(), checkfirst=True)
+    logger.debug("Creating database tables for SQLite")
+    tables = mapper_registry.metadata.tables.values()
+    for table in tables:
+        for column in table.columns:
+            existing_type = column.type
+            if type(existing_type) == VARCHAR:
+                existing_type.collation = None
+                column.type = existing_type
+    mapper_registry.metadata.create_all(engine, tables, checkfirst=True)
 
 
 def insert_extension(extension_id: str, subscription_required: int, available: bool, enabled: bool):
@@ -213,6 +184,3 @@ def clear_all_tables(tables):
         for table in tables:
             session.execute('DELETE FROM ' + table + ';')
             session.commit()
-
-
-setup()

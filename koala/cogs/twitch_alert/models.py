@@ -1,14 +1,13 @@
 from sqlalchemy import Column, INT, VARCHAR, ForeignKey, orm
-from koala.db import setup
 from koala.models import mapper_registry, DiscordSnowflake
 
 
 @mapper_registry.mapped
 class TwitchAlerts:
     __tablename__ = 'TwitchAlerts'
-    guild_id = Column(DiscordSnowflake, ForeignKey("GuildExtensions.guild_id"), primary_key=True)
+    guild_id = Column(DiscordSnowflake, ForeignKey("Guilds.guild_id"))
     channel_id = Column(DiscordSnowflake, primary_key=True)
-    default_message = Column(VARCHAR(1000))
+    default_message = Column(VARCHAR(1000, collation="utf8mb4_general_ci"))
 
     def __repr__(self):
         return "<TwitchAlerts(%s, %s, %s)>" % \
@@ -20,7 +19,7 @@ class UserInTwitchAlert:
     __tablename__ = 'UserInTwitchAlert'
     channel_id = Column(DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id"), primary_key=True)
     twitch_username = Column(VARCHAR(25), primary_key=True)
-    custom_message = Column(VARCHAR(1000), nullable=True)
+    custom_message = Column(VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True)
     message_id = Column(DiscordSnowflake, nullable=True)
     twitch_alert = orm.relationship("TwitchAlerts")
 
@@ -35,7 +34,7 @@ class TeamInTwitchAlert:
     team_twitch_alert_id = Column(INT, autoincrement=True, primary_key=True)
     channel_id = Column(DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id"))
     twitch_team_name = Column(VARCHAR(25))
-    custom_message = Column(VARCHAR(1000), nullable=True)
+    custom_message = Column(VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True)
     twitch_alert = orm.relationship("TwitchAlerts")
 
     def __repr__(self):
@@ -54,6 +53,3 @@ class UserInTwitchTeam:
     def __repr__(self):
         return "<UserInTwitchTeam(%s, %s, %s)>" % \
                (self.team_twitch_alert_id, self.twitch_username, self.message_id)
-
-
-setup()

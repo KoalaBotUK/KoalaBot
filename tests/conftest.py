@@ -15,9 +15,9 @@ import discord.ext.test as dpytest
 
 # Own modules
 import koalabot
+import koala.db as db
 from tests.log import logger
 # Constants
-
 
 @pytest.fixture(scope='session', autouse=True)
 def teardown_config():
@@ -28,9 +28,9 @@ def teardown_config():
     # tear_down: then clear table at the end of the scope
     logger.info("Tearing down session")
 
-    from koala.utils import get_arg_config_path
+    from koala.env import CONFIG_PATH
 
-    shutil.rmtree(get_arg_config_path(), ignore_errors=True)
+    shutil.rmtree(CONFIG_PATH, ignore_errors=True)
 
 
 @pytest.fixture
@@ -48,6 +48,7 @@ async def bot(event_loop):
 
 @pytest.fixture(autouse=True)
 def setup_is_dpytest():
+    db.__create_sqlite_tables()
     koalabot.is_dpytest = True
     yield
     koalabot.is_dpytest = False

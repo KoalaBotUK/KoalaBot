@@ -23,7 +23,7 @@ from koala.cogs.twitch_alert.cog import TwitchAlert
 from koala.cogs.twitch_alert.db import TwitchAlertDBManager
 from koala.cogs.twitch_alert import utils
 from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from koala.db import session_manager, setup
+from koala.db import session_manager
 
 # Constants
 DB_PATH = "Koala.db"
@@ -54,13 +54,10 @@ def twitch_alert_db_manager_tables(twitch_alert_db_manager):
         session.execute(delete(UserInTwitchAlert))
         session.execute(delete(UserInTwitchTeam))
         session.commit()
-
-        setup()
         return twitch_alert_db_manager
 
 
 def test_create_tables():
-    setup()
     tables = ['TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam']
     sql_check_table_exists = "SELECT name FROM sqlite_master " \
                              "WHERE type='table' AND " \

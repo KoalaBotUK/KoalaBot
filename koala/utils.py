@@ -9,7 +9,6 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import argparse
-from pathlib import Path
 
 # Libs
 from typing import Tuple, Optional
@@ -18,7 +17,6 @@ import discord
 from discord.ext import commands
 
 # Own modules
-from koala.env import CONFIG_PATH
 from koala.colours import ERROR_RED
 
 # Constants
@@ -115,14 +113,3 @@ def __parse_args(args):
     args, unknown = parser.parse_known_args(args)
     return args
 
-
-def get_arg_config_path():
-    """
-    Gets config directory if given from arguments when running koalabot.py
-
-    :return: Valid config dir
-    """
-    config_dir = CONFIG_PATH
-    path = Path(config_dir)
-    path.mkdir(exist_ok=True, parents=True)
-    return str(path.absolute())

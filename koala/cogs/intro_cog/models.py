@@ -1,6 +1,5 @@
 from sqlalchemy import Column, VARCHAR
 
-from koala.db import setup
 from koala.models import mapper_registry, DiscordSnowflake
 
 
@@ -8,11 +7,8 @@ from koala.models import mapper_registry, DiscordSnowflake
 class GuildWelcomeMessages:
     __tablename__ = 'GuildWelcomeMessages'
     guild_id = Column(DiscordSnowflake, primary_key=True)
-    welcome_message = Column(VARCHAR(2000), nullable=True)
+    welcome_message = Column(VARCHAR(2000, collation="utf8mb4_general_ci"), nullable=True)
 
     def __repr__(self):
         return "<GuildWelcomeMessages(%s, %s)>" % \
                (self.guild_id, self.welcome_message)
-
-
-setup()
