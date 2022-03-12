@@ -21,6 +21,11 @@ from .db import TextFilterDBManager
 from .utils import type_exists, build_word_list_embed, build_moderation_channel_embed, \
     create_default_embed, build_moderation_deleted_embed
 
+# Flask
+from flask import Blueprint
+text_filter_api = Blueprint('text_filter_api', __name__)
+
+
 
 def text_filter_is_enabled(ctx):
     """
@@ -47,6 +52,10 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.bot = bot
         insert_extension("TextFilter", 0, True, True)
         self.tf_database_manager = TextFilterDBManager(bot)
+    
+    @text_filter_api.route("/text_filter")
+    def endpoint():
+        return "text_filter test"
 
     @commands.command(name="filter", aliases=["filter_word"])
     @commands.check(koalabot.is_admin)

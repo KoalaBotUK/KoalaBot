@@ -27,6 +27,10 @@ from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, 
 
 # Variables
 
+# Flask
+from flask import Blueprint
+intro_cog_api = Blueprint('intro_cog_api', __name__)
+
 
 class IntroCog(commands.Cog, name="KoalaBot"):
     """
@@ -35,6 +39,10 @@ class IntroCog(commands.Cog, name="KoalaBot"):
 
     def __init__(self, bot):
         self.bot = bot
+
+    @intro_cog_api.route("/intro_cog")
+    def endpoint():
+        return "intro_cog test"
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):

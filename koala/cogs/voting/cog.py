@@ -27,6 +27,9 @@ from .utils import make_result_embed
 
 # Variables
 
+# Flask
+from flask import Blueprint
+voting_api = Blueprint('voting_api', __name__)
 
 def currently_configuring():
     """
@@ -79,6 +82,10 @@ class Voting(commands.Cog, name="Vote"):
         self.vote_manager = VoteManager()
         self.vote_manager.load_from_db()
         self.running = False
+
+    @voting_api.route("/voting")
+    def endpoint():
+        return "voting test"
 
     @commands.Cog.listener()
     async def on_ready(self):

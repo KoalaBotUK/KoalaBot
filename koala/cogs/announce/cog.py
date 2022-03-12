@@ -16,6 +16,9 @@ from .db import AnnounceDBManager
 from .log import logger
 from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, MAX_MESSAGE_LENGTH
 
+# Flask
+from flask import Blueprint
+announce_api = Blueprint('announce_api', __name__)
 
 def announce_is_enabled(ctx):
     """
@@ -44,6 +47,10 @@ class Announce(commands.Cog):
         self.roles = {}
         insert_extension("Announce", 0, True, True)
         self.announce_database_manager = AnnounceDBManager()
+
+    @announce_api.route("/announce")
+    def endpoint():
+        return "announce test"
 
     def not_exceeded_limit(self, guild_id):
         """

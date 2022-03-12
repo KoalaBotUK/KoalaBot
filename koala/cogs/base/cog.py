@@ -23,6 +23,9 @@ from .log import logger
 
 # Variables
 
+# Flask
+from flask import Blueprint
+base_api = Blueprint('base_api', __name__)
 
 class BaseCog(commands.Cog, name='KoalaBot'):
     """
@@ -38,6 +41,10 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self._last_member = None
         self.started = False
         self.COGS_DIR = koalabot.COGS_DIR
+
+    @base_api.route("/base")
+    def endpoint():
+        return "base test"
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -186,3 +193,5 @@ def setup(bot: koalabot) -> None:
     """
     bot.add_cog(BaseCog(bot))
     logger.info("BaseCog is ready.")
+
+

@@ -29,8 +29,9 @@ from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
 
 # Variables
 
-
-
+# Flask
+from flask import Blueprint
+verification_api = Blueprint('verification_api', __name__)
 
 def verify_is_enabled(ctx):
     """
@@ -53,6 +54,10 @@ class Verification(commands.Cog, name="Verify"):
     def __init__(self, bot):
         self.bot = bot
         insert_extension("Verify", 0, True, True)
+
+    @verification_api.route("/verification")
+    def endpoint():
+        return "verification test"
 
     @staticmethod
     def send_email(email, token):

@@ -30,6 +30,9 @@ from sqlalchemy import select, or_, delete, and_, update, null
 
 # Variables
 
+# Flask
+from flask import Blueprint
+twitch_alert_api = Blueprint('twitch_alert_api', __name__)
 
 def twitch_is_enabled(ctx):
     """
@@ -65,6 +68,10 @@ class TwitchAlert(commands.Cog):
         self.loop_team_thread = None
         self.running = False
         self.stop_loop = False
+    
+    @twitch_alert_api.route("/twitch_alert")
+    def endpoint():
+        return "twitch_alert test"
 
     @commands.check(koalabot.is_guild_channel)
     @commands.check(koalabot.is_admin)

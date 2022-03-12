@@ -26,6 +26,10 @@ import time
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import importlib
+from flask import Flask
+from threading import Thread
+from functools import partial
 
 # Own modules
 from koala.db import extension_enabled
@@ -33,9 +37,11 @@ from koala.utils import error_embed
 from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER
 
+# Flask
+flask_app = Flask(__name__)
+
 # Constants
 load_dotenv()
-
 
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
@@ -59,7 +65,6 @@ intent.guilds = True
 intent.messages = True
 client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 is_dpytest = False
-
 
 def is_owner(ctx):
     """
@@ -96,6 +101,15 @@ def is_dm_channel(ctx):
 def is_guild_channel(ctx):
     return ctx.guild is not None
 
+def load_apis():
+    for cog in ENABLED_COGS:
+        module_name = 'koala.cogs.'+cog+'.cog'
+        print(module_name)
+        try:
+            # flask_app.register_blueprint(getimportlib.import_module(module_name))
+            flask_app.register_blueprint(getattr(importlib.import_module(module_name), cog + '_api'))
+        except commands.errors.ExtensionAlreadyLoaded:
+            print("API already loaded")
 
 def load_all_cogs():
     """
@@ -176,9 +190,18 @@ async def on_command_error(ctx, error: Exception):
             description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error
 
-
+# load_apis()
 if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     load_all_cogs()
+    load_apis()
+
+    # Run Flask in seperate thread
+    flask_run = partial(flask_app.run, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    flask_thread = Thread(target=flask_run)
+    flask_thread.start()
+
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)
+
+    

@@ -24,6 +24,9 @@ from .utils import COLOUR_ROLE_NAMING
 
 # Variables
 
+# Flask
+from flask import Blueprint
+colour_role_api = Blueprint('colour_role_api', __name__)
 
 def is_allowed_to_change_colour(ctx: commands.Context):
     """
@@ -72,6 +75,10 @@ class ColourRole(commands.Cog):
         self.bot = bot
         insert_extension("ColourRole", 0, True, True)
         self.cr_database_manager = ColourRoleDBManager()
+
+    @colour_role_api.route("/colour_role")
+    def endpoint():
+        return "colour_role test"
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):

@@ -26,6 +26,9 @@ from .db import ReactForRoleDBManager
 from .log import logger
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 
+# Flask
+from flask import Blueprint
+react_for_role_api = Blueprint('react_for_role_api', __name__)
 
 def rfr_is_enabled(ctx):
     """
@@ -51,6 +54,10 @@ class ReactForRole(commands.Cog):
         self.bot = bot
         insert_extension("ReactForRole", 0, True, True)
         self.rfr_database_manager = ReactForRoleDBManager()
+
+    @react_for_role_api.route("/react_for_role")
+    def endpoint():
+        return "react_for_role test"
 
     @commands.check(koalabot.is_guild_channel)
     @commands.check(koalabot.is_admin)
