@@ -10,6 +10,7 @@ import re
 
 # Libs
 from discord.ext import commands
+import json
 
 # Own modules
 import koalabot
@@ -24,8 +25,6 @@ from .utils import type_exists, build_word_list_embed, build_moderation_channel_
 # Quart
 from quart import Blueprint
 text_filter_api = Blueprint('text_filter_api', __name__)
-
-
 
 def text_filter_is_enabled(ctx):
     """
@@ -52,10 +51,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.bot = bot
         insert_extension("TextFilter", 0, True, True)
         self.tf_database_manager = TextFilterDBManager(bot)
-    
-    @text_filter_api.route("/text_filter")
-    def endpoint():
-        return "text_filter test"
+        
+        text_filter_api.add_url_rule('/text_filter/list_words/<int:guild_id>', view_func=self.tf_database_manager.get_filtered_text_for_guild, methods=['GET'])
 
     @commands.command(name="filter", aliases=["filter_word"])
     @commands.check(koalabot.is_admin)
@@ -134,7 +131,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param ctx: The discord context
         :return:
         """
-        all_words_and_types = self.get_list_of_words(ctx)
+        all_words_and_types = self.get_list_of_words(ctx.guild.id)
         await ctx.channel.send(embed=build_word_list_embed(ctx, all_words_and_types[0], all_words_and_types[1],
                                                            all_words_and_types[2]))
 
@@ -388,7 +385,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
                 channel = self.bot.get_channel(id=int(each_channel[0]))
                 await channel.send(embed=build_moderation_deleted_embed(message))
 
-    def get_list_of_words(self, ctx):
+    def get_list_of_words(self, guild_id):
         """
         Gets a list of filtered words and corresponding types in a guild
 
@@ -396,7 +393,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :return [all_words, all_types]: a list containing two lists of filtered words and types
         """
         all_words, all_types, all_regex = "", "", ""
-        for word, filter_type, regex in self.tf_database_manager.get_filtered_text_for_guild(ctx.guild.id):
+        for word, filter_type, regex in json.loads(self.tf_database_manager.get_filtered_text_for_guild(guild_id)):
             all_words += word + "\n"
             all_types += filter_type + "\n"
             all_regex += regex + "\n"

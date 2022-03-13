@@ -10,6 +10,7 @@ Created by: Stefan Cooper
 # Libs
 import discord
 from sqlalchemy import select, delete
+import json
 
 # Own modules
 from koala.db import session_manager
@@ -121,7 +122,7 @@ class TextFilterDBManager:
         """
         with session_manager() as session:
             rows = session.execute(select(TextFilter).filter_by(guild_id=guild_id)).scalars()
-            return [(row.filtered_text, row.filter_type, str(int(row.is_regex))) for row in rows]
+            return json.dumps([(row.filtered_text, row.filter_type,str(int(row.is_regex))) for row in rows])
 
     def get_ignore_list_channels(self, guild_id):
         """
