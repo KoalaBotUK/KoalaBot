@@ -13,7 +13,9 @@ import re
 from typing import List, Tuple, Any
 # Libs
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
+import asyncio
+import aiohttp
 
 # Own modules
 import koalabot
@@ -24,8 +26,8 @@ from .utils import COLOUR_ROLE_NAMING
 
 # Variables
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 colour_role_api = Blueprint('colour_role_api', __name__)
 
 def is_allowed_to_change_colour(ctx: commands.Context):
@@ -75,10 +77,11 @@ class ColourRole(commands.Cog):
         self.bot = bot
         insert_extension("ColourRole", 0, True, True)
         self.cr_database_manager = ColourRoleDBManager()
+        colour_role_api.add_url_rule('/colour_role/create_role/<int:guild_id>/<string:colour_str>', view_func=self.create_role_api, methods=['POST'])
 
-    @colour_role_api.route("/colour_role")
-    def endpoint():
-        return "colour_role test"
+    def create_role_api(self, guild_id: int, colour_str: str) -> discord.Role:
+        asyncio.run_coroutine_threadsafe(self.create_custom_colour_role(discord.Colour.random(), colour_str, guild_id), self.bot.loop).result()
+        return "colour_role"
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):
@@ -160,7 +163,7 @@ class ColourRole(commands.Cog):
                     await ctx.author.add_roles(role)
                 else:
                     # create the role
-                    role: discord.Role = await self.create_custom_colour_role(colour, colour_str, ctx)
+                    role: discord.Role = await self.create_custom_colour_role(colour, colour_str, ctx.guild.id)
                     # add that role to the person
                     await ctx.author.add_roles(role)
                 await ctx.send(f"Your new custom role colour is #{colour_str}, with the role {role.mention}")
@@ -260,8 +263,7 @@ class ColourRole(commands.Cog):
             return False
         return True
 
-    async def create_custom_colour_role(self, colour: discord.Colour, colour_str: str,
-                                        ctx: commands.Context) -> discord.Role:
+    async def create_custom_colour_role(self, colour: discord.Colour, colour_str: str, guild_id: int) -> discord.Role:
         """
         Creates a custom colour role in the context's guild, with an auto-generated name.
 
@@ -270,10 +272,11 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: The role that was created
         """
-        colour_role: discord.Role = await ctx.guild.create_role(name=f"KoalaBot[0x{colour_str}]",
-                                                                colour=colour,
-                                                                mentionable=False, hoist=False)
-        role_pos = self.calculate_custom_colour_role_position(ctx.guild)
+        guild = self.bot.get_guild(guild_id)
+        colour_role: discord.Role = await guild.create_role(name=f"KoalaBot[0x{colour_str}]",
+                                                            colour=colour,
+                                                            mentionable=False, hoist=False)
+        role_pos = self.calculate_custom_colour_role_position(guild)
         await colour_role.edit(position=role_pos)
         await colour_role.edit(position=role_pos)
         return colour_role

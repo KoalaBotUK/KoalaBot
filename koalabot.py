@@ -27,9 +27,10 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import importlib
-from flask import Flask
+from quart import Quart
 from threading import Thread
 from functools import partial
+import asyncio
 
 # Own modules
 from koala.db import extension_enabled
@@ -37,8 +38,8 @@ from koala.utils import error_embed
 from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER
 
-# Flask
-flask_app = Flask(__name__)
+# quart
+quart_app = Quart(__name__)
 
 # Constants
 load_dotenv()
@@ -106,8 +107,7 @@ def load_apis():
         module_name = 'koala.cogs.'+cog+'.cog'
         print(module_name)
         try:
-            # flask_app.register_blueprint(getimportlib.import_module(module_name))
-            flask_app.register_blueprint(getattr(importlib.import_module(module_name), cog + '_api'))
+            quart_app.register_blueprint(getattr(importlib.import_module(module_name), cog + '_api'))
         except commands.errors.ExtensionAlreadyLoaded:
             print("API already loaded")
 
@@ -196,10 +196,10 @@ if __name__ == "__main__":  # pragma: no cover
     load_all_cogs()
     load_apis()
 
-    # Run Flask in seperate thread
-    flask_run = partial(flask_app.run, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
-    flask_thread = Thread(target=flask_run)
-    flask_thread.start()
+    # Run quart in seperate thread
+    quart_run = partial(quart_app.run, host="0.0.0.0", port=5000, debug=True, use_reloader=False)
+    quart_thread = Thread(target=quart_run)
+    quart_thread.start()
 
     # Starts bot using the given BOT_ID
     client.run(BOT_TOKEN)

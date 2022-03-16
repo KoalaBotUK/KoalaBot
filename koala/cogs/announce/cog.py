@@ -17,7 +17,7 @@ from .log import logger
 from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, MAX_MESSAGE_LENGTH
 
 # Flask
-from flask import Blueprint
+from quart import Blueprint
 announce_api = Blueprint('announce_api', __name__)
 
 def announce_is_enabled(ctx):

@@ -27,8 +27,8 @@ from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, 
 
 # Variables
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 intro_cog_api = Blueprint('intro_cog_api', __name__)
 
 

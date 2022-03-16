@@ -30,8 +30,8 @@ from sqlalchemy import select, or_, delete, and_, update, null
 
 # Variables
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 twitch_alert_api = Blueprint('twitch_alert_api', __name__)
 
 def twitch_is_enabled(ctx):

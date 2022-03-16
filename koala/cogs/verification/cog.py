@@ -29,8 +29,8 @@ from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
 
 # Variables
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 verification_api = Blueprint('verification_api', __name__)
 
 def verify_is_enabled(ctx):

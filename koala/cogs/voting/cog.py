@@ -27,8 +27,8 @@ from .utils import make_result_embed
 
 # Variables
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 voting_api = Blueprint('voting_api', __name__)
 
 def currently_configuring():

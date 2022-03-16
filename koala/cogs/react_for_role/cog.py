@@ -26,8 +26,8 @@ from .db import ReactForRoleDBManager
 from .log import logger
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 react_for_role_api = Blueprint('react_for_role_api', __name__)
 
 def rfr_is_enabled(ctx):

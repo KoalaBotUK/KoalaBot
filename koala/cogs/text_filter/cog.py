@@ -21,8 +21,8 @@ from .db import TextFilterDBManager
 from .utils import type_exists, build_word_list_embed, build_moderation_channel_embed, \
     create_default_embed, build_moderation_deleted_embed
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 text_filter_api = Blueprint('text_filter_api', __name__)
 
 

@@ -23,8 +23,8 @@ from .log import logger
 
 # Variables
 
-# Flask
-from flask import Blueprint
+# Quart
+from quart import Blueprint
 base_api = Blueprint('base_api', __name__)
 
 class BaseCog(commands.Cog, name='KoalaBot'):
