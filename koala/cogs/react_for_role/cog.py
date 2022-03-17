@@ -55,10 +55,6 @@ class ReactForRole(commands.Cog):
         insert_extension("ReactForRole", 0, True, True)
         self.rfr_database_manager = ReactForRoleDBManager()
 
-    @react_for_role_api.route("/react_for_role")
-    def endpoint():
-        return "react_for_role test"
-
     @commands.check(koalabot.is_guild_channel)
     @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)

@@ -40,10 +40,6 @@ class IntroCog(commands.Cog, name="KoalaBot"):
     def __init__(self, bot):
         self.bot = bot
 
-    @intro_cog_api.route("/intro_cog")
-    def endpoint():
-        return "intro_cog test"
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         """

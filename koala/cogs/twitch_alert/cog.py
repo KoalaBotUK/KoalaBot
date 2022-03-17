@@ -68,10 +68,6 @@ class TwitchAlert(commands.Cog):
         self.loop_team_thread = None
         self.running = False
         self.stop_loop = False
-    
-    @twitch_alert_api.route("/twitch_alert")
-    def endpoint():
-        return "twitch_alert test"
 
     @commands.check(koalabot.is_guild_channel)
     @commands.check(koalabot.is_admin)

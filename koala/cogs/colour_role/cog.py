@@ -15,7 +15,6 @@ from typing import List, Tuple, Any
 import discord
 from discord.ext import commands, tasks
 import asyncio
-import aiohttp
 
 # Own modules
 import koalabot
@@ -81,7 +80,7 @@ class ColourRole(commands.Cog):
 
     def create_role_api(self, guild_id: int, colour_str: str) -> discord.Role:
         asyncio.run_coroutine_threadsafe(self.create_custom_colour_role(discord.Colour.random(), colour_str, guild_id), self.bot.loop).result()
-        return "colour_role"
+        return 200
 
     @commands.Cog.listener()
     async def on_guild_role_delete(self, role: discord.Role):

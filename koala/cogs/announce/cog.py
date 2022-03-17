@@ -48,10 +48,6 @@ class Announce(commands.Cog):
         insert_extension("Announce", 0, True, True)
         self.announce_database_manager = AnnounceDBManager()
 
-    @announce_api.route("/announce")
-    def endpoint():
-        return "announce test"
-
     def not_exceeded_limit(self, guild_id):
         """
         Check if enough days have passed for the user to use the announce function

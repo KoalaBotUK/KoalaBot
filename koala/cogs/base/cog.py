@@ -11,6 +11,7 @@ Commented using reStructuredText (reST)
 
 # Libs
 from discord.ext import commands
+import json
 
 # Own modules
 import koalabot
@@ -41,10 +42,10 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self._last_member = None
         self.started = False
         self.COGS_DIR = koalabot.COGS_DIR
+        base_api.add_url_rule('/base', view_func=self.endpoint, methods=['GET'])
 
-    @base_api.route("/base")
-    def endpoint():
-        return "base test"
+    def endpoint(self):
+        return json.dumps("base test")
 
     @commands.Cog.listener()
     async def on_ready(self):

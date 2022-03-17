@@ -83,10 +83,6 @@ class Voting(commands.Cog, name="Vote"):
         self.vote_manager.load_from_db()
         self.running = False
 
-    @voting_api.route("/voting")
-    def endpoint():
-        return "voting test"
-
     @commands.Cog.listener()
     async def on_ready(self):
         if not self.running:

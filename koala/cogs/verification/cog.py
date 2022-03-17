@@ -55,10 +55,6 @@ class Verification(commands.Cog, name="Verify"):
         self.bot = bot
         insert_extension("Verify", 0, True, True)
 
-    @verification_api.route("/verification")
-    def endpoint():
-        return "verification test"
-
     @staticmethod
     def send_email(email, token):
         """
