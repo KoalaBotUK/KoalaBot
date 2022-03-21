@@ -14,7 +14,8 @@ from sqlalchemy import select, delete, and_, func, create_engine, VARCHAR
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
-from koala.env import DB_URL
+from .enums import DatabaseType
+from koala.env import DB_URL, DB_TYPE
 from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
 from koala.log import logger
 
@@ -170,8 +171,11 @@ def fetch_all_tables():
     Fetches all table names within the database
     """
     with session_manager() as session:
-        return [table.name for table in
-                session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
+        if DB_TYPE == DatabaseType.SQLITE:
+            return [table.name for table in
+                    session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
+        else:
+            return session.execute("SHOW Tables;").all()
 
 
 def clear_all_tables(tables):

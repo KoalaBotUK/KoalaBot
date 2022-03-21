@@ -80,12 +80,12 @@ def dict_factory(cursor, row):
 def upgrade():
     guilds = op.create_table("Guilds",
                              Column('guild_id', VARCHAR(18), primary_key=True),
-                             Column('subscription', INT))
+                             Column('subscription', INT, server_default='0'))
     koala_extensions = op.create_table("KoalaExtensions",
                                        Column('extension_id', VARCHAR(20), primary_key=True),
-                                       Column('subscription_required', INT),
-                                       Column('available', BOOLEAN),
-                                       Column('enabled', BOOLEAN))
+                                       Column('subscription_required', INT, server_default='0'),
+                                       Column('available', BOOLEAN, server_default='1'),
+                                       Column('enabled', BOOLEAN, server_default='1'))
     guild_extensions = op.create_table('GuildExtensions',
                                        Column('extension_id', VARCHAR(20),
                                               ForeignKey("KoalaExtensions.extension_id"), primary_key=True),

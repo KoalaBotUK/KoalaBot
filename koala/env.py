@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
-from pathlib import PurePath, Path
+from pathlib import Path
+
+from .enums import DatabaseType
 
 load_dotenv()
 
@@ -22,9 +24,11 @@ CONFIG_PATH.mkdir(exist_ok=True, parents=True)
 
 # Database
 DB_URL = os.environ.get("DB_URL")
+DB_TYPE = DatabaseType[os.environ.get("DB_TYPE", "MYSQL")]
 
 if not DB_URL:
     # Use SQLite
+    DB_TYPE = DatabaseType["SQLITE"]
     ENCRYPTED_DB = (not os.name == 'nt') and eval(os.environ.get('ENCRYPTED', "True"))
     DB_KEY = os.environ.get('SQLITE_KEY', "2DD29CA851E7B56E4697B0E1F08507293D761A05CE4D1B628663F411A8086D99")
     SQLITE_DB_PATH = Path(CONFIG_PATH, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
