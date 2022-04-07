@@ -102,51 +102,51 @@ async def test_disable_koala_ext(base_cog):
 async def test_on_ready(base_cog: BaseCog):
     await base_cog.on_ready()
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing,
-                                                                name=koalabot.COMMAND_PREFIX + "help" + koalabot.KOALA_PLUG))
+                                                                name=koalabot.COMMAND_PREFIX + "help"))
 
 
 @pytest.mark.asyncio
-async def test_change_activity():
-    await dpytest.message(koalabot.COMMAND_PREFIX + "change_activity watching you")
-    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you" + koalabot.KOALA_PLUG))
+async def test_activity():
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity set watching you")
+    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you"))
     assert dpytest.verify().message().content("I am now watching you")
 
 
 @pytest.mark.asyncio
-async def test_invalid_change_activity():
-    await dpytest.message(koalabot.COMMAND_PREFIX + "change_activity oof you")
+async def test_invalid_activity():
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity set oof you")
     assert dpytest.verify().message().content("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
 
 
 def test_playing_new_discord_activity():
     test_name = "Half Life 3"
     assert_activity(new_discord_activity("playing", test_name),
-                    type=discord.ActivityType.playing, name=test_name + koalabot.KOALA_PLUG)
+                    type=discord.ActivityType.playing, name=test_name)
 
 
 def test_watching_new_discord_activity():
     test_name = "you"
     assert_activity(new_discord_activity("watching", test_name),
-                    type=discord.ActivityType.watching, name=test_name + koalabot.KOALA_PLUG)
+                    type=discord.ActivityType.watching, name=test_name)
 
 
 def test_listening_new_discord_activity():
     test_name = "/Darude Sandstorm"
     assert_activity(new_discord_activity("listening", test_name),
-                    type=discord.ActivityType.listening, name=test_name + koalabot.KOALA_PLUG)
+                    type=discord.ActivityType.listening, name=test_name)
 
 
 def test_streaming_new_discord_activity():
     test_name = "__your room__"
     assert_activity(new_discord_activity("streaming", test_name),
-                    type=discord.ActivityType.streaming, name=test_name + koalabot.KOALA_PLUG,
+                    type=discord.ActivityType.streaming, name=test_name,
                     url=koalabot.STREAMING_URL)
 
 
 def test_custom_new_discord_activity():
     test_name = "1 4M K04L4"
     assert_activity(new_discord_activity("custom", test_name),
-                    type=discord.ActivityType.custom, name=test_name + koalabot.KOALA_PLUG)
+                    type=discord.ActivityType.custom, name=test_name)
 
 
 def test_invalid_new_discord_activity():

@@ -10,16 +10,23 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
-from discord.ext import commands
+import datetime
+
+import discord
+from discord.ext import commands, tasks
 
 # Own modules
+from sqlalchemy import select
+
 import koalabot
 from koala.db import get_all_available_guild_extensions, give_guild_extension, \
-    get_enabled_guild_extensions, remove_guild_extension
+    get_enabled_guild_extensions, remove_guild_extension, session_manager
 from .utils import new_discord_activity, list_ext_embed
 from .log import logger
+from .models import ScheduledActivities
 
 # Constants
+DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help")
 
 # Variables
 
@@ -38,19 +45,31 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self._last_member = None
         self.started = False
         self.COGS_DIR = koalabot.COGS_DIR
+        self.current_activity = None
 
     @commands.Cog.listener()
     async def on_ready(self):
         """
         Ran after all cogs have been started and bot is ready
         """
-        await self.bot.change_presence(activity=new_discord_activity("playing", f"{koalabot.COMMAND_PREFIX}help"))
+        await self.bot.change_presence(activity=DEFAULT_ACTIVITY)
+        self.current_activity = DEFAULT_ACTIVITY
+        self.update_activity.start()
         self.started = True
         logger.info("Bot is ready.")
 
-    @commands.command(name="activity", aliases=["change_activity"])
+    @commands.group(name="activity")
     @commands.check(koalabot.is_owner)
-    async def change_activity(self, ctx, new_activity, name):
+    async def activity_group(self, ctx: commands.Context):
+        """
+        Group of commands for activity functionality.
+        :param ctx: Context of the command
+        :return:
+        """
+
+    @activity_group.command(name="set")
+    @commands.check(koalabot.is_owner)
+    async def activity_set(self, ctx, new_activity, name):
         """
         Change the activity of the bot
         :param ctx: Context of the command
@@ -62,6 +81,66 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             await ctx.send(f"I am now {new_activity} {name}")
         else:
             await ctx.send("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
+
+    @activity_group.command(name="schedule")
+    @commands.check(koalabot.is_owner)
+    async def activity_schedule(self, ctx, new_activity, message, start_time, end_time, url=None):
+        activity_type = discord.ActivityType[str.lower(new_activity)]
+        time_start = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%SZ")
+        time_end = datetime.datetime.strptime(end_time, "%Y-%m-%dT%H:%M:%SZ")
+        with session_manager() as session:
+            activity = ScheduledActivities(activity_type=activity_type, message=message, stream_url=url, time_start=time_start, time_end=time_end)
+            session.add(activity)
+            session.commit()
+            await ctx.send("Activity saved %s" % activity)
+
+    @activity_group.command(name="list")
+    @commands.check(koalabot.is_owner)
+    async def activity_list(self, ctx, amount=None):
+        with session_manager() as session:
+            current_time = datetime.datetime.now()
+            query = select(ScheduledActivities)
+
+            if not amount or str.lower(amount) != "all":
+                query = query.where(ScheduledActivities.time_end > current_time)
+
+            activities = session.execute(query).scalars()
+            result = "Activities:"
+            for activity in activities:
+                result += "\n%s, %s, %s, %s, %s, %s" % (activity.activity_id, activity.activity_type.name,
+                                                        activity.stream_url, activity.message, activity.time_start,
+                                                        activity.time_end)
+            await ctx.send(result)
+
+    @activity_group.command(name="remove")
+    @commands.check(koalabot.is_owner)
+    async def activity_remove(self, ctx, activity_id):
+        with session_manager() as session:
+            activity = session.execute(select(ScheduledActivities).filter_by(activity_id=activity_id)).scalar()
+            session.delete(activity)
+            result = "Removed: "
+            result += "\n%s, %s, %s, %s, %s, %s" % (activity.activity_id, activity.activity_type.name,
+                                                    activity.stream_url, activity.message, activity.time_start,
+                                                    activity.time_end)
+            await ctx.send(result)
+            session.commit()
+
+    @tasks.loop(seconds=10.0)
+    async def update_activity(self):
+        with session_manager() as session:
+            current_time = datetime.datetime.now()
+            query = select(ScheduledActivities).where(ScheduledActivities.time_start < current_time,
+                                                      ScheduledActivities.time_end > current_time)
+            activity = session.execute(query).scalar()
+            if activity:
+                new_activity = discord.Activity(
+                    type=activity.activity_type, name=activity.message, url=activity.stream_url)
+            else:
+                new_activity = DEFAULT_ACTIVITY
+            if new_activity != self.current_activity:
+                await self.bot.change_presence(activity=new_activity)
+                logger.info("Auto changing bot presence: %s" % new_activity)
+                self.current_activity = new_activity
 
     @commands.command()
     async def ping(self, ctx):
@@ -186,3 +265,4 @@ def setup(bot: koalabot) -> None:
     """
     bot.add_cog(BaseCog(bot))
     logger.info("BaseCog is ready.")
+

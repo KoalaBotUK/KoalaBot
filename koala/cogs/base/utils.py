@@ -33,7 +33,6 @@ def new_discord_activity(activity, name):
     :param name: The name of the activity
     :return: The custom activity created
     """
-    name = name + koalabot.KOALA_PLUG  # Added to every presence change, do not alter
     lower_activity = str.lower(activity)
     if lower_activity == "playing":
         activity_type = discord.ActivityType.playing
