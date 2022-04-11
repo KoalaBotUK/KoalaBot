@@ -11,8 +11,11 @@ Commented using reStructuredText (reST)
 import os
 # Libs
 from contextlib import contextmanager
+from functools import wraps
 from pathlib import Path
-from sqlalchemy import select, delete, and_, func, create_engine
+
+import sqlalchemy
+from sqlalchemy import select, delete, and_, create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
@@ -24,6 +27,19 @@ from koala.log import logger
 # Constants
 
 # Variables
+
+
+def assign_session(func):
+
+    @wraps(func)
+    def with_session(*args, **kwargs):
+        if not kwargs.get("session"):
+            with session_manager() as session:
+                kwargs["session"] = session
+                return func(*args, **kwargs)
+        else:
+            return func(*args, **kwargs)
+    return with_session
 
 
 def _get_sql_url(db_path, encrypted: bool, db_key=None):
@@ -137,7 +153,7 @@ def give_guild_extension(guild_id, extension_id: str):
     """
     with session_manager() as session:
         extension_exists = extension_id == "All" or session.execute(
-            select(func.count(KoalaExtensions.extension_id))
+            select(sqlalchemy.func.count(KoalaExtensions.extension_id))
             .filter_by(extension_id=extension_id, available=1)).scalars().one() > 0
 
         if extension_exists:

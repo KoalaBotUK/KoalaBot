@@ -56,7 +56,7 @@ intent = discord.Intents.default()
 intent.members = True
 intent.guilds = True
 intent.messages = True
-client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
+bot = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 is_dpytest = False
 
 
@@ -72,7 +72,7 @@ def is_owner(ctx):
     elif BOT_OWNER is not None:
         return ctx.author.id == int(BOT_OWNER) or is_dpytest
     else:
-        return client.is_owner(ctx.author) or is_dpytest
+        return bot.is_owner(ctx.author) or is_dpytest
 
 
 def is_admin(ctx):
@@ -105,23 +105,23 @@ def load_all_cogs():
     for filename in os.listdir(COGS_DIR):
         if filename.endswith('.py') and filename not in UNRELEASED and filename != "__init__.py":
             try:
-                client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
+                bot.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
             except commands.errors.ExtensionAlreadyLoaded:
-                client.reload_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
+                bot.reload_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
 
     # New Approach
     for cog in ENABLED_COGS:
         module_name = 'koala.cogs.'+cog+'.cog'
         try:
-            client.load_extension(module_name)
+            bot.load_extension(module_name)
         except commands.errors.ExtensionAlreadyLoaded:
-            client.reload_extension(module_name)
+            bot.reload_extension(module_name)
 
     logger.info("All cogs loaded")
 
 
 def get_channel_from_id(id):
-    return client.get_channel(id=id)
+    return bot.get_channel(id=id)
 
 
 async def dm_group_message(members: [discord.Member], message: str):
@@ -155,7 +155,7 @@ def check_guild_has_ext(ctx, extension_id):
     return True
 
 
-@client.event
+@bot.event
 async def on_command_error(ctx, error: Exception):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.send(embed=error_embed(description=error))
@@ -180,4 +180,4 @@ if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     load_all_cogs()
     # Starts bot using the given BOT_ID
-    client.run(BOT_TOKEN)
+    bot.run(BOT_TOKEN)

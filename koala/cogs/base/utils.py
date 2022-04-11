@@ -10,6 +10,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+from deprecated import deprecated
 import discord
 
 # Own modules
@@ -19,10 +20,12 @@ from koala.colours import KOALA_GREEN
 
 
 # Constants
+DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help")
 
 # Variables
 
 
+@deprecated
 def new_discord_activity(activity, name):
     """
     This command takes an activity and name and returns the discord.Activity type for it
