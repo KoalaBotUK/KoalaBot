@@ -550,7 +550,7 @@ class TwitchAlert(commands.Cog):
         # logger.info("TwitchAlert: Team Loop Started")
 
         # Select all twitch users & team names where TwitchAlert is enabled
-        sql_select_team_users = select(UserInTwitchTeam.twitch_username, TeamInTwitchAlert.twitch_team_name) \
+        sql_select_team_users = select(UserInTwitchTeam.twitch_username) \
             .join(TeamInTwitchAlert, UserInTwitchTeam.team_twitch_alert_id == TeamInTwitchAlert.team_twitch_alert_id) \
             .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
             .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
@@ -650,6 +650,7 @@ class TwitchAlert(commands.Cog):
                 logger.error(f"TwitchAlert: Team Loop error {err}")
 
         # Deals with remaining offline streams
+        logger.debug("Deleting offline streams: %s" % usernames)
         await self.ta_database_manager.delete_all_offline_team_streams(usernames)
         time_diff = time.time() - start
         if time_diff > 5:
