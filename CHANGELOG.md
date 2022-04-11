@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+
+## [0.5.0] - 11-04-2022
 ### TwitchAlert
 - TwitchAlert completely reworked (part 1)
 - TwitchAlert commands have been altered (e.g. `k!twitchAddTeam` to `k!twitch addTeam`) see https://koalabot.uk/documentation for new syntax
@@ -250,6 +252,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.5.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.5...v0.5.0
 [0.4.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.2...v0.4.3

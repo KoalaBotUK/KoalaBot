@@ -12,7 +12,7 @@ __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", 
                "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
                "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.4.5"
+__version__ = "0.5.0"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
@@ -39,7 +39,7 @@ load_dotenv()
 
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
-STREAMING_URL = "https://twitch.tv/jaydwee"
+STREAMING_URL = "https://twitch.tv/thenuel"
 COGS_DIR = "koala/cogs"
 KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
 TEST_USER = "TestUser#0001"  # Test user for dpytest
