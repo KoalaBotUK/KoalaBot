@@ -3,9 +3,13 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+## [0.5.2] - 12-04-2022
+### TwitchAlert
+- Fix streams delete themselves when live
+
 ## [0.5.1] - 11-04-2022
 ### Vote
-- fix error if someone leaves the server during a vote
+- Fix error if someone leaves the server during a vote
 
 ## [0.5.0] - 11-04-2022
 ### TwitchAlert
@@ -255,6 +259,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.5.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.5...v0.5.0
 [0.4.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.4...v0.4.5
