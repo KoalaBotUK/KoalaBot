@@ -22,7 +22,7 @@ import koalabot
 from koala.db import get_all_available_guild_extensions, give_guild_extension, \
     get_enabled_guild_extensions, remove_guild_extension
 from . import core
-from .utils import list_ext_embed
+from .utils import list_ext_embed, AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
 
 # Constants
@@ -42,7 +42,6 @@ def convert_iso_datetime(argument):
         return datetime.datetime.fromisoformat(argument)
     except ValueError:
         raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
-
 
 
 class BaseCog(commands.Cog, name='KoalaBot'):
@@ -141,7 +140,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
                                                 activity.time_end)
         await ctx.send(result)
 
-    @tasks.loop(seconds=1.0)
+    @tasks.loop(minutes=AUTO_UPDATE_ACTIVITY_DELAY)
     async def update_activity(self):
         """
         Loop for updating the activity of the bot according to scheduled activities

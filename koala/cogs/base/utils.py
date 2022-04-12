@@ -20,7 +20,7 @@ from koala.colours import KOALA_GREEN
 
 # Constants
 DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help koalabot.uk")
-
+AUTO_UPDATE_ACTIVITY_DELAY = 1
 # Variables
 
 
