@@ -13,6 +13,7 @@ from sqlalchemy import select, delete
 
 # Own modules
 from koala.db import session_manager
+from .log import logger
 from .models import Votes, VoteTargetRoles, VoteOptions, VoteSent
 from .option import Option
 from .two_way import TwoWay
@@ -56,15 +57,18 @@ async def get_results(bot, vote):
     results = {}
     for u_id, msg_id in vote.sent_to.items():
         user = bot.get_user(u_id)
-        msg = await user.fetch_message(msg_id)
-        for reaction in msg.reactions:
-            if reaction.count > 1:
-                opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
-                if opt in results.keys():
-                    results[opt] += 1
-                else:
-                    results[opt] = 1
-                break
+        if user:
+            msg = await user.fetch_message(msg_id)
+            for reaction in msg.reactions:
+                if reaction.count > 1:
+                    opt = vote.options[VoteManager.emote_reference[reaction.emoji]]
+                    if opt in results.keys():
+                        results[opt] += 1
+                    else:
+                        results[opt] = 1
+                    break
+        else:
+            logger.error("User %s not found for msg_id: %s" % (u_id, msg_id))
     return results
 
 

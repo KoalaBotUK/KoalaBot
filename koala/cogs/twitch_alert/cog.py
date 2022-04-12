@@ -22,7 +22,7 @@ from .env import TWITCH_KEY, TWITCH_SECRET
 # Libs
 import discord
 from discord.ext import commands, tasks
-from sqlalchemy import select, or_, delete, and_, update, null
+from sqlalchemy import select, or_, delete, and_, update, null, func
 
 
 # Constants
@@ -550,13 +550,13 @@ class TwitchAlert(commands.Cog):
         # logger.info("TwitchAlert: Team Loop Started")
 
         # Select all twitch users & team names where TwitchAlert is enabled
-        sql_select_team_users = select(UserInTwitchTeam.twitch_username, TeamInTwitchAlert.twitch_team_name) \
+        sql_select_team_users = select(func.distinct(UserInTwitchTeam.twitch_username)) \
             .join(TeamInTwitchAlert, UserInTwitchTeam.team_twitch_alert_id == TeamInTwitchAlert.team_twitch_alert_id) \
             .join(TwitchAlerts, TeamInTwitchAlert.channel_id == TwitchAlerts.channel_id) \
             .join(GuildExtensions, TwitchAlerts.guild_id == GuildExtensions.guild_id) \
             .where(or_(GuildExtensions.extension_id == 'TwitchAlert', GuildExtensions.extension_id == 'All'))
         with session_manager() as session:
-            users_and_teams = session.execute(sql_select_team_users).all()
+            users = session.execute(sql_select_team_users).all()
         # sql_select_team_users = "SELECT twitch_username, twitch_team_name " \
         #                         "FROM UserInTwitchTeam " \
         #                         "JOIN TeamInTwitchAlert TITA " \
@@ -566,7 +566,7 @@ class TwitchAlert(commands.Cog):
         #                         "WHERE extension_id = 'TwitchAlert' " \
         #                         "  OR extension_id = 'All') GE on TA.guild_id = GE.guild_id "
 
-        usernames = [str.lower(user.twitch_username) for user in users_and_teams]
+            usernames = [str.lower(user[0]) for user in users]
 
         if not usernames:
             return
@@ -580,6 +580,7 @@ class TwitchAlert(commands.Cog):
             try:
                 if stream_data.get('type') == "live":
                     current_username = str.lower(stream_data.get("user_login"))
+                    logger.debug("Creating team stream alert for %s" % current_username)
                     old_len = len(usernames)
                     usernames.remove(current_username)
                     if len(usernames) == old_len:
@@ -650,6 +651,7 @@ class TwitchAlert(commands.Cog):
                 logger.error(f"TwitchAlert: Team Loop error {err}")
 
         # Deals with remaining offline streams
+        logger.debug("Deleting offline streams: %s" % usernames)
         await self.ta_database_manager.delete_all_offline_team_streams(usernames)
         time_diff = time.time() - start
         if time_diff > 5:
