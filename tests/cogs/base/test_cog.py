@@ -21,11 +21,9 @@ from sqlalchemy import delete
 import koalabot
 from koala.cogs import BaseCog
 from koala.cogs.base.cog import setup as setup_cog
-from koala.cogs.base.utils import new_discord_activity
 from koala.db import session_manager
 from koala.colours import KOALA_GREEN
 from koala.models import KoalaExtensions, GuildExtensions
-from tests.tests_utils.utils import assert_activity
 
 
 # Constants
@@ -42,7 +40,7 @@ def setup_is_dpytest():
 
 # Test TwitchAlert
 @pytest.fixture(scope='function', autouse=True)
-async def base_cog(bot):
+async def base_cog(bot: commands.Bot):
     """ setup any state specific to the execution of the given module."""
     with session_manager() as session:
         session.execute(delete(KoalaExtensions))
@@ -154,43 +152,6 @@ async def test_remove_activity():
                                               "\n1, playing, None, test, 2020-01-01 00:00:00, 2020-01-01 01:00:00")
     await dpytest.message(koalabot.COMMAND_PREFIX + "activity list true")
     assert dpytest.verify().message().content("Activities:")
-
-
-def test_playing_new_discord_activity():
-    test_name = "Half Life 3"
-    assert_activity(new_discord_activity("playing", test_name),
-                    type=discord.ActivityType.playing, name=test_name)
-
-
-def test_watching_new_discord_activity():
-    test_name = "you"
-    assert_activity(new_discord_activity("watching", test_name),
-                    type=discord.ActivityType.watching, name=test_name)
-
-
-def test_listening_new_discord_activity():
-    test_name = "/Darude Sandstorm"
-    assert_activity(new_discord_activity("listening", test_name),
-                    type=discord.ActivityType.listening, name=test_name)
-
-
-def test_streaming_new_discord_activity():
-    test_name = "__your room__"
-    assert_activity(new_discord_activity("streaming", test_name),
-                    type=discord.ActivityType.streaming, name=test_name,
-                    url=koalabot.STREAMING_URL)
-
-
-def test_custom_new_discord_activity():
-    test_name = "1 4M K04L4"
-    assert_activity(new_discord_activity("custom", test_name),
-                    type=discord.ActivityType.custom, name=test_name)
-
-
-def test_invalid_new_discord_activity():
-    test_name = "INCORRECT"
-    with pytest.raises(SyntaxError, match="incorrect is not an activity"):
-        new_discord_activity("incorrect", test_name)
 
 
 @mock.patch("builtins.round", mock.MagicMock(return_value=4))
