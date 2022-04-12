@@ -3,7 +3,6 @@
 # Libs
 from discord import ActivityType
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Enum
-from sqlalchemy.orm import registry
 
 # Own modules
 from koala.models import mapper_registry

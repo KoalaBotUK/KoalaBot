@@ -14,8 +14,7 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 
-import sqlalchemy
-from sqlalchemy import select, delete, and_, create_engine
+from sqlalchemy import select, delete, and_, create_engine, func as sql_func
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
@@ -153,7 +152,7 @@ def give_guild_extension(guild_id, extension_id: str):
     """
     with session_manager() as session:
         extension_exists = extension_id == "All" or session.execute(
-            select(sqlalchemy.func.count(KoalaExtensions.extension_id))
+            select(sql_func.count(KoalaExtensions.extension_id))
             .filter_by(extension_id=extension_id, available=1)).scalars().one() > 0
 
         if extension_exists:
