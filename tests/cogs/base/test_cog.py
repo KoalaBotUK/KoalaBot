@@ -21,11 +21,9 @@ from sqlalchemy import delete
 import koalabot
 from koala.cogs import BaseCog
 from koala.cogs.base.cog import setup as setup_cog
-from koala.cogs.base.utils import new_discord_activity
 from koala.db import session_manager
 from koala.colours import KOALA_GREEN
 from koala.models import KoalaExtensions, GuildExtensions
-from tests.tests_utils.utils import assert_activity
 
 
 # Constants
@@ -42,7 +40,7 @@ def setup_is_dpytest():
 
 # Test TwitchAlert
 @pytest.fixture(scope='function', autouse=True)
-async def base_cog(bot):
+async def base_cog(bot: commands.Bot):
     """ setup any state specific to the execution of the given module."""
     with session_manager() as session:
         session.execute(delete(KoalaExtensions))
@@ -102,57 +100,58 @@ async def test_disable_koala_ext(base_cog):
 async def test_on_ready(base_cog: BaseCog):
     await base_cog.on_ready()
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing,
-                                                                name=koalabot.COMMAND_PREFIX + "help" + koalabot.KOALA_PLUG))
+                                                                name=koalabot.COMMAND_PREFIX + "help koalabot.uk"))
 
 
 @pytest.mark.asyncio
-async def test_change_activity():
-    await dpytest.message(koalabot.COMMAND_PREFIX + "change_activity watching you")
-    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you" + koalabot.KOALA_PLUG))
+async def test_activity():
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity set watching you")
+    assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.watching, name="you"))
     assert dpytest.verify().message().content("I am now watching you")
 
 
 @pytest.mark.asyncio
-async def test_invalid_change_activity():
-    await dpytest.message(koalabot.COMMAND_PREFIX + "change_activity oof you")
-    assert dpytest.verify().message().content("That is not a valid activity, sorry!\nTry 'playing' or 'watching'")
+async def test_invalid_activity():
+    with pytest.raises(commands.BadArgument):
+        await dpytest.message(koalabot.COMMAND_PREFIX + "activity set oof you")
 
 
-def test_playing_new_discord_activity():
-    test_name = "Half Life 3"
-    assert_activity(new_discord_activity("playing", test_name),
-                    type=discord.ActivityType.playing, name=test_name + koalabot.KOALA_PLUG)
+@pytest.mark.asyncio
+async def test_schedule_activity():
+    await dpytest.message(koalabot.COMMAND_PREFIX +
+                          "activity schedule playing test \"2020-01-01 00:00:00\" \"2020-01-01 01:00:00\"")
+    assert dpytest.verify().message().content("Activity saved")
 
 
-def test_watching_new_discord_activity():
-    test_name = "you"
-    assert_activity(new_discord_activity("watching", test_name),
-                    type=discord.ActivityType.watching, name=test_name + koalabot.KOALA_PLUG)
+@pytest.mark.asyncio
+async def test_schedule_activity_invalid_date():
+    with pytest.raises(commands.BadArgument):
+        await dpytest.message(koalabot.COMMAND_PREFIX + "activity schedule playing test abc abc")
 
 
-def test_listening_new_discord_activity():
-    test_name = "/Darude Sandstorm"
-    assert_activity(new_discord_activity("listening", test_name),
-                    type=discord.ActivityType.listening, name=test_name + koalabot.KOALA_PLUG)
+@pytest.mark.asyncio
+async def test_list_activity():
+    await test_schedule_activity()
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity list")
+    assert dpytest.verify().message().content("Activities:")
 
 
-def test_streaming_new_discord_activity():
-    test_name = "__your room__"
-    assert_activity(new_discord_activity("streaming", test_name),
-                    type=discord.ActivityType.streaming, name=test_name + koalabot.KOALA_PLUG,
-                    url=koalabot.STREAMING_URL)
+@pytest.mark.asyncio
+async def test_list_activity_show_all():
+    await test_schedule_activity()
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity list true")
+    assert dpytest.verify().message().content("Activities:"
+                                              "\n1, playing, None, test, 2020-01-01 00:00:00, 2020-01-01 01:00:00")
 
 
-def test_custom_new_discord_activity():
-    test_name = "1 4M K04L4"
-    assert_activity(new_discord_activity("custom", test_name),
-                    type=discord.ActivityType.custom, name=test_name + koalabot.KOALA_PLUG)
-
-
-def test_invalid_new_discord_activity():
-    test_name = "INCORRECT"
-    with pytest.raises(SyntaxError, match="incorrect is not an activity"):
-        new_discord_activity("incorrect", test_name)
+@pytest.mark.asyncio
+async def test_remove_activity():
+    await test_list_activity_show_all()
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity remove 1")
+    assert dpytest.verify().message().content("Removed:"
+                                              "\n1, playing, None, test, 2020-01-01 00:00:00, 2020-01-01 01:00:00")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "activity list true")
+    assert dpytest.verify().message().content("Activities:")
 
 
 @mock.patch("builtins.round", mock.MagicMock(return_value=4))
@@ -244,9 +243,8 @@ async def test_version(base_cog: BaseCog):
     assert dpytest.verify().message().content("version: " + koalabot.__version__)
 
 
-
 @pytest.mark.asyncio
 async def test_setup():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
-        setup_cog(koalabot.client)
+        setup_cog(koalabot.bot)
     mock1.assert_called()

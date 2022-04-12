@@ -15,6 +15,7 @@ import discord.ext.test as dpytest
 
 # Own modules
 import koalabot
+from koala.db import session_manager
 from tests.log import logger
 # Constants
 
@@ -52,3 +53,8 @@ def setup_is_dpytest():
     yield
     koalabot.is_dpytest = False
 
+
+@pytest.fixture
+async def session():
+    with session_manager() as session:
+        yield session
