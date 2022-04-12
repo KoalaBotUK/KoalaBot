@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Base
+- Add scheduled activities for bot owners
+
 ## [0.5.3] - 12-04-2022
 ### TwitchAlert
 - Fix streams delete themselves when live (again)
