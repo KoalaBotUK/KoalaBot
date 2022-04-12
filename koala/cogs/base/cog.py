@@ -16,16 +16,33 @@ import discord
 from discord.ext import commands, tasks
 
 # Own modules
+from discord.ext.commands import BadArgument
+
 import koalabot
 from koala.db import get_all_available_guild_extensions, give_guild_extension, \
     get_enabled_guild_extensions, remove_guild_extension
 from . import core
-from .utils import list_ext_embed, DEFAULT_ACTIVITY
+from .utils import list_ext_embed
 from .log import logger
 
 # Constants
 
 # Variables
+
+
+def convert_activity_type(argument):
+    try:
+        return discord.ActivityType[argument]
+    except KeyError:
+        raise BadArgument('Unknown activity type %s' % argument)
+
+
+def convert_iso_datetime(argument):
+    try:
+        return datetime.datetime.fromisoformat(argument)
+    except ValueError:
+        raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
+
 
 
 class BaseCog(commands.Cog, name='KoalaBot'):
@@ -50,6 +67,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Ran after all cogs have been started and bot is ready
         """
         core.activity_clear_current()
+        await self.update_activity()
         self.update_activity.start()
         self.started = True
         logger.info("Bot is ready.")
@@ -65,7 +83,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 
     @activity_group.command(name="set")
     @commands.check(koalabot.is_owner)
-    async def activity_set(self, ctx, new_activity, name, url=None):
+    async def activity_set(self, ctx, new_activity: convert_activity_type, name: str, url: str = None):
         """
         Change the activity of the bot
         :param ctx: Context of the command
@@ -73,25 +91,34 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param name: The name of the activity
         :param url: url for streaming
         """
-        activity_type = discord.ActivityType[str.lower(new_activity)]
-        await core.activity_set(activity_type, name, url, bot=self.bot)
-        await ctx.send(f"I am now {new_activity} {name}")
+        await core.activity_set(new_activity, name, url, bot=self.bot)
+        await ctx.send(f"I am now {new_activity.name} {name}")
 
     @activity_group.command(name="schedule")
     @commands.check(koalabot.is_owner)
-    async def activity_schedule(self, ctx, new_activity, message, start_time, end_time, url=None):
-        activity_type = discord.ActivityType[str.lower(new_activity)]
-        time_start = datetime.datetime.fromisoformat(start_time)
-        time_end = datetime.datetime.fromisoformat(end_time)
-
-        core.activity_schedule(activity_type, message, url, time_start, time_end)
-
+    async def activity_schedule(self, ctx, new_activity: convert_activity_type, message: str,
+                                start_time: convert_iso_datetime, end_time: convert_iso_datetime, url: str = None):
+        """
+        Schedule an activity
+        :param ctx: Context of the command
+        :param new_activity: activity type (watching, playing etc.)
+        :param message: message
+        :param start_time: iso format start time
+        :param end_time: iso format end time
+        :param url: url
+        """
+        core.activity_schedule(new_activity, message, url, start_time, end_time)
         await ctx.send("Activity saved")
 
     @activity_group.command(name="list")
     @commands.check(koalabot.is_owner)
-    async def activity_list(self, ctx, amount=None):
-        activities = core.activity_list(amount and str.lower(amount) == "all")
+    async def activity_list(self, ctx, show_all: bool = False):
+        """
+        List scheduled activities
+        :param ctx: Context of the command
+        :param show_all: false=future activities, true=all activities
+        """
+        activities = core.activity_list(show_all)
         result = "Activities:"
         for activity in activities:
             result += "\n%s, %s, %s, %s, %s, %s" % (activity.activity_id, activity.activity_type.name,
@@ -102,16 +129,27 @@ class BaseCog(commands.Cog, name='KoalaBot'):
     @activity_group.command(name="remove")
     @commands.check(koalabot.is_owner)
     async def activity_remove(self, ctx, activity_id: int):
+        """
+        Remove an existing activity
+        :param ctx: Context of the command
+        :param activity_id: Activity ID
+        """
         activity = core.activity_remove(activity_id)
-        result = "Removed: "
+        result = "Removed:"
         result += "\n%s, %s, %s, %s, %s, %s" % (activity.activity_id, activity.activity_type.name,
                                                 activity.stream_url, activity.message, activity.time_start,
                                                 activity.time_end)
         await ctx.send(result)
 
-    @tasks.loop(seconds=10.0)
+    @tasks.loop(seconds=1.0)
     async def update_activity(self):
-        await core.activity_set_current_scheduled()
+        """
+        Loop for updating the activity of the bot according to scheduled activities
+        """
+        try:
+            await core.activity_set_current_scheduled(self.bot)
+        except Exception as err:
+            logger.error("Error in update_activity loop %s" % err, exc_info=err)
 
     @commands.command()
     async def ping(self, ctx):

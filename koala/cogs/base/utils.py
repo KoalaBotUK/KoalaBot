@@ -20,7 +20,7 @@ from koala.colours import KOALA_GREEN
 
 
 # Constants
-DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help")
+DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help koalabot.uk")
 
 # Variables
 
@@ -79,3 +79,10 @@ def list_ext_embed(guild_id):
     if disabled != "":
         embed.add_field(name=":negative_squared_cross_mark: Disabled", value=disabled)
     return embed
+
+
+def activity_eq(activity1: discord.Activity, activity2: discord.Activity) -> bool:
+    return activity1 and activity2 \
+           and activity1.type == activity2.type \
+           and activity1.name == activity2.name \
+           and activity1.url == activity2.url

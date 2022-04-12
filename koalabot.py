@@ -51,7 +51,6 @@ ENABLED_COGS = ["base", "announce", "colour_role", "intro_cog", "react_for_role"
                 "verification", "voting"]
 
 # Variables
-started = False
 intent = discord.Intents.default()
 intent.members = True
 intent.guilds = True
@@ -153,7 +152,6 @@ def check_guild_has_ext(ctx, extension_id):
     if (not extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
-
 
 @bot.event
 async def on_command_error(ctx, error: Exception):
