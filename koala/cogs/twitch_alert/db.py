@@ -8,7 +8,7 @@ from koala.db import session_manager
 
 from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
+from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, create_live_embed
 from .log import logger
 from .env import TWITCH_KEY, TWITCH_SECRET
 
@@ -384,3 +384,16 @@ class TwitchAlertDBManager:
     #                 logger.error(f"Team not found on Twitch {team}, deleted")
     #         session.execute("ALTER TABLE TeamInTwitchAlert RENAME COLUMN twitch_team_name TO twitch_team_id")
     #         session.commit()
+
+    async def create_alert_embed(self, stream_data, message):
+        """
+        Creates and sends an alert message
+        :param stream_data: The twitch stream data to have in the message
+        :param message: The custom message to be added as a description
+        :return: The discord message id of the sent message
+        """
+        user_details = self.twitch_handler.get_user_data(
+            stream_data.get("user_name"))[0]
+        game_details = self.twitch_handler.get_game_data(
+            stream_data.get("game_id"))
+        return create_live_embed(stream_data, user_details, game_details, message)
