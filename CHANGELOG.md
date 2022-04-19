@@ -4,6 +4,10 @@ administrators
 
 ## [Unreleased]
 
+## [0.5.5] - 19-04-2022
+### TwitchAlert
+- Add logging and error handling to team loop
+
 ## [0.5.4] - 12-04-2022
 ### Base
 - Add scheduled activities for bot owners
@@ -268,6 +272,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.5.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.1...v0.5.2
