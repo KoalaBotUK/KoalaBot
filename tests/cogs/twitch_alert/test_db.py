@@ -186,6 +186,18 @@ async def test_remove_team_from_ta(twitch_alert_db_manager_tables):
 
 
 @pytest.mark.asyncio()
+async def test_remove_team_from_ta_duplicate(twitch_alert_db_manager_tables):
+    test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_id=590, guild_id=591)
+    test_add_team_to_ta_custom_message(twitch_alert_db_manager_tables, channel_id=590, guild_id=591)
+    await twitch_alert_db_manager_tables.remove_team_from_ta(590, "faze")
+
+    sql_select_team = select(TeamInTwitchAlert.custom_message)\
+        .where(and_(TeamInTwitchAlert.channel_id == 590, TeamInTwitchAlert.twitch_team_name == 'faze'))
+    with session_manager() as session:
+        assert session.execute(sql_select_team).one_or_none() is not None
+
+
+@pytest.mark.asyncio()
 async def test_remove_team_from_ta_invalid(twitch_alert_db_manager_tables):
     with pytest.raises(AttributeError,
                        match="Team name not found"):

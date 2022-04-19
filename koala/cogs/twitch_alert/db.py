@@ -150,7 +150,7 @@ class TwitchAlertDBManager:
         with session_manager() as session:
             message = session.execute(select(UserInTwitchAlert)
                                       .filter_by(twitch_username=twitch_username, channel_id=channel_id)
-                                      ).scalars().one_or_none()
+                                      ).scalars().first()
             if message is not None:
                 await self.delete_message(message.message_id, channel_id)
                 session.delete(message)
@@ -233,7 +233,7 @@ class TwitchAlertDBManager:
         with session_manager() as session:
             team = session.execute(select(TeamInTwitchAlert)
                                    .filter_by(twitch_team_name=team_name, channel_id=channel_id)
-                                   ).scalars().one_or_none()
+                                   ).scalars().first()
             if not team:
                 raise AttributeError("Team name not found")
 
@@ -298,7 +298,7 @@ class TwitchAlertDBManager:
                     )
             ).scalars().all()
 
-            if results is None:
+            if not results:
                 return
             logger.debug("Deleting offline streams: %s" % results)
             for result in results:

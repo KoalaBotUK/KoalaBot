@@ -12,7 +12,7 @@ __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", 
                "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
                "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.5.5"
+__version__ = "0.5.6"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
@@ -153,10 +153,16 @@ def check_guild_has_ext(ctx, extension_id):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 
+
 @bot.event
 async def on_command_error(ctx, error: Exception):
-    if isinstance(error, commands.MissingRequiredArgument):
+    if error.__class__ in [commands.MissingRequiredArgument,
+                           commands.CommandNotFound]:
         await ctx.send(embed=error_embed(description=error))
+    if error.__class__ in [commands.CheckFailure]:
+        await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
+                                         description=str(error)+"\nPlease ensure you have administrator permissions, "
+                                                                "and have enabled this extension."))
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
                                                      f"{str(error.retry_after)}s."))
@@ -165,10 +171,8 @@ async def on_command_error(ctx, error: Exception):
     elif isinstance(error, commands.CommandInvokeError):
         # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
         await ctx.send(embed=error_embed(description=error.original))
-    elif isinstance(error, commands.CommandNotFound):
-        await ctx.send(embed=error_embed(description=error))
     else:
-        logger.error(f"Unexpected Error in guild {ctx.guild.name}: {error}")
+        logger.error(f"Unexpected Error in guild %s : %s", ctx.guild.name, error, exc_info=error)
         await ctx.send(embed=error_embed(
             description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error
