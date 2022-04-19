@@ -15,7 +15,7 @@ from .env import TWITCH_KEY, TWITCH_SECRET
 # Libs
 import discord
 from sqlalchemy import select, delete, and_, null
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 
 # Constants
@@ -294,7 +294,7 @@ class TwitchAlertDBManager:
                         UserInTwitchTeam.message_id != null(),
                         UserInTwitchTeam.twitch_username.in_(usernames))
                     ).options(
-                        selectinload(UserInTwitchTeam.team)
+                        joinedload(UserInTwitchTeam.team)
                     )
             ).scalars().all()
 
