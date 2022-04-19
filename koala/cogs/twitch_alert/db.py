@@ -306,7 +306,7 @@ class TwitchAlertDBManager:
                     result.message_id = None
                 else:
                     logger.debug("Result team not found: %s", result)
-                    logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)))
+                    logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)).scalars().all())
                     # session.delete(result)
             session.commit()
 
