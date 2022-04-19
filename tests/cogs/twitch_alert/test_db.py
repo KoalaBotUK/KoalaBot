@@ -294,3 +294,12 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
         assert len(result) == 2
         assert result[0].message_id is None
         assert result[1].message_id is None
+
+
+@pytest.mark.asyncio
+async def test_create_alert_embed(twitch_alert_db_manager_tables):
+    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
+                   "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
+                   'title': 'Music 24/7'}
+
+    assert type(await twitch_alert_db_manager_tables.create_alert_embed(stream_data, None)) is discord.Embed

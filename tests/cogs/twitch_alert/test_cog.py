@@ -332,15 +332,6 @@ async def test_loop_check_live(twitch_cog: twitch_alert.cog.TwitchAlert):
     assert dpytest.verify().message().embed(expected_embed)
 
 
-@pytest.mark.asyncio
-async def test_create_alert_embed(twitch_cog: twitch_alert.cog.TwitchAlert):
-    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-                   "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
-                   'title': 'Music 24/7'}
-
-    assert type(await twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
-
-
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")
 @pytest.mark.asyncio
 async def test_loop_check_team_live(twitch_cog):
