@@ -300,6 +300,7 @@ class TwitchAlertDBManager:
 
             if results is None:
                 return
+            logger.debug("Deleting offline streams: %s" % results)
             for result in results:
                 if result.team:
                     await self.delete_message(result.message_id, result.team.channel_id)
@@ -309,8 +310,6 @@ class TwitchAlertDBManager:
                     logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)).scalars().all())
                     # session.delete(result)
             session.commit()
-
-
 
     async def delete_all_offline_streams(self, usernames):
         """

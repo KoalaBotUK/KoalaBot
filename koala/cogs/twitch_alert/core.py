@@ -114,7 +114,6 @@ async def create_team_alerts(bot: Bot, ta_database_manager, session):
             logger.error(f"TwitchAlert: Team Loop error {err}")
 
     # Deals with remaining offline streams
-    logger.debug("Deleting offline streams: %s" % usernames)
     await ta_database_manager.delete_all_offline_team_streams(usernames)
     time_diff = time.time() - start
     if time_diff > 5:
