@@ -301,10 +301,15 @@ class TwitchAlertDBManager:
             if results is None:
                 return
             for result in results:
-                await self.delete_message(result.message_id, result.team.channel_id)
-                result.message_id = None
-
+                if result.team:
+                    await self.delete_message(result.message_id, result.team.channel_id)
+                    result.message_id = None
+                else:
+                    logger.debug("Result.team not found", result)
+                    # session.delete(result)
             session.commit()
+
+
 
     async def delete_all_offline_streams(self, usernames):
         """

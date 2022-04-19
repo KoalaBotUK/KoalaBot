@@ -7,6 +7,7 @@ administrators
 ## [0.5.5] - 19-04-2022
 ### TwitchAlert
 - Add logging and error handling to team loop
+- Fix issue where deleting orphan team twitch alert members would cause twitch alert to crash
 
 ## [0.5.4] - 12-04-2022
 ### Base
