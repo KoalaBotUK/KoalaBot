@@ -305,7 +305,8 @@ class TwitchAlertDBManager:
                     await self.delete_message(result.message_id, result.team.channel_id)
                     result.message_id = None
                 else:
-                    logger.debug("Result.team not found", result)
+                    logger.debug("Result team not found: %s", result)
+                    logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)))
                     # session.delete(result)
             session.commit()
 

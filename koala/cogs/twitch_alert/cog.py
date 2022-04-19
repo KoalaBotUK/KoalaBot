@@ -536,7 +536,7 @@ class TwitchAlert(commands.Cog):
         try:
             await create_team_alerts(self.bot, self.ta_database_manager)
         except Exception as err:
-            logger.error("Twitch team live loop error: ", err)
+            logger.error("Twitch team live loop error: ", exc_info=err)
 
 def setup(bot: koalabot) -> None:
     """
