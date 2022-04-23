@@ -22,6 +22,7 @@ import koalabot
 from koala.db import get_all_available_guild_extensions, give_guild_extension, \
     get_enabled_guild_extensions, remove_guild_extension
 from . import core
+from .api import BaseEndpoint
 from .utils import list_ext_embed, AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
 
@@ -269,7 +270,10 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
+    
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(BaseCog(bot))
     logger.info("BaseCog is ready.")
+    # sub_app = BaseEndpoint()
+    # koalabot.app.add_subapp('/base/', sub_app.register())

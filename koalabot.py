@@ -19,15 +19,18 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 # Built-in/Generic Imports
+import asyncio
 import os
 import time
 
 # Libs
+from aiohttp import web
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
+import koala.cogs.base.api
 from koala.db import extension_enabled
 from koala.utils import error_embed
 from koala.log import logger
@@ -168,8 +171,28 @@ async def on_command_error(ctx, error: Exception):
         raise error
 
 
-if __name__ == "__main__":  # pragma: no cover
-    os.system("title " + "KoalaBot")
-    load_all_cogs()
-    # Starts bot using the given BOT_ID
-    bot.run(BOT_TOKEN)
+async def run_bot():
+    app = web.Application()
+    sub_app = koala.cogs.base.api.BaseEndpoint()
+    app.add_subapp('/base/', sub_app.register())
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    await site.start()
+
+
+    try:
+        load_all_cogs()
+        await bot.start(BOT_TOKEN)
+
+    except:
+        bot.close(),
+        raise
+
+    finally:
+        await runner.cleanup()
+
+if __name__ == '__main__': # pragma: no cover
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_bot())
