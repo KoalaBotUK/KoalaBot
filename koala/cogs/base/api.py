@@ -8,15 +8,17 @@ from discord.ext.commands import Bot
 # Own modules
 from . import core
 from .log import logger
-from koala.rest.api import parse_request
+from koala.rest.api import parse_request, build_response
+from koala.rest.utils import CREATED
+from koala.utils import convert_iso_datetime
 
 # Constants
 BASE_ENDPOINT = 'base'
 ACTIVITY_ENDPOINT = 'activity'
-SET_ACTIVITY_ENDPOINT = 'set-activity'
+SET_ACTIVITY_ENDPOINT = 'setActivity'
+SCHEDULE_ACTIVITY_ENDPOINT = 'scheduleActivity'
 
 # Variables
-
 
 class BaseEndpoint:
     """
@@ -33,7 +35,8 @@ class BaseEndpoint:
         :return: app
         """
         app.add_routes([web.get('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.get_activities),
-                        web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity)])
+                        web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity),
+                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT), self.post_schedule_activity)])
         return app
 
     @parse_request
@@ -45,7 +48,7 @@ class BaseEndpoint:
         """
         return core.activity_list(show_all=show_all)
 
-    @parse_request
+    @parse_request(raw_response=True)
     async def put_set_activity(self, activity_type, name, url):
         """
         Put a given activity as the discord bot's activity
@@ -54,10 +57,29 @@ class BaseEndpoint:
         :param url: The url to use (for streaming)
         :return:
         """
-        activity_type = discord.ActivityType[activity_type]
+        activity_type = getActivityType(activity_type)
         await core.activity_set(activity_type, name, url, self._bot)
-        return "Successfully set activity"
+        return build_response(CREATED, {'message': 'Activity set'})
 
+    @parse_request(raw_response=True)
+    async def post_schedule_activity(self, activity_type, message, url, start_time, end_time):
+        """
+        Post a given activity as a scheduled activity
+        :param activity_type: activity type (playing, watching, streaming, ...)
+        :param message: message to be used in sidebar
+        :param url: optional url to use (for streaming)
+        :param start_time: start time of activity to be used
+        :param end_time: end time of activity to be used
+        :return:
+        """
+        start_time = convert_iso_datetime(start_time)
+        end_time = convert_iso_datetime(end_time)
+        activity_type = getActivityType(activity_type)
+        core.activity_schedule(activity_type, message, url, start_time, end_time)
+        return build_response(CREATED, {'message': 'Activity scheduled'})
+
+def getActivityType(activity_type):
+    return discord.ActivityType[activity_type]
 
 def setup(bot: Bot):
     """
