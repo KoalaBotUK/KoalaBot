@@ -15,7 +15,7 @@ from koala.models import BaseModel
 
 # Constants
 
-from .utils import OK
+from http.client import OK
 
 # Variables
 

@@ -1,7 +1,9 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
+from http.client import BAD_REQUEST, CREATED
 from aiohttp import web
+import aiohttp.web
 import discord
 from discord.ext.commands import Bot
 
@@ -9,7 +11,6 @@ from discord.ext.commands import Bot
 from . import core
 from .log import logger
 from koala.rest.api import parse_request, build_response
-from koala.rest.utils import CREATED
 from koala.utils import convert_iso_datetime
 
 # Constants
@@ -57,8 +58,13 @@ class BaseEndpoint:
         :param url: The url to use (for streaming)
         :return:
         """
-        activity_type = getActivityType(activity_type)
-        await core.activity_set(activity_type, name, url, self._bot)
+        try:
+            activity_type = getActivityType(activity_type)
+            await core.activity_set(activity_type, name, url, self._bot)
+        except BaseException as e:
+            error = 'Error setting activity: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise aiohttp.web.HTTPUnprocessableEntity(reason="{}".format(error))
         return build_response(CREATED, {'message': 'Activity set'})
 
     @parse_request(raw_response=True)
@@ -72,14 +78,27 @@ class BaseEndpoint:
         :param end_time: end time of activity to be used
         :return:
         """
-        start_time = convert_iso_datetime(start_time)
-        end_time = convert_iso_datetime(end_time)
-        activity_type = getActivityType(activity_type)
-        core.activity_schedule(activity_type, message, url, start_time, end_time)
+        try:
+            start_time = convert_iso_datetime(start_time)
+            end_time = convert_iso_datetime(end_time)
+            activity_type = getActivityType(activity_type)
+            core.activity_schedule(activity_type, message, url, start_time, end_time)
+        except BaseException as e:
+            error = 'Error scheduling activity: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise aiohttp.web.HTTPUnprocessableEntity(reason="{}".format(error))
+
         return build_response(CREATED, {'message': 'Activity scheduled'})
 
 def getActivityType(activity_type):
     return discord.ActivityType[activity_type]
+
+def handleActivityError(error):
+    if (type(error) == KeyError):
+        return 'Invalid activity type'
+    elif (type(error) == discord.ext.commands.errors.BadArgument):
+        return 'Bad start / end time' 
+    return 'Unknown error'
 
 def setup(bot: Bot):
     """
