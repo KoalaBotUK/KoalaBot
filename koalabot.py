@@ -30,7 +30,6 @@ from discord.ext import commands
 from dotenv import load_dotenv
 
 # Own modules
-import koala.cogs.base.api
 from koala.db import extension_enabled
 from koala.utils import error_embed
 from koala.log import logger
@@ -177,7 +176,7 @@ async def on_command_error(ctx, error: Exception):
 async def run_bot():
     app = web.Application()
 
-    bot.__setattr__("koala_web_app", app)
+    setattr(bot, "koala_web_app", app)
     load_all_cogs()
 
     runner = web.AppRunner(app)
@@ -188,7 +187,7 @@ async def run_bot():
     try:
         await bot.start(BOT_TOKEN)
 
-    except:
+    except Exception:
         bot.close(),
         raise
 
