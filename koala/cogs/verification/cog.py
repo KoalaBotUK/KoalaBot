@@ -70,7 +70,7 @@ class Verification(commands.Cog, name="Verify"):
         username = GMAIL_EMAIL
         password = GMAIL_PASSWORD
 
-        html = open("templates/emailtemplate.html").read()
+        html = open("koala/cogs/verification/templates/emailtemplate.html").read()
         soup = BeautifulSoup(html, features="html.parser")
         soup.find(id="confirmbuttonbody").string = f"{koalabot.COMMAND_PREFIX}confirm {token}"
         soup.find(id="backup").string = f"Main body not loading? Send this command to the bot: {koalabot.COMMAND_PREFIX}confirm {token}"
@@ -159,7 +159,7 @@ This email is stored so you don't need to verify it multiple times across server
             session.commit()
 
             await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
-            await self.assign_role_to_guild(ctx.guild, role_valid, suffix)
+            await core.assign_role_to_guild(ctx.guild, role_valid, suffix)
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
@@ -202,7 +202,7 @@ This email is stored so you don't need to verify it multiple times across server
     async def blacklist_remove(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
         core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email")
-        await self.assign_role_to_guild(ctx.guild, role, suffix)
+        await core.assign_role_to_guild(ctx.guild, role, suffix)
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="verify")
@@ -378,7 +378,6 @@ This email is stored so you don't need to verify it multiple times across server
             await ctx.send("That role has now been removed from all users and they will need to "
                            "re-verify the associated email.")
 
-
     async def assign_roles_on_startup(self):
         with session_manager() as session:
             results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)).all()
@@ -386,7 +385,7 @@ This email is stored so you don't need to verify it multiple times across server
                 try:
                     guild = self.bot.get_guild(g_id)
                     role = discord.utils.get(guild.roles, id=r_id)
-                    await self.assign_role_to_guild(guild, role, suffix)
+                    await core.assign_role_to_guild(guild, role, suffix)
                 except AttributeError as e:
                     # bot not in guild
                     logger.error("Verify bot not in guild %s", guild.id, exc_info=e)
@@ -402,7 +401,7 @@ This email is stored so you don't need to verify it multiple times across server
                 should_re_verify = session.execute(select(ToReVerify).filter_by(r_id=r_id, u_id=user_id)).all()
 
                 blacklisted = session.execute(select(VerifyBlacklist).filter_by(user_id=user_id, role_id=r_id)
-                                              .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+                                              .where(text(":email like ('%' || email)")), {"email": email}).all()
 
                 if blacklisted or should_re_verify:
                     continue
@@ -443,34 +442,6 @@ This email is stored so you don't need to verify it multiple times across server
                     logger.error(e)
                 except discord.errors.NotFound:
                     logger.error(f"user with id {user_id} not found in {guild}")
-
-    async def assign_role_to_guild(self, guild, role, suffix):
-        with session_manager() as session:
-            async for member in guild.fetch_members(limit=guild.member_count):
-                try:
-                    result = session.execute(
-                        select(VerifiedEmails.u_id).where(VerifiedEmails.email.endswith(suffix),
-                                                          VerifiedEmails.u_id == member.id)).all()
-                    if result:
-                        should_re_verify = session.execute(select(ToReVerify)
-                                                           .filter_by(r_id=role.id, u_id=member.id)).all()
-
-                        blacklisted = session.execute(select(VerifyBlacklist)
-                                                      .filter_by(user_id=member.id, role_id=role.id)
-                                                      .where(text(":email like ('%' || email_suffix)")),
-                                                      {"email": result[0][1]}).all()
-                        if blacklisted or should_re_verify:
-                            continue
-                        await member.add_roles(role)
-                except AttributeError as e:
-                    # bot not in guild
-                    logger.error(exc_info=e)
-                except discord.errors.NotFound as e:
-                    logger.error(f"user with id {member.id} not found in {guild}", exc_info=e)
-                except discord.errors.Forbidden:
-                    raise errors.VerifyError(f"I do not have permission to assign {role}. "
-                                             f"Make sure I have permission to give roles and {role} is lower than the "
-                                             f"KoalaBot role in the hierarchy, then try again.")
 
 
 def setup(bot: koalabot) -> None:
