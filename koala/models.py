@@ -15,6 +15,9 @@ mapper_registry = registry()
 
 
 class BaseModel:
+    """
+    The base, serializable model for all sqlalchemy models in this project
+    """
     __table__: sqlalchemy.dialects.mssql.information_schema.tables
 
     def as_dict(self):

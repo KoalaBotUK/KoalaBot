@@ -97,9 +97,6 @@ def is_guild_channel(ctx):
     return ctx.guild is not None
 
 
-def load_sub_api():
-    pass
-
 def load_all_cogs():
     """
     Loads all cogs in ENABLED_COGS into the client
