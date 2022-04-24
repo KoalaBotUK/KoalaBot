@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 
 # Own modules
 from koala.db import extension_enabled
+from koala.errors import KoalaException
 from koala.utils import error_embed
 from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER
@@ -156,7 +157,8 @@ def check_guild_has_ext(ctx, extension_id):
 
 @bot.event
 async def on_command_error(ctx, error: Exception):
-    if error.__class__ in [commands.MissingRequiredArgument,
+    if error.__class__ in [KoalaException,
+                           commands.MissingRequiredArgument,
                            commands.CommandNotFound]:
         await ctx.send(embed=error_embed(description=error))
     if error.__class__ in [commands.CheckFailure]:
@@ -169,7 +171,7 @@ async def on_command_error(ctx, error: Exception):
     elif isinstance(error, commands.errors.ChannelNotFound):
         await ctx.send(embed=error_embed(description=f"The channel ID provided is either invalid, or not in this server."))
     elif isinstance(error, commands.CommandInvokeError):
-        # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
+        logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message, exc_info=error)
         await ctx.send(embed=error_embed(description=error.original))
     else:
         logger.error(f"Unexpected Error in guild %s : %s", ctx.guild.name, error, exc_info=error)

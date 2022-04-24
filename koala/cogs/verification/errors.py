@@ -1,6 +1,9 @@
-class InvalidArgumentError(Exception):
-    pass
+from koala.errors import KoalaException
 
 
-class VerifyError(Exception):
+class VerifyException(KoalaException):
+    """
+    Unspecified error within the 'verify' extension
+    """
     pass
+
