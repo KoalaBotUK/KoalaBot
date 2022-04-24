@@ -270,7 +270,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
-    
+
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(BaseCog(bot))

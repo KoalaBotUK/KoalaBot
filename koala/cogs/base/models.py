@@ -5,7 +5,7 @@ from discord import ActivityType
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Enum
 
 # Own modules
-from koala.models import mapper_registry
+from koala.models import mapper_registry, BaseModel
 from koala.db import setup
 
 # Constants
@@ -14,7 +14,7 @@ from koala.db import setup
 
 
 @mapper_registry.mapped
-class ScheduledActivities:
+class ScheduledActivities(BaseModel):
     __tablename__ = 'ScheduledActivities'
     activity_id = Column(Integer, primary_key=True, autoincrement=True)
     activity_type = Column(Enum(ActivityType), comment="0: Playing, 1: Streaming, 2: Listening, 3: Watching, 4: Custom,"

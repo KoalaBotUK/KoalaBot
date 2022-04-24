@@ -98,6 +98,9 @@ def is_guild_channel(ctx):
     return ctx.guild is not None
 
 
+def load_sub_api():
+    pass
+
 def load_all_cogs():
     """
     Loads all cogs in ENABLED_COGS into the client
@@ -173,17 +176,16 @@ async def on_command_error(ctx, error: Exception):
 
 async def run_bot():
     app = web.Application()
-    sub_app = koala.cogs.base.api.BaseEndpoint()
-    app.add_subapp('/base/', sub_app.register())
+
+    bot.__setattr__("koala_web_app", app)
+    load_all_cogs()
 
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', 8080)
     await site.start()
 
-
     try:
-        load_all_cogs()
         await bot.start(BOT_TOKEN)
 
     except:

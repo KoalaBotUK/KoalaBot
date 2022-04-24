@@ -1,6 +1,7 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
+import sqlalchemy.dialects.mssql.information_schema
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import registry
 
@@ -11,6 +12,13 @@ from sqlalchemy.orm import registry
 # Variables
 
 mapper_registry = registry()
+
+
+class BaseModel:
+    __table__: sqlalchemy.dialects.mssql.information_schema.tables
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 @mapper_registry.mapped
