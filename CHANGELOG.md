@@ -1,10 +1,64 @@
 # Changelog
-All notable changes to KoalaBot will be documented in this file.
-A lot of these commands will only be available to administrators
+All notable changes to KoalaBot will be documented in this file. A lot of these commands will only be available to
+administrators
 
 ## [Unreleased]
+
+## [0.5.6] - 19-04-2022
+### TwitchAlert
+- Fix issue where duplicate team alerts cannot be removed
+### Base
+- Command Checks now are presented well to the client
+
+## [0.5.5] - 19-04-2022
+### TwitchAlert
+- Fix issue where team twitch alerts would not show
+- Add logging and error handling to team loop
+
+## [0.5.4] - 12-04-2022
+### Base
+- Add scheduled activities for bot owners
+
+## [0.5.3] - 12-04-2022
+### TwitchAlert
+- Fix streams delete themselves when live (again)
+
+## [0.5.2] - 12-04-2022
+### TwitchAlert
+- Fix streams delete themselves when live
+
+## [0.5.1] - 11-04-2022
+### Vote
+- Fix error if someone leaves the server during a vote
+
+## [0.5.0] - 11-04-2022
+### TwitchAlert
+- TwitchAlert completely reworked (part 1)
+- TwitchAlert commands have been altered (e.g. `k!twitchAddTeam` to `k!twitch addTeam`) see https://koalabot.uk/documentation for new syntax
+- Positioning of the `channel` argument has been moved. Please always check commands with `k!help <command>`
+- Previously optional `channel` arguments are now required
+- Help messages are now more detailed
+- Internal API library changed, may increase delays in twitch API responses
 ### Other
+- ./config is the new default config directory and is set in env
+- /config/logs/<date> is now used for logs
+- refactor koala file structure
+- Updated the credits and authors.
+
+## [0.4.5] - 25-08-2021
+### Other
+- Small improvements
+
+## [0.4.4] - 19-08-2021
+### ReactForRole
+- Fix bug where reacting with a unicode emoji broke the whole message
+### Colour Role
+- Colour strings can now be prefixed with a #
+### Other
+- Added command prefix K!
 - Testing updated to use builders in dpytest 0.5.0
+- Additional option with `--config <path to config>` to choose where databases are stored
+- Officially removed support for Discord.py 1.3.4
 
 ## [0.4.3] - 14-05-2021
 ### Announce
@@ -105,13 +159,13 @@ manually if a timer is deleted.
 
 ### React For Role (RFR)
 ##### Added
-- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`. 
-- `rfr delete` Delete an existing rfr message. 
+- `rfr create` Create a new, blank rfr message. Default title is `React for Role`. Default description is `Roles below!`.
+- `rfr delete` Delete an existing rfr message.
 - `rfr addRequiredRole` Add a role required to react to/use rfr functionality. If no role is added, anyone can use rfr functionality.
-- `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality 
+- `rfr removeRequiredRole` Removes a role from the group of roles someone requires to use rfr functionality
 
-- `rfr edit addRoles` Add emoji/role combos to an existing rfr message. 
-- `rfr edit removeRoles` Remove emoji/role combos from an existing rfr message. 
+- `rfr edit addRoles` Add emoji/role combos to an existing rfr message.
+- `rfr edit removeRoles` Remove emoji/role combos from an existing rfr message.
 - `rfr edit description` Edit the description of an existing rfr message  
 - `rfr edit title` Edit the title of an existing rfr message.
 
@@ -147,13 +201,13 @@ manually if a timer is deleted.
 ### Verification
 ##### Changed
 - Fix bot erroring on startup if it had left any guilds with verification enabled
-#### Twitch Alert 
+#### Twitch Alert
 ##### Changed
 - Fix use of full URLs in twitch alerts
 - Fix oauth not updating
 
 ## [0.1.4] - 10-10-2020
-#### Twitch Alert 
+#### Twitch Alert
 ##### Changed
 - Fix TwitchAlert loops crashing
 - Fix repeat on_ready
@@ -225,6 +279,15 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.5.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.5...v0.5.6
+[0.5.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.4...v0.5.5
+[0.5.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.3...v0.5.4
+[0.5.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.2...v0.5.3
+[0.5.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.1...v0.5.2
+[0.5.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.5...v0.5.0
+[0.4.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.4...v0.4.5
+[0.4.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.4.0...v0.4.1
