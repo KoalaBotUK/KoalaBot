@@ -97,24 +97,14 @@ def is_guild_channel(ctx):
 
 def load_all_cogs():
     """
-    Loads all cogs in COGS_DIR into the client
+    Loads all cogs in ENABLED_COGS into the client
     """
-    UNRELEASED = []
 
-    for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py') and filename not in UNRELEASED and filename != "__init__.py":
-            try:
-                bot.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
-            except commands.errors.ExtensionAlreadyLoaded:
-                bot.reload_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
-
-    # New Approach
     for cog in ENABLED_COGS:
-        module_name = 'koala.cogs.'+cog+'.cog'
         try:
-            bot.load_extension(module_name)
+            bot.load_extension("."+cog, package='koala.cogs')
         except commands.errors.ExtensionAlreadyLoaded:
-            bot.reload_extension(module_name)
+            bot.reload_extension("."+cog, package='koala.cogs')
 
     logger.info("All cogs loaded")
 
