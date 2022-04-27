@@ -40,7 +40,7 @@ load_dotenv()
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/thenuel"
-COGS_DIR = os.environ.get("COGS_DIR") or "koala/cogs"
+COGS_PACKAGE = "koala.cogs"
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
@@ -102,9 +102,9 @@ def load_all_cogs():
 
     for cog in ENABLED_COGS:
         try:
-            bot.load_extension("."+cog, package='koala.cogs')
+            bot.load_extension("."+cog, package=COGS_PACKAGE)
         except commands.errors.ExtensionAlreadyLoaded:
-            bot.reload_extension("."+cog, package='koala.cogs')
+            bot.reload_extension("."+cog, package=COGS_PACKAGE)
 
     logger.info("All cogs loaded")
 
