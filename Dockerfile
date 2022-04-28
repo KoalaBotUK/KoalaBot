@@ -44,4 +44,4 @@ VOLUME /config
 # run app
 #########
 
-CMD [ "/opt/venv/bin/python", "koalabot.py"]
+CMD [ "python3", "koalabot.py"]
