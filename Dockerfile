@@ -15,9 +15,8 @@ RUN \
 	curl \
     jq \
     unzip \
-    python3 \
-    python3-pip \
-    python3-venv
+    python3.9 \
+    python3-pip
 
 RUN apt-get install -y software-properties-common && \
   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
@@ -28,11 +27,9 @@ RUN apt-get install -y sqlcipher libsqlcipher-dev
 COPY . /app
 WORKDIR /app
 
-RUN python3 -m venv /opt/venv
-
-RUN /opt/venv/bin/python -m pip install --upgrade pip
-RUN /opt/venv/bin/pip install -r requirements.txt
-RUN /opt/venv/bin/python -m pip install pysqlcipher3
+RUN python -m pip install --upgrade pip
+RUN pip install -r requirements.txt
+RUN python -m pip install pysqlcipher3
 
 
 # docker settings
