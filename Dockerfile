@@ -2,7 +2,7 @@
 
 # Install the base requirements for the app.
 # This stage is to support development.
-FROM ubuntu:latest AS base
+FROM ubuntu:20.04 AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -15,14 +15,14 @@ RUN \
 	curl \
     jq \
     unzip \
-    python3.9 \
+    python3 \
     python3-pip
 
 RUN apt-get install -y software-properties-common && \
   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
   apt-get update
 
-RUN apt-get install -y sqlcipher libsqlcipher-dev
+RUN apt-get install -y sqlite3=3.38.2 sqlcipher libsqlcipher-dev
 
 COPY . /app
 WORKDIR /app
