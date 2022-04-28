@@ -67,6 +67,11 @@ TWITCH_SECRET = tw1tch53cr3t # Twitch Secret taken from the twitch developers po
 # Verification (Required for Verify Extension)
 GMAIL_EMAIL = example@gmail.com # email for a gmail account
 GMAIL_PASSWORD = example_password123 # password for the same gmail account
+
+# API
+API_PORT = 8080 # port for the API to listen on (default=8080)
+```
+
 ```
 `DISCORD_TOKEN` is the only required environment variable for KoalaBot to be run.
 

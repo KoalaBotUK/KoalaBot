@@ -178,7 +178,7 @@ async def run_bot():
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    site = web.TCPSite(runner, '0.0.0.0', os.environ.get("API_PORT"))
     await site.start()
 
     try:
