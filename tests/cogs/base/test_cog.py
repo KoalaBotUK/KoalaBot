@@ -191,8 +191,8 @@ async def test_invalid_clear(base_cog: BaseCog):
 @pytest.mark.asyncio
 async def test_load_cog(base_cog: BaseCog):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        await dpytest.message(koalabot.COMMAND_PREFIX + "load_cog BaseCog")
-    mock1.assert_called_with(".BaseCog", package="koala.cogs")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "load_cog base")
+    mock1.assert_called_with(".base", package="koala.cogs")
 
 
 @pytest.mark.asyncio
