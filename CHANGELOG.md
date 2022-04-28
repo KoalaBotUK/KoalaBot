@@ -4,6 +4,10 @@ administrators
 
 ## [Unreleased]
 
+## [0.5.7] - 28-04-2022
+### TwitchAlert
+- Fix issue where users alerts would sometimes delete themselves 
+
 ## [0.5.6] - 19-04-2022
 ### TwitchAlert
 - Fix issue where duplicate team alerts cannot be removed
@@ -279,6 +283,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.5.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.5...v0.5.6
 [0.5.5]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.3...v0.5.4
