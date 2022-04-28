@@ -57,8 +57,8 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self.bot = bot
         self._last_member = None
         self.started = False
-        self.COGS_DIR = koalabot.COGS_DIR
         self.current_activity = None
+        self.COGS_PACKAGE = koalabot.COGS_PACKAGE
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -184,7 +184,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        self.bot.load_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
+        self.bot.load_extension("."+extension, package=self.COGS_PACKAGE)
         await ctx.send(f'{extension} Cog Loaded')
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
@@ -198,7 +198,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         if extension == "BaseCog":
             await ctx.send("Sorry, you can't unload the base cog")
         else:
-            self.bot.unload_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
+            self.bot.unload_extension("."+extension, package=self.COGS_PACKAGE)
             await ctx.send(f'{extension} Cog Unloaded')
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])

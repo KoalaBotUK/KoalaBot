@@ -1,1 +1,1 @@
-from .cog import BaseCog
+from .cog import BaseCog, setup

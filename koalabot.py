@@ -40,7 +40,7 @@ load_dotenv()
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/thenuel"
-COGS_DIR = "koala/cogs"
+COGS_PACKAGE = "koala.cogs"
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
@@ -97,24 +97,14 @@ def is_guild_channel(ctx):
 
 def load_all_cogs():
     """
-    Loads all cogs in COGS_DIR into the client
+    Loads all cogs in ENABLED_COGS into the client
     """
-    UNRELEASED = []
 
-    for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py') and filename not in UNRELEASED and filename != "__init__.py":
-            try:
-                bot.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
-            except commands.errors.ExtensionAlreadyLoaded:
-                bot.reload_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
-
-    # New Approach
     for cog in ENABLED_COGS:
-        module_name = 'koala.cogs.'+cog+'.cog'
         try:
-            bot.load_extension(module_name)
+            bot.load_extension("."+cog, package=COGS_PACKAGE)
         except commands.errors.ExtensionAlreadyLoaded:
-            bot.reload_extension(module_name)
+            bot.reload_extension("."+cog, package=COGS_PACKAGE)
 
     logger.info("All cogs loaded")
 
