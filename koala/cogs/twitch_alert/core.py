@@ -135,7 +135,7 @@ async def create_user_alerts(bot: Bot, ta_database_manager, session):
     #              "WHERE extension_id = 'twitch_alert' OR extension_id = 'All') GE on TA.guild_id = GE.guild_id;"
     users = session.execute(sql_find_users).all()
 
-    usernames = [str.lower(user.twitch_username) for user in users]
+    usernames = [str.lower(user[0]) for user in users]
 
     if not usernames:
         return
