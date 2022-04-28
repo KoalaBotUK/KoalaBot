@@ -27,9 +27,9 @@ RUN apt-get install -y sqlcipher libsqlcipher-dev
 COPY . /app
 WORKDIR /app
 
-RUN python -m pip install --upgrade pip
-RUN pip install -r requirements.txt
-RUN python -m pip install pysqlcipher3
+RUN python3 -m pip install --upgrade pip
+RUN pip3 install -r requirements.txt
+RUN python3 -m pip install pysqlcipher3
 
 
 # docker settings
