@@ -15,9 +15,14 @@ import discord.ext.test as dpytest
 import pytest
 
 # Own modules
+from sqlalchemy import delete
+
 from koala import db as koala_db
 from koala.cogs.intro_cog import db as intro_db
+from koala.cogs.intro_cog.models import GuildWelcomeMessages
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, get_non_bot_members
+from koala.db import engine
+from koala.models import Guilds, GuildExtensions, KoalaExtensions, mapper_registry
 from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
 from tests.log import logger
 
@@ -137,4 +142,7 @@ async def test_on_member_join():
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    koala_db.clear_all_tables(koala_db.fetch_all_tables())
+    with koala_db.session_manager() as session:
+        for table in mapper_registry.metadata.tables:
+            session.execute(delete(table))
+        session.commit()

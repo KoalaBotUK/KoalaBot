@@ -175,7 +175,7 @@ def fetch_all_tables():
             return [table.name for table in
                     session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
         else:
-            return session.execute("SHOW Tables;").all()
+            return [row[0] for row in session.execute("SHOW Tables;").all()]
 
 
 def clear_all_tables(tables):
