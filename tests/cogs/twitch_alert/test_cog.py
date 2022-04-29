@@ -31,7 +31,7 @@ DB_PATH = "Koala.db"
 @pytest.mark.asyncio
 async def test_setup():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
-        cog.setup(koalabot.client)
+        cog.setup(koalabot.bot)
     mock1.assert_called()
 
 
@@ -330,15 +330,6 @@ async def test_loop_check_live(twitch_cog: twitch_alert.cog.TwitchAlert):
     twitch_cog.start_loop()
     await asyncio.sleep(10)
     assert dpytest.verify().message().embed(expected_embed)
-
-
-@pytest.mark.asyncio
-async def test_create_alert_embed(twitch_cog: twitch_alert.cog.TwitchAlert):
-    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-                   "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
-                   'title': 'Music 24/7'}
-
-    assert type(await twitch_cog.create_alert_embed(stream_data, None)) is discord.Embed
 
 
 @pytest.mark.skip(reason="Issues with testing inside asyncio event loop, not implemented")

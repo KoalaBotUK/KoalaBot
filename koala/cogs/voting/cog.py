@@ -92,42 +92,45 @@ class Voting(commands.Cog, name="Vote"):
 
     @tasks.loop(seconds=60.0)
     async def vote_end_loop(self):
-        with session_manager() as session:
-            now = time.time()
-            votes = session.execute(select(Votes.vote_id, Votes.author_id, Votes.guild_id, Votes.title, Votes.end_time)
-                                    .where(Votes.end_time < now)).all()
-            for v_id, a_id, g_id, title, end_time in votes:
-                if v_id in self.vote_manager.sent_votes.keys():
-                    vote = self.vote_manager.get_vote_from_id(v_id)
-                    results = await get_results(self.bot, vote)
-                    embed = await make_result_embed(vote, results)
-                    try:
-                        if vote.chair:
-                            try:
-                                chair = await self.bot.fetch_user(vote.chair)
-                                await chair.send(f"Your vote {title} has closed")
-                                await chair.send(embed=embed)
-                            except discord.Forbidden:
-                                user = await self.bot.fetch_user(vote.author)
-                                await user.send(f"Your vote {title} has closed")
-                                await user.send(embed=embed)
-                        else:
-                            try:
-                                user = await self.bot.fetch_user(vote.author)
-                                await user.send(f"Your vote {title} has closed")
-                                await user.send(embed=embed)
-                            except discord.Forbidden:
-                                guild = await self.bot.fetch_guild(vote.guild)
-                                user = await self.bot.fetch_user(guild.owner_id)
-                                await user.send(f"A vote in your guild titled {title} has closed and the chair is unavailable.")
-                                await user.send(embed=embed)
-                        session.execute(delete(Votes).filter_by(vote_id=vote.id))
-                        session.commit()
-                        self.vote_manager.cancel_sent_vote(vote.id)
-                    except Exception as e:
-                        session.execute(update(Votes).filter_by(vote_id=vote.id).values(end_time=time.time() + 86400))
-                        session.commit()
-                        logger.error(f"error in vote loop: {e}")
+        try:
+            with session_manager() as session:
+                now = time.time()
+                votes = session.execute(select(Votes.vote_id, Votes.author_id, Votes.guild_id, Votes.title, Votes.end_time)
+                                        .where(Votes.end_time < now)).all()
+                for v_id, a_id, g_id, title, end_time in votes:
+                    if v_id in self.vote_manager.sent_votes.keys():
+                        vote = self.vote_manager.get_vote_from_id(v_id)
+                        results = await get_results(self.bot, vote)
+                        embed = await make_result_embed(vote, results)
+                        try:
+                            if vote.chair:
+                                try:
+                                    chair = await self.bot.fetch_user(vote.chair)
+                                    await chair.send(f"Your vote {title} has closed")
+                                    await chair.send(embed=embed)
+                                except discord.Forbidden:
+                                    user = await self.bot.fetch_user(vote.author)
+                                    await user.send(f"Your vote {title} has closed")
+                                    await user.send(embed=embed)
+                            else:
+                                try:
+                                    user = await self.bot.fetch_user(vote.author)
+                                    await user.send(f"Your vote {title} has closed")
+                                    await user.send(embed=embed)
+                                except discord.Forbidden:
+                                    guild = await self.bot.fetch_guild(vote.guild)
+                                    user = await self.bot.fetch_user(guild.owner_id)
+                                    await user.send(f"A vote in your guild titled {title} has closed and the chair is unavailable.")
+                                    await user.send(embed=embed)
+                            session.execute(delete(Votes).filter_by(vote_id=vote.id))
+                            session.commit()
+                            self.vote_manager.cancel_sent_vote(vote.id)
+                        except Exception as e:
+                            session.execute(update(Votes).filter_by(vote_id=vote.id).values(end_time=time.time() + 86400))
+                            session.commit()
+                            logger.error(f"error in vote loop: {e}")
+        except Exception as e:
+            logger.error("Exception in outer vote loop: %s" % e, exc_info=e)
 
     @vote_end_loop.before_loop
     async def before_vote_loop(self):

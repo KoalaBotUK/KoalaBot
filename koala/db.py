@@ -10,7 +10,9 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 # Libs
 from contextlib import contextmanager
-from sqlalchemy import select, delete, and_, func, create_engine, VARCHAR
+from functools import wraps
+
+from sqlalchemy import select, delete, and_, create_engine, VARCHAR, func as sql_func
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
@@ -25,6 +27,19 @@ from koala.log import logger
 engine = create_engine(DB_URL, future=True)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
+
+
+def assign_session(func):
+
+    @wraps(func)
+    def with_session(*args, **kwargs):
+        if not kwargs.get("session"):
+            with session_manager() as session:
+                kwargs["session"] = session
+                return func(*args, **kwargs)
+        else:
+            return func(*args, **kwargs)
+    return with_session
 
 
 @contextmanager
@@ -109,7 +124,7 @@ def give_guild_extension(guild_id, extension_id: str):
     """
     with session_manager() as session:
         extension_exists = extension_id == "All" or session.execute(
-            select(func.count(KoalaExtensions.extension_id))
+            select(sql_func.count(KoalaExtensions.extension_id))
             .filter_by(extension_id=extension_id, available=1)).scalars().one() > 0
 
         if extension_exists:
@@ -187,4 +202,4 @@ def clear_all_tables(tables):
     with session_manager() as session:
         for table in tables:
             session.execute('DELETE FROM ' + table + ';')
-            session.commit()
+        session.commit()

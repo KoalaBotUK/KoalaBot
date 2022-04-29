@@ -12,7 +12,7 @@ __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", 
                "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
                "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.4.5"
+__version__ = "0.5.8"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
@@ -39,9 +39,8 @@ load_dotenv()
 
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
-STREAMING_URL = "https://twitch.tv/jaydwee"
-COGS_DIR = "koala/cogs"
-KOALA_PLUG = " koalabot.uk"  # Added to every presence change, do not alter
+STREAMING_URL = "https://twitch.tv/thenuel"
+COGS_PACKAGE = "koala.cogs"
 TEST_USER = "TestUser#0001"  # Test user for dpytest
 TEST_BOT_USER = "FakeApp#0001"  # Test bot user for dpytest
 KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
@@ -52,12 +51,11 @@ ENABLED_COGS = ["base", "announce", "colour_role", "intro_cog", "react_for_role"
                 "verification", "voting"]
 
 # Variables
-started = False
 intent = discord.Intents.default()
 intent.members = True
 intent.guilds = True
 intent.messages = True
-client = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
+bot = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 is_dpytest = False
 
 
@@ -73,7 +71,7 @@ def is_owner(ctx):
     elif BOT_OWNER is not None:
         return ctx.author.id == int(BOT_OWNER) or is_dpytest
     else:
-        return client.is_owner(ctx.author) or is_dpytest
+        return bot.is_owner(ctx.author) or is_dpytest
 
 
 def is_admin(ctx):
@@ -99,30 +97,20 @@ def is_guild_channel(ctx):
 
 def load_all_cogs():
     """
-    Loads all cogs in COGS_DIR into the client
+    Loads all cogs in ENABLED_COGS into the client
     """
-    UNRELEASED = []
 
-    for filename in os.listdir(COGS_DIR):
-        if filename.endswith('.py') and filename not in UNRELEASED and filename != "__init__.py":
-            try:
-                client.load_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
-            except commands.errors.ExtensionAlreadyLoaded:
-                client.reload_extension(COGS_DIR.replace("/", ".") + f'.{filename[:-3]}')
-
-    # New Approach
     for cog in ENABLED_COGS:
-        module_name = 'koala.cogs.'+cog+'.cog'
         try:
-            client.load_extension(module_name)
+            bot.load_extension("."+cog, package=COGS_PACKAGE)
         except commands.errors.ExtensionAlreadyLoaded:
-            client.reload_extension(module_name)
+            bot.reload_extension("."+cog, package=COGS_PACKAGE)
 
     logger.info("All cogs loaded")
 
 
 def get_channel_from_id(id):
-    return client.get_channel(id=id)
+    return bot.get_channel(id=id)
 
 
 async def dm_group_message(members: [discord.Member], message: str):
@@ -156,10 +144,15 @@ def check_guild_has_ext(ctx, extension_id):
     return True
 
 
-@client.event
+@bot.event
 async def on_command_error(ctx, error: Exception):
-    if isinstance(error, commands.MissingRequiredArgument):
+    if error.__class__ in [commands.MissingRequiredArgument,
+                           commands.CommandNotFound]:
         await ctx.send(embed=error_embed(description=error))
+    if error.__class__ in [commands.CheckFailure]:
+        await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
+                                         description=str(error)+"\nPlease ensure you have administrator permissions, "
+                                                                "and have enabled this extension."))
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
                                                      f"{str(error.retry_after)}s."))
@@ -168,10 +161,8 @@ async def on_command_error(ctx, error: Exception):
     elif isinstance(error, commands.CommandInvokeError):
         # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
         await ctx.send(embed=error_embed(description=error.original))
-    elif isinstance(error, commands.CommandNotFound):
-        await ctx.send(embed=error_embed(description=error))
     else:
-        logger.error(f"Unexpected Error in guild {ctx.guild.name}: {error}")
+        logger.error(f"Unexpected Error in guild %s : %s", ctx.guild.name, error, exc_info=error)
         await ctx.send(embed=error_embed(
             description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error
@@ -181,4 +172,4 @@ if __name__ == "__main__":  # pragma: no cover
     os.system("title " + "KoalaBot")
     load_all_cogs()
     # Starts bot using the given BOT_ID
-    client.run(BOT_TOKEN)
+    bot.run(BOT_TOKEN)

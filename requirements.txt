@@ -30,7 +30,7 @@ requests==2.26.0
 six==1.16.0
 sqlalchemy==1.4.25
 toml==0.10.2
-twitchAPI==2.4.1
+twitchAPI==2.5.3
 urllib3==1.26.7
 wcwidth==0.2.5
 websockets==10.2

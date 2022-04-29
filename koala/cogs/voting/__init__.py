@@ -1,2 +1,2 @@
 from . import utils, db, log, models
-from .cog import Voting
+from .cog import Voting, setup

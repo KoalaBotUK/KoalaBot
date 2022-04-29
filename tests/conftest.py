@@ -16,8 +16,10 @@ import discord.ext.test as dpytest
 # Own modules
 import koalabot
 import koala.db as db
+from koala.db import session_manager
 from tests.log import logger
 # Constants
+
 
 @pytest.fixture(scope='session', autouse=True)
 def teardown_config():
@@ -53,3 +55,8 @@ def setup_is_dpytest():
     yield
     koalabot.is_dpytest = False
 
+
+@pytest.fixture
+async def session():
+    with session_manager() as session:
+        yield session

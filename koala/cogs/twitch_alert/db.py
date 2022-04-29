@@ -8,14 +8,14 @@ from koala.db import session_manager
 
 from .twitch_handler import TwitchAPIHandler
 from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX
+from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, create_live_embed
 from .log import logger
 from .env import TWITCH_KEY, TWITCH_SECRET
 
 # Libs
 import discord
 from sqlalchemy import select, delete, and_, null
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import selectinload, joinedload
 
 
 # Constants
@@ -150,7 +150,7 @@ class TwitchAlertDBManager:
         with session_manager() as session:
             message = session.execute(select(UserInTwitchAlert)
                                       .filter_by(twitch_username=twitch_username, channel_id=channel_id)
-                                      ).scalars().one_or_none()
+                                      ).scalars().first()
             if message is not None:
                 await self.delete_message(message.message_id, channel_id)
                 session.delete(message)
@@ -233,7 +233,7 @@ class TwitchAlertDBManager:
         with session_manager() as session:
             team = session.execute(select(TeamInTwitchAlert)
                                    .filter_by(twitch_team_name=team_name, channel_id=channel_id)
-                                   ).scalars().one_or_none()
+                                   ).scalars().first()
             if not team:
                 raise AttributeError("Team name not found")
 
@@ -294,16 +294,21 @@ class TwitchAlertDBManager:
                         UserInTwitchTeam.message_id != null(),
                         UserInTwitchTeam.twitch_username.in_(usernames))
                     ).options(
-                        selectinload(UserInTwitchTeam.team)
+                        joinedload(UserInTwitchTeam.team)
                     )
             ).scalars().all()
 
-            if results is None:
+            if not results:
                 return
+            logger.debug("Deleting offline streams: %s" % results)
             for result in results:
-                await self.delete_message(result.message_id, result.team.channel_id)
-                result.message_id = None
-
+                if result.team:
+                    await self.delete_message(result.message_id, result.team.channel_id)
+                    result.message_id = None
+                else:
+                    logger.debug("Result team not found: %s", result)
+                    logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)).scalars().all())
+                    # session.delete(result)
             session.commit()
 
     async def delete_all_offline_streams(self, usernames):
@@ -384,3 +389,16 @@ class TwitchAlertDBManager:
     #                 logger.error(f"Team not found on Twitch {team}, deleted")
     #         session.execute("ALTER TABLE TeamInTwitchAlert RENAME COLUMN twitch_team_name TO twitch_team_id")
     #         session.commit()
+
+    async def create_alert_embed(self, stream_data, message):
+        """
+        Creates and sends an alert message
+        :param stream_data: The twitch stream data to have in the message
+        :param message: The custom message to be added as a description
+        :return: The discord message id of the sent message
+        """
+        user_details = self.twitch_handler.get_user_data(
+            stream_data.get("user_name"))[0]
+        game_details = self.twitch_handler.get_game_data(
+            stream_data.get("game_id"))
+        return create_live_embed(stream_data, user_details, game_details, message)

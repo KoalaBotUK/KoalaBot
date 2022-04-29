@@ -6,10 +6,12 @@ Create Date: 2022-02-23 18:54:15.064055
 
 """
 import os
+from enum import Enum
 from pathlib import Path
 
 from alembic import op
-from sqlalchemy import Column, String, VARCHAR, INT, FLOAT, BOOLEAN, ForeignKey
+from discord import ActivityType
+from sqlalchemy import Column, String, VARCHAR, INT, FLOAT, BOOLEAN, ForeignKey, TIMESTAMP
 from sqlalchemy.exc import IntegrityError as SaIntegrityError
 from pymysql.err import IntegrityError as PmyIntegrityError
 
@@ -90,6 +92,16 @@ def upgrade():
                                        Column('extension_id', VARCHAR(20),
                                               ForeignKey("KoalaExtensions.extension_id"), primary_key=True),
                                        Column('guild_id', VARCHAR(18), primary_key=True))
+
+    scheduled_activities = op.create_table('ScheduledActivities',
+                                           Column('activity_id', INT, primary_key=True, autoincrement=True),
+                                           Column('activity_type', Enum(ActivityType),
+                                                  comment="0: Playing, 1: Streaming, 2: Listening, 3: Watching, "
+                                                          "4: Custom, 5: Competing"),
+                                           Column('stream_url', VARCHAR(100), nullable=True),
+                                           Column('message', VARCHAR(100)),
+                                           Column('time_start', TIMESTAMP),
+                                           Column('time_end', TIMESTAMP))
 
     guild_usage = op.create_table('GuildUsage',
                                   Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id"), primary_key=True),
@@ -211,7 +223,6 @@ def upgrade():
         c.execute('''PRAGMA key="x'{}'"'''.format(SQLITE_DB_KEY))
 
     # koala
-
     c.execute("SELECT DISTINCT guild_id FROM GuildExtensions")
     op.bulk_insert(guilds, c.fetchall())
 
@@ -220,6 +231,10 @@ def upgrade():
 
     c.execute("SELECT * FROM GuildExtensions")
     op.bulk_insert(guild_extensions, c.fetchall())
+
+    # base
+    c.execute("SELECT * FROM ScheduledActivities")
+    op.bulk_insert(scheduled_activities, c.fetchall())
 
     # announce
     c.execute("SELECT * FROM GuildUsage")

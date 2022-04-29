@@ -19,35 +19,9 @@ from koala.colours import KOALA_GREEN
 
 
 # Constants
-
+DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help koalabot.uk")
+AUTO_UPDATE_ACTIVITY_DELAY = 1
 # Variables
-
-
-def new_discord_activity(activity, name):
-    """
-    This command takes an activity and name and returns the discord.Activity type for it
-
-    Custom doesn't currently work
-    koalabot.uk is added to the end of any activity
-    :param activity: The new activity of the bot
-    :param name: The name of the activity
-    :return: The custom activity created
-    """
-    name = name + koalabot.KOALA_PLUG  # Added to every presence change, do not alter
-    lower_activity = str.lower(activity)
-    if lower_activity == "playing":
-        activity_type = discord.ActivityType.playing
-    elif lower_activity == "watching":
-        activity_type = discord.ActivityType.watching
-    elif lower_activity == "listening":
-        activity_type = discord.ActivityType.listening
-    elif lower_activity == "streaming":
-        return discord.Activity(type=discord.ActivityType.streaming, name=name, url=koalabot.STREAMING_URL)
-    elif lower_activity == "custom":
-        return discord.Activity(type=discord.ActivityType.custom, name=name)
-    else:
-        raise SyntaxError(f"{activity} is not an activity")
-    return discord.Activity(type=activity_type, name=name)
 
 
 def list_ext_embed(guild_id):
@@ -77,3 +51,10 @@ def list_ext_embed(guild_id):
     if disabled != "":
         embed.add_field(name=":negative_squared_cross_mark: Disabled", value=disabled)
     return embed
+
+
+def activity_eq(activity1: discord.Activity, activity2: discord.Activity) -> bool:
+    return activity1 and activity2 \
+           and activity1.type == activity2.type \
+           and activity1.name == activity2.name \
+           and activity1.url == activity2.url

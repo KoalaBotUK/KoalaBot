@@ -26,7 +26,7 @@ CONFIG_PATH.mkdir(exist_ok=True, parents=True)
 DB_URL = os.environ.get("DB_URL")
 DB_TYPE = DatabaseType[os.environ.get("DB_TYPE", "MYSQL")]
 
-if not DB_URL:
+if not DB_URL or DB_TYPE == DatabaseType.SQLITE:
     # Use SQLite
     DB_TYPE = DatabaseType["SQLITE"]
     ENCRYPTED_DB = (not os.name == 'nt') and eval(os.environ.get('ENCRYPTED', "True"))
