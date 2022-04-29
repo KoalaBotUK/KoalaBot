@@ -1,9 +1,8 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import BAD_REQUEST, CREATED
+from http.client import  CREATED
 from aiohttp import web
-import aiohttp.web
 import discord
 from discord.ext.commands import Bot
 
@@ -64,7 +63,7 @@ class BaseEndpoint:
         except BaseException as e:
             error = 'Error setting activity: {}'.format(handleActivityError(e))
             logger.error(error)
-            raise aiohttp.web.HTTPUnprocessableEntity(reason="{}".format(error))
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         return build_response(CREATED, {'message': 'Activity set'})
 
     @parse_request(raw_response=True)
@@ -86,19 +85,22 @@ class BaseEndpoint:
         except BaseException as e:
             error = 'Error scheduling activity: {}'.format(handleActivityError(e))
             logger.error(error)
-            raise aiohttp.web.HTTPUnprocessableEntity(reason="{}".format(error))
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
 
         return build_response(CREATED, {'message': 'Activity scheduled'})
+
 
 def getActivityType(activity_type):
     return discord.ActivityType[activity_type]
 
+
 def handleActivityError(error):
-    if (type(error) == KeyError):
+    if type(error) == KeyError:
         return 'Invalid activity type'
-    elif (type(error) == discord.ext.commands.errors.BadArgument):
+    elif type(error) == discord.ext.commands.errors.BadArgument:
         return 'Bad start / end time' 
     return 'Unknown error'
+
 
 def setup(bot: Bot):
     """

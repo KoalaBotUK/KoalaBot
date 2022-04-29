@@ -8,7 +8,6 @@ import json
 # Libs
 from functools import wraps
 import aiohttp.web
-from aiohttp.web import Response
 
 # Own modules
 from koala.models import BaseModel
@@ -33,6 +32,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
             return o.isoformat()
         return super().default(o)
 
+
 def build_response(status_code, data):
     """
     Build a response object
@@ -40,7 +40,7 @@ def build_response(status_code, data):
     :param data:
     :return:
     """
-    return Response(status=status_code,
+    return aiohttp.web.Response(status=status_code,
                     body=json.dumps(data, cls=EnhancedJSONEncoder),
                     content_type='application/json')
 
