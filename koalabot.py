@@ -20,25 +20,20 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 # Futures
 # Built-in/Generic Imports
 import asyncio
-import os
 import time
 
 # Libs
 from aiohttp import web
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 # Own modules
 from koala.db import extension_enabled
 from koala.utils import error_embed
 from koala.log import logger
-from koala.env import BOT_TOKEN, BOT_OWNER
+from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
 
 # Constants
-load_dotenv()
-
-
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/thenuel"
@@ -178,7 +173,7 @@ async def run_bot():
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', os.environ.get("API_PORT"))
+    site = web.TCPSite(runner, '0.0.0.0', API_PORT)
     await site.start()
 
     try:
