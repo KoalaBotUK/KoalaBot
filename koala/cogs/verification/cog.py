@@ -15,11 +15,12 @@ from email.message import EmailMessage
 # Libs
 import discord
 from discord.ext import commands
-from sqlalchemy import select, delete, and_, text
+from sqlalchemy import select, delete, and_
 
 # Own modules
 import koalabot
 from koala.db import session_manager, insert_extension
+from . import db
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
 from .log import logger
 from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
@@ -249,7 +250,7 @@ This email is stored so you don't need to verify it multiple times across server
             session.execute(delete(NonVerifiedEmails).filter_by(token=token))
 
             potential_roles = session.execute(select(Roles.r_id)
-                                              .where(text(":email like ('%' || email_suffix)")),
+                                              .where(db.value_suffix_like_column(":email", "email_suffix")),
                                               {"email": entry.email}).all()
             if potential_roles:
                 for role_id in potential_roles:
@@ -355,7 +356,7 @@ This email is stored so you don't need to verify it multiple times across server
     async def assign_roles_for_user(self, user_id, email):
         with session_manager() as session:
             results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
-                                      .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+                                      .where(db.value_suffix_like_column(":email", "email_suffix")), {"email": email}).all()
 
             for g_id, r_id, suffix in results:
                 blacklisted = session.execute(select(ToReVerify).filter_by(r_id=r_id, u_id=user_id)).all()
@@ -378,7 +379,7 @@ This email is stored so you don't need to verify it multiple times across server
     async def remove_roles_for_user(self, user_id, email):
         with session_manager() as session:
             results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
-                                      .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+                                      .where(db.value_suffix_like_column(":email", "email_suffix")), {"email": email}).all()
 
             for g_id, r_id, suffix in results:
                 try:

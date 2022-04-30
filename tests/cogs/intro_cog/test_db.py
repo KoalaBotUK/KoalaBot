@@ -15,14 +15,11 @@ import discord.ext.test as dpytest
 import pytest
 
 # Own modules
-from sqlalchemy import delete
+from sqlalchemy import text
 
 from koala import db as koala_db
 from koala.cogs.intro_cog import db as intro_db
-from koala.cogs.intro_cog.models import GuildWelcomeMessages
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, get_non_bot_members
-from koala.db import engine
-from koala.models import Guilds, GuildExtensions, KoalaExtensions, mapper_registry
 from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
 from tests.log import logger
 
@@ -31,6 +28,7 @@ from tests.log import logger
 # Variables
 
 # Welcome Message Database Manager Tests
+
 
 @pytest.mark.parametrize("guild_id, expected", [(101,
                                                  "fake guild welcome message"),
@@ -144,5 +142,5 @@ async def test_on_member_join():
 def setup_db():
     with koala_db.session_manager() as session:
         for table in koala_db.fetch_all_tables():
-            session.execute(delete(table))
+            session.execute(text(f"DELETE FROM {table};"))
         session.commit()
