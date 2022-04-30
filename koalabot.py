@@ -19,24 +19,21 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 
 # Futures
 # Built-in/Generic Imports
-import os
+import asyncio
 import time
 
 # Libs
+from aiohttp import web
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 # Own modules
 from koala.db import extension_enabled
 from koala.utils import error_embed
 from koala.log import logger
-from koala.env import BOT_TOKEN, BOT_OWNER
+from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
 
 # Constants
-load_dotenv()
-
-
 COMMAND_PREFIX = "k!"
 OPT_COMMAND_PREFIX = "K!"
 STREAMING_URL = "https://twitch.tv/thenuel"
@@ -168,8 +165,27 @@ async def on_command_error(ctx, error: Exception):
         raise error
 
 
-if __name__ == "__main__":  # pragma: no cover
-    os.system("title " + "KoalaBot")
+async def run_bot():
+    app = web.Application()
+
+    setattr(bot, "koala_web_app", app)
     load_all_cogs()
-    # Starts bot using the given BOT_ID
-    bot.run(BOT_TOKEN)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', API_PORT)
+    await site.start()
+
+    try:
+        await bot.start(BOT_TOKEN)
+
+    except Exception:
+        bot.close(),
+        raise
+
+    finally:
+        await runner.cleanup()
+
+if __name__ == '__main__': # pragma: no cover
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_bot())

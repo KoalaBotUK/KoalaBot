@@ -19,6 +19,8 @@ from koala.db import session_manager
 from tests.log import logger
 # Constants
 
+pytest_plugins = 'aiohttp.pytest_plugin'
+
 
 @pytest.fixture(scope='session', autouse=True)
 def teardown_config():

@@ -10,13 +10,13 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
-import datetime
 
 import discord
 from discord.ext import commands, tasks
 
 # Own modules
 from discord.ext.commands import BadArgument
+from koala.utils import convert_iso_datetime
 
 import koalabot
 from koala.db import get_all_available_guild_extensions, give_guild_extension, \
@@ -35,15 +35,6 @@ def convert_activity_type(argument):
         return discord.ActivityType[argument]
     except KeyError:
         raise BadArgument('Unknown activity type %s' % argument)
-
-
-def convert_iso_datetime(argument):
-    try:
-        return datetime.datetime.fromisoformat(argument)
-    except ValueError:
-        raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
-
-
 class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
@@ -269,6 +260,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
 def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
+
     :param bot: the bot client for KoalaBot
     """
     bot.add_cog(BaseCog(bot))
