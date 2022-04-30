@@ -46,4 +46,4 @@ VOLUME /config
 # run app
 #########
 
-CMD [ "python3", "koalabot.py"]
+CMD [ "./startup.sh"]
