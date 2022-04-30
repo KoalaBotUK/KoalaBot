@@ -143,6 +143,6 @@ async def test_on_member_join():
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
     with koala_db.session_manager() as session:
-        for table in mapper_registry.metadata.tables:
+        for table in koala_db.fetch_all_tables():
             session.execute(delete(table))
         session.commit()
