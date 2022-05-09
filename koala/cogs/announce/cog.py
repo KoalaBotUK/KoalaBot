@@ -30,7 +30,7 @@ def announce_is_enabled(ctx):
     except PermissionError:
         result = False
 
-    return result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest)
+    await ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
 
 
 class Announce(commands.Cog):
@@ -55,15 +55,15 @@ class Announce(commands.Cog):
                 guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
         return True
 
-    def has_active_msg(self, guild_id):
+    def has_active_msg(self, guild_id, ctx):
         """
         Check if a particular id has an active announcement pending announcement
         :param guild_id: The id of the guild of the command
         :return: Boolean of whether there is an active announcement or not
         """
-        return guild_id in self.messages.keys()
+        await ctx.send(guild_id in self.messages)
 
-    def get_role_names(self, guild_id, roles):
+    def get_role_names(self, guild_id, roles, ctx):
         """
         A function to get the names of all the roles the announcement will be sent to
         :param roles: The list of roles in the guild
@@ -73,9 +73,9 @@ class Announce(commands.Cog):
         temp = []
         for role in self.roles[guild_id]:
             temp.append(discord.utils.get(roles, id=role).name)
-        return temp
+        await ctx.send(temp)
 
-    def get_receivers(self, guild_id, roles):
+    def get_receivers(self, guild_id, roles, ctx):
         """
         A function to get the receivers of a particular announcement
         :param roles: The list of roles in the guild
@@ -85,7 +85,7 @@ class Announce(commands.Cog):
         temp = []
         for role in self.roles[guild_id]:
             temp += discord.utils.get(roles, id=role).members
-        return list(set(temp))
+        await ctx.send(list(set(temp)))
 
     def receiver_msg(self, guild):
         """
