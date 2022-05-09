@@ -45,7 +45,7 @@ class Announce(commands.Cog):
         insert_extension("Announce", 0, True, True)
         self.announce_database_manager = AnnounceDBManager()
 
-    def not_exceeded_limit(self, guild_id):
+    def not_exceeded_limit(self, guild_id, ctx):
         """
         Check if enough days have passed for the user to use the announce function
         :return:
@@ -53,7 +53,7 @@ class Announce(commands.Cog):
         if self.announce_database_manager.get_last_use_date(guild_id):
             return int(time.time()) - self.announce_database_manager.get_last_use_date(
                 guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
-        return True
+        await ctx.send(True)
 
     def has_active_msg(self, guild_id, ctx):
         """
@@ -87,7 +87,7 @@ class Announce(commands.Cog):
             temp += discord.utils.get(roles, id=role).members
         await ctx.send(list(set(temp)))
 
-    def receiver_msg(self, guild):
+    def receiver_msg(self, guild, ctx):
         """
         A function to create a string message about receivers
         :param guild: The guild of the bot
@@ -95,9 +95,9 @@ class Announce(commands.Cog):
         """
         if not self.roles[guild.id]:
             return f"You are currently sending to Everyone and there are {str(len(guild.members))} receivers"
-        return f"You are currently sending to {self.get_role_names(guild.id, guild.roles)} and there are {str(len(self.get_receivers(guild.id, guild.roles)))} receivers "
+        await ctx.send(f"You are currently sending to {self.get_role_names(guild.id, guild.roles)} and there are {str(len(self.get_receivers(guild.id, guild.roles)))} receivers ")
 
-    def construct_embed(self, guild: discord.Guild):
+    def construct_embed(self, guild: discord.Guild, ctx):
         """
         Constructing an embedded message from the information stored in the manager
         :param guild: The the guild
@@ -109,7 +109,7 @@ class Announce(commands.Cog):
         embed.set_author(name="Announcement from " + guild.name)
         if message.thumbnail != 'https://cdn.discordapp.com/':
             embed.set_thumbnail(url=message.thumbnail)
-        return embed
+        await ctx.send(embed)
 
     @commands.check(announce_is_enabled)
     @commands.group(name="announce")
