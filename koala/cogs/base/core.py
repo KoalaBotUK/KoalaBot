@@ -1,4 +1,5 @@
 import datetime
+from distutils import extension
 from typing import List, Optional
 
 import discord
@@ -7,8 +8,8 @@ from discord.ext.commands import Bot
 from . import db
 from .log import logger
 from .models import ScheduledActivities
-from koala.db import assign_session
-from .utils import DEFAULT_ACTIVITY, activity_eq
+from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, give_guild_extension, remove_guild_extension
+from .utils import DEFAULT_ACTIVITY, activity_eq, list_ext_embed
 
 # Constants
 
@@ -96,3 +97,119 @@ async def activity_set_current_scheduled(bot: Bot, **kwargs):
         await bot.change_presence(activity=new_activity)
         logger.info("Auto changing bot presence: %s" % new_activity)
         current_activity = new_activity
+
+
+async def ping(bot: Bot):
+    """
+    Returns the ping of the bot
+    :param bot:
+    :return:
+    """
+    return f"Pong! {round(bot.latency * 1000)}ms"
+
+
+async def support_link():
+    """
+    Returns the link for KoalaBot Support server
+    :return:
+    """
+    return f"Join our support server for more help! https://discord.gg/5etEjVd"
+
+
+async def purge_limit(amount):
+    """
+    Returns number of messages to purge
+    :param amount:
+    :return:
+    """
+    return amount + 1
+
+
+async def load_cog(bot: Bot, extension, package):
+    """
+    Loads a cog from the cogs folder
+    :param extension:
+    :param package:
+    :return:
+    """
+    bot.load_extension("."+extension, package=package)
+    
+    return f'{extension} Cog Loaded'
+
+
+async def unload_cog(bot: Bot, extension, package):
+    """
+    Unloads a cog from the cogs folder
+    :param extension:
+    :param package:
+    :return:
+    """
+    if extension == "BaseCog":
+        return "Sorry, you can't unload the base cog"
+    else:
+        bot.unload_extension("."+extension, package=package)
+        return f'{extension} Cog Unloaded'
+
+
+async def enable_extension(guild_id, koala_extension):
+    """
+    Enables a koala extension
+    :param guild_id:
+    :param koala_extension:
+    :return:
+    """
+    if koala_extension.lower() in ["all"]:
+        available_extensions = get_all_available_guild_extensions(guild_id)
+        for ext in available_extensions:
+            give_guild_extension(guild_id, ext)
+        
+        embed = list_ext_embed(guild_id)
+        embed.title = "All extensions enabled"
+
+    else:
+        give_guild_extension(guild_id, koala_extension)
+        embed = list_ext_embed(guild_id)
+        embed.title = koala_extension + " enabled"
+    
+    return embed
+
+
+async def disable_extension(guild_id, koala_extension):
+    """
+    Disables a koala extension
+    :param guild_id:
+    :param koala_extension:
+    :return:
+    """
+    all_ext = get_enabled_guild_extensions(guild_id)
+
+    if koala_extension.lower() in ["all"]:
+        for ext in all_ext:
+            remove_guild_extension(guild_id, ext)
+    elif koala_extension not in all_ext:
+        raise NotImplementedError(f"{koala_extension} is not an enabled extension")
+    
+    remove_guild_extension(guild_id, koala_extension)
+    embed = list_ext_embed(guild_id)
+    embed.title = koala_extension + " disabled"
+
+    return embed
+
+
+async def list_enabled_extensions(guild_id):
+    """
+    Lists enabled koala extensions
+    :param guild_id:
+    :return:
+    """
+    embed = list_ext_embed(guild_id)
+    return embed
+
+
+async def get_version(bot):
+    """
+    Returns version of KoalaBot
+    :param bot:
+    :return:
+    """
+    return "version: "+bot.__version__
