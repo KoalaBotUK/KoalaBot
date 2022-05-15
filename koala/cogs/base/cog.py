@@ -163,7 +163,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param amount: Amount of lines to delete
         """
-        await ctx.channel.purge(limit=core.purge_limit(amount))
+        await core.purge(self.bot, ctx.channel.id, amount)
 
     @commands.command(name="loadCog", aliases=["load_cog"])
     @commands.check(koalabot.is_owner)
@@ -173,7 +173,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(core.load_cog(self, extension, self.COGS_PACKAGE))
+        await ctx.send(core.load_cog(self.bot, extension, self.COGS_PACKAGE))
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
@@ -183,7 +183,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(core.unload_cog(self, extension, self.COGS_PACKAGE))
+        await ctx.send(core.unload_cog(self.bot, extension, self.COGS_PACKAGE))
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)

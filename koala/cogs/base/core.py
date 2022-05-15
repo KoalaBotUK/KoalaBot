@@ -116,13 +116,15 @@ async def support_link():
     return f"Join our support server for more help! https://discord.gg/5etEjVd"
 
 
-async def purge_limit(amount):
+async def purge(bot: Bot, channel_id, amount):
     """
-    Returns number of messages to purge
+    Purges a number of messages from the channel
+    :param channel:
     :param amount:
     :return:
     """
-    return amount + 1
+    channel = bot.get_channel(channel_id)
+    return channel.purge(amount + 1)
 
 
 async def load_cog(bot: Bot, extension, package):
@@ -133,7 +135,6 @@ async def load_cog(bot: Bot, extension, package):
     :return:
     """
     bot.load_extension("."+extension, package=package)
-    
     return f'{extension} Cog Loaded'
 
 
