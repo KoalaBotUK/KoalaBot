@@ -1,7 +1,7 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import  CREATED
+from http.client import CREATED, OK
 from aiohttp import web
 import discord
 from discord.ext.commands import Bot
@@ -17,6 +17,16 @@ BASE_ENDPOINT = 'base'
 ACTIVITY_ENDPOINT = 'activity'
 SET_ACTIVITY_ENDPOINT = 'setActivity'
 SCHEDULE_ACTIVITY_ENDPOINT = 'scheduleActivity'
+
+PING_ENDPOINT = 'ping'
+SUPPORT_ENDPOINT = 'support'
+GET_VERSION_ENDPOINT = 'getVersion'
+PURGE_ENDPOINT = 'purge'
+LOAD_COG_ENDPOINT = 'loadCog'
+UNLOAD_COG_ENDPOINT = 'unloadCog'
+ENABLE_EXTENSION_ENDPOINT = 'enableExtension'
+DISABLE_EXTENSION_ENDPOINT = 'disableExtension'
+LIST_ENABLED_EXTENSIONS_ENDPOINT = 'listEnabledExtensions'
 
 # Variables
 
@@ -36,7 +46,13 @@ class BaseEndpoint:
         """
         app.add_routes([web.get('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.get_activities),
                         web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity),
-                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT), self.post_schedule_activity)])
+                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT), self.post_schedule_activity),
+                        web.get('/{endpoint}'.format(endpoint=PING_ENDPOINT), self.get_ping),
+                        web.get('/{endpoint}'.format(endpoint=SUPPORT_ENDPOINT), self.get_support_link),
+                        web.get('/{endpoint}'.format(endpint=GET_VERSION_ENDPOINT), self.get_version),
+                        web.delete('/{endpoint}'.format(endpoint=PURGE_ENDPOINT), self.delete_messages),
+                        web.get('/{endpoint}'.format(endpoint=LOAD_COG_ENDPOINT), self.get_cog),
+                        web.delete('/{endpoint}'.format(endpoint=UNLOAD_COG_ENDPOINT), self.delete_cog)])
         return app
 
     @parse_request
@@ -88,6 +104,82 @@ class BaseEndpoint:
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
 
         return build_response(CREATED, {'message': 'Activity scheduled'})
+
+    @parse_request
+    async def get_ping(self):
+        """
+        Get the latency of the bot
+        :return: The ping
+        """
+        return core.ping(self._bot)
+
+    @parse_request
+    async def get_support_link():
+        """
+        Get the support link of KoalaBot
+        :return: The support link
+        """
+        return core.support_link()
+
+    @parse_request
+    async def get_version(self):
+        """
+        Get the version of KoalaBot
+        :return: The version
+        """
+        return core.get_version(self._bot)
+
+    @parse_request
+    async def delete_messages(self, channel_id, amount):
+        """
+        Delete messages from a given channel
+        :param channel_id: channel to delete messages
+        :param amount: number of messages to delete
+        :return:
+        """
+        try:
+            core.purge(self._bot, channel_id, amount)
+        except BaseException as e:
+            error = 'Error deleting messages: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
+
+        return build_response(OK, {'message': 'Message(s) deleted'})
+
+    @parse_request
+    async def get_cog(self, extension, package):
+        """
+        Loads a cog from the cogs folder
+        :param extension: name of the cog
+        :param package: package of the cogs
+        :return:
+        """
+        try:
+            core.load_cog(self._bot, extension, package)
+        except BaseException as e:
+            error = 'Error loading cog: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
+        
+        return build_response(OK, {'message': 'Cog loaded'})
+
+    @parse_request
+    async def delete_cog(self, extension, package):
+        """
+        Unloads a cog from the cogs folder
+        :param extension: name of the cog
+        :param package: package of the cogs
+        :return:
+        """
+        try:
+            core.unload_cog(self._bot, extension, package)
+        except BaseException as e:
+            error = 'Error unloading cog: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
+        
+        return build_response(OK, {'message': 'Cog unloaded'})
+
 
 
 def getActivityType(activity_type):
