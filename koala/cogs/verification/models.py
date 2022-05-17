@@ -29,7 +29,7 @@ class NonVerifiedEmails:
 @mapper_registry.mapped
 class Roles:
     __tablename__ = 'roles'
-    s_id = Column(DiscordSnowflake, ForeignKey("Guilds.guild_id"), primary_key=True)
+    s_id = Column(DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True)
     r_id = Column(DiscordSnowflake, primary_key=True)
     email_suffix = Column(VARCHAR(100), primary_key=True)
 

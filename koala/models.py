@@ -1,6 +1,9 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
+from enum import Enum
+
+import discord
 from sqlalchemy import Column, INT, VARCHAR, BOOLEAN, ForeignKey
 import sqlalchemy.types as types
 from sqlalchemy.orm import registry, validates
@@ -67,7 +70,7 @@ class KoalaExtensions:
 @mapper_registry.mapped
 class GuildExtensions:
     __tablename__ = 'GuildExtensions'
-    extension_id = Column(VARCHAR(20), ForeignKey("KoalaExtensions.extension_id"), primary_key=True)
+    extension_id = Column(VARCHAR(20), ForeignKey("KoalaExtensions.extension_id", ondelete='CASCADE'), primary_key=True)
     guild_id = Column(DiscordSnowflake, primary_key=True)
 
     @validates("guild_id")

@@ -9,9 +9,11 @@ import os
 from enum import Enum
 from pathlib import Path
 
+import discord
+import sqlalchemy.dialects.mysql.base
 from alembic import op
 from discord import ActivityType
-from sqlalchemy import Column, String, VARCHAR, INT, FLOAT, BOOLEAN, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, String, VARCHAR, INT, FLOAT, BOOLEAN, ForeignKey, TIMESTAMP, types
 from sqlalchemy.exc import IntegrityError as SaIntegrityError
 from pymysql.err import IntegrityError as PmyIntegrityError
 
@@ -79,6 +81,32 @@ def dict_factory(cursor, row):
     return d
 
 
+class DiscordActivityType(types.TypeDecorator):
+    """
+    Uses int for python, but VARCHAR(18) for storing in db
+    """
+
+    impl = sqlalchemy.dialects.mysql.TINYINT(2)
+
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        return discord.ActivityType[value].value if value else None
+
+    def process_literal_param(self, value, dialect):
+        return discord.ActivityType[value].value if value else None
+
+    def process_result_value(self, value, dialect):
+        return ActivityType(value) if value else None
+
+    def copy(self, **kw):
+        return DiscordActivityType()
+
+    @property
+    def python_type(self):
+        return ActivityType
+
+
 def upgrade():
     guilds = op.create_table("Guilds",
                              Column('guild_id', VARCHAR(18), primary_key=True),
@@ -90,30 +118,30 @@ def upgrade():
                                        Column('enabled', BOOLEAN, server_default='1'))
     guild_extensions = op.create_table('GuildExtensions',
                                        Column('extension_id', VARCHAR(20),
-                                              ForeignKey("KoalaExtensions.extension_id"), primary_key=True),
+                                              ForeignKey("KoalaExtensions.extension_id", ondelete='CASCADE'), primary_key=True),
                                        Column('guild_id', VARCHAR(18), primary_key=True))
 
     scheduled_activities = op.create_table('ScheduledActivities',
                                            Column('activity_id', INT, primary_key=True, autoincrement=True),
-                                           Column('activity_type', Enum(ActivityType),
-                                                  comment="0: Playing, 1: Streaming, 2: Listening, 3: Watching, "
-                                                          "4: Custom, 5: Competing"),
+                                           Column('activity_type', DiscordActivityType,
+                                                  comment="-1: unknown, 0: Playing, 1: Streaming, 2: Listening, "
+                                                          "3: Watching, 4: Custom, 5: Competing"),
                                            Column('stream_url', VARCHAR(100), nullable=True),
                                            Column('message', VARCHAR(100)),
                                            Column('time_start', TIMESTAMP),
                                            Column('time_end', TIMESTAMP))
 
     guild_usage = op.create_table('GuildUsage',
-                                  Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id"), primary_key=True),
+                                  Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
                                   Column('last_message_epoch_time', INT))
 
     guild_colour_change_permissions = op.create_table('GuildColourChangePermissions',
                                                       Column('guild_id', VARCHAR(18),
-                                                             ForeignKey("Guilds.guild_id"), primary_key=True),
+                                                             ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
                                                       Column('role_id', VARCHAR(18), primary_key=True))
     guild_invalid_custom_colour_roles = op.create_table('GuildInvalidCustomColourRoles',
                                                         Column('guild_id', VARCHAR(18),
-                                                               ForeignKey("Guilds.guild_id"),
+                                                               ForeignKey("Guilds.guild_id", ondelete='CASCADE'),
                                                                primary_key=True),
                                                         Column('role_id', VARCHAR(18), primary_key=True))
 
@@ -122,21 +150,21 @@ def upgrade():
                                              Column('welcome_message', String(2000, collation="utf8mb4_general_ci"), nullable=True))
 
     guild_rfr_messages = op.create_table('GuildRFRMessages',
-                                         Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id")),
+                                         Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
                                          Column('channel_id', VARCHAR(18)),
                                          Column('message_id', VARCHAR(18)),
                                          Column('emoji_role_id', INT, primary_key=True))
     op.create_unique_constraint('uniq_message', 'GuildRFRMessages', ['guild_id', 'channel_id', 'message_id'])
     rfr_message_emoji_roles = op.create_table('RFRMessageEmojiRoles',
                                               Column('emoji_role_id', INT,
-                                                     ForeignKey("GuildRFRMessages.emoji_role_id"), primary_key=True),
+                                                     ForeignKey("GuildRFRMessages.emoji_role_id", ondelete='CASCADE'), primary_key=True),
                                               Column('emoji_raw', VARCHAR(50, collation="utf8mb4_general_ci"), primary_key=True),
                                               Column('role_id', VARCHAR(18), primary_key=True))
     op.create_unique_constraint('uniq_emoji', 'RFRMessageEmojiRoles', ['emoji_role_id', 'emoji_raw'])
     op.create_unique_constraint('uniq_role_emoji', 'RFRMessageEmojiRoles', ['emoji_role_id', 'role_id'])
     guild_rfr_required_roles = op.create_table('GuildRFRRequiredRoles',
                                                Column('guild_id', VARCHAR(18),
-                                                      ForeignKey("Guilds.guild_id"), primary_key=True),
+                                                      ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
                                                Column('role_id', VARCHAR(18), primary_key=True))
     op.create_unique_constraint('uniq_guild_role', 'GuildRFRRequiredRoles', ['guild_id', 'role_id'])
 
@@ -157,24 +185,24 @@ def upgrade():
 
     twitch_alerts = op.create_table('TwitchAlerts',
                                     Column('guild_id', VARCHAR(18),
-                                           ForeignKey("Guilds.guild_id")),
+                                           ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
                                     Column('channel_id', VARCHAR(18), primary_key=True),
                                     Column('default_message', VARCHAR(1000, collation="utf8mb4_general_ci")))
     user_in_twitch_alert = op.create_table('UserInTwitchAlert',
                                            Column('channel_id', VARCHAR(18),
-                                                  ForeignKey("TwitchAlerts.channel_id"), primary_key=True),
+                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'), primary_key=True),
                                            Column('twitch_username', VARCHAR(25), primary_key=True),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True),
                                            Column('message_id', VARCHAR(18), nullable=True))
     team_in_twitch_alert = op.create_table('TeamInTwitchAlert',
                                            Column('team_twitch_alert_id', INT,
                                                   autoincrement=True, primary_key=True),
-                                           Column('channel_id', VARCHAR(18), ForeignKey("TwitchAlerts.channel_id")),
+                                           Column('channel_id', VARCHAR(18), ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')),
                                            Column('twitch_team_name', VARCHAR(25)),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True))
     user_in_twitch_team = op.create_table('UserInTwitchTeam',
                                           Column('team_twitch_alert_id', INT,
-                                                 ForeignKey("TeamInTwitchAlert.team_twitch_alert_id"),
+                                                 ForeignKey("TeamInTwitchAlert.team_twitch_alert_id", ondelete='CASCADE'),
                                                  primary_key=True),
                                           Column('twitch_username', VARCHAR(25), primary_key=True),
                                           Column('message_id', VARCHAR(18), nullable=True))
@@ -187,7 +215,7 @@ def upgrade():
                                           Column('email', VARCHAR(100)),
                                           Column('token', VARCHAR(8), primary_key=True))
     roles = op.create_table('roles',
-                            Column('s_id', VARCHAR(18), ForeignKey("Guilds.guild_id"), primary_key=True),
+                            Column('s_id', VARCHAR(18), ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
                             Column('r_id', VARCHAR(18), primary_key=True),
                             Column('email_suffix', VARCHAR(100), primary_key=True))
     to_re_verify = op.create_table('to_re_verify',
@@ -344,6 +372,8 @@ def downgrade():
 
     op.drop_table("GuildInvalidCustomColourRoles")
     op.drop_table("GuildColourChangePermissions")
+
+    op.drop_table("ScheduledActivities")
 
     op.drop_table("GuildExtensions")
     op.drop_table("KoalaExtensions")
