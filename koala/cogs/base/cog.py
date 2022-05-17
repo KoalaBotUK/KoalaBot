@@ -145,7 +145,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Returns the ping of the bot
         :param ctx: Context of the command
         """
-        await ctx.send(core.ping(self.bot))
+        await ctx.send(await core.ping(self.bot))
 
     @commands.command()
     async def support(self, ctx):
@@ -220,7 +220,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         Get the version of KoalaBot
         """
-        await ctx.send(core.get_version(koalabot))
+        await ctx.send(core.get_version())
 
 
 def setup(bot: koalabot) -> None:
