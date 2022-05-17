@@ -14,19 +14,18 @@ from koala.utils import convert_iso_datetime
 
 # Constants
 BASE_ENDPOINT = 'base'
-ACTIVITY_ENDPOINT = 'activity'
-SET_ACTIVITY_ENDPOINT = 'setActivity'
-SCHEDULE_ACTIVITY_ENDPOINT = 'scheduleActivity'
+ACTIVITY_ENDPOINT = 'scheduled-activity' # GET
+SET_ACTIVITY_ENDPOINT = 'activity' # PUT
+SCHEDULE_ACTIVITY_ENDPOINT = 'scheduled-activity' # POST
 
 PING_ENDPOINT = 'ping'
 SUPPORT_ENDPOINT = 'support'
-GET_VERSION_ENDPOINT = 'getVersion'
-PURGE_ENDPOINT = 'purge'
-LOAD_COG_ENDPOINT = 'loadCog'
-UNLOAD_COG_ENDPOINT = 'unloadCog'
-ENABLE_EXTENSION_ENDPOINT = 'enableExtension'
-DISABLE_EXTENSION_ENDPOINT = 'disableExtension'
-LIST_ENABLED_EXTENSIONS_ENDPOINT = 'listEnabledExtensions'
+GET_VERSION_ENDPOINT = 'version'
+LOAD_COG_ENDPOINT = 'load-cog'
+UNLOAD_COG_ENDPOINT = 'unload-cog'
+ENABLE_EXTENSION_ENDPOINT = 'enable-extension'
+DISABLE_EXTENSION_ENDPOINT = 'disable-extension'
+EXTENSIONS_ENDPOINT = 'extensions'
 
 # Variables
 
@@ -49,10 +48,12 @@ class BaseEndpoint:
                         web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT), self.post_schedule_activity),
                         web.get('/{endpoint}'.format(endpoint=PING_ENDPOINT), self.get_ping),
                         web.get('/{endpoint}'.format(endpoint=SUPPORT_ENDPOINT), self.get_support_link),
-                        web.get('/{endpoint}'.format(endpint=GET_VERSION_ENDPOINT), self.get_version),
-                        web.delete('/{endpoint}'.format(endpoint=PURGE_ENDPOINT), self.delete_messages),
-                        web.get('/{endpoint}'.format(endpoint=LOAD_COG_ENDPOINT), self.get_cog),
-                        web.delete('/{endpoint}'.format(endpoint=UNLOAD_COG_ENDPOINT), self.delete_cog)])
+                        web.get('/{endpoint}'.format(endpoint=GET_VERSION_ENDPOINT), self.get_version),
+                        web.post('/{endpoint}'.format(endpoint=LOAD_COG_ENDPOINT), self.post_load_cog),
+                        web.post('/{endpoint}'.format(endpoint=UNLOAD_COG_ENDPOINT), self.post_unload_cog),
+                        web.post('/{endpoint}'.format(endpoint=ENABLE_EXTENSION_ENDPOINT), self.post_enable_extension),
+                        web.post('/{endpoint}'.format(endpoint=DISABLE_EXTENSION_ENDPOINT), self.post_disable_extension),
+                        web.get('/{endpoint}'.format(endpoint=EXTENSIONS_ENDPOINT), self.get_extensions)])
         return app
 
     @parse_request
@@ -113,8 +114,8 @@ class BaseEndpoint:
         """
         return core.ping(self._bot)
 
-    @parse_request
-    async def get_support_link():
+    @parse_request()
+    async def get_support_link(self):
         """
         Get the support link of KoalaBot
         :return: The support link
@@ -129,25 +130,8 @@ class BaseEndpoint:
         """
         return core.get_version(self._bot)
 
-    @parse_request
-    async def delete_messages(self, channel_id, amount):
-        """
-        Delete messages from a given channel
-        :param channel_id: channel to delete messages
-        :param amount: number of messages to delete
-        :return:
-        """
-        try:
-            core.purge(self._bot, channel_id, amount)
-        except BaseException as e:
-            error = 'Error deleting messages: {}'.format(handleActivityError(e))
-            logger.error(error)
-            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
-
-        return build_response(OK, {'message': 'Message(s) deleted'})
-
-    @parse_request
-    async def get_cog(self, extension, package):
+    @parse_request(raw_response=True)
+    async def post_load_cog(self, extension, package):
         """
         Loads a cog from the cogs folder
         :param extension: name of the cog
@@ -163,8 +147,8 @@ class BaseEndpoint:
         
         return build_response(OK, {'message': 'Cog loaded'})
 
-    @parse_request
-    async def delete_cog(self, extension, package):
+    @parse_request(raw_response=True)
+    async def post_unload_cog(self, extension, package):
         """
         Unloads a cog from the cogs folder
         :param extension: name of the cog
@@ -179,6 +163,50 @@ class BaseEndpoint:
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
         return build_response(OK, {'message': 'Cog unloaded'})
+
+    @parse_request(raw_response=True)
+    async def post_enable_extension(self, guild_id, koala_ext):
+        """
+        Enables a koala extension
+        :param guild_id: id for the Discord guild
+        :param koala_ext: name of the extension
+        :return:
+        """
+        try:
+            core.enable_extension(self._bot, guild_id, koala_ext)
+        except BaseException as e:
+            error = 'Error enabling extension: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
+        
+        return build_response(OK, {'message': 'Extension enabled'})
+
+    @parse_request(raw_response=True)
+    async def post_disable_extension(self, guild_id, koala_ext):
+        """
+        Disables a koala extension onto a server
+        :param guild_id: id for the Discord guild
+        :param koala_extension: name of the extension
+        :return:
+        """
+        try:
+            core.disable_extension(self._bot, guild_id, koala_ext)
+        except BaseException as e:
+            error = 'Error enabling extension: {}'.format(handleActivityError(e))
+            logger.error(error)
+            raise web.HTTPUnprocessableEntity(reason="{}".format(error))
+        
+        return build_response(OK, {'message': 'Extension disabled'})
+
+    @parse_request
+    async def get_extensions(self, guild_id):
+        """
+        Gets enabled koala extensions of a guild
+        :param guild_id: id of the Discord guild
+        :return:
+        """
+        
+        return core.get_available_extensions(guild_id)
 
 
 

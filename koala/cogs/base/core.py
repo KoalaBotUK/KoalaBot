@@ -207,6 +207,15 @@ async def list_enabled_extensions(guild_id):
     return embed
 
 
+async def get_available_extensions(guild_id):
+    """
+        Gets all koala extensions of a guild
+        :param guild_id:
+        :return:
+        """
+    return get_all_available_guild_extensions(guild_id)
+
+
 async def get_version(bot):
     """
     Returns version of KoalaBot

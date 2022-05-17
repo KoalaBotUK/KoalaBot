@@ -21,27 +21,27 @@ GET /activity
 '''
 
 async def test_get_activities(api_client):
-    resp = await api_client.get('/activity?show_all=False')
+    resp = await api_client.get('/scheduled-activity?show_all=False')
     assert resp.status == OK
     text = await resp.text()
     assert text == '[]'
 
 async def test_get_activities_bad_param(api_client):
-    resp = await api_client.get('/activity?invalid_arg=abc')
+    resp = await api_client.get('/scheduled-activity?invalid_arg=abc')
     assert resp.status == BAD_REQUEST
 
 async def test_get_activities_missing_param(api_client):
-    resp = await api_client.get('/activity')
+    resp = await api_client.get('/scheduled-activity')
     assert resp.status == BAD_REQUEST
 
 '''
 
-POST /scheduleActivity  
+POST /scheduled-activity  
 
 '''
 
 async def test_post_schedule_activity(api_client):
-    resp = await api_client.post('/scheduleActivity', data=(
+    resp = await api_client.post('/scheduled-activity', data=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -54,7 +54,7 @@ async def test_post_schedule_activity(api_client):
     assert text == '{"message": "Activity scheduled"}'
 
 async def test_post_schedule_activity_missing_param(api_client):
-    resp = await api_client.post('/scheduleActivity', data=(
+    resp = await api_client.post('/scheduled-activity', data=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -66,7 +66,7 @@ async def test_post_schedule_activity_missing_param(api_client):
     assert text == "400: Unsatisfied Arguments: {'end_time'}"
 
 async def test_post_schedule_activity_bad_activity(api_client):
-    resp = await api_client.post('/scheduleActivity', data=(
+    resp = await api_client.post('/scheduled-activity', data=(
         {
             'activity_type': 'invalidActivity',
             'message': 'test',
@@ -78,7 +78,7 @@ async def test_post_schedule_activity_bad_activity(api_client):
     assert await resp.text() == '422: Error scheduling activity: Invalid activity type'
 
 async def test_post_schedule_activity_bad_start_time(api_client):
-    resp = await api_client.post('/scheduleActivity', data=(
+    resp = await api_client.post('/scheduled-activity', data=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -90,7 +90,7 @@ async def test_post_schedule_activity_bad_start_time(api_client):
     assert await resp.text() == '422: Error scheduling activity: Bad start / end time'
 
 async def test_post_schedule_activity_bad_end_time(api_client):
-    resp = await api_client.post('/scheduleActivity', data=(
+    resp = await api_client.post('/scheduled-activity', data=(
         {
             'activity_type': 'invalidActivity',
             'message': 'test',
@@ -103,12 +103,12 @@ async def test_post_schedule_activity_bad_end_time(api_client):
 
 '''
 
-PUT /setActivity
+PUT /activity
 
 '''
 
 async def test_put_set_activity(api_client):
-    resp = await api_client.put('/setActivity', data=(
+    resp = await api_client.put('/activity', data=(
         {
             'activity_type': 'playing',
             'name': 'test',
@@ -120,7 +120,7 @@ async def test_put_set_activity(api_client):
     assert dpytest.verify().activity().matches(discord.Activity(type=discord.ActivityType.playing, name="test", url="test.com"))
     
 async def test_put_set_activity_bad_req(api_client):
-    resp = await api_client.put('/setActivity', data=(
+    resp = await api_client.put('/activity', data=(
         {
             'activity_type': 'invalidActivity',
             'name': 'test',
@@ -130,10 +130,42 @@ async def test_put_set_activity_bad_req(api_client):
     assert await resp.text() == '422: Error setting activity: Invalid activity type'
 
 async def test_put_set_activity_missing_param(api_client):
-    resp = await api_client.put('/setActivity', data=(
+    resp = await api_client.put('/activity', data=(
         {
             'activity_type': 'invalidActivity',
             'url': 'test.com'
         }))
     assert resp.status == BAD_REQUEST
     assert await resp.text() == "400: Unsatisfied Arguments: {'name'}"
+
+'''
+
+GET /ping  
+
+'''
+
+async def test_get_ping(api_client):
+    resp = await api_client.get('/ping')
+    text = await resp.text()
+    assert "Pong! " in text
+
+'''
+
+GET /version 
+
+'''
+
+async def test_get_version(api_client):
+    resp = await api_client.get('/version')
+    text = await resp.text()
+    assert "version: " in text
+
+'''
+
+GET /support
+
+'''
+
+async def test_get_support_link(api_client):
+    resp = await api_client.get('/support')
+    assert await resp.text() == "Join our support server for more help! https://discord.gg/5etEjVd"
