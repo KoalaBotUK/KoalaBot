@@ -5,6 +5,7 @@ from typing import List, Optional
 import discord
 from discord.ext.commands import Bot
 
+import koalabot
 from . import db
 from .log import logger
 from .models import ScheduledActivities
@@ -108,7 +109,7 @@ async def ping(bot: Bot):
     return f"Pong! {round(bot.latency * 1000)}ms"
 
 
-async def support_link():
+def support_link():
     """
     Returns the link for KoalaBot Support server
     :return:
@@ -216,10 +217,9 @@ async def get_available_extensions(guild_id):
     return get_all_available_guild_extensions(guild_id)
 
 
-async def get_version(bot):
+def get_version():
     """
     Returns version of KoalaBot
-    :param bot:
     :return:
     """
-    return "version: "+bot.__version__
+    return "version: "+koalabot.__version__

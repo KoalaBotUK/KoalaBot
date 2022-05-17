@@ -107,8 +107,10 @@ def parse_request(*args, **kwargs):
                 raise aiohttp.web.HTTPBadRequest(reason="Unsatisfied Arguments: %s" % unsatisfied_args)
 
             result = await func(self, **{arg_name: available_args[arg_name] for arg_name in wanted_args})
-            if raw_response: return result
-            else: return build_response(OK, result)
+            if raw_response:
+                return result
+            else:
+                return build_response(OK, result)
 
         return wrapper
     return parsed_request(func) if func else parsed_request

@@ -112,7 +112,7 @@ class BaseEndpoint:
         Get the latency of the bot
         :return: The ping
         """
-        return core.ping(self._bot)
+        return await core.ping(self._bot)
 
     @parse_request()
     async def get_support_link(self):
@@ -128,7 +128,7 @@ class BaseEndpoint:
         Get the version of KoalaBot
         :return: The version
         """
-        return core.get_version(self._bot)
+        return core.get_version()
 
     @parse_request(raw_response=True)
     async def post_load_cog(self, extension, package):
