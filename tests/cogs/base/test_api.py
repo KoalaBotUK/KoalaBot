@@ -1,7 +1,8 @@
 from http.client import BAD_REQUEST, CREATED, OK, UNPROCESSABLE_ENTITY
 
-from discord.ext import commands
 from mock import mock
+from koala.db import get_all_available_guild_extensions
+from koala.rest.api import parse_request
 
 import koalabot
 from koala.cogs.base.api import BaseEndpoint
@@ -164,7 +165,7 @@ GET /ping
 '''
 
 
-async def test_get_ping(api_client, bot: commands.Bot):
+async def test_get_ping(api_client):
     with mock.patch('discord.client.Client.latency', new_callable=mock.PropertyMock) as mock_last_transaction:
         mock_last_transaction.return_value = 0.42
         resp = await api_client.get('/ping')
@@ -194,3 +195,146 @@ async def test_get_support_link(api_client):
     resp = await api_client.get('/support')
     text = await resp.text()
     assert "Join our support server for more help! https://discord.gg/5etEjVd" in text
+
+'''
+
+POST /load-cog
+
+'''
+
+async def test_post_load_cog(api_client):
+    resp = await api_client.post('/load-cog', data=(
+        {
+            'extension': 'announce',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == OK
+    text = await resp.text()
+    assert text == '{"message": "Cog loaded"}'
+
+async def test_post_load_cog_bad_req(api_client):
+    resp = await api_client.post('/load-cog', data=(
+        {
+            'extension': 'invalidCog',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == UNPROCESSABLE_ENTITY
+    assert await resp.text() == '422: Error loading cog: Invalid extension'
+
+async def test_post_load_cog_missing_param(api_client):
+    resp = await api_client.post('/load-cog', data=(
+        {
+            'extension': 'invalidCog'
+        }))
+    assert resp.status == BAD_REQUEST
+    assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
+
+async def test_post_load_cog_already_loaded(api_client):
+    await api_client.post('/load-cog', data=(
+        {
+            'extension': 'announce',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    
+    resp = await api_client.post('/load-cog', data=(
+        {
+            'extension': 'announce',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == UNPROCESSABLE_ENTITY
+    assert await resp.text() == '422: Error loading cog: Already loaded'
+
+'''
+
+POST /unload-cog
+
+'''
+
+async def test_post_unload_cog(api_client):
+    await api_client.post('/load-cog', data=(
+        {
+            'extension': 'announce',
+            'package': koalabot.COGS_PACKAGE
+        }))
+
+    resp = await api_client.post('/unload-cog', data=(
+        {
+            'extension': 'announce',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == OK
+    text = await resp.text()
+    assert text == '{"message": "Cog unloaded"}'
+
+async def test_post_unload_cog_not_loaded(api_client):
+    resp = await api_client.post('/unload-cog', data=(
+        {
+            'extension': 'announce',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == UNPROCESSABLE_ENTITY
+    assert await resp.text() == '422: Error unloading cog: Extension not loaded'
+
+async def test_post_unload_cog_missing_param(api_client):
+    resp = await api_client.post('/unload-cog', data=(
+        {
+            'extension': 'invalidCog'
+        }))
+    assert resp.status == BAD_REQUEST
+    assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
+
+async def test_post_unload_base_cog(api_client):
+    resp = await api_client.post('/unload-cog', data=(
+        {
+            'extension': 'BaseCog',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == BAD_REQUEST
+    text = await resp.text()
+    assert text == '{"message": "Sorry, you can\'t unload the base cog"}'
+
+'''
+
+POST /enable-extension
+
+'''
+
+# ERROR
+# async def test_post_enable_extension(api_client):
+#     guild: discord.Guild = dpytest.get_config().guilds[0]
+
+#     resp = await api_client.post('/enable-extension', data=({
+#         'guild_id': guild.id,
+#         'koala_ext': 'Announce' # TypeError
+#     }))
+#     assert resp.status == OK
+#     text = await resp.text()
+#     assert text == "Extension enabled"
+
+async def test_post_enable_extension_missing_param(api_client):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    
+    resp = await api_client.post('/enable-extension', data=(
+        {
+            'guild_id': guild.id
+        }))
+    assert resp.status == BAD_REQUEST
+    text = await resp.text()
+    assert text == "400: Unsatisfied Arguments: {'koala_ext'}"
+
+'''
+
+GET /extensions
+
+'''
+
+
+async def test_get_extension(api_client):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    resp = await api_client.get('/extensions', data=({
+        'guild_id': guild.id # 400 error: Unsatisfied Arguments
+    }))
+
+    assert resp.status == OK
+    text = await resp.text()
+    assert text == "placeholder"

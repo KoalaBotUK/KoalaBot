@@ -1,7 +1,7 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED, OK
+from http.client import CREATED, OK, BAD_REQUEST
 from aiohttp import web
 import discord
 from discord.ext.commands import Bot
@@ -139,7 +139,7 @@ class BaseEndpoint:
         :return:
         """
         try:
-            core.load_cog(self._bot, extension, package)
+            await core.load_cog(self._bot, extension, package)
         except BaseException as e:
             error = 'Error loading cog: {}'.format(handleActivityError(e))
             logger.error(error)
@@ -156,13 +156,16 @@ class BaseEndpoint:
         :return:
         """
         try:
-            core.unload_cog(self._bot, extension, package)
+            resp = await core.unload_cog(self._bot, extension, package)
         except BaseException as e:
             error = 'Error unloading cog: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
-        return build_response(OK, {'message': 'Cog unloaded'})
+        if resp == "Sorry, you can't unload the base cog":
+            return build_response(BAD_REQUEST, {'message': "Sorry, you can't unload the base cog"})
+        else:
+            return build_response(OK, {'message': 'Cog unloaded'})
 
     @parse_request(raw_response=True)
     async def post_enable_extension(self, guild_id, koala_ext):
@@ -173,8 +176,9 @@ class BaseEndpoint:
         :return:
         """
         try:
-            core.enable_extension(self._bot, guild_id, koala_ext)
+            await core.enable_extension(self._bot, guild_id, koala_ext)
         except BaseException as e:
+            print(type(e))
             error = 'Error enabling extension: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
@@ -205,8 +209,7 @@ class BaseEndpoint:
         :param guild_id: id of the Discord guild
         :return:
         """
-        
-        return core.get_available_extensions(guild_id)
+        return await core.get_available_extensions(guild_id)
 
 
 
@@ -218,7 +221,13 @@ def handleActivityError(error):
     if type(error) == KeyError:
         return 'Invalid activity type'
     elif type(error) == discord.ext.commands.errors.BadArgument:
-        return 'Bad start / end time' 
+        return 'Bad start / end time'
+    elif type(error) == discord.ext.commands.errors.ExtensionNotFound:
+        return 'Invalid extension'
+    elif type(error) == discord.ext.commands.errors.ExtensionNotLoaded:
+        return 'Extension not loaded'
+    elif type(error) == discord.ext.commands.errors.ExtensionAlreadyLoaded:
+        return 'Already loaded'
     return 'Unknown error'
 
 
