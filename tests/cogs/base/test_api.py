@@ -300,20 +300,32 @@ POST /enable-extension
 '''
 
 # ERROR
-# async def test_post_enable_extension(api_client):
-#     guild: discord.Guild = dpytest.get_config().guilds[0]
+async def test_post_enable_extension(api_client):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
 
-#     resp = await api_client.post('/enable-extension', data=({
-#         'guild_id': guild.id,
-#         'koala_ext': 'Announce' # TypeError
-#     }))
-#     assert resp.status == OK
-#     text = await resp.text()
-#     assert text == "Extension enabled"
+    resp = await api_client.post('/enable-extension', data=({
+        'guild_id': guild.id,
+        'koala_ext': 'Announce'
+    })) # TypeError
+    assert resp.status == OK
+    text = await resp.text()
+    assert text == "Extension enabled"
+
+# ERROR
+async def test_post_extension_bad_req(api_client):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+
+    resp = await api_client.post('/enable-extension', data=(
+        {
+            'guild_id': guild.id,
+            'koala_ext': 'Invalid Extension'
+        })) # TypeError
+    assert resp.status == UNPROCESSABLE_ENTITY
+    text = await resp.text()
+    assert text == "422: Error enabling extension: Invalid extension"
 
 async def test_post_enable_extension_missing_param(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    
     resp = await api_client.post('/enable-extension', data=(
         {
             'guild_id': guild.id
@@ -324,6 +336,24 @@ async def test_post_enable_extension_missing_param(api_client):
 
 '''
 
+POST /enable-extension
+
+'''
+
+# ERROR
+async def test_post_disable_extension(api_client):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    resp = await api_client.post('/disable-extension', data=({
+        'guild_id': guild.id,
+        'koala_ext': 'Announce'
+    })) # TypeError
+    assert resp.status == OK
+    text = await resp.text()
+    assert text == "{'message': 'Extension disabled'}"
+
+
+'''
+
 GET /extensions
 
 '''
@@ -331,10 +361,22 @@ GET /extensions
 
 async def test_get_extension(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    resp = await api_client.get('/extensions', data=({
-        'guild_id': guild.id # 400 error: Unsatisfied Arguments
-    }))
+    resp = await api_client.get('/extensions?guild_id={}'.format(guild.id))
 
     assert resp.status == OK
     text = await resp.text()
-    assert text == "placeholder"
+    assert text == '["Announce"]'
+
+async def test_get_extension_bad_param(api_client):
+    resp = await api_client.get('/extensions?invalid-arg=abc')
+
+    assert resp.status == BAD_REQUEST
+    text = await resp.text()
+    assert text == "400: Unsatisfied Arguments: {'guild_id'}"
+
+async def test_get_extension_missing_param(api_client):
+    resp = await api_client.get('/extensions')
+
+    assert resp.status == BAD_REQUEST
+    text = await resp.text()
+    assert text == "400: Unsatisfied Arguments: {'guild_id'}"
