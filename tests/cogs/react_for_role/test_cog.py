@@ -20,12 +20,14 @@ from discord.ext import commands
 from discord.ext.test import factories as dpyfactory
 
 # Own modules
+from koala.cogs.react_for_role import core
 import koalabot
 from koala.colours import KOALA_GREEN
 from koala.db import session_manager
 from tests.tests_utils import utils as testutils
 from .utils import DBManager, independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
 from tests.log import logger
+from koala.cogs import ReactForRole
 
 # Constants
 
@@ -195,14 +197,16 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
 
 
 @pytest.mark.asyncio
-async def test_overwrite_channel_add_reaction_perms(rfr_cog):
+async def test_setup_rfr_reaction_permissions(rfr_cog):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
+    bot: discord.Client = config.client
     with mock.patch('discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
         for i in range(15):
             await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
+        # await core.setup_rfr_reaction_permissions(guild, channel, bot)
         await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
         calls = [mock.call(channel.id, role.id, 0, 64, 'role', reason=None),
                  mock.call(channel.id, config.client.user.id, 64, 0, 'member',

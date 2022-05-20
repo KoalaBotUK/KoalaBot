@@ -18,6 +18,7 @@ import emoji
 from discord.ext import commands
 
 # Own modules
+from . import core
 import koalabot
 from koala.colours import KOALA_GREEN
 from koala.utils import wait_for_message
@@ -181,12 +182,10 @@ class ReactForRole(commands.Cog):
                 desc: str = msg.content
             await ctx.send(f"Okay, the description of the message will be \"{desc}\".\n Okay, "
                            f"I'll create the react for role message now.")
-            embed: discord.Embed = discord.Embed(title=title, description=desc, colour=KOALA_GREEN)
-            embed.set_footer(text="ReactForRole")
-            embed.set_thumbnail(
-                url="https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png")
-            rfr_msg: discord.Message = await channel.send(embed=embed)
-            self.rfr_database_manager.add_rfr_message(ctx.guild.id, channel.id, rfr_msg.id)
+
+            rfr_msg = await core.create_rfr_message(title, ctx.guild, desc, KOALA_GREEN, channel)
+            # TODO - Get this working, for some reason we get 403 currently
+            # await core.setup_rfr_reaction_permissions(ctx.guild, channel, self.bot)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
             await ctx.send(
                 f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
@@ -398,7 +397,7 @@ class ReactForRole(commands.Cog):
         Cosmetic fix method if the bot ever has a moment and doesn't react with the correct emojis/has duplicates.
         """
         msg, chnl = await self.get_rfr_message_from_prompts(ctx)
-        await self.overwrite_channel_add_reaction_perms(chnl.guild, chnl)
+        await core.setup_rfr_reaction_permissions(chnl.guild, chnl, self.bot)
         emb = self.get_embed_from_message(msg)
         reacts: List[Union[discord.PartialEmoji, discord.Emoji, str]] = [x.emoji for x in msg.reactions]
         if not emb:
@@ -905,6 +904,7 @@ class ReactForRole(commands.Cog):
             else:
                 arr.append(raw_emoji)
         return arr
+    
 
     async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> Union[discord.Attachment, str]:
         """
@@ -943,6 +943,7 @@ class ReactForRole(commands.Cog):
         for bot_member in bot_members:
             await channel.set_permissions(bot_member, overwrite=overwrite)
 
+    
     async def is_user_alive(self, ctx: commands.Context):
         """
         Prompts user for message to check if they're alive. Any message will do. We hope they're alive anyways.
@@ -954,21 +955,23 @@ class ReactForRole(commands.Cog):
             return False
         return True
 
-    def get_embed_from_message(self, msg: discord.Message) -> Optional[discord.Embed]:
-        """
-        Gets the embed from a given message. Yup. That's it.
-        :param msg: Message to check
-        :return: Returns the embed if there is one. If there isn't returns None
-        """
-        if not msg:
-            return None
-        try:
-            embed = msg.embeds[0]
-            if not embed:
-                return None
-            return embed
-        except IndexError:
-            return None
+    # def get_embed_from_message(self, msg: discord.Message) -> Optional[discord.Embed]:
+    #     """
+    #     Gets the embed from a given message. Yup. That's it.
+    #     :param msg: Message to check
+    #     :return: Returns the embed if there is one. If there isn't returns None
+    #     """
+    #     print("BBBBBBBBBBB")
+    #     print(msg.embeds)
+    #     if not msg:
+    #         return None
+    #     try:
+    #         embed = msg.embeds[0]
+    #         if not embed:
+    #             return None
+    #         return embed
+    #     except IndexError:
+    #         return None
 
     def get_number_of_embed_fields(self, embed: discord.Embed) -> int:
         """
