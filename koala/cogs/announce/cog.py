@@ -30,7 +30,7 @@ def announce_is_enabled(ctx):
     except PermissionError:
         result = False
 
-    await ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
+    ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
 
 
 class Announce(commands.Cog):
@@ -53,7 +53,7 @@ class Announce(commands.Cog):
         if self.announce_database_manager.get_last_use_date(guild_id):
             return int(time.time()) - self.announce_database_manager.get_last_use_date(
                 guild_id) > ANNOUNCE_SEPARATION_DAYS * SECONDS_IN_A_DAY
-        await ctx.send(True)
+        ctx.send(True)
 
     def has_active_msg(self, guild_id, ctx):
         """
@@ -61,7 +61,7 @@ class Announce(commands.Cog):
         :param guild_id: The id of the guild of the command
         :return: Boolean of whether there is an active announcement or not
         """
-        await ctx.send(guild_id in self.messages)
+        ctx.send(guild_id in self.messages)
 
     def get_role_names(self, guild_id, roles, ctx):
         """
@@ -73,7 +73,7 @@ class Announce(commands.Cog):
         temp = []
         for role in self.roles[guild_id]:
             temp.append(discord.utils.get(roles, id=role).name)
-        await ctx.send(temp)
+        ctx.send(temp)
 
     def get_receivers(self, guild_id, roles, ctx):
         """
@@ -85,7 +85,7 @@ class Announce(commands.Cog):
         temp = []
         for role in self.roles[guild_id]:
             temp += discord.utils.get(roles, id=role).members
-        await ctx.send(list(set(temp)))
+        ctx.send(list(set(temp)))
 
     def receiver_msg(self, guild, ctx):
         """
@@ -95,7 +95,7 @@ class Announce(commands.Cog):
         """
         if not self.roles[guild.id]:
             return f"You are currently sending to Everyone and there are {str(len(guild.members))} receivers"
-        await ctx.send(f"You are currently sending to {self.get_role_names(guild.id, guild.roles)} and there are {str(len(self.get_receivers(guild.id, guild.roles)))} receivers ")
+        ctx.send(f"You are currently sending to {self.get_role_names(guild.id, guild.roles)} and there are {str(len(self.get_receivers(guild.id, guild.roles)))} receivers ")
 
     def construct_embed(self, guild: discord.Guild, ctx):
         """
@@ -109,7 +109,7 @@ class Announce(commands.Cog):
         embed.set_author(name="Announcement from " + guild.name)
         if message.thumbnail != 'https://cdn.discordapp.com/':
             embed.set_thumbnail(url=message.thumbnail)
-        await ctx.send(embed)
+        ctx.send(embed)
 
     @commands.check(announce_is_enabled)
     @commands.group(name="announce")
