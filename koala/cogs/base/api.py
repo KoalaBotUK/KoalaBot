@@ -197,7 +197,7 @@ class BaseEndpoint:
             await core.disable_extension(self._bot, guild_id, koala_ext)
         except BaseException as e:
             print(type(e))
-            error = 'Error enabling extension: {}'.format(handleActivityError(e))
+            error = 'Error disabling extension: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
@@ -229,7 +229,9 @@ def handleActivityError(error):
         return 'Extension not loaded'
     elif type(error) == discord.ext.commands.errors.ExtensionAlreadyLoaded:
         return 'Already loaded'
-    elif type(error) == NotImplementedError:
+    elif type(error) == NotImplementedError and str(error).endswith("not an enabled extension"):
+        return 'Extension not enabled'
+    elif type(error) == NotImplementedError and str(error).endswith("not a valid extension"):
         return 'Invalid extension'
     return 'Unknown error'
 
