@@ -153,7 +153,7 @@ async def unload_cog(bot: Bot, extension, package):
         return f'{extension} Cog Unloaded'
 
 
-async def enable_extension(guild_id, koala_extension):
+async def enable_extension(bot: Bot, guild_id, koala_extension):
     """
     Enables a koala extension
     :param guild_id:
@@ -176,7 +176,7 @@ async def enable_extension(guild_id, koala_extension):
     return embed
 
 
-async def disable_extension(guild_id, koala_extension):
+async def disable_extension(bot: Bot, guild_id, koala_extension):
     """
     Disables a koala extension
     :param guild_id:
