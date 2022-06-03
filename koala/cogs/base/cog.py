@@ -173,7 +173,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(core.load_cog(self.bot, extension, self.COGS_PACKAGE))
+        await ctx.send(await core.load_cog(self.bot, extension, self.COGS_PACKAGE))
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
@@ -183,7 +183,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(core.unload_cog(self.bot, extension, self.COGS_PACKAGE))
+        await ctx.send(await core.unload_cog(self.bot, extension, self.COGS_PACKAGE))
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -193,7 +193,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param koala_extension: The name of the koala
         """
-        await ctx.send(embed=core.enable_extension(ctx.message.guild.id, koala_extension))
+        await ctx.send(embed=await core.enable_extension(self.bot, ctx.message.guild.id, koala_extension))
 
     @commands.command(name="disableExt", aliases=["disable_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -203,7 +203,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param koala_extension: The name of the koala
         """
-        await ctx.send(embed=core.disable_extension(ctx.message.guild.id, koala_extension))
+        await ctx.send(embed=await core.disable_extension(self.bot, ctx.message.guild.id, koala_extension))
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -212,7 +212,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Lists the enabled koala extensions of a server
         :param ctx: Context of the command
         """
-        await ctx.send(embed=core.list_enabled_extensions(ctx.message.guild.id))
+        await ctx.send(embed=await core.list_enabled_extensions(ctx.message.guild.id))
 
     @commands.command(name="version")
     @commands.check(koalabot.is_owner)

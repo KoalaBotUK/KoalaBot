@@ -171,14 +171,14 @@ async def test_support():
 async def test_default_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await dpytest.message(koalabot.COMMAND_PREFIX + "clear")
-    mock1.assert_called_with(limit=2)
+    mock1.assert_called_with(2)
 
 
 @pytest.mark.asyncio
 async def test_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await dpytest.message(koalabot.COMMAND_PREFIX + "clear 4")
-    mock1.assert_called_with(limit=5)
+    mock1.assert_called_with(5)
 
 
 @pytest.mark.asyncio
