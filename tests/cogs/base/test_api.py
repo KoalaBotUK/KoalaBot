@@ -212,6 +212,16 @@ async def test_post_load_cog(api_client):
     text = await resp.text()
     assert text == '{"message": "Cog loaded"}'
 
+async def test_post_load_base_cog(api_client):
+    resp = await api_client.post('/load-cog', data=(
+        {
+            'extension': 'base',
+            'package': koalabot.COGS_PACKAGE
+        }))
+    assert resp.status == OK
+    text = await resp.text()
+    assert text == '{"message": "Cog loaded"}'
+
 async def test_post_load_cog_bad_req(api_client):
     resp = await api_client.post('/load-cog', data=(
         {
