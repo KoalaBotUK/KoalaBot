@@ -26,7 +26,7 @@ pytest-ordering==0.6
 python-dotenv==0.19.2
 requests==2.28.0
 six==1.16.0
-sqlalchemy==1.4.25
+sqlalchemy==1.4.37
 toml==0.10.2
 twitchAPI==2.5.3
 urllib3==1.26.7
