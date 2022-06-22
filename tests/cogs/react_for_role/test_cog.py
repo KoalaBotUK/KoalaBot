@@ -229,21 +229,20 @@ async def test_is_user_alive(utils_cog, rfr_cog):
 
 
 @pytest.mark.asyncio
-async def test_get_embed_from_message(rfr_cog):
+async def test_get_embed_from_message(rfr_cog, bot: commands.Bot):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
-    bot: discord.Client = config.client
-    await bot.http.send_message(channel.id, '', embed=test_embed_dict)
+    embed = discord.Embed(title="title", description="descr", type="rich", url="https://www.google.com")
+    await channel.send(embed=embed)
     sent_msg: discord.Message = await dpytest.sent_queue.get()
     msg_mock: discord.Message = dpytest.back.make_message('a', author, channel)
-    result = rfr_cog.get_embed_from_message(None)
+    result = core.get_embed_from_message(None)
     assert result is None
-    result = rfr_cog.get_embed_from_message(msg_mock)
+    result = core.get_embed_from_message(msg_mock)
     assert result is None
-    result = rfr_cog.get_embed_from_message(sent_msg)
+    result = core.get_embed_from_message(sent_msg)
     assert dpytest.embed_eq(result, sent_msg.embeds[0])
 
 
