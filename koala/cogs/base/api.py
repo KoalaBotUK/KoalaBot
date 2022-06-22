@@ -233,6 +233,8 @@ def handleActivityError(error):
         return 'Extension not enabled'
     elif type(error) == NotImplementedError and str(error).endswith("not a valid extension"):
         return 'Invalid extension'
+    elif type(error) == discord.ext.commands.errors.ExtensionFailed:
+        return 'Failed to load'
     return 'Unknown error'
 
 
