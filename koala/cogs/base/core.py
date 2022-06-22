@@ -125,7 +125,7 @@ async def purge(bot: Bot, channel_id, amount):
     :return:
     """
     channel = bot.get_channel(channel_id)
-    return channel.purge(amount + 1)
+    return await channel.purge(amount + 1)
 
 
 async def load_cog(bot: Bot, extension, package):
