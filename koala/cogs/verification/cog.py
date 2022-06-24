@@ -163,7 +163,7 @@ This email is stored so you don't need to verify it multiple times across server
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="confirm")
-    async def confirm(self, ctx, token):
+    async def confirm(self, ctx, token): # not in core?
         """
         Send to KoalaBot in dms to confirm the verification of an email
         :param ctx: the context of the discord message
@@ -204,11 +204,8 @@ This email is stored so you don't need to verify it multiple times across server
         :param user_id: the id of the user who's emails you want to find
         :return:
         """
-        with session_manager() as session:
-            results = session.execute(select(VerifiedEmails.email).filter_by(u_id=user_id)).all()
-
-            emails = '\n'.join([x[0] for x in results])
-            await ctx.send(f"This user has registered with:\n{emails}")
+        emails = core.get_emails(user_id)
+        await ctx.send(f"This user has registered with:\n{emails}")
 
     @commands.command(name="verifyList", aliases=["checkVerifications"])
     @commands.check(verify_is_enabled)
@@ -249,26 +246,8 @@ This email is stored so you don't need to verify it multiple times across server
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
-        with session_manager() as session:
-            try:
-                role_id = int(role[3:-1])
-            except ValueError:
-                raise self.InvalidArgumentError("Please give a role by @mentioning it")
-            except TypeError:
-                raise self.InvalidArgumentError("Please give a role by @mentioning it")
-
-            exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role_id)).all()
-
-            if not exists:
-                raise self.VerifyError("Verification is not enabled for that role")
-            role = discord.utils.get(ctx.guild.roles, id=role_id)
-            for member in ctx.guild.members:
-                if role in member.roles:
-                    await member.remove_roles(role)
-                    session.add(ToReVerify(u_id=member.id, r_id=role.id))
-
-            session.commit()
-            await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
+        await core.re_verify(role, ctx.guild.id, ctx.guild.roles, ctx.guild.members)
+        await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
 
     class InvalidArgumentError(Exception):
         pass

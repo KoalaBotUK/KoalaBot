@@ -137,6 +137,45 @@ def un_verify(user_id, email):
         session.execute(delete(VerifiedEmails).filter_by(u_id=user_id, email=email))
         session.commit()
 
+def get_emails(user_id: int):
+    """
+    See the emails a user is verified with
+    :param user_id: the id of the user who's emails you want to find
+    :return: string of emails user is verified with
+    """
+    with session_manager() as session:
+        results = session.execute(select(VerifiedEmails.email).filter_by(u_id=user_id)).all()
+
+        return '\n'.join([x[0] for x in results])
+
+async def re_verify(role, guild_id, guild_roles, guild_members):
+    """
+    Removes a role from all users who have it and marks them as needing to re-verify before giving it back
+    :param role: the role to be removed and re-verified (e.g. @students)
+    :param guild_id: the guild to re-verify for
+    :param guild_roles: all roles active in the current guild
+    :param guild_members: all members in the current guild
+    :return:
+    """
+    with session_manager() as session:
+        try:
+            role_id = int(role[3:-1])
+        except ValueError:
+            raise InvalidArgumentError("Please give a role by @mentioning it")
+        except TypeError:
+            raise InvalidArgumentError("Please give a role by @mentioning it")
+
+        exists = session.execute(select(Roles).filter_by(s_id=guild_id, r_id=role_id)).all()
+
+        if not exists:
+            raise VerifyError("Verification is not enabled for that role")
+        role = discord.utils.get(guild_roles, id=role_id)
+        for member in guild_members:
+            if role in member.roles:
+                await member.remove_roles(role)
+                session.add(ToReVerify(u_id=member.id, r_id=role.id))
+
+        session.commit()
 
 class InvalidArgumentError(Exception):
     pass
