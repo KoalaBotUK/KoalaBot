@@ -1,3 +1,7 @@
-from . import utils, db, log, models
-from .cog import Announce, setup
-from .announce_message import AnnounceMessage
+from . import cog
+from . import api
+from .cog import AnnounceCog
+
+def setup(bot):
+    cog.setup(bot)
+    api.setup(bot)
