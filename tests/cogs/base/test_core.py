@@ -111,7 +111,6 @@ async def test_unload_cog(bot: commands.Bot):
     assert resp == "announce Cog Unloaded"
 
 
-# ERROR: "koala.cogs.base" has not been loaded
 @pytest.mark.asyncio
 async def test_unload_base_cog(bot: commands.Bot):
     resp = await core.unload_cog(bot, "base", "koala.cogs")

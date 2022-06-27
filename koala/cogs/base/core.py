@@ -146,7 +146,7 @@ async def unload_cog(bot: Bot, extension, package):
     :param package:
     :return:
     """
-    if extension == "BaseCog":
+    if extension == "base" or extension == "BaseCog":
         return "Sorry, you can't unload the base cog"
     else:
         bot.unload_extension("."+extension, package=package)
