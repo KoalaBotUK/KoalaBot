@@ -260,12 +260,12 @@ async def test_get_number_of_embed_fields(rfr_cog):
     for i in range(20):
         test_embed.add_field(name=f'field{i}', value=f'num{i}')
         num_fields += 1
-        assert rfr_cog.get_number_of_embed_fields(test_embed) == num_fields
+        assert core.get_number_of_embed_fields(embed=test_embed) == num_fields
 
 
 @pytest.mark.skip('dpytest currently has non-implemented functionality for construction of guild custom emojis')
 @pytest.mark.asyncio
-async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
+async def test_get_first_emoji_from_str(bot, utils_cog, rfr_cog):
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -282,7 +282,7 @@ async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
     author: discord.Member = config.members[0]
     channel: discord.TextChannel = guild.text_channels[0]
     msg: discord.Message = dpytest.back.make_message(str(guild_emoji), author, channel)
-    result = await rfr_cog.get_first_emoji_from_str(ctx, msg.content)
+    result = await core.get_first_emoji_from_str(bot, guild, msg.content)
     logger.debug(result)
     assert isinstance(result, discord.Emoji), msg.content
     assert guild_emoji == result
@@ -374,7 +374,7 @@ async def test_rfr_edit_description():
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new description", "Y"])):
-            with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
                 await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit description")
                 assert embed.description == 'new description'
                 assert dpytest.verify().message()
@@ -397,7 +397,7 @@ async def test_rfr_edit_title():
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new title", "Y"])):
-            with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
                 await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit title")
                 assert embed.title == 'new title'
                 assert dpytest.verify().message()
@@ -428,7 +428,7 @@ async def test_rfr_edit_thumbnail_attach():
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=attach):
                 await dpytest.message("k!rfr edit image")
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
@@ -453,7 +453,7 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=attach):
                 with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument,
                                     commands.CommandInvokeError)) as exc:
@@ -482,7 +482,7 @@ async def test_rfr_edit_thumbnail_links(image_url):
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=image_url):
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
                 await dpytest.message("k!rfr edit image")
@@ -511,7 +511,7 @@ async def test_rfr_edit_inline_all(arg):
              mock.call(0, name="field2", value="value2", inline=(arg == "Y"))]
     with mock.patch("koala.cogs.ReactForRole.prompt_for_input", side_effects=["all", arg]):
         with mock.patch("discord.abc.Messageable.fetch_message", side_effects=[message1, message2]):
-            with mock.patch("koala.cogs.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
+            with mock.patch("koala.cogs.react_for_role.core.get_embed_from_message", side_effects=[embed1, embed2]):
                 with mock.patch('discord.Embed.set_field_at') as mock_call:
                     await dpytest.message("k!rfr edit inline")
                     assert dpytest.verify().message()
@@ -550,7 +550,7 @@ async def test_rfr_add_roles_to_msg():
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('discord.client.Client.wait_for',
                             mock.AsyncMock(return_value=input_em_ro_msg)):
                 with mock.patch('discord.Embed.add_field') as add_field:
@@ -585,7 +585,7 @@ async def test_rfr_remove_roles_from_msg():
     input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('discord.client.Client.wait_for',
                             mock.AsyncMock(return_value=input_em_ro_msg)):
                 with mock.patch('discord.Embed.add_field') as add_field:
