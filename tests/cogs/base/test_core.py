@@ -11,6 +11,12 @@ import koalabot
 from koala.cogs.base import core
 
 
+@pytest.fixture
+def reset_extensions(bot: commands.Bot):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    core.disable_extension(bot, guild.id, "All")
+
+
 def test_activity_clear_current():
     core.current_activity = "test"
     assert core.current_activity
@@ -77,13 +83,13 @@ async def test_purge(bot: commands.Bot):
 
 # Load cogs
 
+@mock.patch("koalabot.ENABLED_COGS", ['announce'])
 @pytest.mark.asyncio
 async def test_load_cog(bot: commands.Bot):
     resp = await core.load_cog(bot, "announce", "koala.cogs")
     assert resp == "announce Cog Loaded"
 
 
-# ERROR: bot obj has no attri 'koala_web_app' (api.py @ setup)
 @pytest.mark.asyncio
 async def test_load_base_cog(bot: commands.Bot):
     resp = await core.load_cog(bot, "base", "koala.cogs")
@@ -96,6 +102,7 @@ async def test_load_invalid_cog(bot: commands.Bot):
         await core.load_cog(bot, "FakeCog", "koala.cogs")
 
 
+@mock.patch("koalabot.ENABLED_COGS", ['announce'])
 @pytest.mark.asyncio
 async def test_load_already_loaded_cog(bot: commands.Bot):
     await core.load_cog(bot, "announce", "koala.cogs")
@@ -130,11 +137,20 @@ async def test_unload_invalid_cog(bot: commands.Bot):
 
 # Enable extensions
 
+@mock.patch("koalabot.ENABLED_COGS", ["Announce"])
 @pytest.mark.asyncio
 async def test_enable_extension(bot: commands.Bot):
     guild: discord.Guild = dpytest.get_config().guilds[0]
+    await test_load_cog(bot)
     embed = await core.enable_extension(bot, guild.id, "Announce")
     assert embed.title == "Announce enabled"
+
+
+@pytest.mark.asyncio
+async def test_enable_extension_all(bot: commands.Bot):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    embed = await core.enable_extension(bot, guild.id, "All")
+    assert embed.title == "All extensions enabled"
 
 
 @pytest.mark.asyncio
@@ -145,13 +161,22 @@ async def test_enable_invalid_extension(bot: commands.Bot):
 
 # Disable extensions
 
+@mock.patch("koalabot.ENABLED_COGS", ["announce"])
 @pytest.mark.asyncio
 async def test_disable_extension(bot: commands.Bot):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    await core.enable_extension(bot, guild.id, "Announce")
+    await test_enable_extension(bot)
     embed = await core.disable_extension(bot, guild.id, "Announce")
     assert embed.title == "Announce disabled"
 
+
+@pytest.mark.asyncio
+async def test_disable_extension_all(bot: commands.Bot):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    await test_enable_extension_all(bot)
+    embed = await core.disable_extension(bot, guild.id, "All")
+    assert embed.title == "All disabled"
+    
 
 @pytest.mark.asyncio
 async def test_disable_extension_not_enabled(bot: commands.Bot):
@@ -168,18 +193,23 @@ async def test_disable_invalid_extension(bot: commands.Bot):
 
 # List enabled extensions
 
+@mock.patch("koalabot.ENABLED_COGS", ["announce"])
 @pytest.mark.asyncio
 async def test_list_enabled_extensions(bot: commands.Bot):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    await core.enable_extension(bot, guild.id, "Announce")
+    await test_enable_extension(bot)
     embed = await core.list_enabled_extensions(guild.id)
     assert embed.fields[0].name == ":white_check_mark: Enabled"
     assert "Announce" in embed.fields[0].value
 
 # Get available extensions
 
+@mock.patch("koalabot.COGS_PACKAGE", koalabot.COGS_PACKAGE)
+@mock.patch("koalabot.ENABLED_COGS", ["announce"])
 @pytest.mark.asyncio
 async def test_get_extensions(bot: commands.Bot):
+    koalabot.load_all_cogs()
     guild: discord.Guild = dpytest.get_config().guilds[0]
     resp = core.get_all_available_guild_extensions(guild.id)
+    print(resp)
     assert resp[0] == "Announce"
