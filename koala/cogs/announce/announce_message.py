@@ -16,6 +16,7 @@ from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, MAX_MESSAGE_LENGT
 import discord
 from discord.ext import commands
 
+
 def announce_is_enabled(guild):
     """
     A command used to check if the guild has enabled announce
@@ -30,6 +31,7 @@ def announce_is_enabled(guild):
         result = False
 
     return result
+
 
 class AnnounceMessage:
     """
@@ -63,6 +65,7 @@ class AnnounceMessage:
         """
         self.description = message
 
+
 class Announce:
     """
         Send DM announcements to certain roles and people.
@@ -86,7 +89,7 @@ class Announce:
                 return True
             else:
                 return False
-    
+
     def has_active_message(self, guild_id):
         """
         Check if a particular id has an active announcement pending announcement
@@ -131,7 +134,7 @@ class Announce:
         :return: A string message about receivers
         """
         if not self.roles[guild.id]:
-             return f"You are currently sending to Everyone and there are {str(len(guild.members))} receivers"
+            return f"You are currently sending to Everyone and there are {str(len(guild.members))} receivers"
         else:
             receivers = self.get_receivers(guild.id)
             return f"You are currently sending to {str(len(self.roles[guild.id]))} roles and {str(len(receivers))} receivers"
@@ -159,4 +162,5 @@ class Announce:
         :return:
         """
         if ctx.invoked_subcommand is None:
-            await ctx.send(f"{ctx.author.mention}, please use `{ctx.prefix}announce help` to see the help for this command")
+            await ctx.send(
+                f"{ctx.author.mention}, please use `{ctx.prefix}announce help` to see the help for this command")

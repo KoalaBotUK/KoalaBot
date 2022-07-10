@@ -1,27 +1,26 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED, OK, BAD_REQUEST
 from aiohttp import web
-import discord
 from discord.ext.commands import Bot
 
+from koala.rest.api import parse_request
+from . import cog
 # Own modules
-from . import core
 from .log import logger
-from koala.rest.api import parse_request, build_response
-from koala.utils import convert_iso_datetime
 
 # Constants
 ANNOUNCE_ENDPOINT = 'announce'
-ACTIVITY_ENDPOINT = 'scheduled-activity' # GET
-SET_ACTIVITY_ENDPOINT = 'activity' # PUT
-SCHEDULE_ACTIVITY_ENDPOINT = 'scheduled-activity' # POST
+ACTIVITY_ENDPOINT = 'scheduled-activity'  # GET
+SET_ACTIVITY_ENDPOINT = 'activity'  # PUT
+SCHEDULE_ACTIVITY_ENDPOINT = 'scheduled-activity'  # POST
+
 
 class AnnounceEndpoint:
     """
     The API endpoints for AnnounceCog
     """
+
     def __init__(self, bot):
         self._bot = bot
 
@@ -34,12 +33,36 @@ class AnnounceEndpoint:
         """
         app.add_routes([web.get('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.get_activities),
                         web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity),
-                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT), self.post_schedule_activity),
+                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT),
+                                 self.post_schedule_activity),
                         web.get('/{endpoint}'.format(endpoint=ANNOUNCE_ENDPOINT), self.get_announce)])
         return app
 
-def getActivityType(activity_type):
-    return discord.ActivityType[activity_type]
+
+@parse_request
+async def announce_is_enabled(guild):
+    return await cog.announce_is_enabled(guild)
+
+
+@parse_request
+async def enough_days_passed(self, guild_id, ctx):
+    return await cog.not_exceeded_limit(self, guild_id, ctx)
+
+
+@parse_request
+async def has_active_message(self, guild_id, ctx):
+    return await cog.has_active_msg(self, guild_id, ctx)
+
+
+@parse_request
+async def get_names_of_roles(self, guild_id, roles, ctx):
+    return await cog.get_role_names(self, guild_id, roles, ctx)
+
+
+@parse_request()
+async def get_receivers_of_announcement(self, guild_id, roles, ctx):
+    return await cog.get_receivers(self, guild_id, roles, ctx)
+
 
 def setup(bot: Bot):
     """
