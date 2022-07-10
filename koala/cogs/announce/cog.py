@@ -1,12 +1,23 @@
 # Own imports
+import math
+import time
+
+import discord
+
 import koalabot
 from announce_message import AnnounceMessage, Announce, announce_is_enabled
 
 from discord.ext import commands, tasks
 from discord.ext.commands import BadArgument
 
+from koala.cogs.announce.utils import MAX_MESSAGE_LENGTH, ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY
+from koala.log import logger
+from koala.utils import wait_for_message, extract_id
+
+
 def announce_is_enabled(guild):
     return announce_is_enabled(guild)
+
 
 def not_exceeded_limit(self, guild_id, ctx):
     """
@@ -22,6 +33,7 @@ def not_exceeded_limit(self, guild_id, ctx):
 
     ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
 
+
 def has_active_msg(self, guild_id, ctx):
     """
     Check if there is an active announcement message
@@ -35,6 +47,7 @@ def has_active_msg(self, guild_id, ctx):
         result = False
 
     ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
+
 
 def get_role_names(self, guild_id, roles, ctx):
     """
@@ -51,6 +64,7 @@ def get_role_names(self, guild_id, roles, ctx):
 
     ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
 
+
 def get_receivers(self, guild_id, roles, ctx):
     """
     Get the receivers of the announcement
@@ -66,18 +80,20 @@ def get_receivers(self, guild_id, roles, ctx):
 
     ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
 
+
 def receiver_msg(self, guild, ctx):
-        """
+    """
         A function to create a string message about receivers
         :param guild: The guild of the bot
         :return: A string message about receivers
         """
-        try:
-            result = self.Announce.receiver_msg(guild, ctx)
-        except PermissionError:
-            result = False
+    try:
+        result = self.Announce.receiver_msg(guild, ctx)
+    except PermissionError:
+        result = False
 
-        ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
+    ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
+
 
 def construct_embed(self, guild: discord.Guild, ctx):
     """
@@ -92,7 +108,7 @@ def construct_embed(self, guild: discord.Guild, ctx):
         result = False
 
     ctx.send(result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest))
-    
+
     @commands.check(announce_is_enabled)
     @commands.group(name="announce")
     async def announce(self, ctx):
@@ -187,7 +203,8 @@ def construct_embed(self, guild: discord.Guild, ctx):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
+            await ctx.send(
+                "Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -210,7 +227,8 @@ def construct_embed(self, guild: discord.Guild, ctx):
         :return:
         """
         if self.has_active_msg(ctx.guild.id):
-            await ctx.send("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
+            await ctx.send(
+                "Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
             if not message:
                 await channel.send("Okay, I'll cancel the command.")
@@ -252,13 +270,13 @@ def construct_embed(self, guild: discord.Guild, ctx):
                     try:
                         await receiver.send(embed=embed)
                     except (discord.Forbidden, AttributeError, discord.HTTPException) as e:
-                        logger.error(f'User {receiver.id} cannot recieve dms')
+                        logger.error(f'User {receiver.id} cannot receive dms')
             else:
                 for receiver in ctx.guild.members:
                     try:
                         await receiver.send(embed=embed)
                     except (discord.Forbidden, AttributeError, discord.HTTPException) as e:
-                        logger.error(f'User {receiver.id} cannot recieve dms')
+                        logger.error(f'User {receiver.id} cannot receive dms')
 
             self.messages.pop(ctx.guild.id)
             self.roles.pop(ctx.guild.id)
