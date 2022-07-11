@@ -63,6 +63,14 @@ async def get_names_of_roles(self, guild_id, roles, ctx):
 async def get_receivers_of_announcement(self, guild_id, roles, ctx):
     return await cog.get_receivers(self, guild_id, roles, ctx)
 
+@parse_request()
+async def receiver_msg_create(self, guild, ctx):
+    return await cog.receiver_msg_create(self, guild, ctx)
+
+@parse_request()
+async def construct_embed_message(self, guild, ctx):
+    return await cog.construct_embed_message(self, guild, ctx)
+
 
 def setup(bot: Bot):
     """
