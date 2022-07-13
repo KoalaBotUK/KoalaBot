@@ -10,8 +10,10 @@ Commented using reStructuredText (reST)
 import asyncio
 
 # Libs
+import discord
 import discord.ext.test as dpytest
 import pytest
+import sqlalchemy.orm
 from discord.ext import commands
 from sqlalchemy import select, delete
 
@@ -226,3 +228,31 @@ async def test_re_verify():
         session.delete(test_role)
         session.execute(delete(ToReVerify).filter_by(u_id=member.id))
         session.commit()
+
+@pytest.mark.asyncio
+async def test_re_verify_duplicate():
+    with session_manager() as session:
+        test_config = dpytest.get_config()
+        guild = test_config.guilds[0]
+        role = dpytest.back.make_role("testRole", guild, id_num=555)
+        member = test_config.members[0]
+        await dpytest.add_role(member, role)
+        test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
+        test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
+        test_re_verify = ToReVerify(u_id=member.id, r_id=role.id)
+        session.add(test_verified_email)
+        session.add(test_role)
+        session.add(test_re_verify)
+        session.commit()
+
+        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555>")
+        assert role not in member.roles
+        blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
+        assert blacklisted
+        assert dpytest.verify().message().content(
+            "That role has now been removed from all users and they will need to re-verify the associated email.")
+        session.delete(test_verified_email)
+        session.delete(test_role)
+        session.execute(delete(ToReVerify).filter_by(u_id=member.id))
+        session.commit()
+
