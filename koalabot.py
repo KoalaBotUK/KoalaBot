@@ -12,7 +12,7 @@ __credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", 
                "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
                "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.5.8"
+__version__ = "0.5.9"
 __maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
