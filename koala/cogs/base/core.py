@@ -197,13 +197,14 @@ async def disable_extension(bot: Bot, guild_id, koala_extension):
     return embed
 
 
-async def list_enabled_extensions(guild_id):
+@assign_session
+async def list_enabled_extensions(guild_id, **kwargs):
     """
     Lists enabled koala extensions
     :param guild_id:
     :return:
     """
-    embed = list_ext_embed(guild_id)
+    embed = list_ext_embed(guild_id, **kwargs)
     return embed
 
 

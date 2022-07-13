@@ -14,6 +14,7 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 
+import sqlalchemy.orm
 from sqlalchemy import select, delete, and_, create_engine, func as sql_func
 from sqlalchemy.orm import sessionmaker
 
@@ -177,11 +178,13 @@ def remove_guild_extension(guild_id, extension_id: str):
         session.commit()
 
 
-def get_enabled_guild_extensions(guild_id: int):
+@assign_session  # fallback assign session
+def get_enabled_guild_extensions(guild_id: int, session: Session):
     """
     Gets a list of extensions IDs that are enabled in a server
 
     :param guild_id: Discord guild ID for a given server
+    :param session: sqlalchemy Session
     """
     sql_select_enabled = select(GuildExtensions.extension_id)\
         .join(KoalaExtensions, GuildExtensions.extension_id == KoalaExtensions.extension_id)\
@@ -189,24 +192,24 @@ def get_enabled_guild_extensions(guild_id: int):
         and_(
             GuildExtensions.guild_id == guild_id,
             KoalaExtensions.available == 1))
-    with session_manager() as session:
-        return session.execute(sql_select_enabled)\
-            .scalars(GuildExtensions.extension_id).all()    # todo: test if works
+    return session.execute(sql_select_enabled)\
+        .scalars(GuildExtensions.extension_id).all()    # todo: test if works
 
 
-def get_all_available_guild_extensions(guild_id: int):
+@assign_session
+def get_all_available_guild_extensions(guild_id: int, session: Session):
     """
     Gets all available guild extensions for a given guild
 
     todo: restrict with rules of subscriptions & enabled state
 
     :param guild_id: Discord guild ID for a given server
+    :param session: sqlalchemy Session
     """
     sql_select_all = select(KoalaExtensions.extension_id).filter_by(available=1).distinct()
-    with session_manager() as session:
-        return session.execute(sql_select_all)\
-            .scalars(KoalaExtensions.extension_id).all()    # todo: test if works
-            # [extension.extension_id for extension in session.execute(sql_select_all).all()]
+    return session.execute(sql_select_all)\
+        .scalars(KoalaExtensions.extension_id).all()    # todo: test if works
+        # [extension.extension_id for extension in session.execute(sql_select_all).all()]
 
 
 def fetch_all_tables():
