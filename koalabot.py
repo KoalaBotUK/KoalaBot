@@ -143,6 +143,12 @@ def check_guild_has_ext(ctx, extension_id):
 
 @bot.event
 async def on_command_error(ctx, error: Exception):
+    if ctx.guild is None:
+        guild_id = "UNKNOWN"
+        logger.warn("Unknown guild ID threw exception", exc_info=error)
+    else:
+        guild_id = ctx.guild.id
+
     if error.__class__ in [commands.MissingRequiredArgument,
                            commands.CommandNotFound]:
         await ctx.send(embed=error_embed(description=error))
@@ -156,10 +162,10 @@ async def on_command_error(ctx, error: Exception):
     elif isinstance(error, commands.errors.ChannelNotFound):
         await ctx.send(embed=error_embed(description=f"The channel ID provided is either invalid, or not in this server."))
     elif isinstance(error, commands.CommandInvokeError):
-        # logger.warning("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, ctx.guild.id, ctx.message)
+        logger.error("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, guild_id, ctx.message, exc_info=error)
         await ctx.send(embed=error_embed(description=error.original))
     else:
-        logger.error(f"Unexpected Error in guild %s : %s", ctx.guild.name, error, exc_info=error)
+        logger.error(f"Unexpected Error in guild %s : %s", guild_id, error, exc_info=error)
         await ctx.send(embed=error_embed(
             description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
         raise error
