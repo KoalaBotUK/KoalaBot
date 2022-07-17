@@ -13,7 +13,6 @@ from .log import logger
 ANNOUNCE_ENDPOINT = 'announce'
 ACTIVITY_ENDPOINT = 'scheduled-activity'  # GET
 SET_ACTIVITY_ENDPOINT = 'activity'  # PUT
-SCHEDULE_ACTIVITY_ENDPOINT = 'scheduled-activity'  # POST
 
 
 class AnnounceEndpoint:
@@ -33,7 +32,7 @@ class AnnounceEndpoint:
         """
         app.add_routes([web.get('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.get_activities),
                         web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity),
-                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT),
+                        web.put('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT),
                                  self.post_schedule_activity),
                         web.get('/{endpoint}'.format(endpoint=ANNOUNCE_ENDPOINT), self.get_announce)])
         return app
