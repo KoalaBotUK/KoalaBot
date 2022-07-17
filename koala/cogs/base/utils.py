@@ -14,7 +14,7 @@ import discord
 
 # Own modules
 import koalabot
-from koala.db import get_enabled_guild_extensions, get_all_available_guild_extensions
+from koala.db import assign_session, get_enabled_guild_extensions, get_all_available_guild_extensions
 from koala.colours import KOALA_GREEN
 
 

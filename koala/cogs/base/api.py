@@ -14,9 +14,8 @@ from koala.utils import convert_iso_datetime
 
 # Constants
 BASE_ENDPOINT = 'base'
-ACTIVITY_ENDPOINT = 'scheduled-activity' # GET
-SET_ACTIVITY_ENDPOINT = 'activity' # PUT
-SCHEDULE_ACTIVITY_ENDPOINT = 'scheduled-activity' # POST
+ACTIVITY_ENDPOINT = 'activity' # PUT
+SCHEDULED_ACTIVITY_ENDPOINT = 'scheduled-activity' # POST
 
 PING_ENDPOINT = 'ping'
 SUPPORT_ENDPOINT = 'support'
@@ -43,9 +42,9 @@ class BaseEndpoint:
         :param app: The aiohttp.web.Application (likely of the sub app)
         :return: app
         """
-        app.add_routes([web.get('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.get_activities),
-                        web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity),
-                        web.post('/{endpoint}'.format(endpoint=SCHEDULE_ACTIVITY_ENDPOINT), self.post_schedule_activity),
+        app.add_routes([web.get('/{endpoint}'.format(endpoint=SCHEDULED_ACTIVITY_ENDPOINT), self.get_activities),
+                        web.put('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.put_set_activity),
+                        web.put('/{endpoint}'.format(endpoint=SCHEDULED_ACTIVITY_ENDPOINT), self.put_schedule_activity),
                         web.get('/{endpoint}'.format(endpoint=PING_ENDPOINT), self.get_ping),
                         web.get('/{endpoint}'.format(endpoint=SUPPORT_ENDPOINT), self.get_support_link),
                         web.get('/{endpoint}'.format(endpoint=GET_VERSION_ENDPOINT), self.get_version),
@@ -84,9 +83,9 @@ class BaseEndpoint:
         return build_response(CREATED, {'message': 'Activity set'})
 
     @parse_request(raw_response=True)
-    async def post_schedule_activity(self, activity_type, message, url, start_time, end_time):
+    async def put_schedule_activity(self, activity_type, message, url, start_time, end_time):
         """
-        Post a given activity as a scheduled activity
+        Put a given activity as a scheduled activity
         :param activity_type: activity type (playing, watching, streaming, ...)
         :param message: message to be used in sidebar
         :param url: optional url to use (for streaming)
@@ -162,10 +161,10 @@ class BaseEndpoint:
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
-        if resp == "Sorry, you can't unload the base cog":
-            return build_response(BAD_REQUEST, {'message': "Sorry, you can't unload the base cog"})
-        else:
-            return build_response(OK, {'message': 'Cog unloaded'})
+        # if resp == "Sorry, you can't unload the base cog":
+        #     return build_response(BAD_REQUEST, {'message': "Sorry, you can't unload the base cog"})
+        # else:
+        return build_response(OK, {'message': 'Cog unloaded'})
 
     @parse_request(raw_response=True)
     async def post_enable_extension(self, guild_id, koala_ext):
@@ -235,6 +234,8 @@ def handleActivityError(error):
         return 'Invalid extension'
     elif type(error) == discord.ext.commands.errors.ExtensionFailed:
         return 'Failed to load'
+    elif type(error) == discord.ext.commands.errors.ExtensionError and str(error).endswith("base cog"):
+        return "Sorry, you can't unload the base cog"
     return 'Unknown error'
 
 

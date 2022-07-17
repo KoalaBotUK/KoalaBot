@@ -146,13 +146,14 @@ async def unload_cog(bot: Bot, extension, package):
     :return:
     """
     if extension == "base" or extension == "BaseCog":
-        return "Sorry, you can't unload the base cog"
+        raise discord.ext.commands.errors.ExtensionError(message=f"Sorry, you can't unload the base cog", name=extension)
     else:
         bot.unload_extension("."+extension, package=package)
         return f'{extension} Cog Unloaded'
 
 
-async def enable_extension(bot: Bot, guild_id, koala_extension):
+@assign_session
+async def enable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
     """
     Enables a koala extension
     :param guild_id:
@@ -160,38 +161,39 @@ async def enable_extension(bot: Bot, guild_id, koala_extension):
     :return:
     """
     if koala_extension.lower() in ["all"]:
-        available_extensions = get_all_available_guild_extensions(guild_id)
+        available_extensions = get_all_available_guild_extensions(guild_id, **kwargs)
         for ext in available_extensions:
-            give_guild_extension(guild_id, ext)
+            give_guild_extension(guild_id, ext, **kwargs)
         
-        embed = list_ext_embed(guild_id)
+        embed = list_ext_embed(guild_id, **kwargs)
         embed.title = "All extensions enabled"
 
     else:
-        give_guild_extension(guild_id, koala_extension)
-        embed = list_ext_embed(guild_id)
+        give_guild_extension(guild_id, koala_extension, **kwargs)
+        embed = list_ext_embed(guild_id, **kwargs)
         embed.title = koala_extension + " enabled"
     
     return embed
 
 
-async def disable_extension(bot: Bot, guild_id, koala_extension):
+@assign_session
+async def disable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
     """
     Disables a koala extension
     :param guild_id:
     :param koala_extension:
     :return:
     """
-    all_ext = get_enabled_guild_extensions(guild_id)
+    all_ext = get_enabled_guild_extensions(guild_id, **kwargs)
 
     if koala_extension.lower() in ["all"]:
         for ext in all_ext:
-            remove_guild_extension(guild_id, ext)
+            remove_guild_extension(guild_id, ext, **kwargs)
     elif koala_extension not in all_ext:
         raise NotImplementedError(f"{koala_extension} is not an enabled extension")
     
-    remove_guild_extension(guild_id, koala_extension)
-    embed = list_ext_embed(guild_id)
+    remove_guild_extension(guild_id, koala_extension, **kwargs)
+    embed = list_ext_embed(guild_id, **kwargs)
     embed.title = koala_extension + " disabled"
 
     return embed
@@ -208,13 +210,14 @@ async def list_enabled_extensions(guild_id, **kwargs):
     return embed
 
 
-async def get_available_extensions(guild_id):
+@assign_session
+async def get_available_extensions(guild_id, **kwargs):
     """
         Gets all koala extensions of a guild
         :param guild_id:
         :return:
         """
-    return get_all_available_guild_extensions(guild_id)
+    return get_all_available_guild_extensions(guild_id, **kwargs)
 
 
 def get_version():

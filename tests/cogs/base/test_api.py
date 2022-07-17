@@ -48,12 +48,12 @@ async def test_get_activities_missing_param(api_client):
 
 '''
 
-POST /scheduled-activity  
+PUT /scheduled-activity  
 
 '''
 
-async def test_post_schedule_activity(api_client):
-    resp = await api_client.post('/scheduled-activity', data=(
+async def test_put_schedule_activity(api_client):
+    resp = await api_client.put('/scheduled-activity', data=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -66,8 +66,8 @@ async def test_post_schedule_activity(api_client):
     assert text == '{"message": "Activity scheduled"}'
 
 
-async def test_post_schedule_activity_missing_param(api_client):
-    resp = await api_client.post('/scheduled-activity', data=(
+async def test_put_schedule_activity_missing_param(api_client):
+    resp = await api_client.put('/scheduled-activity', data=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -79,8 +79,8 @@ async def test_post_schedule_activity_missing_param(api_client):
     assert text == "400: Unsatisfied Arguments: {'end_time'}"
 
 
-async def test_post_schedule_activity_bad_activity(api_client):
-    resp = await api_client.post('/scheduled-activity', data=(
+async def test_put_schedule_activity_bad_activity(api_client):
+    resp = await api_client.put('/scheduled-activity', data=(
         {
             'activity_type': 'invalidActivity',
             'message': 'test',
@@ -92,8 +92,8 @@ async def test_post_schedule_activity_bad_activity(api_client):
     assert await resp.text() == '422: Error scheduling activity: Invalid activity type'
 
 
-async def test_post_schedule_activity_bad_start_time(api_client):
-    resp = await api_client.post('/scheduled-activity', data=(
+async def test_put_schedule_activity_bad_start_time(api_client):
+    resp = await api_client.put('/scheduled-activity', data=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -105,8 +105,8 @@ async def test_post_schedule_activity_bad_start_time(api_client):
     assert await resp.text() == '422: Error scheduling activity: Bad start / end time'
 
 
-async def test_post_schedule_activity_bad_end_time(api_client):
-    resp = await api_client.post('/scheduled-activity', data=(
+async def test_put_schedule_activity_bad_end_time(api_client):
+    resp = await api_client.put('/scheduled-activity', data=(
         {
             'activity_type': 'invalidActivity',
             'message': 'test',
@@ -299,9 +299,9 @@ async def test_post_unload_base_cog(api_client):
             'extension': 'BaseCog',
             'package': koalabot.COGS_PACKAGE
         }))
-    assert resp.status == BAD_REQUEST
+    assert resp.status == UNPROCESSABLE_ENTITY
     text = await resp.text()
-    assert text == '{"message": "Sorry, you can\'t unload the base cog"}'
+    assert text == "422: Error unloading cog: Sorry, you can't unload the base cog"
 
 '''
 

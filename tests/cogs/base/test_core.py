@@ -120,8 +120,8 @@ async def test_unload_cog(bot: commands.Bot):
 
 @pytest.mark.asyncio
 async def test_unload_base_cog(bot: commands.Bot):
-    resp = await core.unload_cog(bot, "base", "koala.cogs")
-    assert resp == ("Sorry, you can't unload the base cog")
+    with pytest.raises(discord.ext.commands.errors.ExtensionError, match="Sorry, you can't unload the base cog"):
+        await core.unload_cog(bot, "base", "koala.cogs")
 
 
 @pytest.mark.asyncio

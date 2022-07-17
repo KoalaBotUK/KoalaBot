@@ -204,9 +204,8 @@ async def test_invalid_load_cog(base_cog: BaseCog):
 
 @pytest.mark.asyncio
 async def test_unload_base_cog(base_cog: BaseCog):
-    with mock.patch.object(discord.ext.commands.Context, 'send') as mock1:
+    with pytest.raises(discord.ext.commands.CommandInvokeError, match="Sorry, you can't unload the base cog"):
         await dpytest.message(koalabot.COMMAND_PREFIX + "unload_cog BaseCog")
-    mock1.assert_called_with("Sorry, you can't unload the base cog")
 
 
 @pytest.mark.asyncio
