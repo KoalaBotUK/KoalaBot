@@ -113,7 +113,7 @@ class BaseEndpoint:
         """
         return await core.ping(self._bot)
 
-    @parse_request()
+    @parse_request
     async def get_support_link(self):
         """
         Get the support link of KoalaBot
@@ -129,7 +129,7 @@ class BaseEndpoint:
         """
         return core.get_version()
 
-    @parse_request(raw_response=True)
+    @parse_request
     async def post_load_cog(self, extension, package):
         """
         Loads a cog from the cogs folder
@@ -144,9 +144,9 @@ class BaseEndpoint:
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
-        return build_response(OK, {'message': 'Cog loaded'})
+        return {'message': 'Cog loaded'}
 
-    @parse_request(raw_response=True)
+    @parse_request
     async def post_unload_cog(self, extension, package):
         """
         Unloads a cog from the cogs folder
@@ -164,9 +164,9 @@ class BaseEndpoint:
         # if resp == "Sorry, you can't unload the base cog":
         #     return build_response(BAD_REQUEST, {'message': "Sorry, you can't unload the base cog"})
         # else:
-        return build_response(OK, {'message': 'Cog unloaded'})
+        return {'message': 'Cog unloaded'}
 
-    @parse_request(raw_response=True)
+    @parse_request
     async def post_enable_extension(self, guild_id, koala_ext):
         """
         Enables a koala extension
@@ -182,9 +182,9 @@ class BaseEndpoint:
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
-        return build_response(OK, {'message': 'Extension enabled'})
+        return {'message': 'Extension enabled'}
 
-    @parse_request(raw_response=True)
+    @parse_request
     async def post_disable_extension(self, guild_id, koala_ext):
         """
         Disables a koala extension onto a server
@@ -200,7 +200,7 @@ class BaseEndpoint:
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
         
-        return build_response(OK, {'message': 'Extension disabled'})
+        return {'message': 'Extension disabled'}
 
     @parse_request
     async def get_extensions(self, guild_id):
