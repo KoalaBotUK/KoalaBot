@@ -14,7 +14,6 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 
-import sqlalchemy.orm
 from sqlalchemy import select, delete, and_, create_engine, func as sql_func
 from sqlalchemy.orm import sessionmaker
 

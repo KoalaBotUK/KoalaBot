@@ -155,7 +155,7 @@ class BaseEndpoint:
         :return:
         """
         try:
-            resp = await core.unload_cog(self._bot, extension, package)
+            await core.unload_cog(self._bot, extension, package)
         except BaseException as e:
             error = 'Error unloading cog: {}'.format(handleActivityError(e))
             logger.error(error)
