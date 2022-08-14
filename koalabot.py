@@ -58,7 +58,8 @@ is_dpytest = False
 
 def is_owner(ctx):
     """
-    A command used to check if the user of a command is the owner, or the testing bot
+    A command used to check if the user of a command is the owner, or the testing bot.
+    The command also allows Senior Devs of KoalaBot to use owner only commands (as given by Admin role in the dev portal)
     e.g. @commands.check(koalabot.is_owner)
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
@@ -149,25 +150,32 @@ async def on_command_error(ctx, error: Exception):
     else:
         guild_id = ctx.guild.id
 
-    if error.__class__ in [commands.MissingRequiredArgument,
-                           commands.CommandNotFound]:
+    if error.__class__ in [commands.MissingRequiredArgument]:
+        await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
+                                         description=str(error)+"\nAn argument is missing from this command. "
+                                                                "Use k!help <command> for more information.")) #TODO: Make <command> actually change to the command inputted
+    if error.__class__ in [commands.CommandNotFound]:
         await ctx.send(embed=error_embed(description=error))
     if error.__class__ in [commands.CheckFailure]:
         await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
-                                         description=str(error)+"\nPlease ensure you have administrator permissions, "
-                                                                "and have enabled this extension."))
+                                         description=str(error)+"\nThe command could not be executed with the given "
+                                                                "parameter."))
     elif isinstance(error, commands.CommandOnCooldown):
         await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
                                                      f"{str(error.retry_after)}s."))
     elif isinstance(error, commands.errors.ChannelNotFound):
         await ctx.send(embed=error_embed(description=f"The channel ID provided is either invalid, or not in this server."))
+    elif isinstance(error, commands.errors.Forbidden):
+        await ctx.send(embed=error.embed(description=f"The bot lacks necessary guild permissions, re-add the bot to "
+                                                     f"this server "
+                                                     f"with the correct permissions from the README.md"))
     elif isinstance(error, commands.CommandInvokeError):
         logger.error("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, guild_id, ctx.message, exc_info=error)
         await ctx.send(embed=error_embed(description=error.original))
     else:
         logger.error(f"Unexpected Error in guild %s : %s", guild_id, error, exc_info=error)
         await ctx.send(embed=error_embed(
-            description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}")) # FIXME: better timestamp
+            description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.asctime(time.gmtime(time.time()))}"))
         raise error
 
 
