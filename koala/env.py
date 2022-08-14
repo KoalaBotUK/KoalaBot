@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.environ['DISCORD_TOKEN']
-BOT_OWNER = os.environ.get('BOT_OWNER')
+BOT_OWNER = [int(os.environ.get('BOT_OWNER'))]
+BOT_OWNER.extend([107153571190935552, 230371277603340289, 142694160887971840, 228541431483072513])
 
 API_PORT = os.environ.get("API_PORT", 8080)
 
