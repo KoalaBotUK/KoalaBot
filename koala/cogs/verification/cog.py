@@ -201,10 +201,7 @@ This email is stored so you don't need to verify it multiple times across server
             session.add(NonVerifiedEmails(u_id=ctx.author.id, email=email, token=verification_code))
             session.commit()
 
-            try:
-                self.send_email(email, verification_code)
-            except smtplib.SMTPRecipentsRefused:
-                raise EmailError("KoalaBot was unable to send an email to the given address.")
+            self.send_email(email, verification_code)
             await ctx.send("Please verify yourself using the command you have been emailed")
 
     @commands.check(koalabot.is_dm_channel)
