@@ -20,7 +20,7 @@ from discord.ext import commands
 # Own modules
 import koalabot
 from koala.colours import KOALA_GREEN
-from koala.utils import wait_for_message, is_int
+from koala.utils import wait_for_message
 from koala.db import insert_extension
 from .db import ReactForRoleDBManager
 from .log import logger
@@ -783,12 +783,7 @@ class ReactForRole(commands.Cog):
         if not channel:
             raise commands.CommandError("Invalid channel given.")
         msg_id_raw = await self.prompt_for_input(ctx, "react for role message ID")
-        if (msg_id_raw == ""):
-            msg_id = None
-        elif not is_int(msg_id_raw):
-            msg_id = None
-        else:
-            msg_id = int(msg_id_raw)
+        msg_id = None if (msg_id_raw == "") else int(msg_id_raw)
         if not msg_id:
             raise commands.CommandError("Invalid Message ID given.")
         msg = await channel.fetch_message(msg_id)
