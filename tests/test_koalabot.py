@@ -56,15 +56,17 @@ def test_test_user_is_owner(test_ctx):
 
 
 def test_invalid_test_user_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER) + 1)
-    koalabot.is_dpytest = False
-    assert not koalabot.is_owner(test_ctx)
-    koalabot.is_dpytest = True
+    for i in range(len(koalabot.BOT_OWNER)):
+        test_ctx.author = FakeAuthor(id=koalabot.BOT_OWNER[i] + 1)
+        koalabot.is_dpytest = False
+        assert not koalabot.is_owner(test_ctx)
+        koalabot.is_dpytest = True
 
 
 def test_owner_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER))
-    assert koalabot.is_owner(test_ctx)
+    for i in range(len(koalabot.BOT_OWNER)):
+        test_ctx.author = FakeAuthor(id=(koalabot.BOT_OWNER[i]))
+        assert koalabot.is_owner(test_ctx)
 
 
 def test_test_user_is_admin(test_ctx):
