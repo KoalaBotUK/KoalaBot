@@ -31,7 +31,7 @@ from discord.ext import commands
 from koala.db import extension_enabled
 from koala.utils import error_embed
 from koala.log import logger
-from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT, ADMINS
+from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
 
 # Constants
 COMMAND_PREFIX = "k!"
@@ -67,15 +67,9 @@ def is_owner(ctx):
     if is_dm_channel(ctx):
         return False
     elif BOT_OWNER is not None:
-        if ctx.author.id == int(BOT_OWNER):
-            return True
-        else:
-            return ctx.message.author.name in ADMINS or is_dpytest
+        return ctx.author.id in BOT_OWNER or is_dpytest
     else:
-        if ctx.message.author.name in ADMINS:
-            return True
-        else:
-            return bot.is_owner(ctx.author) or is_dpytest
+        return bot.is_owner(ctx.author) or is_dpytest
 
 
 def is_admin(ctx):
