@@ -46,4 +46,4 @@ VOLUME /config
 # run app
 #########
 
-CMD [ "./startup.sh"]
+CMD [ "bash", "startup.sh"]

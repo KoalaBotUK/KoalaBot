@@ -83,7 +83,7 @@ def dict_factory(cursor, row):
 
 class DiscordActivityType(types.TypeDecorator):
     """
-    Uses int for python, but VARCHAR(18) for storing in db
+    Uses ActivityType for python, but TINYINT(2) for storing in db
     """
 
     impl = sqlalchemy.dialects.mysql.TINYINT(2)
@@ -106,10 +106,35 @@ class DiscordActivityType(types.TypeDecorator):
     def python_type(self):
         return ActivityType
 
+class DiscordSnowflake(types.TypeDecorator):
+    """
+    Uses int for python, but DiscordSnowflake for storing in db
+    """
+
+    impl = types.VARCHAR(20)
+
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        return str(value) if value else None
+
+    def process_literal_param(self, value, dialect):
+        return str(value) if value else None
+
+    def process_result_value(self, value, dialect):
+        return int(value) if value else None
+
+    def copy(self, **kw):
+        return DiscordSnowflake(self.impl.length)
+
+    @property
+    def python_type(self):
+        return int
+
 
 def upgrade():
     guilds = op.create_table("Guilds",
-                             Column('guild_id', VARCHAR(18), primary_key=True),
+                             Column('guild_id', DiscordSnowflake, primary_key=True),
                              Column('subscription', INT, server_default='0'))
     koala_extensions = op.create_table("KoalaExtensions",
                                        Column('extension_id', VARCHAR(20), primary_key=True),
@@ -119,7 +144,7 @@ def upgrade():
     guild_extensions = op.create_table('GuildExtensions',
                                        Column('extension_id', VARCHAR(20),
                                               ForeignKey("KoalaExtensions.extension_id", ondelete='CASCADE'), primary_key=True),
-                                       Column('guild_id', VARCHAR(18), primary_key=True))
+                                       Column('guild_id', DiscordSnowflake, primary_key=True))
 
     scheduled_activities = op.create_table('ScheduledActivities',
                                            Column('activity_id', INT, primary_key=True, autoincrement=True),
@@ -132,72 +157,72 @@ def upgrade():
                                            Column('time_end', TIMESTAMP))
 
     guild_usage = op.create_table('GuildUsage',
-                                  Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
+                                  Column('guild_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
                                   Column('last_message_epoch_time', INT))
 
     guild_colour_change_permissions = op.create_table('GuildColourChangePermissions',
-                                                      Column('guild_id', VARCHAR(18),
+                                                      Column('guild_id', DiscordSnowflake,
                                                              ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
-                                                      Column('role_id', VARCHAR(18), primary_key=True))
+                                                      Column('role_id', DiscordSnowflake, primary_key=True))
     guild_invalid_custom_colour_roles = op.create_table('GuildInvalidCustomColourRoles',
-                                                        Column('guild_id', VARCHAR(18),
+                                                        Column('guild_id', DiscordSnowflake,
                                                                ForeignKey("Guilds.guild_id", ondelete='CASCADE'),
                                                                primary_key=True),
-                                                        Column('role_id', VARCHAR(18), primary_key=True))
+                                                        Column('role_id', DiscordSnowflake, primary_key=True))
 
     guild_welcome_messages = op.create_table('GuildWelcomeMessages',
-                                             Column('guild_id', VARCHAR(18), primary_key=True),
+                                             Column('guild_id', DiscordSnowflake, primary_key=True),
                                              Column('welcome_message', String(2000, collation="utf8mb4_general_ci"), nullable=True))
 
     guild_rfr_messages = op.create_table('GuildRFRMessages',
-                                         Column('guild_id', VARCHAR(18), ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
-                                         Column('channel_id', VARCHAR(18)),
-                                         Column('message_id', VARCHAR(18)),
+                                         Column('guild_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
+                                         Column('channel_id', DiscordSnowflake),
+                                         Column('message_id', DiscordSnowflake),
                                          Column('emoji_role_id', INT, primary_key=True))
     op.create_unique_constraint('uniq_message', 'GuildRFRMessages', ['guild_id', 'channel_id', 'message_id'])
     rfr_message_emoji_roles = op.create_table('RFRMessageEmojiRoles',
                                               Column('emoji_role_id', INT,
                                                      ForeignKey("GuildRFRMessages.emoji_role_id", ondelete='CASCADE'), primary_key=True),
                                               Column('emoji_raw', VARCHAR(50, collation="utf8mb4_general_ci"), primary_key=True),
-                                              Column('role_id', VARCHAR(18), primary_key=True))
+                                              Column('role_id', DiscordSnowflake, primary_key=True))
     op.create_unique_constraint('uniq_emoji', 'RFRMessageEmojiRoles', ['emoji_role_id', 'emoji_raw'])
     op.create_unique_constraint('uniq_role_emoji', 'RFRMessageEmojiRoles', ['emoji_role_id', 'role_id'])
     guild_rfr_required_roles = op.create_table('GuildRFRRequiredRoles',
-                                               Column('guild_id', VARCHAR(18),
+                                               Column('guild_id', DiscordSnowflake,
                                                       ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
-                                               Column('role_id', VARCHAR(18), primary_key=True))
+                                               Column('role_id', DiscordSnowflake, primary_key=True))
     op.create_unique_constraint('uniq_guild_role', 'GuildRFRRequiredRoles', ['guild_id', 'role_id'])
 
     text_filter = op.create_table('TextFilter',
                                   Column('filtered_text_id', String(100, collation="utf8mb4_general_ci"), primary_key=True),
-                                  Column('guild_id', VARCHAR(18)),
+                                  Column('guild_id', DiscordSnowflake),
                                   Column('filtered_text', VARCHAR(100, collation="utf8mb4_general_ci")),
                                   Column('filter_type', VARCHAR(10)),
                                   Column('is_regex', BOOLEAN))
     text_filter_moderation = op.create_table('TextFilterModeration',
-                                             Column('channel_id', VARCHAR(18), primary_key=True),
-                                             Column('guild_id', VARCHAR(18)))
+                                             Column('channel_id', DiscordSnowflake, primary_key=True),
+                                             Column('guild_id', DiscordSnowflake))
     text_filter_ignore_list = op.create_table('TextFilterIgnoreList',
                                               Column('ignore_id', VARCHAR(36), primary_key=True),
-                                              Column('guild_id', VARCHAR(18)),
+                                              Column('guild_id', DiscordSnowflake),
                                               Column('ignore_type', VARCHAR(10)),
-                                              Column('ignore', VARCHAR(18)))
+                                              Column('ignore', DiscordSnowflake))
 
     twitch_alerts = op.create_table('TwitchAlerts',
-                                    Column('guild_id', VARCHAR(18),
+                                    Column('guild_id', DiscordSnowflake,
                                            ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
-                                    Column('channel_id', VARCHAR(18), primary_key=True),
+                                    Column('channel_id', DiscordSnowflake, primary_key=True),
                                     Column('default_message', VARCHAR(1000, collation="utf8mb4_general_ci")))
     user_in_twitch_alert = op.create_table('UserInTwitchAlert',
-                                           Column('channel_id', VARCHAR(18),
+                                           Column('channel_id', DiscordSnowflake,
                                                   ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'), primary_key=True),
                                            Column('twitch_username', VARCHAR(25), primary_key=True),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True),
-                                           Column('message_id', VARCHAR(18), nullable=True))
+                                           Column('message_id', DiscordSnowflake, nullable=True))
     team_in_twitch_alert = op.create_table('TeamInTwitchAlert',
                                            Column('team_twitch_alert_id', INT,
                                                   autoincrement=True, primary_key=True),
-                                           Column('channel_id', VARCHAR(18), ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')),
+                                           Column('channel_id', DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')),
                                            Column('twitch_team_name', VARCHAR(25)),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True))
     user_in_twitch_team = op.create_table('UserInTwitchTeam',
@@ -205,43 +230,43 @@ def upgrade():
                                                  ForeignKey("TeamInTwitchAlert.team_twitch_alert_id", ondelete='CASCADE'),
                                                  primary_key=True),
                                           Column('twitch_username', VARCHAR(25), primary_key=True),
-                                          Column('message_id', VARCHAR(18), nullable=True))
+                                          Column('message_id', DiscordSnowflake, nullable=True))
 
     verified_emails = op.create_table('verified_emails',
-                                      Column('u_id', VARCHAR(18), primary_key=True),
+                                      Column('u_id', DiscordSnowflake, primary_key=True),
                                       Column('email', VARCHAR(100, collation="utf8_bin"), primary_key=True))
     non_verified_emails = op.create_table('non_verified_emails',
-                                          Column('u_id', VARCHAR(18)),
+                                          Column('u_id', DiscordSnowflake),
                                           Column('email', VARCHAR(100)),
                                           Column('token', VARCHAR(8), primary_key=True))
     roles = op.create_table('roles',
-                            Column('s_id', VARCHAR(18), ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
-                            Column('r_id', VARCHAR(18), primary_key=True),
+                            Column('s_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
+                            Column('r_id', DiscordSnowflake, primary_key=True),
                             Column('email_suffix', VARCHAR(100), primary_key=True))
     to_re_verify = op.create_table('to_re_verify',
-                                   Column('u_id', VARCHAR(18), primary_key=True),
-                                   Column('r_id', VARCHAR(18), primary_key=True))
+                                   Column('u_id', DiscordSnowflake, primary_key=True),
+                                   Column('r_id', DiscordSnowflake, primary_key=True))
 
     votes = op.create_table('Votes',
-                            Column('vote_id', VARCHAR(18), primary_key=True),
-                            Column('author_id', VARCHAR(18)),
-                            Column('guild_id', VARCHAR(18)),
+                            Column('vote_id', DiscordSnowflake, primary_key=True),
+                            Column('author_id', DiscordSnowflake),
+                            Column('guild_id', DiscordSnowflake),
                             Column('title', VARCHAR(200, collation="utf8mb4_general_ci")),
-                            Column('chair_id', VARCHAR(18), nullable=True),
-                            Column('voice_id', VARCHAR(18), nullable=True),
+                            Column('chair_id', DiscordSnowflake, nullable=True),
+                            Column('voice_id', DiscordSnowflake, nullable=True),
                             Column('end_time', FLOAT, nullable=True))
     vote_target_roles = op.create_table('VoteTargetRoles',
-                                        Column('vote_id', VARCHAR(18), primary_key=True),
-                                        Column('role_id', VARCHAR(18), primary_key=True))
+                                        Column('vote_id', DiscordSnowflake, primary_key=True),
+                                        Column('role_id', DiscordSnowflake, primary_key=True))
     vote_options = op.create_table('VoteOptions',
-                                   Column('vote_id', VARCHAR(18), primary_key=True),
-                                   Column('opt_id', VARCHAR(18), primary_key=True),
+                                   Column('vote_id', DiscordSnowflake, primary_key=True),
+                                   Column('opt_id', DiscordSnowflake, primary_key=True),
                                    Column('option_title', VARCHAR(150, collation="utf8mb4_general_ci")),
                                    Column('option_desc', VARCHAR(150, collation="utf8mb4_general_ci")))
     vote_sent = op.create_table('VoteSent',
-                                Column('vote_id', VARCHAR(18), primary_key=True),
-                                Column('vote_receiver_id', VARCHAR(18), primary_key=True),
-                                Column('vote_receiver_message', VARCHAR(18)))
+                                Column('vote_id', DiscordSnowflake, primary_key=True),
+                                Column('vote_receiver_id', DiscordSnowflake, primary_key=True),
+                                Column('vote_receiver_message', DiscordSnowflake))
 
     # Copy data to new db
     conn = sqlite3.connect(str(SQLITE_DB_PATH.absolute()))

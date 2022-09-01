@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #while ! mysqladmin ping -h"database" --silent; do
 #  sleep 1
