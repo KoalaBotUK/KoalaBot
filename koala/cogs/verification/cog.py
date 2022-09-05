@@ -11,11 +11,14 @@ import random
 import smtplib
 import string
 from email.message import EmailMessage
+import io
+import csv
 
 # Libs
 import discord
 from discord.ext import commands
 from sqlalchemy import select, delete, and_, text
+from discord.utils import get
 
 # Own modules
 import koalabot
@@ -28,8 +31,6 @@ from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
 # Constants
 
 # Variables
-
-
 
 
 def verify_is_enabled(ctx):
@@ -127,7 +128,8 @@ This email is stored so you don't need to verify it multiple times across server
         """
         with session_manager() as session:
             if not role or not suffix:
-                raise self.InvalidArgumentError(f"Please provide the correct arguments\n(`{koalabot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
+                raise self.InvalidArgumentError(
+                    f"Please provide the correct arguments\n(`{koalabot.COMMAND_PREFIX}enable_verification <domain> <@role>`")
 
             try:
                 role_id = int(role[3:-1])
@@ -178,7 +180,6 @@ This email is stored so you don't need to verify it multiple times across server
             session.commit()
 
             await ctx.send(f"Emails ending with {suffix} no longer give {role}")
-
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="verify")
@@ -325,7 +326,73 @@ This email is stored so you don't need to verify it multiple times across server
                     session.add(ToReVerify(u_id=member.id, r_id=role.id))
 
             session.commit()
-            await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
+            await ctx.send(
+                "That role has now been removed from all users and they will need to re-verify the associated email.")
+
+    @commands.check(koalabot.is_owner)
+    @commands.command(name="listVerified")
+    async def list_verified(self, ctx):
+        """
+        Lists all users verified to a server, if the list is less than 20 then it is listed in chat otherwise it is compiled to a CSV
+        :param ctx: the context of the discord message
+        :return:
+        """
+        with session_manager() as session:
+            guild_member_list = ctx.guild.members
+            verified_list = session.execute(select(VerifiedEmails.u_id)).all()
+            verified_in_guild = [x.name for x in guild_member_list if x.id in verified_list]
+            if len(verified_in_guild) == 0:
+                await ctx.send(f'There is no one verified in this server')
+            if len(verified_in_guild) < 20:
+                await ctx.send(f'{verified_in_guild}')
+            else:
+                header = ['Discord ID', 'Discord Username']
+                data = [[x.id, str(x.name + x.discriminator)] for x in guild_member_list]
+                buffer = io.StringIO()
+                writer = csv.writer(buffer)
+                writer.writerow(header)
+                writer.writerows(data)
+                buffer.seek(0)
+                await ctx.send(file=discord.File(buffer, 'verified_users.csv'))
+
+    @commands.check(koalabot.is_owner)
+    @commands.command(name="verifyAddBatch")
+    async def verify_add_batch(self, ctx):
+        """
+        Takes in a CSV input and will batch add roles to all individuals in the CSV
+        :param ctx: the context of the discord message
+        :return:
+        """
+
+        """
+        CSV Format:
+        Header: [Username, RoleID1, RoleID2, RoleID3, ...]
+        X added to column that corresponds to role that you want to give to the user
+        
+        Example:
+        Header: [Username, Role1, Role2, Role3, Role4] 
+        Row: [FakeUser1234, , X, , X]
+        
+        This is for the user FakeUser1234 to be given Role2 and Role 4. 
+        """
+
+        # Scary thing that I don't really want to test right now
+        # for member in ctx.guild.members:
+        #     role = get(ctx.message.server.roles, name=member.name)
+        #     await member.remove_roles(role)
+
+        for thing in ctx.message.attachments:
+            data = await thing.read()
+            data = data.decode("utf-8").replace('\n', '').split('\r')
+            header = data[0].split(',')
+            roles_list = [x.split(',') for x in data[1:]]
+            for person in roles_list:
+                user = ctx.guild.get_member_named(person[0])
+                for loc, role in enumerate(person[1:]):
+                    if role != '':
+                        role_1 = get(ctx.guild.roles, name=header[loc+1])
+                        await user.add_roles(role_1)
+
 
     class InvalidArgumentError(Exception):
         pass
@@ -419,4 +486,3 @@ def setup(bot: koalabot) -> None:
     else:
         bot.add_cog(Verification(bot))
         logger.info("Verification is ready.")
-
