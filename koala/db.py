@@ -9,17 +9,19 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import os
+from typing import List, Optional
 # Libs
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 
+from discord import role
 from sqlalchemy import select, delete, and_, create_engine, func as sql_func
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
 from koala.env import DB_KEY, ENCRYPTED_DB
-from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
+from koala.models import mapper_registry, KoalaExtensions, GuildExtensions, AdminRoles
 from koala.utils import get_arg_config_path, format_config_path
 from koala.log import logger
 
@@ -229,5 +231,39 @@ def clear_all_tables(tables):
             session.execute('DELETE FROM ' + table + ';')
             session.commit()
 
+def add_admin_roles(guild_id, role_id):
+    with session_manager() as session:
+        new = AdminRoles(guild_id=guild_id, role_id=role_id)
+        session.add(new)
+        session.commit()
+
+
+def remove_admin_role(guild_id, role_id):
+    with session_manager() as session:
+        session.execute(
+            delete(AdminRoles)
+            .where(
+                and_(AdminRoles.guild_id == guild_id,
+                     AdminRoles.role_id == role_id)))
+        session.commit()
+
+
+def remove_all_admin_role(guild_id):
+    with session_manager() as session:
+        session.execute(
+            delete(AdminRoles)
+            .where(
+                (AdminRoles.guild_id == guild_id)))
+        session.commit()
+
+
+def get_admin_roles(guild_id: str) -> Optional[List[int]]:
+    with session_manager() as session:
+        roles = session.execute(select(AdminRoles)
+                                .where(AdminRoles.guild_id == guild_id)).scalars().all()
+        if roles:
+            return [role.role_id for role in roles]
+        else:
+            return []
 
 setup()
