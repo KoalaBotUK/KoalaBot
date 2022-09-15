@@ -4,6 +4,10 @@ administrators
 
 ## [Unreleased]
 
+## [0.5.10] - 15-09-2022
+### ReactForRole
+- Fix an issue where errors cause all reactions to be deleted
+
 ## [0.5.9] - 13-07-2022
 ### Verify
 - Fix an issue where reVerify would fail if run multiple times
@@ -291,7 +295,8 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.5.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
+[0.5.10]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.9...v0.5.10
+[0.5.9]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
 [0.5.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.5...v0.5.6
