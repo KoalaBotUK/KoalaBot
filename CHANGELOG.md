@@ -3,7 +3,11 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Base
+- Add commands to modify and check admin roles
 
+### Other
+- Allow users with admin roles to use admin commands
 ## [0.5.9] - 13-07-2022
 ### Verify
 - Fix an issue where reVerify would fail if run multiple times

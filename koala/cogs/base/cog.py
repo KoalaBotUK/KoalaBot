@@ -10,6 +10,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+from typing import List
 
 import discord
 from discord.ext import commands, tasks
@@ -19,6 +20,7 @@ from discord.ext.commands import BadArgument
 from koala.utils import convert_iso_datetime
 
 import koalabot
+from koala.db import add_admin_roles, remove_admin_role, get_admin_roles
 from . import core
 from .utils import AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
@@ -221,7 +223,83 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Get the version of KoalaBot
         """
         await ctx.send(core.get_version())
+    def get_admin_roles(self, guild: discord.Guild) -> List[discord.Role]:
+        """
+          Returns list of all roles that can use admin bot permissions in a guild
+          :param guild: Guild that is checked
+        """
+        role_ids = get_admin_roles(guild.id)
+        if not role_ids:
+            return []
+        roles = [guild.get_role(role_id) for role_id in role_ids]
+        return roles
 
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role: discord.Role):
+        """
+          Listens for roles being deleted in a guild. On a role being deleted, it automatically removes the role from the
+          database table.
+
+          :param role: Role that was deleted from the guild
+        """
+        admin = get_admin_roles(role.guild.id)
+        if role.id in admin:
+            remove_admin_role(role.guild.id, role.id)
+
+    @commands.check(koalabot.is_admin)
+    @commands.command(name="listAdminRoles",
+                      aliases=["list_admin_roles", "listBotRoles", "list_bot_roles"])
+    async def list_admin_roles(self, ctx: commands.Context):
+        """
+        Lists the admin roles. Requires admin permissions to use.
+
+        :param ctx: Context of the command
+        :return: Sends a message with the mentions of the roles that are protected in a guild
+        """
+        roles = self.get_admin_roles(ctx.guild)
+        msg = "Roles who have admin permissions are:\r\n"
+        for role in roles:
+            msg += f"{role.mention}\n"
+        await ctx.send(msg[:-1])
+
+    @commands.check(koalabot.is_owner)
+    @commands.command(name="addAdminRole", alias=["add_admin_role",
+                                                  "addAdministratorRole", "add_administrator_role",
+                                                  "addBotRole", "add_bot_role"])
+    async def add_admin_role(self, ctx: commands.Context, *, role_str: str):
+        """
+        Allow a role, via ID, mention or name to the list of roles allowed to have admin bot permissions.
+        Needs admin permissions to use.
+
+        :param ctx: Context of the command
+        :param role_str: The role to add (ID, name or mention)
+        """
+        role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
+        admin_roles = get_admin_roles(ctx.guild.id)
+        if role.id in admin_roles:
+            await ctx.send(f"{role.mention} already has admin permissions.")
+        else:
+            add_admin_roles(ctx.guild.id, role.id)
+            await ctx.send(f"Added {role.mention} to the list of roles allowed to have a bot admin permissions.")
+
+
+    @commands.check(koalabot.is_owner)
+    @commands.command(name="removeAdminRole",
+                      aliases=["remove_admin_role", "removeBotRole", "remove_bot_role"])
+    async def remove_admin_role(self, ctx: commands.Context, *, role_str: str):
+        """
+        Removes a role, via ID, mention or name, from the list of roles allowed use bot admin commands.
+
+        :param ctx: Context of the command
+        :param role_str: The role to remove (ID, name or mention)
+        """
+        role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
+        admin_roles = get_admin_roles(ctx.guild.id)
+        if role.id not in admin_roles:
+            await ctx.send(f"{role.mention} doesn't have admin permissions.")
+        else:
+            remove_admin_role(ctx.guild.id, role.id)
+            await ctx.send(f"Removed {role.mention} from the list of roles allowed to have a bot admin commands.")
 
 def setup(bot: koalabot) -> None:
     """

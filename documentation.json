@@ -46,6 +46,21 @@
         "command": "support",
         "parameters": [],
         "description": "Returns a link to the KoalaBot Support Discord Server"
+      },
+      {
+        "command": "listAdminRoles",
+        "parameters": [],
+        "description": "List all roles that can use admin commands"
+      },
+      {
+        "command": "addAdminRole",
+        "parameters": ["role"],
+        "description": "Allow a role to use admin commands"
+      },
+      {
+        "command": "removeAdminRole",
+        "parameters": ["role"],
+        "description": "Disables role from using admin commands"
       }
     ]
   },

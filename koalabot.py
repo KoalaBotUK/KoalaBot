@@ -28,7 +28,7 @@ import discord
 from discord.ext import commands
 
 # Own modules
-from koala.db import extension_enabled
+from koala.db import extension_enabled, get_admin_roles
 from koala.utils import error_embed
 from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
@@ -78,10 +78,17 @@ def is_admin(ctx):
     :param ctx: The context of the message
     :return: True if admin or test, False otherwise
     """
+    admin_roles = get_admin_roles(ctx.guild.id)
+    logger.debug(ctx.author.roles)
+    user_roles = ctx.author.roles
+    user_roles_id = []
+    for role in user_roles:
+        user_roles_id.append(role.id)
+    has_admin_role = not set(user_roles_id).isdisjoint(admin_roles)
     if is_dm_channel(ctx):
         return False
     else:
-        return ctx.author.guild_permissions.administrator or is_dpytest
+        return ctx.author.guild_permissions.administrator or is_dpytest or has_admin_role
 
 
 def is_dm_channel(ctx):

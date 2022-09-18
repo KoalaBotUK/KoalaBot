@@ -47,3 +47,12 @@ class GuildExtensions:
         return "GuildExtensions(%s, %s)>" % \
                (self.extension_id, self.guild_id)
 
+@mapper_registry.mapped
+class AdminRoles:
+    __tablename__ = 'AdminRoles'
+    guild_id = Column(Integer, primary_key=True)
+    role_id = Column(Integer, primary_key=True)
+
+    def __repr__(self):
+        return "AdminRoles(%s, %s)" % \
+               (self.guild_id, self.guild_id)
