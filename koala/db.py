@@ -24,7 +24,7 @@ from koala.log import logger
 # Constants
 
 # Variables
-engine = create_engine(DB_URL, future=True, pool_size=20)
+engine = create_engine(DB_URL, future=True, pool_size=20, pool_recycle=3600)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 
