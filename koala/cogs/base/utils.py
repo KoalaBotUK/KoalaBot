@@ -24,7 +24,7 @@ AUTO_UPDATE_ACTIVITY_DELAY = 1
 # Variables
 
 
-def list_ext_embed(guild_id):
+def list_ext_embed(guild_id, **kwargs):
     """
     Creates a discord embed of enabled and disabled extensions
     :param guild_id: The discord guild id of the server
@@ -34,8 +34,8 @@ def list_ext_embed(guild_id):
     embed.title = "Enabled extensions"
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {guild_id}")
-    enabled_results = get_enabled_guild_extensions(guild_id)
-    all_results = get_all_available_guild_extensions(guild_id)
+    enabled_results = get_enabled_guild_extensions(guild_id, **kwargs)
+    all_results = get_all_available_guild_extensions(guild_id, **kwargs)
     enabled = ""
     disabled = ""
     for result in enabled_results:
