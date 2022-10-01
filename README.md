@@ -13,9 +13,9 @@ to improve their server and society!
 
 * **Jack Draper** - *Project Manager* - [JayDwee](https://github.com/JayDwee)
 * **Stefan Cooper** - *Senior Developer* - [stefan-cooper](https://github.com/stefan-cooper)
-* **Kieran Allinson** - *Senior Developer* - [Kaspiaan](https://github.com/Kaspiaan)
 * **Viraj Shah** - *Senior Developer* - [VirajShah18](https://github.com/VirajShah18)
 * **Otto Hooper** - *Senior Developer* - [VottonDev](https://github.com/VottonDev)
+* **Zoe Tam** - *Senior Developer* - [abluey](https://github.com/abluey)
 
 All of our other amazing developers can be seen on our website https://koalabot.uk
 
