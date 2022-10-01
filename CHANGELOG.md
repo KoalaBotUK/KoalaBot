@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Other
+- Updated list of Senior Developers
 
 ## [0.5.9] - 13-07-2022
 ### Verify
