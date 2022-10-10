@@ -7,6 +7,7 @@ from koala.models import mapper_registry
 @mapper_registry.mapped
 class GuildUsage:
     __tablename__ = 'GuildUsage'
+    __table_args__= {'extend_existing': True}
     guild_id = Column(Integer, ForeignKey("GuildExtensions.guild_id"), primary_key=True)
     last_message_epoch_time = Column(Integer)
 
