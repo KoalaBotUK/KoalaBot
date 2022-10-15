@@ -3,16 +3,15 @@ import math
 import time
 
 import discord
-
-import koalabot
-from announce_message import AnnounceMessage, Announce, announce_is_enabled
-
+from announce_message import Announce, AnnounceMessage, announce_is_enabled
 from discord.ext import commands, tasks
 from discord.ext.commands import BadArgument
 
-from koala.cogs.announce.utils import MAX_MESSAGE_LENGTH, ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY
+import koalabot
+from koala.cogs.announce.utils import (ANNOUNCE_SEPARATION_DAYS,
+                                       MAX_MESSAGE_LENGTH, SECONDS_IN_A_DAY)
 from koala.log import logger
-from koala.utils import wait_for_message, extract_id
+from koala.utils import extract_id, wait_for_message
 
 
 def announce_is_enabled(guild):

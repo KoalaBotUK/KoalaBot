@@ -5,6 +5,7 @@ from aiohttp import web
 from discord.ext.commands import Bot
 
 from koala.rest.api import parse_request
+
 from . import cog
 # Own modules
 from .log import logger

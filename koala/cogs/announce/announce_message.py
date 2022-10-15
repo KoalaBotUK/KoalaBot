@@ -2,19 +2,21 @@
 import math
 import time
 
+# Libs
+import discord
+from discord.ext import commands
+
 # Own modules
 import koalabot
 from koala.colours import KOALA_GREEN
 from koala.db import insert_extension
 from koala.utils import extract_id, wait_for_message
+
 from .announce_message import AnnounceMessage
 from .db import AnnounceDBManager
 from .log import logger
-from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, MAX_MESSAGE_LENGTH
-
-# Libs
-import discord
-from discord.ext import commands
+from .utils import (ANNOUNCE_SEPARATION_DAYS, MAX_MESSAGE_LENGTH,
+                    SECONDS_IN_A_DAY)
 
 
 def announce_is_enabled(guild):

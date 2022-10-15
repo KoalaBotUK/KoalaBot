@@ -1,6 +1,6 @@
-from . import cog
-from . import api
+from . import api, cog
 from .cog import AnnounceCog
+
 
 def setup(bot):
     cog.setup(bot)
