@@ -246,10 +246,6 @@ This email is stored so you don't need to verify it multiple times across server
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
-<<<<<<< HEAD
-        await core.re_verify(role, ctx.guild.id, ctx.guild.roles, ctx.guild.members)
-        await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
-=======
         with session_manager() as session:
             exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role.id)).all()
 
@@ -263,7 +259,6 @@ This email is stored so you don't need to verify it multiple times across server
 
             session.commit()
             await ctx.send("That role has now been removed from all users and they will need to re-verify the associated email.")
->>>>>>> 8713ece085d8f44af25d3271542a6a31a0530d4a
 
     class InvalidArgumentError(Exception):
         pass
