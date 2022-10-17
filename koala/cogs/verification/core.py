@@ -50,6 +50,7 @@ def enable_verification(guild_id, guild_roles, session: sqlalchemy.orm.Session, 
     Set up a role and email pair for KoalaBot to verify users with
     :param guild_id: guild id of current guild
     :param guild_roles: all enabled roles in the current guild
+    :param session:
     :param suffix: end of the email (e.g. "example.com")
     :param role: the role to give users with that email verified (e.g. @students)
     :return:

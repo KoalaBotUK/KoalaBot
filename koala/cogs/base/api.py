@@ -216,7 +216,7 @@ class BaseEndpoint:
 def getActivityType(activity_type):
     return discord.ActivityType[activity_type]
 
-
+# Extract into new file?
 def handleActivityError(error):
     if type(error) == KeyError:
         return 'Invalid activity type'
