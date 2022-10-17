@@ -1,4 +1,5 @@
 from . import api, cog
+from .cog import Announce
 
 
 def setup(bot):
