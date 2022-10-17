@@ -37,9 +37,9 @@ class AnnounceEndpoint:
         return app
 
 
-@parse_request
-async def get_announce_is_enabled(guild):
-    return await cog.announce_is_enabled(guild)
+    @parse_request
+    async def get_announce_is_enabled(guild):
+        return await cog.announce_is_enabled(guild)
 
 
 def setup(bot: Bot):
