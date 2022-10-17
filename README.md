@@ -107,6 +107,8 @@ services:
       - TWITCH_SECRET = twitch_application_secret #optional (TwitchAlert)
       - GMAIL_EMAIL = example@gmail.com #optional (Verify)
       - GMAIL_PASSWORD = example_password123 #optional (Verify)
+    ports:
+      - "8080:8080"
     volumes:
       - <path to data>:/config
     restart: unless-stopped
@@ -125,6 +127,7 @@ docker run \
   -e TWITCH_SECRET=twitch_application_secret `#optional (TwitchAlert)` \
   -e GMAIL_EMAIL=example@gmail.com `#optional (Verify)` \
   -e GMAIL_PASSWORD=example_password123 `#optional (Verify)` \
+  -p 8080:8080
   -v <path to data>:/config \
   --restart unless-stopped \
   jaydwee/koalabot
