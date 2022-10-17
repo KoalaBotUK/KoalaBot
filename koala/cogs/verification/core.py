@@ -140,6 +140,12 @@ def un_verify(user_id, email, session: sqlalchemy.orm.Session):
 
 @assign_session
 def confirm(user_id, token, session: sqlalchemy.orm.Session):
+    """
+    Send to KoalaBot in dms to confirm the verification of an email
+    :param ctx: the context of the discord message
+    :param token: the token emailed to you to verify with
+    :return:
+    """
     entry = session.execute(select(NonVerifiedEmails).filter_by(token=token)).scalar()
 
     if not entry:
@@ -203,6 +209,80 @@ async def re_verify(role, guild_id, guild_roles, guild_members, session: sqlalch
             session.add(ToReVerify(u_id=member.id, r_id=role.id))
 
     session.commit()
+
+@assign_session
+def assign_roles_on_startup(bot, session: sqlalchemy.orm.Session):
+    results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)).all()
+    for g_id, r_id, suffix in results:
+        try:
+            guild = bot.get_guild(g_id)
+            role = discord.utils.get(guild.roles, id=r_id)
+            assign_role_to_guild(guild, role, suffix)
+        except AttributeError as e:
+            # bot not in guild
+            logger.error(e)
+
+@assign_session
+def assign_roles_for_user(bot, user_id, email, session: sqlalchemy.orm.Session):
+    results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
+                                .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+
+    for g_id, r_id, suffix in results:
+        blacklisted = session.execute(select(ToReVerify).filter_by(r_id=r_id, u_id=user_id)).all()
+
+        if blacklisted:
+            continue
+        try:
+            guild = bot.get_guild(g_id)
+            role = discord.utils.get(guild.roles, id=r_id)
+            member = guild.get_member(user_id)
+            if not member:
+                member = guild.fetch_member(user_id)
+            member.add_roles(role)
+        except AttributeError as e:
+            # bot not in guild
+            logger.error(e)
+        except discord.errors.NotFound:
+            logger.warn(f"user with id {user_id} not found")
+
+@assign_session
+def remove_roles_for_user(bot, user_id, email, session: sqlalchemy.orm.Session):
+    results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
+                                .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+
+    for g_id, r_id, suffix in results:
+        try:
+            guild = bot.get_guild(g_id)
+            role = discord.utils.get(guild.roles, id=r_id)
+            member = guild.get_member(user_id)
+            if not member:
+                member = guild.fetch_member(user_id)
+            member.remove_roles(role)
+        except AttributeError as e:
+            # bot not in guild
+            logger.error(e)
+        except discord.errors.NotFound:
+            logger.error(f"user with id {user_id} not found in {guild}")
+
+@assign_session
+def assign_role_to_guild(guild, role, suffix, session: sqlalchemy.orm.Session):
+    results = session.execute(select(VerifiedEmails.u_id).where(VerifiedEmails.email.endswith(suffix))).all()
+
+    for user_id in results:
+        try:
+            blacklisted = session.execute(select(ToReVerify).filter_by(r_id=role.id, u_id=user_id[0])).all()
+
+            if blacklisted:
+                continue
+            member = guild.get_member(user_id[0])
+            if not member:
+                member = guild.fetch_member(user_id[0])
+            member.add_roles(role)
+        except AttributeError as e:
+            # bot not in guild
+            logger.error(e)
+        except discord.errors.NotFound:
+            logger.error(f"user with id {user_id} not found in {guild}")
 
 class InvalidArgumentError(Exception):
     pass

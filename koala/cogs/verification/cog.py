@@ -67,7 +67,7 @@ class Verification(commands.Cog, name="Verify"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.assign_roles_on_startup()
+        await core.assign_roles_on_startup(self.bot)
 
     @commands.Cog.listener()
     async def on_member_join(self, member): # not sure if this should be in core...
@@ -158,7 +158,7 @@ This email is stored so you don't need to verify it multiple times across server
         """
         core.un_verify(ctx.author.id, email)
 
-        await self.remove_roles_for_user(ctx.author.id, email)
+        await core.remove_roles_for_user(self.bot, ctx.author.id, email)
         await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
 
     @commands.check(koalabot.is_dm_channel)
@@ -173,7 +173,7 @@ This email is stored so you don't need to verify it multiple times across server
         entry = core.confirm(ctx.author.id, token)
 
         await ctx.send("Your email has been verified, thank you")
-        await self.assign_roles_for_user(ctx.author.id, entry.email)
+        await core.assign_roles_for_user(self.bot, ctx.author.id, entry.email)
 
     @commands.check(koalabot.is_owner)
     @commands.command(name="getEmails")
@@ -245,81 +245,6 @@ This email is stored so you don't need to verify it multiple times across server
 
     class VerifyError(Exception):
         pass
-
-    async def assign_roles_on_startup(self):
-        with session_manager() as session:
-            results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)).all()
-            for g_id, r_id, suffix in results:
-                try:
-                    guild = self.bot.get_guild(g_id)
-                    role = discord.utils.get(guild.roles, id=r_id)
-                    await self.assign_role_to_guild(guild, role, suffix)
-                except AttributeError as e:
-                    # bot not in guild
-                    logger.error(e)
-
-    async def assign_roles_for_user(self, user_id, email):
-        with session_manager() as session:
-            results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
-                                      .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
-
-            for g_id, r_id, suffix in results:
-                blacklisted = session.execute(select(ToReVerify).filter_by(r_id=r_id, u_id=user_id)).all()
-
-                if blacklisted:
-                    continue
-                try:
-                    guild = self.bot.get_guild(g_id)
-                    role = discord.utils.get(guild.roles, id=r_id)
-                    member = guild.get_member(user_id)
-                    if not member:
-                        member = await guild.fetch_member(user_id)
-                    await member.add_roles(role)
-                except AttributeError as e:
-                    # bot not in guild
-                    logger.error(e)
-                except discord.errors.NotFound:
-                    logger.warn(f"user with id {user_id} not found")
-
-    async def remove_roles_for_user(self, user_id, email):
-        with session_manager() as session:
-            results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
-                                      .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
-
-            for g_id, r_id, suffix in results:
-                try:
-                    guild = self.bot.get_guild(g_id)
-                    role = discord.utils.get(guild.roles, id=r_id)
-                    member = guild.get_member(user_id)
-                    if not member:
-                        member = await guild.fetch_member(user_id)
-                    await member.remove_roles(role)
-                except AttributeError as e:
-                    # bot not in guild
-                    logger.error(e)
-                except discord.errors.NotFound:
-                    logger.error(f"user with id {user_id} not found in {guild}")
-
-    async def assign_role_to_guild(self, guild, role, suffix):
-        with session_manager() as session:
-            results = session.execute(select(VerifiedEmails.u_id).where(VerifiedEmails.email.endswith(suffix))).all()
-
-            for user_id in results:
-                try:
-                    blacklisted = session.execute(select(ToReVerify).filter_by(r_id=role.id, u_id=user_id[0])).all()
-
-                    if blacklisted:
-                        continue
-                    member = guild.get_member(user_id[0])
-                    if not member:
-                        member = await guild.fetch_member(user_id[0])
-                    await member.add_roles(role)
-                except AttributeError as e:
-                    # bot not in guild
-                    logger.error(e)
-                except discord.errors.NotFound:
-                    logger.error(f"user with id {user_id} not found in {guild}")
-
 
 def setup(bot: koalabot) -> None:
     """
