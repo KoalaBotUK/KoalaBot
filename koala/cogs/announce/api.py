@@ -32,42 +32,13 @@ class AnnounceEndpoint:
         :param app: The aiohttp.web.Application (likely of the sub app)
         :return: app
         """
-        app.add_routes([web.get('/{endpoint}'.format(endpoint=ANNOUNCE_IS_ENABLED), self.get_announce_is_enabled),
-                        web.get('/{endpoint}'.format(endpoint=ANNOUNCE_ENOUGH_DAYS_PASSED), self.get_enough_days_passed)])
+        app.add_routes([web.get('/{endpoint}'.format(endpoint=ANNOUNCE_IS_ENABLED), self.get_announce_is_enabled)])
         return app
 
 
 @parse_request
 async def get_announce_is_enabled(guild):
     return await cog.announce_is_enabled(guild)
-
-
-@parse_request
-async def get_enough_days_passed(self, guild_id, ctx):
-    return await cog.not_exceeded_limit(self, guild_id, ctx)
-
-
-@parse_request
-async def has_active_message(self, guild_id, ctx):
-    return await cog.has_active_msg(self, guild_id, ctx)
-
-
-@parse_request
-async def get_names_of_roles(self, guild_id, roles, ctx):
-    return await cog.get_role_names(self, guild_id, roles, ctx)
-
-
-@parse_request()
-async def get_receivers_of_announcement(self, guild_id, roles, ctx):
-    return await cog.get_receivers(self, guild_id, roles, ctx)
-
-@parse_request()
-async def receiver_msg_create(self, guild, ctx):
-    return await cog.receiver_msg_create(self, guild, ctx)
-
-@parse_request()
-async def construct_embed_message(self, guild, ctx):
-    return await cog.construct_embed_message(self, guild, ctx)
 
 
 def setup(bot: Bot):
