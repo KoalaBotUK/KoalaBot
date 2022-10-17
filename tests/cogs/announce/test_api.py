@@ -1,18 +1,15 @@
 from http.client import BAD_REQUEST, CREATED, OK, UNPROCESSABLE_ENTITY
 
-from mock import mock
-from koala.cogs.announce.api import AnnounceEndpoint
-from koala.db import get_all_available_guild_extensions
-from koala.rest.api import parse_request
-
-import koalabot
-from koala.cogs.base.api import AnnounceEndpoint
-
 # Libs
 import discord
-from aiohttp import web
 import pytest
-import discord.ext.test as dpytest
+from aiohttp import web
+
+import koalabot
+from koala.cogs.announce.api import AnnounceEndpoint
+from koala.cogs.base.api import AnnounceEndpoint
+from koala.db import get_all_available_guild_extensions
+from koala.rest.api import parse_request
 
 
 @pytest.fixture
