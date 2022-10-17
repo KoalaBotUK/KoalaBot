@@ -163,37 +163,17 @@ This email is stored so you don't need to verify it multiple times across server
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="confirm")
-    async def confirm(self, ctx, token): # not in core?
+    async def confirm(self, ctx, token):
         """
         Send to KoalaBot in dms to confirm the verification of an email
         :param ctx: the context of the discord message
         :param token: the token emailed to you to verify with
         :return:
         """
-        with session_manager() as session:
-            entry = session.execute(select(NonVerifiedEmails).filter_by(token=token)).scalar()
+        entry = core.confirm(ctx.author.id, token)
 
-            if not entry:
-                raise self.InvalidArgumentError("That is not a valid token")
-
-            already_verified = session.execute(select(VerifiedEmails)
-                                               .filter_by(u_id=ctx.author.id, email=entry.email)).all()
-
-            if not already_verified:
-                session.add(VerifiedEmails(u_id=ctx.author.id, email=entry.email))
-
-            session.execute(delete(NonVerifiedEmails).filter_by(token=token))
-
-            potential_roles = session.execute(select(Roles.r_id)
-                                              .where(text(":email like ('%' || email_suffix)")),
-                                              {"email": entry.email}).all()
-            if potential_roles:
-                for role_id in potential_roles:
-                    session.execute(delete(ToReVerify).filter_by(r_id=role_id[0], u_id=ctx.author.id))
-
-            session.commit()
-            await ctx.send("Your email has been verified, thank you")
-            await self.assign_roles_for_user(ctx.author.id, entry.email)
+        await ctx.send("Your email has been verified, thank you")
+        await self.assign_roles_for_user(ctx.author.id, entry.email)
 
     @commands.check(koalabot.is_owner)
     @commands.command(name="getEmails")

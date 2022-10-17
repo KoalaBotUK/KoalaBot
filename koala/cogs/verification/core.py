@@ -137,6 +137,32 @@ def un_verify(user_id, email):
         session.execute(delete(VerifiedEmails).filter_by(u_id=user_id, email=email))
         session.commit()
 
+def confirm(user_id, token):
+    with session_manager() as session:
+        entry = session.execute(select(NonVerifiedEmails).filter_by(token=token)).scalar()
+
+        if not entry:
+            raise InvalidArgumentError("That is not a valid token")
+
+        already_verified = session.execute(select(VerifiedEmails)
+                                            .filter_by(u_id=user_id, email=entry.email)).all()
+
+        if not already_verified:
+            session.add(VerifiedEmails(u_id=ctx.author.id, email=entry.email))
+
+        session.execute(delete(NonVerifiedEmails).filter_by(token=token))
+
+        potential_roles = session.execute(select(Roles.r_id)
+                                            .where(text(":email like ('%' || email_suffix)")),
+                                            {"email": entry.email}).all()
+        if potential_roles:
+            for role_id in potential_roles:
+                session.execute(delete(ToReVerify).filter_by(r_id=role_id[0], u_id=user_id))
+
+        session.commit()
+
+    return entry
+
 def get_emails(user_id: int):
     """
     See the emails a user is verified with
