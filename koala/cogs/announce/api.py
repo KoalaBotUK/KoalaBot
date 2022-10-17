@@ -12,8 +12,9 @@ from .log import logger
 
 # Constants
 ANNOUNCE_ENDPOINT = 'announce'
-ACTIVITY_ENDPOINT = 'scheduled-activity'  # GET
-SET_ACTIVITY_ENDPOINT = 'activity'  # PUT
+
+ANNOUNCE_IS_ENABLED= 'announce_is_enabled' # GET
+ANNOUNCE_ENOUGH_DAYS_PASSED = 'announce_enough_days_passed'
 
 
 class AnnounceEndpoint:
@@ -31,21 +32,18 @@ class AnnounceEndpoint:
         :param app: The aiohttp.web.Application (likely of the sub app)
         :return: app
         """
-        app.add_routes([web.get('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT), self.get_activities),
-                        web.put('/{endpoint}'.format(endpoint=SET_ACTIVITY_ENDPOINT), self.put_set_activity),
-                        web.put('/{endpoint}'.format(endpoint=ACTIVITY_ENDPOINT),
-                                 self.post_schedule_activity),
-                        web.get('/{endpoint}'.format(endpoint=ANNOUNCE_ENDPOINT), self.get_announce)])
+        app.add_routes([web.get('/{endpoint}'.format(endpoint=ANNOUNCE_IS_ENABLED), self.get_announce_is_enabled),
+                        web.get('/{endpoint}'.format(endpoint=ANNOUNCE_ENOUGH_DAYS_PASSED), self.get_enough_days_passed)])
         return app
 
 
 @parse_request
-async def announce_is_enabled(guild):
+async def get_announce_is_enabled(guild):
     return await cog.announce_is_enabled(guild)
 
 
 @parse_request
-async def enough_days_passed(self, guild_id, ctx):
+async def get_enough_days_passed(self, guild_id, ctx):
     return await cog.not_exceeded_limit(self, guild_id, ctx)
 
 

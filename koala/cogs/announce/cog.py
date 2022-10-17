@@ -3,9 +3,8 @@ import math
 import time
 
 import discord
-from announce_message import Announce, AnnounceMessage, announce_is_enabled
-from discord.ext import commands, tasks
-from discord.ext.commands import BadArgument
+from announce_message import Announce, AnnounceMessage
+from discord.ext import commands
 
 import koalabot
 from koala.cogs.announce.utils import (ANNOUNCE_SEPARATION_DAYS,
