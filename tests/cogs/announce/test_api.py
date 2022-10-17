@@ -7,7 +7,6 @@ from aiohttp import web
 
 import koalabot
 from koala.cogs.announce.api import AnnounceEndpoint
-from koala.cogs.base.api import AnnounceEndpoint
 from koala.db import get_all_available_guild_extensions
 from koala.rest.api import parse_request
 
