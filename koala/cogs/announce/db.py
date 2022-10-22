@@ -3,6 +3,7 @@ from sqlalchemy import select
 
 # Own modules
 from koala.db import session_manager
+
 from .models import GuildUsage
 
 # Libs
