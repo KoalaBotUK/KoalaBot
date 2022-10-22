@@ -17,7 +17,7 @@ from .log import logger
 # Constants
 ANNOUNCE_ENDPOINT = 'announce'
 
-ANNOUNCE_IS_ENABLED= 'announce_is_enabled' # GET
+ANNOUNCE_STATUS= 'announce_status' # GET
 
 
 class AnnounceEndpoint:
@@ -35,7 +35,7 @@ class AnnounceEndpoint:
         :param app: The aiohttp.web.Application (likely of the sub app)
         :return: app
         """
-        app.add_routes([web.get('/{endpoint}'.format(endpoint=ANNOUNCE_IS_ENABLED), self.get_announce_is_enabled)])
+        app.add_routes([web.get('/{endpoint}'.format(endpoint=ANNOUNCE_STATUS), self.get_announce_is_enabled)])
         return app
 
 

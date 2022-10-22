@@ -17,3 +17,9 @@ def api_client(bot: discord.ext.commands.Bot, aiohttp_client, loop ):
     endpoint = AnnounceEndpoint(bot)
     app = endpoint.register(app)
     return loop.run_until_complete(aiohttp_client(app))
+
+# Check if announce cog is enabled
+async def test_is_announce_cog_enabled(api_client):
+    resp = await api_client.get('/announce_status?guild=1')
+    assert resp.status == OK
+    assert await resp.json() == True
