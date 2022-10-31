@@ -43,9 +43,9 @@ def get_scheduled_activities(start_time_restricted: bool, end_time_restricted: b
     current_time = datetime.datetime.now()
     query = select(ScheduledActivities)
     if start_time_restricted:
-        query = query.where(ScheduledActivities.time_start < current_time)
+        query = query.where(ScheduledActivities.time_start <= current_time)
     if end_time_restricted:
-        query = query.where(ScheduledActivities.time_end > current_time)
+        query = query.where(ScheduledActivities.time_end >= current_time)
 
     return session.execute(query).scalars().all()
 

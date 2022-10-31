@@ -41,7 +41,8 @@ RUN python3 -m pip install pysqlcipher3
 VOLUME /config
 
 # Expose port
-# EXPOSE 5000
+ENV API_PORT=8080
+EXPOSE 8080
 
 # run app
 #########

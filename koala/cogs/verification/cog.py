@@ -306,7 +306,7 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.check(koalabot.is_admin)
     @commands.command(name="reVerify")
     @commands.check(verify_is_enabled)
-    async def re_verify(self, ctx, role):
+    async def re_verify(self, ctx, role: discord.Role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
         :param ctx: the context of the discord message
@@ -314,21 +314,14 @@ This email is stored so you don't need to verify it multiple times across server
         :return:
         """
         with session_manager() as session:
-            try:
-                role_id = int(role[3:-1])
-            except ValueError:
-                raise self.InvalidArgumentError("Please give a role by @mentioning it")
-            except TypeError:
-                raise self.InvalidArgumentError("Please give a role by @mentioning it")
-
-            exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role_id)).all()
+            exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role.id)).all()
 
             if not exists:
                 raise self.VerifyError("Verification is not enabled for that role")
-            role = discord.utils.get(ctx.guild.roles, id=role_id)
-            for member in ctx.guild.members:
-                if role in member.roles:
-                    await member.remove_roles(role)
+            existing_reverify = session.execute(select(ToReVerify.u_id).filter_by(r_id=role.id)).scalars().all()
+            for member in role.members:
+                await member.remove_roles(role)
+                if member.id not in existing_reverify:
                     session.add(ToReVerify(u_id=member.id, r_id=role.id))
 
             session.commit()
@@ -373,7 +366,7 @@ This email is stored so you don't need to verify it multiple times across server
                     # bot not in guild
                     logger.error(e)
                 except discord.errors.NotFound:
-                    logger.error(f"user with id {user_id} not found")
+                    logger.warn(f"user with id {user_id} not found")
 
     async def remove_roles_for_user(self, user_id, email):
         with session_manager() as session:
