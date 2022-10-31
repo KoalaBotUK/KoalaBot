@@ -23,7 +23,7 @@ import koalabot
 from koala.colours import KOALA_GREEN
 from koala.utils import wait_for_message
 from koala.db import insert_extension
-from .db import ReactForRoleDBManager
+from .db import *
 from .log import logger
 
 
@@ -50,7 +50,6 @@ class ReactForRole(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         insert_extension("ReactForRole", 0, True, True)
-        self.rfr_database_manager = ReactForRoleDBManager()
 
     @commands.check(koalabot.is_guild_channel)
     @commands.check(koalabot.is_admin)
@@ -380,12 +379,12 @@ class ReactForRole(commands.Cog):
             logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
         else:
-            er_id, _, _, _ = self.rfr_database_manager.get_rfr_message(ctx.guild.id, chnl.id, msg.id)
+            er_id, _, _, _ = get_rfr_message(ctx.guild.id, chnl.id, msg.id)
             if not er_id:
                 logger.error(
                     f"RFR: Can't find rfr message with {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}. DB ER_ID : {er_id}")
             else:
-                rfr_er = self.rfr_database_manager.get_rfr_message_emoji_roles(er_id)
+                rfr_er = get_rfr_message_emoji_roles(er_id)
                 if not rfr_er:
                     logger.error(
                         f"RFR: Can't retrieve RFR message (ER_ID: {er_id})'s emoji role combinations.")
@@ -428,7 +427,7 @@ class ReactForRole(commands.Cog):
             "Okay. This will add roles to an already created react for role message. I'll need some details first "
             "though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
-        rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg.id)
+        rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, msg.id)
 
         if not rfr_msg_row:
             raise commands.CommandError("Message ID given is not that of a react for role message.")
@@ -448,7 +447,7 @@ class ReactForRole(commands.Cog):
                 msg = core.create_rfr_message(title=old_embed.title, guild=ctx.guild, description=old_embed.description, colour=KOALA_GREEN, channel=channel)
                 msg_id = msg.id
                 await ctx.send(f"Okay, the new message has ID {msg.id} and is in {msg.channel.mention}.")
-                rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg_id)
+                rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, msg_id)
             else:
                 await ctx.send("Okay, I'll stop the command then.")
                 return
@@ -487,7 +486,7 @@ class ReactForRole(commands.Cog):
             "Okay, this will remove roles from an already existing react for role message. I'll need some details first"
             " though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
-        rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg.id)
+        rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, msg.id)
 
         if not rfr_msg_row:
             raise commands.CommandError("Message ID given is not that of a react for role message.")
@@ -542,7 +541,7 @@ class ReactForRole(commands.Cog):
         """
         if payload.guild_id is not None:
             if not payload.member.bot:
-                rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+                rfr_message = get_rfr_message(payload.guild_id, payload.channel_id,
                                                                         payload.message_id)
                 if not rfr_message:
                     return
@@ -561,7 +560,7 @@ class ReactForRole(commands.Cog):
                         await member_role[0].add_roles(member_role[1])
                     else:
                         # Remove all rfr roles from member
-                        role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
+                        role_ids = get_guild_rfr_roles(payload.guild_id)
                         roles: List[discord.Role] = []
                         for role_id in role_ids:
                             role = discord.utils.get(member_role[0].guild.roles, id=role_id)
@@ -571,7 +570,7 @@ class ReactForRole(commands.Cog):
                         for role_to_remove in roles:
                             await member_role[0].remove_roles(role_to_remove)
                         # Remove members' reaction from all rfr messages in guild
-                        guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
+                        guild_rfr_messages = get_guild_rfr_messages(payload.guild_id)
                         if not guild_rfr_messages:
                             logger.error(
                                 f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
@@ -657,7 +656,7 @@ class ReactForRole(commands.Cog):
         """
 
         if payload.guild_id is not None:
-            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
+            rfr_message = get_rfr_message(payload.guild_id, payload.channel_id,
                                                                     payload.message_id)
             if not rfr_message:
                 return
@@ -674,7 +673,7 @@ class ReactForRole(commands.Cog):
         :param member: Member to check rfr perms for
         :return: True if member has one of the required roles, or if there are no required roles. False otherwise
         """
-        required_roles: List[int] = self.rfr_database_manager.get_guild_rfr_required_roles(member.guild.id)
+        required_roles: List[int] = get_guild_rfr_required_roles(member.guild.id)
         if not required_roles or len(required_roles) == 0:
             return True
         return any(x in required_roles for x in [y.id for y in member.roles])
@@ -697,7 +696,7 @@ class ReactForRole(commands.Cog):
         msg = await channel.fetch_message(msg_id)
         if not msg:
             raise commands.CommandError("Invalid Message ID given.")
-        rfr_msg_row = self.rfr_database_manager.get_rfr_message(ctx.guild.id, channel.id, msg_id)
+        rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, msg_id)
         if not rfr_msg_row:
             raise commands.CommandError("Message ID given is not that of a react for role message.")
         return msg, channel
