@@ -7,7 +7,7 @@ from discord.ext.commands import Bot
 from discord.ext import commands
 import emoji
 
-from . import db2
+from . import db
 from .log import logger
 
 from koala.db import assign_session
@@ -31,20 +31,20 @@ async def create_rfr_message(title: str, guild: discord.Guild, description: str,
     embed.set_footer(text="ReactForRole")
     embed.set_thumbnail(url=koala_logo)
     rfr_msg: discord.Message = await channel.send(embed=embed)
-    db2.add_rfr_message(guild.id, channel.id, rfr_msg.id, **kwargs)
+    db.add_rfr_message(guild.id, channel.id, rfr_msg.id, **kwargs)
     return rfr_msg
 
 @assign_session
 async def delete_rfr_message(guild_id: str, channel_id: str, msg: discord.Message, **kwargs):
-    rfr_msg_row = db2.get_rfr_message(guild_id, channel_id, msg.id, **kwargs)
-    db2.remove_rfr_message_emoji_roles(rfr_msg_row[3], **kwargs)
-    db2.remove_rfr_message(guild_id, channel_id, msg.id, **kwargs)
+    rfr_msg_row = db.get_rfr_message(guild_id, channel_id, msg.id, **kwargs)
+    db.remove_rfr_message_emoji_roles(rfr_msg_row[3], **kwargs)
+    db.remove_rfr_message(guild_id, channel_id, msg.id, **kwargs)
     await msg.delete()
 
 @assign_session
 async def use_inline_rfr_all(guild: discord.Guild, **kwargs):
     text_channels: List[discord.TextChannel] = guild.text_channels
-    guild_rfr_messages = db2.get_guild_rfr_messages(guild.id, **kwargs)
+    guild_rfr_messages = db.get_guild_rfr_messages(guild.id, **kwargs)
     for rfr_message in guild_rfr_messages:
         channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
         msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
@@ -86,13 +86,13 @@ async def rfr_remove_emojis_roles(bot: Bot, guild: discord.Guild, msg: discord.M
         if isinstance(row, discord.Emoji) or isinstance(row, str):
             field_index = [x.name for x in rfr_embed_fields].index(str(row))
             if isinstance(row, str):
-                db2.remove_rfr_message_emoji_role(rfr_msg_row[3], emoji_raw=emoji.demojize(row), **kwargs)
+                db.remove_rfr_message_emoji_role(rfr_msg_row[3], emoji_raw=emoji.demojize(row), **kwargs)
             else:
-                db2.remove_rfr_message_emoji_role(rfr_msg_row[3], emoji_raw=row, **kwargs)
+                db.remove_rfr_message_emoji_role(rfr_msg_row[3], emoji_raw=row, **kwargs)
         else:
             # row is instance of role
             field_index = [x.value for x in rfr_embed_fields].index(row.mention)
-            db2.remove_rfr_message_emoji_role(rfr_msg_row[3], role_id=row.id, **kwargs)
+            db.remove_rfr_message_emoji_role(rfr_msg_row[3], role_id=row.id, **kwargs)
 
         field = rfr_embed_fields[field_index]
         removed_field_indexes.append(field_index)
@@ -130,10 +130,10 @@ async def rfr_add_emoji_role(guild: str, channel: discord.TextChannel, rfr_embed
              duplicateRolesFound = True
         else:
             if isinstance(discord_emoji, str):
-                db2.add_rfr_message_emoji_role(rfr_msg_row[3], emoji.demojize(discord_emoji),
+                db.add_rfr_message_emoji_role(rfr_msg_row[3], emoji.demojize(discord_emoji),
                                                                         role.id, **kwargs)
             else:
-                db2.add_rfr_message_emoji_role(rfr_msg_row[3], str(discord_emoji), role.id, **kwargs)
+                db.add_rfr_message_emoji_role(rfr_msg_row[3], str(discord_emoji), role.id, **kwargs)
             rfr_embed.add_field(name=str(discord_emoji), value=role.mention, inline=False)
             await msg.add_reaction(discord_emoji)
 
@@ -152,17 +152,17 @@ async def rfr_add_emoji_role(guild: str, channel: discord.TextChannel, rfr_embed
 async def add_guild_rfr_required_role(bot: Bot, guild: discord.Guild, role_str: str, **kwargs):
     ctx = create_ctx(bot, guild)
     role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
-    db2.remove_guild_rfr_required_role(ctx.guild.id, role.id, **kwargs)
+    db.remove_guild_rfr_required_role(ctx.guild.id, role.id, **kwargs)
     return role
 
 async def remove_guild_rfr_required_role(bot: Bot, guild: discord.Guild, role_str: str, **kwargs):
     ctx = create_ctx(bot, guild)
     role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
-    db2.add_guild_rfr_required_role(ctx.guild.id, role.id, **kwargs)
+    db.add_guild_rfr_required_role(ctx.guild.id, role.id, **kwargs)
     return role
 
 def rfr_list_guild_required_roles(guild: discord.Guild, **kwargs):
-    return db2.get_guild_rfr_required_roles(guild.id, **kwargs)
+    return db.get_guild_rfr_required_roles(guild.id, **kwargs)
 
 async def setup_rfr_reaction_permissions(guild: discord.Guild, channel: discord.TextChannel, bot: Bot):
     """
