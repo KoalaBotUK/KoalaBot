@@ -171,7 +171,7 @@ def get_rfr_message_emoji_roles(emoji_role_id: int):
         return [(row.emoji_role_id, row.emoji_raw, row.role_id) for row in rows]
 
 @assign_session
-def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int):
+def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int, session: sqlalchemy.orm.Session):
     """
     Returns a specific emoji-role combo on an rfr message
 
