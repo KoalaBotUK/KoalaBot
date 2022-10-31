@@ -158,7 +158,7 @@ def get_guild_rfr_roles(guild_id: int) -> List[int]:
         return role_ids
 
 @assign_session
-def get_rfr_message_emoji_roles(emoji_role_id: int):
+def get_rfr_message_emoji_roles(emoji_role_id: int, session: sqlalchemy.orm.Session):
     """
     Returns all the emoji-role combinations on an rfr message
 
@@ -171,7 +171,7 @@ def get_rfr_message_emoji_roles(emoji_role_id: int):
         return [(row.emoji_role_id, row.emoji_raw, row.role_id) for row in rows]
 
 @assign_session
-def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int, session: sqlalchemy.orm.Session):
+def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int):
     """
     Returns a specific emoji-role combo on an rfr message
 
