@@ -1,5 +1,4 @@
 from ast import Tuple
-import datetime
 from typing import *
 
 import discord
@@ -11,8 +10,6 @@ from . import db
 from .log import logger
 
 from koala.db import assign_session
-import discord
-from discord import Colour
 from koala.colours import KOALA_GREEN
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 # Constants
@@ -26,7 +23,7 @@ def create_ctx(bot: Bot, guild: discord.Guild):
     return { 'bot': bot, 'guild': guild }
 
 @assign_session
-async def create_rfr_message(title: str, guild: discord.Guild, description: str, colour: Colour, channel: discord.TextChannel, **kwargs):
+async def create_rfr_message(title: str, guild: discord.Guild, description: str, colour: discord.Colour, channel: discord.TextChannel, **kwargs):
     embed: discord.Embed = discord.Embed(title=title, description=description, colour=colour)
     embed.set_footer(text="ReactForRole")
     embed.set_thumbnail(url=koala_logo)
