@@ -590,7 +590,7 @@ async def test_rfr_remove_roles_from_msg():
                             mock.AsyncMock(return_value=input_em_ro_msg)):
                 with mock.patch('discord.Embed.add_field') as add_field:
                     with mock.patch(
-                            'koala.cogs.react_for_role.db.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
+                            'koala.cogs.react_for_role.db.remove_rfr_message_emoji_role') as remove_emoji_role:
                         add_field.reset_mock()
                         await dpytest.message(koalabot.COMMAND_PREFIX + "rfr removeRoles")
                         add_field.assert_not_called()

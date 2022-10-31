@@ -20,7 +20,6 @@ import pytest
 from discord.ext.test import factories as dpyfactory
 
 # Own modules
-from koala.cogs.react_for_role.db import ReactForRoleDBManager
 from koala.db import session_manager
 from tests.tests_utils import utils as testutils
 
