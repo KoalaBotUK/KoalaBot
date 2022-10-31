@@ -189,7 +189,7 @@ def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int, sess
             return None
 
 @assign_session
-def get_rfr_reaction_role_by_emoji_str(emoji_role_id: int, emoji_raw: str) -> Optional[int]:
+def get_rfr_reaction_role_by_emoji_str(session: sqlalchemy.orm.Session, emoji_role_id: int, emoji_raw: str) -> Optional[int]:
     """
     Gets a role ID from the emoji_role_id and the emoji associated with that role in the emoji-role combo
     :param emoji_role_id: emoji-role combo identifier
