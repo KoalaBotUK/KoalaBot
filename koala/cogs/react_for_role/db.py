@@ -2,7 +2,6 @@
 
 # Built-in/Generic Imports
 from typing import *
-from requests import Session
 
 import sqlalchemy.exc
 import sqlalchemy.orm
