@@ -15,14 +15,7 @@ import sqlalchemy.orm
 from sqlalchemy import select
 
 # Own modules
-from koala.cogs.react_for_role.db import ReactForRoleDBManager
 from koala.cogs.react_for_role.models import GuildRFRRequiredRoles, GuildRFRMessages, RFRMessageEmojiRoles
-
-# Constants
-
-# Variables
-DBManager = ReactForRoleDBManager()
-
 
 def independent_get_guild_rfr_message(session: sqlalchemy.orm.Session, guild_id=None, channel_id=None, message_id=None
                                       ) -> List[Tuple[int, int, int, int]]:
