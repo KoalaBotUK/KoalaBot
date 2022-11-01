@@ -74,7 +74,7 @@ def test_test_user_is_admin(test_ctx):
 
 
 def test_invalid_test_user_is_admin(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER) + 2)
+    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER[0]) + 2)
     koalabot.is_dpytest = False
     assert not koalabot.is_admin(test_ctx)
     koalabot.is_dpytest = True
