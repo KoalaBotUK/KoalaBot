@@ -63,8 +63,8 @@ async def test_rfr_db_functions_guild_rfr_messages():
             expected_full_list[1]]
         assert independent_get_guild_rfr_message(session, guild2.id, channel2.id, msg_id)[
                    0] == get_rfr_message(guild2.id,
-                                                   channel2.id,
-                                                   msg_id)
+                                         channel2.id,
+                                         msg_id)
         assert independent_get_guild_rfr_message(session) == expected_full_list
         # 1 guild, 2 channels with 1 message each
         guild1channel2: discord.TextChannel = dpytest.back.make_text_channel(
@@ -158,7 +158,7 @@ async def test_rfr_db_functions_rfr_message_emoji_roles():
                                                       1, fake_emoji_2) == [(1, fake_emoji_2, fake_role_id_2)]
         assert independent_get_rfr_message_emoji_role(session, 1, fake_emoji_1)[0][
                    2] == get_rfr_reaction_role_by_emoji_str(1,
-                                                                      fake_emoji_1)
+                                                            fake_emoji_1)
         assert independent_get_rfr_message_emoji_role(session,
                                                       1) == get_rfr_message_emoji_roles(1)
         assert independent_get_rfr_message_emoji_role(session, 1, role_id=fake_role_id_2)[0][

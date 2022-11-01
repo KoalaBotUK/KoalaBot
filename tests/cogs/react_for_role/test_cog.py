@@ -5,8 +5,6 @@ Testing KoalaBot ReactForRole Cog
 
 Commented using reStructuredText (reST)
 """
-# Futures
-
 # Built-in/Generic Imports
 import random
 
@@ -29,6 +27,7 @@ from koala.cogs.react_for_role.db import *
 from .utils import independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
 from tests.log import logger
 from koala.cogs import ReactForRole
+
 
 # Constants
 
@@ -68,7 +67,6 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
             assert rfr_msg_channel.id == channel_id
 
 
-# TODO Actually implement the test.
 @pytest.mark.parametrize("num_rows", [0, 1, 2, 20, 100, 250])
 @pytest.mark.asyncio
 async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
@@ -630,3 +628,22 @@ async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
             else:
                 assert rfr_cog.can_have_rfr_role(member) == any(
                     x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
+
+
+@pytest.mark.asyncio
+async def test_get_first_emoji_from_str():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id: int = message.id
+    add_rfr_message(guild.id, channel.id, msg_id)
+
+    emoji: discord.Emoji = testutils.fake_guild_emoji(guild)
+    role: discord.Role = testutils.fake_guild_role(guild)
+
+    assert core.get_first_emoji_from_str(koalabot, guild, emoji)
+
+    uni_emoji = testutils.fake_unicode_emoji()
+    assert core.get_first_emoji_from_str(koalabot, guild, uni_emoji)

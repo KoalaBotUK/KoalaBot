@@ -12,18 +12,22 @@ from .log import logger
 from koala.db import assign_session
 from koala.colours import KOALA_GREEN
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
+
 # Constants
 
 koala_logo = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
+
 
 # Variables
 # current_activity = None
 
 def create_ctx(bot: Bot, guild: discord.Guild):
-    return { 'bot': bot, 'guild': guild }
+    return {'bot': bot, 'guild': guild}
+
 
 @assign_session
-async def create_rfr_message(title: str, guild: discord.Guild, description: str, colour: discord.Colour, channel: discord.TextChannel, **kwargs):
+async def create_rfr_message(title: str, guild: discord.Guild, description: str, colour: discord.Colour,
+                             channel: discord.TextChannel, **kwargs):
     embed: discord.Embed = discord.Embed(title=title, description=description, colour=colour)
     embed.set_footer(text="ReactForRole")
     embed.set_thumbnail(url=koala_logo)
@@ -31,12 +35,14 @@ async def create_rfr_message(title: str, guild: discord.Guild, description: str,
     db.add_rfr_message(guild.id, channel.id, rfr_msg.id, **kwargs)
     return rfr_msg
 
+
 @assign_session
 async def delete_rfr_message(guild_id: str, channel_id: str, msg: discord.Message, **kwargs):
     rfr_msg_row = db.get_rfr_message(guild_id, channel_id, msg.id, **kwargs)
     db.remove_rfr_message_emoji_roles(rfr_msg_row[3], **kwargs)
     db.remove_rfr_message(guild_id, channel_id, msg.id, **kwargs)
     await msg.delete()
+
 
 @assign_session
 async def use_inline_rfr_all(guild: discord.Guild, **kwargs):
@@ -52,6 +58,7 @@ async def use_inline_rfr_all(guild: discord.Guild, **kwargs):
             embed.set_field_at(i, name=field.name, value=field.value, inline=True)
         await msg.edit(embed=embed)
 
+
 async def use_inline_rfr_specific(embed: discord.Embed, msg: discord.Message):
     length = get_number_of_embed_fields(embed)
     for i in range(length):
@@ -59,19 +66,23 @@ async def use_inline_rfr_specific(embed: discord.Embed, msg: discord.Message):
         embed.set_field_at(i, name=field.name, value=field.value, inline=True)
     await msg.edit(embed=embed)
 
-async def rfr_edit(embed: discord.Embed, msg: discord.Message, description: str = "", title: str = "", image_url: str = ""):
+
+async def rfr_edit(embed: discord.Embed, msg: discord.Message, description: str = "", title: str = "",
+                   image_url: str = ""):
     embed.description = description
     embed.title = title
     embed.set_thumbnail(url=image_url)
     await msg.edit(embed=embed)
     return msg
 
+
 @assign_session
-async def rfr_remove_emojis_roles(bot: Bot, guild: discord.Guild, msg: discord.Message, rfr_msg_row: discord.Message, wanted_removals: List[Union[discord.Emoji, str, discord.Role]], **kwargs):
+async def rfr_remove_emojis_roles(bot: Bot, guild: discord.Guild, msg: discord.Message, rfr_msg_row: discord.Message,
+                                  wanted_removals: List[Union[discord.Emoji, str, discord.Role]], **kwargs):
     rfr_embed: discord.Embed = get_embed_from_message(msg)
     rfr_embed_fields = rfr_embed.fields
     new_embed = discord.Embed(title=rfr_embed.title, description=rfr_embed.description,
-                                colour=KOALA_GREEN)
+                              colour=KOALA_GREEN)
     new_embed.set_thumbnail(
         url=koala_logo)
     new_embed.set_footer(text="ReactForRole")
@@ -104,16 +115,18 @@ async def rfr_remove_emojis_roles(bot: Bot, guild: discord.Guild, msg: discord.M
 
     for field in new_embed_fields:
         new_embed.add_field(name=field.name, value=field.value, inline=False)
-    
+
     for reaction in reactions_to_remove:
         await reaction.clear()
     await msg.edit(embed=new_embed)
-    
+
     return new_embed, errors
 
 
 @assign_session
-async def rfr_add_emoji_role(guild: str, channel: discord.TextChannel, rfr_embed: discord.Embed, msg: discord.Message, rfr_msg_row: discord.Message, emoji_role_map: List[Tuple[Union[discord.Emoji, str], discord.Role]], **kwargs):
+async def rfr_add_emoji_role(guild: str, channel: discord.TextChannel, rfr_embed: discord.Embed, msg: discord.Message,
+                             rfr_msg_row: discord.Message,
+                             emoji_role_map: List[Tuple[Union[discord.Emoji, str], discord.Role]], **kwargs):
     duplicateRolesFound = False
     duplicateEmojisFound = False
 
@@ -122,13 +135,13 @@ async def rfr_add_emoji_role(guild: str, channel: discord.TextChannel, rfr_embed
         role = emoji_role[1]
 
         if discord_emoji in [x.name for x in rfr_embed.fields]:
-             duplicateEmojisFound = True
+            duplicateEmojisFound = True
         elif role in [x.value for x in rfr_embed.fields]:
-             duplicateRolesFound = True
+            duplicateRolesFound = True
         else:
             if isinstance(discord_emoji, str):
                 db.add_rfr_message_emoji_role(rfr_msg_row[3], emoji.demojize(discord_emoji),
-                                                                        role.id, **kwargs)
+                                              role.id, **kwargs)
             else:
                 db.add_rfr_message_emoji_role(rfr_msg_row[3], str(discord_emoji), role.id, **kwargs)
             rfr_embed.add_field(name=str(discord_emoji), value=role.mention, inline=False)
@@ -146,11 +159,13 @@ async def rfr_add_emoji_role(guild: str, channel: discord.TextChannel, rfr_embed
     edited_msg = await msg.edit(embed=rfr_embed)
     return duplicateRolesFound, duplicateEmojisFound, edited_msg
 
+
 async def add_guild_rfr_required_role(bot: Bot, guild: discord.Guild, role_str: str, **kwargs):
     ctx = create_ctx(bot, guild)
     role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
     db.remove_guild_rfr_required_role(ctx.guild.id, role.id, **kwargs)
     return role
+
 
 async def remove_guild_rfr_required_role(bot: Bot, guild: discord.Guild, role_str: str, **kwargs):
     ctx = create_ctx(bot, guild)
@@ -158,8 +173,10 @@ async def remove_guild_rfr_required_role(bot: Bot, guild: discord.Guild, role_st
     db.add_guild_rfr_required_role(ctx.guild.id, role.id, **kwargs)
     return role
 
+
 def rfr_list_guild_required_roles(guild: discord.Guild, **kwargs):
     return db.get_guild_rfr_required_roles(guild.id, **kwargs)
+
 
 async def setup_rfr_reaction_permissions(guild: discord.Guild, channel: discord.TextChannel, bot: Bot):
     """
@@ -181,6 +198,7 @@ async def setup_rfr_reaction_permissions(guild: discord.Guild, channel: discord.
     for bot_member in bot_members:
         await channel.set_permissions(bot_member, overwrite=overwrite)
 
+
 def get_embed_from_message(msg: discord.Message) -> Optional[discord.Embed]:
     """
     Gets the embed from a given message
@@ -196,6 +214,7 @@ def get_embed_from_message(msg: discord.Message) -> Optional[discord.Embed]:
         return embed
     except IndexError:
         return None
+
 
 def get_number_of_embed_fields(embed: discord.Embed) -> int:
     """
