@@ -182,8 +182,7 @@ class ReactForRole(commands.Cog):
                            f"I'll create the react for role message now.")
 
             rfr_msg = await core.create_rfr_message(title, ctx.guild, desc, KOALA_GREEN, channel)
-            # TODO - Get this working, for some reason we get 403 currently
-            # await core.setup_rfr_reaction_permissions(ctx.guild, channel, self.bot)
+            await core.setup_rfr_reaction_permissions(ctx.guild, channel, self.bot)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
             await ctx.send(
                 f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
