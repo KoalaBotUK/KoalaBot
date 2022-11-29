@@ -553,10 +553,10 @@ class ColourRole(commands.Cog):
             await self.prune_guild_empty_colour_roles(ctx)
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(ColourRole(bot))
+    await bot.add_cog(ColourRole(bot))
     logger.info("ColourRole is ready.")

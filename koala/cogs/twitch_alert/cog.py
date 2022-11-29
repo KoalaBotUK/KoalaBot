@@ -444,7 +444,7 @@ class TwitchAlert(commands.Cog):
         except Exception as err:
             logger.error("Twitch team live loop error: ", exc_info=err)
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
@@ -453,5 +453,5 @@ def setup(bot: koalabot) -> None:
         logger.error("TwitchAlert not started. API keys not found in environment.")
         insert_extension("TwitchAlert", 0, False, False)
     else:
-        bot.add_cog(TwitchAlert(bot))
+        await bot.add_cog(TwitchAlert(bot))
         logger.info("TwitchAlert is ready.")

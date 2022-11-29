@@ -408,7 +408,7 @@ This email is stored so you don't need to verify it multiple times across server
                     logger.error(f"user with id {user_id} not found in {guild}")
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the koalabot.
     :param bot: the bot client for KoalaBot
@@ -417,6 +417,6 @@ def setup(bot: koalabot) -> None:
         logger.warning("Verification not started. API keys not found in environment.")
         insert_extension("Verify", 0, False, False)
     else:
-        bot.add_cog(Verification(bot))
+        await bot.add_cog(Verification(bot))
         logger.info("Verification is ready.")
 

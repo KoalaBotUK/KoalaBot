@@ -137,10 +137,10 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             await ctx.send('Please put in a welcome message to update to.')
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot
     """
-    bot.add_cog(IntroCog(bot))
+    await bot.add_cog(IntroCog(bot), override=True)
     logger.info("IntroCog is ready.")

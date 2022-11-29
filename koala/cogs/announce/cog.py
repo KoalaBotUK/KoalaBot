@@ -301,10 +301,10 @@ class Announce(commands.Cog):
             await ctx.send("There is currently no active announcement")
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(Announce(bot))
+    await bot.add_cog(Announce(bot))
     logger.info("announce is ready.")

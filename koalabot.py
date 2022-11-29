@@ -92,16 +92,16 @@ def is_guild_channel(ctx):
     return ctx.guild is not None
 
 
-def load_all_cogs():
+async def load_all_cogs():
     """
     Loads all cogs in ENABLED_COGS into the client
     """
 
     for cog in ENABLED_COGS:
         try:
-            bot.load_extension("."+cog, package=COGS_PACKAGE)
+            await bot.load_extension("."+cog, package=COGS_PACKAGE)
         except commands.errors.ExtensionAlreadyLoaded:
-            bot.reload_extension("."+cog, package=COGS_PACKAGE)
+            await bot.reload_extension("."+cog, package=COGS_PACKAGE)
 
     logger.info("All cogs loaded")
 
@@ -175,7 +175,7 @@ async def run_bot():
     app = web.Application()
 
     setattr(bot, "koala_web_app", app)
-    load_all_cogs()
+    await load_all_cogs()
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -183,7 +183,8 @@ async def run_bot():
     await site.start()
 
     try:
-        await bot.start(BOT_TOKEN)
+        async with bot:
+            await bot.start(BOT_TOKEN)
 
     except Exception:
         bot.close(),
@@ -193,5 +194,5 @@ async def run_bot():
         await runner.cleanup()
 
 if __name__ == '__main__': # pragma: no cover
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_bot())
+    # loop = asyncio.get_event_loop()
+    asyncio.run(run_bot())

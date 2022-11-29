@@ -1026,9 +1026,9 @@ class ReactForRole(commands.Cog):
             return field.value
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(ReactForRole(bot))
+    await bot.add_cog(ReactForRole(bot))
