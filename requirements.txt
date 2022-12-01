@@ -6,7 +6,7 @@ certifi==2021.10.8
 chardet==4.0.0
 colorama==0.4.4
 discord.py==2.1.0
-git+https://github.com/CraftSpider/dpytest@master#egg=dpytest
+dpytest==0.6.0
 emoji==1.7.0
 idna==3.3
 iniconfig==1.1.1

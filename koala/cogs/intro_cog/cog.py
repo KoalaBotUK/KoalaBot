@@ -28,7 +28,7 @@ from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, 
 # Variables
 
 
-class IntroCog(commands.Cog, name="KoalaBot"):
+class IntroCog(commands.Cog, name="Intro"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
