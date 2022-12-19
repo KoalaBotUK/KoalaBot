@@ -41,7 +41,7 @@ async def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.
     for i in range(length):
         role = await guild.create_role(name=f"TestRole{i}")
         arr.append(role)
-        await arr[i].edit(position=i + 1)
+        arr[i] = await arr[i].edit(position=i + 1)
     return arr
 
 
@@ -70,7 +70,7 @@ async def make_list_of_custom_colour_roles(guild: discord.Guild, length: int) ->
     for i in range(length):
         role = await guild.create_role(name=f"KoalaBot[{random_colour_str().upper()}]", colour=random_colour())
         arr.append(role)
-        await arr[i].edit(position=i + 1)
+        arr[i] = await arr[i].edit(position=i + 1)
     return arr
 
 
@@ -79,7 +79,7 @@ async def make_list_of_protected_colour_roles(guild: discord.Guild, length: int)
     for i in range(length):
         role = await guild.create_role(name=f"TestProtectedRole{i}", colour=random_colour())
         arr.append(role)
-        await arr[i].edit(position=i + 1)
+        arr[i] = await arr[i].edit(position=i + 1)
         DBManager.add_guild_protected_colour_role(guild.id, role.id)
     return arr
 

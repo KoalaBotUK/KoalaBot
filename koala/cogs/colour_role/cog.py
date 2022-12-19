@@ -267,9 +267,7 @@ class ColourRole(commands.Cog):
                                                                 colour=colour,
                                                                 mentionable=False, hoist=False)
         role_pos = self.calculate_custom_colour_role_position(ctx.guild)
-        await colour_role.edit(position=role_pos)
-        await colour_role.edit(position=role_pos)
-        return colour_role
+        return await colour_role.edit(position=role_pos)
 
     def calculate_custom_colour_role_position(self, guild: discord.Guild) -> int:
         """
