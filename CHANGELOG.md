@@ -3,6 +3,7 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+- Upgraded to discord.py 2.1.0
 
 ## [0.5.9] - 13-07-2022
 ### Verify
