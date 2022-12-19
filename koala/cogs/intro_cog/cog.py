@@ -142,5 +142,5 @@ async def setup(bot: koalabot) -> None:
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot
     """
-    await bot.add_cog(IntroCog(bot), override=True)
+    await bot.add_cog(IntroCog(bot))
     logger.info("IntroCog is ready.")

@@ -86,7 +86,7 @@ class Voting(commands.Cog, name="Vote"):
             self.vote_end_loop.start()
             self.running = True
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.vote_end_loop.cancel()
         self.running = False
 

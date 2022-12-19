@@ -49,9 +49,11 @@ ENABLED_COGS = ["base", "announce", "colour_role", "intro_cog", "react_for_role"
 
 # Variables
 intent = discord.Intents.default()
-intent.members = True
-intent.guilds = True
-intent.messages = True
+intent.guilds = True        # on_guild_join, on_guild_remove
+intent.members = True       # on_member_join
+intent.reactions = True     # on_raw_reaction_add
+intent.messages = True      # on_message
+intent.message_content = True
 bot = commands.Bot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 is_dpytest = False
 
