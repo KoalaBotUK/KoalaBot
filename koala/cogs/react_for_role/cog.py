@@ -357,7 +357,7 @@ class ReactForRole(commands.Cog):
                     guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(guild.id)
                     for rfr_message in guild_rfr_messages:
                         channel: discord.TextChannel = discord.utils.get(text_channels, id=rfr_message[1])
-                        msg: discord.Message = await channel.fetch_message(id=rfr_message[2])
+                        msg: discord.Message = await channel.fetch_message(rfr_message[2])
                         embed: discord.Embed = self.get_embed_from_message(msg)
                         length = self.get_number_of_embed_fields(embed)
                         for i in range(length):

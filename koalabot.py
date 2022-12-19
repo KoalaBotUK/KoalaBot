@@ -107,7 +107,7 @@ async def load_all_cogs():
 
 
 def get_channel_from_id(id):
-    return bot.get_channel(id=id)
+    return bot.get_channel(id)
 
 
 async def dm_group_message(members: [discord.Member], message: str):
