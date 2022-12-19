@@ -26,18 +26,18 @@ from tests.log import logger
 
 
 @pytest.fixture(scope="function", autouse=True)
-def utils_cog(bot: discord.ext.commands.Bot):
+async def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog
 
 
 @pytest.fixture(scope="function", autouse=True)
-def base_cog(bot: discord.ext.commands.Bot):
+async def base_cog(bot: discord.ext.commands.Bot):
     base_cog = BaseCog(bot)
-    bot.add_cog(base_cog)
+    await bot.add_cog(base_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return base_cog
@@ -46,7 +46,7 @@ def base_cog(bot: discord.ext.commands.Bot):
 @pytest.fixture(scope="function", autouse=True)
 async def tf_cog(bot: discord.ext.commands.Bot):
     tf_cog = TextFilterCog(bot)
-    bot.add_cog(tf_cog)
+    await bot.add_cog(tf_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return tf_cog

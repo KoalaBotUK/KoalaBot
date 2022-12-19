@@ -55,7 +55,7 @@ def test_format_db_path_windows():
 
 @pytest.mark.parametrize("msg_content", [" ", "something"])
 @pytest.mark.asyncio
-async def test_wait_for_message_not_none(msg_content, utils_cog):
+async def test_wait_for_message_not_none(msg_content, utils_cog: LastCtxCog):
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -69,7 +69,7 @@ async def test_wait_for_message_not_none(msg_content, utils_cog):
 
 
 @pytest.mark.asyncio
-async def test_wait_for_message_none(utils_cog):
+async def test_wait_for_message_none(utils_cog: LastCtxCog):
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -78,10 +78,11 @@ async def test_wait_for_message_none(utils_cog):
     assert not msg
     assert channel == ctx.channel
 
+
 @pytest.fixture(autouse=True)
-def utils_cog(bot):
+async def utils_cog(bot: commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog

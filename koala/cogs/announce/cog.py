@@ -149,7 +149,7 @@ class Announce(commands.Cog):
                 return
             self.messages[ctx.guild.id] = AnnounceMessage(f"",
                                                           message.content,
-                                                          ctx.guild.icon_url)
+                                                          ctx.guild.icon)
             self.roles[ctx.guild.id] = []
             await ctx.send(f"An announcement has been created for guild {ctx.guild.name}")
             await ctx.send(embed=self.construct_embed(ctx.guild))

@@ -124,7 +124,7 @@ async def purge(bot: Bot, channel_id, amount):
     :return:
     """
     channel = bot.get_channel(channel_id)
-    return await channel.purge(amount + 1)
+    return await channel.purge(limit=amount+1)
 
 
 async def load_cog(bot: Bot, extension, package):
@@ -134,7 +134,7 @@ async def load_cog(bot: Bot, extension, package):
     :param package:
     :return:
     """
-    bot.load_extension("."+extension, package=package)
+    await bot.load_extension("."+extension, package=package)
     return f'{extension} Cog Loaded'
 
 
@@ -148,7 +148,7 @@ async def unload_cog(bot: Bot, extension, package):
     if extension == "base" or extension == "BaseCog":
         raise discord.ext.commands.errors.ExtensionError(message=f"Sorry, you can't unload the base cog", name=extension)
     else:
-        bot.unload_extension("."+extension, package=package)
+        await bot.unload_extension("."+extension, package=package)
         return f'{extension} Cog Unloaded'
 
 

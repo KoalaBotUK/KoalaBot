@@ -35,18 +35,18 @@ from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_lis
 
 
 @pytest.fixture(autouse=True)
-def utils_cog(bot):
+async def utils_cog(bot: commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog
 
 
 @pytest.fixture(autouse=True)
-def role_colour_cog(bot):
+async def role_colour_cog(bot: commands.Bot):
     role_colour_cog = ColourRole(bot)
-    bot.add_cog(role_colour_cog)
+    await bot.add_cog(role_colour_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return role_colour_cog
@@ -169,9 +169,10 @@ async def test_prune_author_old_colour_roles(num_roles, utils_cog, role_colour_c
     assert not any(roles) in author.roles
 
 
+@pytest.mark.skip(reason="role edit position bug in dpytest 0.6.0 https://github.com/CraftSpider/dpytest/issues/85")
 @pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
 @pytest.mark.asyncio
-async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog):
+async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog: ColourRole):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     roles = await make_list_of_roles(guild, 5)
     # add num_roles roles to the protected roles
@@ -188,8 +189,9 @@ async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog)
     assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected, num_roles
 
 
+@pytest.mark.skip(reason="role edit position bug in dpytest 0.6.0 https://github.com/CraftSpider/dpytest/issues/85")
 @pytest.mark.asyncio
-async def test_create_custom_colour_role(role_colour_cog, utils_cog):
+async def test_create_custom_colour_role(role_colour_cog: ColourRole, utils_cog: LastCtxCog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()

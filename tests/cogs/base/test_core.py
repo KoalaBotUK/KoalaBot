@@ -79,7 +79,7 @@ async def test_purge(bot: commands.Bot):
     channel: discord.TextChannel = dpytest.get_config().channels[0]
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await core.purge(bot, channel.id, 2)
-    mock1.assert_called_with(3)
+    mock1.assert_called_with(limit=3)
 
 # Load cogs
 

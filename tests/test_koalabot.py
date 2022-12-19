@@ -31,10 +31,10 @@ utils_cog = None
 
 
 @pytest.fixture(autouse=True)
-async def test_ctx(bot):
+async def test_ctx(bot: commands.Bot):
     global utils_cog
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     return utils_cog.get_last_ctx()
@@ -97,9 +97,10 @@ def test_not_admin_is_admin(test_ctx):
 
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
-def test_load_all_cogs():
+@pytest.mark.asyncio
+async def test_load_all_cogs():
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        koalabot.load_all_cogs()
+        await koalabot.load_all_cogs()
     mock1.assert_called_with(".greetings_cog", package="tests.tests_utils.fake_load_all_cogs")
 
 

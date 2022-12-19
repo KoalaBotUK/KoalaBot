@@ -35,7 +35,7 @@ def convert_activity_type(argument):
         raise BadArgument('Unknown activity type %s' % argument)
 
 
-class BaseCog(commands.Cog, name='KoalaBot'):
+class BaseCog(commands.Cog, name='Koala'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
@@ -49,7 +49,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self._last_member = None
         self.started = False
         self.current_activity = None
-        self.COGS_PACKAGE = koalabot.COGS_PACKAGE
 
     @commands.Cog.listener()
     async def setup_hook(self):
@@ -65,7 +64,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await self.update_activity()
         self.update_activity.start()
         self.started = True
-        await self.bot.tree.sync()
         logger.info("Bot is ready.")
 
     @commands.hybrid_group(name="activity")
@@ -181,7 +179,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.load_cog(self.bot, extension, self.COGS_PACKAGE))
+        await ctx.send(await core.load_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
     @commands.hybrid_command(name="unload_cog", aliases=["unloadCog"])
     @commands.check(koalabot.is_owner)
@@ -191,7 +189,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.unload_cog(self.bot, extension, self.COGS_PACKAGE))
+        await ctx.send(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
     @commands.hybrid_command(name="enable_koala_ext", aliases=["enableExt"])
     @commands.check(koalabot.is_admin)
