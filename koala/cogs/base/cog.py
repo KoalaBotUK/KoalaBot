@@ -35,7 +35,7 @@ def convert_activity_type(argument):
         raise BadArgument('Unknown activity type %s' % argument)
 
 
-class BaseCog(commands.Cog, name='Koala'):
+class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
@@ -51,11 +51,6 @@ class BaseCog(commands.Cog, name='Koala'):
         self.current_activity = None
 
     @commands.Cog.listener()
-    async def setup_hook(self):
-        logger.debug("hook setup")
-        await self.bot.tree.sync()
-
-    @commands.Cog.listener()
     async def on_ready(self):
         """
         Ran after all cogs have been started and bot is ready
@@ -66,7 +61,7 @@ class BaseCog(commands.Cog, name='Koala'):
         self.started = True
         logger.info("Bot is ready.")
 
-    @commands.hybrid_group(name="activity")
+    @commands.group(name="activity")
     @commands.check(koalabot.is_owner)
     async def activity_group(self, ctx: commands.Context):
         """
@@ -145,7 +140,7 @@ class BaseCog(commands.Cog, name='Koala'):
         except Exception as err:
             logger.error("Error in update_activity loop %s" % err, exc_info=err)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def ping(self, ctx):
         """
         Returns the ping of the bot
@@ -153,7 +148,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(await core.ping(self.bot))
 
-    @commands.hybrid_command()
+    @commands.command()
     async def support(self, ctx):
         """
         KoalaBot Support server link
@@ -161,7 +156,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(core.support_link())
 
-    @commands.hybrid_command(name="clear")
+    @commands.command(name="clear")
     @commands.check(koalabot.is_admin)
     async def clear(self, ctx, amount: int = 1):
         """
@@ -171,7 +166,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await core.purge(self.bot, ctx.channel.id, amount)
 
-    @commands.hybrid_command(name="load_cog", aliases=["loadCog"])
+    @commands.command(name="loadCog", aliases=["load_cog"])
     @commands.check(koalabot.is_owner)
     async def load_cog(self, ctx, extension):
         """
@@ -181,7 +176,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(await core.load_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
-    @commands.hybrid_command(name="unload_cog", aliases=["unloadCog"])
+    @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
     async def unload_cog(self, ctx, extension):
         """
@@ -191,7 +186,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
-    @commands.hybrid_command(name="enable_koala_ext", aliases=["enableExt"])
+    @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)
     async def enable_koala_ext(self, ctx, koala_extension):
         """
@@ -201,7 +196,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(embed=await core.enable_extension(self.bot, ctx.message.guild.id, koala_extension))
 
-    @commands.hybrid_command(name="disable_koala_ext", aliases=["disableExt"])
+    @commands.command(name="disableExt", aliases=["disable_koala_ext"])
     @commands.check(koalabot.is_admin)
     async def disable_koala_ext(self, ctx, koala_extension):
         """
@@ -211,7 +206,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(embed=await core.disable_extension(self.bot, ctx.message.guild.id, koala_extension))
 
-    @commands.hybrid_command(name="list_koala_ext", aliases=["listExt"])
+    @commands.command(name="listExt", aliases=["list_koala_ext"])
     @commands.check(koalabot.is_admin)
     async def list_koala_ext(self, ctx):
         """
@@ -220,7 +215,7 @@ class BaseCog(commands.Cog, name='Koala'):
         """
         await ctx.send(embed=await core.list_enabled_extensions(ctx.message.guild.id))
 
-    @commands.hybrid_command(name="version")
+    @commands.command(name="version")
     @commands.check(koalabot.is_owner)
     async def version(self, ctx):
         """
