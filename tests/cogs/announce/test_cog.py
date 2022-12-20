@@ -479,13 +479,12 @@ async def test_remove_existing_role(announce_cog):
         assert announce_cog.roles[guild.id] == []
 
 
-@pytest.mark.skip(reason="dpy2 guild.roles now sequence, cannot append")
 @pytest.mark.asyncio
 async def test_remove_non_existent_role(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
-    guild.roles.append(await guild.create_role(name="testrole"))
+    await guild.create_role(name="testrole")
     assert len(guild.roles) == 2
     roles = guild.roles
     make_message(guild, announce_cog)
