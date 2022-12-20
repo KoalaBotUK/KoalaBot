@@ -79,7 +79,7 @@ async def test_purge(bot: commands.Bot):
     channel: discord.TextChannel = dpytest.get_config().channels[0]
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await core.purge(bot, channel.id, 2)
-    mock1.assert_called_with(3)
+    mock1.assert_called_with(limit=3)
 
 # Load cogs
 
@@ -208,7 +208,7 @@ async def test_list_enabled_extensions(bot: commands.Bot):
 @mock.patch("koalabot.ENABLED_COGS", ["announce"])
 @pytest.mark.asyncio
 async def test_get_extensions(bot: commands.Bot):
-    koalabot.load_all_cogs()
+    koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     resp = core.get_all_available_guild_extensions(guild.id)
     print(resp)

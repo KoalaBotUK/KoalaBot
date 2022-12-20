@@ -24,10 +24,10 @@ from tests.log import logger
 
 
 @pytest.fixture(autouse=True)
-def cog(bot: commands.Bot):
+async def cog(bot: commands.Bot):
     cog = Voting(bot)
     insert_extension("Vote", 0, True, True)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return cog

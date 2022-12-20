@@ -86,7 +86,7 @@ class Voting(commands.Cog, name="Vote"):
             self.vote_end_loop.start()
             self.running = True
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.vote_end_loop.cancel()
         self.running = False
 
@@ -463,10 +463,10 @@ class Voting(commands.Cog, name="Vote"):
             await msg.edit(embed=embed)
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(Voting(bot))
+    await bot.add_cog(Voting(bot))
     logger.info("Voting is ready.")
