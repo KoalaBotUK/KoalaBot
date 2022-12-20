@@ -29,9 +29,9 @@ DB_PATH = "Koala.db"
 # Variables
 
 @pytest.mark.asyncio
-async def test_setup():
+async def test_setup(bot):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
-        await cog.setup(koalabot.bot)
+        await cog.setup(bot)
     mock1.assert_called()
 
 

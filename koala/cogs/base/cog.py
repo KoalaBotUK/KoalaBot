@@ -12,6 +12,7 @@ Commented using reStructuredText (reST)
 # Libs
 
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 
 # Own modules
@@ -33,6 +34,19 @@ def convert_activity_type(argument):
         return discord.ActivityType[argument]
     except KeyError:
         raise BadArgument('Unknown activity type %s' % argument)
+
+
+class BaseCogSlash(commands.Cog, name='Koala'):
+    """
+    Temporary slash command cog. This will be used to get the new discord dev badge ;)
+    """
+    @app_commands.command(name="support", description="KoalaBot Support server link")
+    async def support(self, interaction: discord.Interaction):
+        """
+        KoalaBot Support server link
+        :param interaction:
+        """
+        await interaction.response.send_message(core.support_link())
 
 
 class BaseCog(commands.Cog, name='KoalaBot'):
@@ -231,4 +245,5 @@ async def setup(bot: koalabot) -> None:
     :param bot: the bot client for KoalaBot
     """
     await bot.add_cog(BaseCog(bot))
+    await bot.add_cog(BaseCogSlash())
     logger.info("BaseCog is ready.")

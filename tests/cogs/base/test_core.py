@@ -208,7 +208,7 @@ async def test_list_enabled_extensions(bot: commands.Bot):
 @mock.patch("koalabot.ENABLED_COGS", ["announce"])
 @pytest.mark.asyncio
 async def test_get_extensions(bot: commands.Bot):
-    koalabot.load_all_cogs()
+    koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     resp = core.get_all_available_guild_extensions(guild.id)
     print(resp)

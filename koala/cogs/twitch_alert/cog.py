@@ -443,6 +443,7 @@ class TwitchAlert(commands.Cog):
         except Exception as err:
             logger.error("Twitch team live loop error: ", exc_info=err)
 
+
 async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.

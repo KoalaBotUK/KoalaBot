@@ -52,8 +52,8 @@ async def base_cog(bot: commands.Bot):
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", [])
 @pytest.mark.asyncio
-async def test_list_koala_ext_disabled(base_cog):
-    await koalabot.load_all_cogs()
+async def test_list_koala_ext_disabled(bot, base_cog):
+    await koalabot.load_all_cogs(bot)
     await dpytest.message(koalabot.COMMAND_PREFIX + "listExt")
     expected_embed = discord.Embed()
     expected_embed.title = "Enabled extensions"
@@ -66,8 +66,8 @@ async def test_list_koala_ext_disabled(base_cog):
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
 @pytest.mark.asyncio
-async def test_enable_koala_ext(base_cog):
-    await koalabot.load_all_cogs()
+async def test_enable_koala_ext(bot, base_cog):
+    await koalabot.load_all_cogs(bot)
     await dpytest.message(koalabot.COMMAND_PREFIX + "enableExt Greetings")
     expected_embed = discord.Embed()
     expected_embed.title = "Greetings enabled"
@@ -80,8 +80,8 @@ async def test_enable_koala_ext(base_cog):
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
 @pytest.mark.asyncio
-async def test_disable_koala_ext(base_cog):
-    await test_enable_koala_ext(base_cog)
+async def test_disable_koala_ext(bot, base_cog):
+    await test_enable_koala_ext(bot, base_cog)
     await dpytest.message(koalabot.COMMAND_PREFIX + "disableExt Greetings")
     expected_embed = discord.Embed()
     expected_embed.title = "Greetings disabled"
@@ -238,7 +238,7 @@ async def test_version(base_cog: BaseCog):
 
 
 @pytest.mark.asyncio
-async def test_setup():
+async def test_setup(bot):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
-        await setup_cog(koalabot.bot)
+        await setup_cog(bot)
     mock1.assert_called()

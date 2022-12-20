@@ -98,9 +98,9 @@ def test_not_admin_is_admin(test_ctx):
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
 @pytest.mark.asyncio
-async def test_load_all_cogs():
+async def test_load_all_cogs(bot):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        await koalabot.load_all_cogs()
+        await koalabot.load_all_cogs(bot)
     mock1.assert_called_with(".greetings_cog", package="tests.tests_utils.fake_load_all_cogs")
 
 

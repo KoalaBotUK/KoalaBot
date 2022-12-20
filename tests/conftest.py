@@ -44,7 +44,7 @@ async def bot():
     intents.guilds = True
     intents.messages = True
     intents.message_content = True
-    b = commands.Bot(koalabot.COMMAND_PREFIX, intents=intents)
+    b = koalabot.KoalaBot(koalabot.COMMAND_PREFIX, intents=intents)
     await b._async_setup_hook()
     await dpytest.empty_queue()
     dpytest.configure(b)
