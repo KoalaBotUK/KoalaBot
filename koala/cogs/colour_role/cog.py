@@ -266,6 +266,7 @@ class ColourRole(commands.Cog):
         colour_role: discord.Role = await ctx.guild.create_role(name=f"KoalaBot[0x{colour_str}]",
                                                                 colour=colour,
                                                                 mentionable=False, hoist=False)
+        colour_role = ctx.guild.get_role(colour_role.id)
         role_pos = self.calculate_custom_colour_role_position(ctx.guild)
         return await colour_role.edit(position=role_pos)
 

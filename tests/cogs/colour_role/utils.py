@@ -42,6 +42,8 @@ async def make_list_of_roles(guild: discord.Guild, length: int) -> List[discord.
         role = await guild.create_role(name=f"TestRole{i}")
         arr.append(role)
         arr[i] = await arr[i].edit(position=i + 1)
+    for i in range(len(arr)):
+        arr[i] = guild.get_role(arr[i].id)
     return arr
 
 

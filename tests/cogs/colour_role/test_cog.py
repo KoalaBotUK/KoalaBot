@@ -9,6 +9,8 @@ Commented using reStructuredText (reST)
 
 import random
 import re
+from typing import List
+
 # Built-in/Generic Imports
 
 # Libs
@@ -169,12 +171,11 @@ async def test_prune_author_old_colour_roles(num_roles, utils_cog, role_colour_c
     assert not any(roles) in author.roles
 
 
-@pytest.mark.skip(reason="role edit position bug in dpytest 0.6.0 https://github.com/CraftSpider/dpytest/issues/85")
 @pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
 @pytest.mark.asyncio
 async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog: ColourRole):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    roles = await make_list_of_roles(guild, 5)
+    roles: List[discord.Role] = await make_list_of_roles(guild, 5)
     # add num_roles roles to the protected roles
     chosen = random.sample(roles, k=num_roles)
     lowest_protected = 2000000000
@@ -187,9 +188,10 @@ async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog:
     else:
         expected = lowest_protected
     assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected, num_roles
+    for role in roles:
+        await role.delete()
 
 
-@pytest.mark.skip(reason="role edit position bug in dpytest 0.6.0 https://github.com/CraftSpider/dpytest/issues/85")
 @pytest.mark.asyncio
 async def test_create_custom_colour_role(role_colour_cog: ColourRole, utils_cog: LastCtxCog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -198,6 +200,7 @@ async def test_create_custom_colour_role(role_colour_cog: ColourRole, utils_cog:
     colour: discord.Colour = discord.Colour.from_rgb(16, 16, 16)
     colour_str = "101010"
     with mock.patch('koala.cogs.ColourRole.calculate_custom_colour_role_position', return_value=2) as mock_calc:
+        await guild.create_role(name="TestRole1")
         role = await role_colour_cog.create_custom_colour_role(colour, colour_str, ctx)
         assert role in guild.roles
         assert re.match(COLOUR_ROLE_NAMING, role.name), role.name
