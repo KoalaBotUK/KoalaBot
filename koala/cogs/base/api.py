@@ -10,7 +10,7 @@ from discord.ext.commands import Bot
 from . import core
 from .log import logger
 from koala.rest.api import parse_request, build_response
-from koala.utils import convert_iso_datetime
+from koala.transformers import DatetimeTransformer
 
 # Constants
 BASE_ENDPOINT = 'base'
@@ -94,8 +94,8 @@ class BaseEndpoint:
         :return:
         """
         try:
-            start_time = convert_iso_datetime(start_time)
-            end_time = convert_iso_datetime(end_time)
+            start_time = DatetimeTransformer.convert_iso_datetime(start_time)
+            end_time = DatetimeTransformer.convert_iso_datetime(end_time)
             activity_type = getActivityType(activity_type)
             core.activity_schedule(activity_type, message, url, start_time, end_time)
         except BaseException as e:
@@ -220,7 +220,7 @@ def getActivityType(activity_type):
 def handleActivityError(error):
     if type(error) == KeyError:
         return 'Invalid activity type'
-    elif type(error) == discord.ext.commands.errors.BadArgument:
+    elif type(error) == ValueError:
         return 'Bad start / end time'
     elif type(error) == discord.ext.commands.errors.ExtensionNotFound:
         return 'Invalid extension'

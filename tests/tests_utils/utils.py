@@ -13,6 +13,7 @@ from string import ascii_letters
 
 # Libs
 import discord
+import discord.ext.test as dpytest
 import emoji
 from discord.ext.test import factories as dpyfactory
 
@@ -69,9 +70,11 @@ def fake_guild_emoji(guild: discord.Guild) -> discord.Emoji:
                                      'name': fake_custom_emoji_name_str(), 'id': fake_id_str(), 'available': True})
     return fake_emoji
 
+
 def fake_partial_emoji() -> discord.PartialEmoji:
     if random.choice([True, False]):
-        fake_emoji = discord.PartialEmoji(name=fake_custom_emoji_name_str(), animated=random.choice([True, False]), id=dpyfactory.make_id)
+        fake_emoji = discord.PartialEmoji(name=fake_custom_emoji_name_str(), animated=random.choice([True, False]),
+                                          id=dpyfactory.make_id)
     else:
         fake_emoji = discord.PartialEmoji(name=fake_unicode_emoji())
     return fake_emoji
@@ -109,11 +112,13 @@ def fake_unicode_emoji() -> str:
     """
     return random.choice(unicode_emojis)
 
+
 def fake_emoji_unicode() -> str:
     """
     Returns a random unicode emoji's unicode codepoint
     """
     return random.choice(emoji_unicodes)
+
 
 def fake_role_mention() -> str:
     """
@@ -168,3 +173,39 @@ class FakeAuthor:
             return discord.Permissions.all()
         else:
             return discord.Permissions.none()
+
+
+class MockInteraction:
+    @property
+    def guild_id(self):
+        return dpytest.get_config().guilds[0].id
+
+    @property
+    def channel_id(self):
+        return dpytest.get_config().channels[0].id
+
+    class MockResponse:
+        sent_message = {}
+
+        async def send_message(self, content=None, **kwargs):
+            kwargs['content'] = content
+            self.sent_message = kwargs
+
+        def assert_eq(self, content=None, **kwargs):
+            actual_msg = self.sent_message
+            actual_content = actual_msg.pop('content')
+            assert actual_content == content, f"content is different Expected:{content}, Actual:{actual_content}"
+            keys = kwargs.copy().keys()
+            for key in keys:
+                actual = actual_msg.pop(key)
+                expected = kwargs.pop(key)
+
+                if key == 'embed':
+                    assert dpytest.utils.embed_eq(expected, actual)
+                else:
+                    assert actual == expected, f"{key} is different Expected:{expected}, Actual:{actual}"
+
+            assert not kwargs, f"Expected {kwargs}, but not found"
+            assert not actual_msg, f"Expected no other fields, but {actual_msg} found"
+
+    response = MockResponse()

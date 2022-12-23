@@ -36,8 +36,8 @@ async def activity_set(activity_type: discord.ActivityType, name: str, url: Opti
 
 
 @assign_session
-def activity_schedule(activity_type: discord.ActivityType, message: str, url: Optional[str], start_time: datetime.datetime,
-                      end_time: datetime.datetime, **kwargs):
+def activity_schedule(activity_type: discord.ActivityType, message: str, url: Optional[str],
+                      start_time: datetime.datetime, end_time: datetime.datetime, **kwargs):
     """
     Schedule an activity to be used for a timed presence
     :param activity_type:

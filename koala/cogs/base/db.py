@@ -12,7 +12,7 @@ from koala.db import assign_session
 @assign_session
 def add_scheduled_activity(activity_type: discord.ActivityType, message: str, url: Optional[str],
                            time_start: datetime.datetime, time_end: datetime.datetime,
-                           session: sqlalchemy.orm.Session) -> ScheduledActivities:
+                           *, session: sqlalchemy.orm.Session) -> ScheduledActivities:
     """
     Add scheduled activity to database
     :param activity_type:
@@ -32,7 +32,7 @@ def add_scheduled_activity(activity_type: discord.ActivityType, message: str, ur
 
 @assign_session
 def get_scheduled_activities(start_time_restricted: bool, end_time_restricted: bool,
-                             session: sqlalchemy.orm.Session) -> List[ScheduledActivities]:
+                             *, session: sqlalchemy.orm.Session) -> List[ScheduledActivities]:
     """
     Get all scheduled activities
     :param start_time_restricted:
@@ -51,7 +51,7 @@ def get_scheduled_activities(start_time_restricted: bool, end_time_restricted: b
 
 
 @assign_session
-def remove_scheduled_activities(activity_id: int, session: sqlalchemy.orm.Session) -> ScheduledActivities:
+def remove_scheduled_activities(activity_id: int, *, session: sqlalchemy.orm.Session) -> ScheduledActivities:
     """
     Delete a specified scheduled activity from a database
     :param activity_id:

@@ -17,6 +17,8 @@ import pytest_asyncio
 import koalabot
 from koala.db import session_manager
 from tests.log import logger
+from tests.tests_utils.utils import MockInteraction
+
 # Constants
 
 pytest_plugins = 'aiohttp.pytest_plugin'
@@ -49,6 +51,11 @@ async def bot():
     await dpytest.empty_queue()
     dpytest.configure(b)
     return b
+
+
+@pytest_asyncio.fixture
+async def mock_interaction():
+    return MockInteraction()
 
 
 @pytest.fixture(autouse=True)

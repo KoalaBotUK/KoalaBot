@@ -142,7 +142,7 @@ def extension_enabled(guild_id, extension_id: str):
 
 
 @assign_session
-def give_guild_extension(guild_id, extension_id: str, session: Session):
+def give_guild_extension(guild_id, extension_id: str, *, session: Session):
     """
     Give a guild the given Koala extension
 
@@ -167,7 +167,7 @@ def give_guild_extension(guild_id, extension_id: str, session: Session):
 
 
 @assign_session
-def remove_guild_extension(guild_id, extension_id: str, session: Session):
+def remove_guild_extension(guild_id, extension_id: str, *, session: Session):
     """
     Remove a given Koala extension from a guild
 
@@ -180,7 +180,7 @@ def remove_guild_extension(guild_id, extension_id: str, session: Session):
 
 
 @assign_session  # fallback assign session
-def get_enabled_guild_extensions(guild_id: int, session: Session):
+def get_enabled_guild_extensions(guild_id: int, *, session: Session):
     """
     Gets a list of extensions IDs that are enabled in a server
 
@@ -198,13 +198,12 @@ def get_enabled_guild_extensions(guild_id: int, session: Session):
 
 
 @assign_session
-def get_all_available_guild_extensions(guild_id: int, session: Session):
+def get_all_available_guild_extensions(*, session: Session):
     """
     Gets all available guild extensions for a given guild
 
     todo: restrict with rules of subscriptions & enabled state
 
-    :param guild_id: Discord guild ID for a given server
     :param session: sqlalchemy Session
     """
     sql_select_all = select(KoalaExtensions.extension_id).filter_by(available=1).distinct()

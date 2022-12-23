@@ -259,7 +259,7 @@ This email is stored so you don't need to verify it multiple times across server
             await ctx.send("Your email has been verified, thank you")
             await self.assign_roles_for_user(ctx.author.id, entry.email)
 
-    @commands.check(koalabot.is_owner)
+    @commands.check(koalabot.is_owner_ctx)
     @commands.command(name="getEmails")
     async def get_emails(self, ctx, user_id: int):
         """

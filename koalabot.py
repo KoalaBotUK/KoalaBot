@@ -56,11 +56,14 @@ intent.messages = True      # on_message
 intent.message_content = True
 is_dpytest = False
 
+global bot
+
 
 class KoalaBot(commands.Bot):
     """
     The commands.Bot subclass for Koala
     """
+
     async def setup_hook(self) -> None:
         """
         To perform asynchronous setup after the bot is logged in but before it has connected to the Websocket.
@@ -100,7 +103,20 @@ class KoalaBot(commands.Bot):
             raise error
 
 
-def is_owner(ctx: commands.Context):
+def is_owner(interaction: discord.Interaction):
+    """
+    A command used to check if the user of a command is the owner, or the testing bot
+    e.g. @app_commands.check(koalabot.is_owner)
+    :param interaction:
+    :return: Whether the user is the owner.
+    """
+    if BOT_OWNER is not None:
+        return interaction.user.id == int(BOT_OWNER) or is_dpytest
+    else:
+        return bot.is_owner(interaction.user) or is_dpytest
+
+
+def is_owner_ctx(ctx: commands.Context):
     """
     A command used to check if the user of a command is the owner, or the testing bot
     e.g. @commands.check(koalabot.is_owner)
@@ -136,16 +152,16 @@ def is_guild_channel(ctx):
     return ctx.guild is not None
 
 
-async def load_all_cogs(bot):
+async def load_all_cogs(client):
     """
     Loads all cogs in ENABLED_COGS into the client
     """
 
     for cog in ENABLED_COGS:
         try:
-            await bot.load_extension("."+cog, package=COGS_PACKAGE)
+            await client.load_extension("." + cog, package=COGS_PACKAGE)
         except commands.errors.ExtensionAlreadyLoaded:
-            await bot.reload_extension("."+cog, package=COGS_PACKAGE)
+            await client.reload_extension("." + cog, package=COGS_PACKAGE)
 
     logger.info("All cogs loaded")
 
@@ -182,6 +198,7 @@ def check_guild_has_ext(ctx, extension_id):
 
 
 async def run_bot():
+    global bot
     app = web.Application()
     bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 
@@ -204,6 +221,7 @@ async def run_bot():
     finally:
         await runner.cleanup()
 
-if __name__ == '__main__': # pragma: no cover
+
+if __name__ == '__main__':  # pragma: no cover
     # loop = asyncio.get_event_loop()
     asyncio.run(run_bot())

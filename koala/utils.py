@@ -128,9 +128,3 @@ def get_arg_config_path():
     path = Path(config_dir)
     path.mkdir(exist_ok=True, parents=True)
     return str(path.absolute())
-
-def convert_iso_datetime(argument):
-    try:
-        return datetime.datetime.fromisoformat(argument)
-    except ValueError:
-        raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
