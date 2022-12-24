@@ -104,33 +104,6 @@ async def test_load_all_cogs(bot):
     mock1.assert_called_with(".greetings_cog", package="tests.tests_utils.fake_load_all_cogs")
 
 
-@pytest.mark.asyncio
-async def test_dm_single_group_message():
-    test_message = 'default message'
-    test_member = dpytest.get_config().members[0]
-    x = await koalabot.dm_group_message([test_member], test_message)
-    assert dpytest.verify().message().content(test_message)
-    assert x == 1
-
-
-@pytest.mark.asyncio
-async def test_dm_plural_group_message():
-    test_message = 'default message'
-    test_member = dpytest.get_config().members[0]
-    test_member_2 = await dpytest.member_join()
-    await dpytest.empty_queue()
-    x = await koalabot.dm_group_message([test_member, test_member_2], test_message)
-    assert dpytest.verify().message().content(test_message)
-    assert dpytest.verify().message().content(test_message)
-    assert x == 2
-
-
-@pytest.mark.asyncio
-async def test_dm_empty_group_message():
-    test_message = 'this should not be sent'
-    x = await koalabot.dm_group_message([], test_message)
-    assert dpytest.verify().message().nothing()
-    assert x == 0
 
 
 @pytest.fixture(scope='session', autouse=True)

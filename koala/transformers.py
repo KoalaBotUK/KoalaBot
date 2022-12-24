@@ -12,7 +12,8 @@ class ExtensionTransformer(app_commands.Transformer):
     """
     Transformer for Koala Extensions
     """
-    async def choices(self) -> Optional[List[Choice[Union[int, float, str]]]]:
+    @property
+    def choices(self) -> Optional[List[Choice[Union[int, float, str]]]]:
         extensions = db.get_all_available_guild_extensions()
         choices = []
         for extension in extensions:

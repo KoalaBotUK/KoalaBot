@@ -161,7 +161,7 @@ async def enable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
     :return:
     """
     if koala_extension.lower() in ["all"]:
-        available_extensions = get_all_available_guild_extensions(guild_id, **kwargs)
+        available_extensions = get_all_available_guild_extensions(**kwargs)
         for ext in available_extensions:
             give_guild_extension(guild_id, ext, **kwargs)
         
@@ -217,7 +217,7 @@ async def get_available_extensions(guild_id, **kwargs):
         :param guild_id:
         :return:
         """
-    return get_all_available_guild_extensions(guild_id, **kwargs)
+    return get_all_available_guild_extensions(**kwargs)
 
 
 def get_version():

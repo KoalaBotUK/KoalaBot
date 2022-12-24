@@ -15,7 +15,7 @@ import discord.ext.test as dpytest
 import pytest
 
 # Own modules
-from koala.cogs.intro_cog.utils import ask_for_confirmation, confirm_message
+from koala.cogs.intro_cog.utils import ask_for_confirmation, confirm_message, dm_group_message
 
 
 @pytest.mark.parametrize("msg_content, is_invalid, expected",
@@ -42,3 +42,31 @@ async def test_confirm_message(msg_content, expected):
     message = dpytest.back.make_message(author=author, content=msg_content, channel=channel)
     x = await confirm_message(message)
     assert x is expected
+
+@pytest.mark.asyncio
+async def test_dm_single_group_message():
+    test_message = 'default message'
+    test_member = dpytest.get_config().members[0]
+    x = await dm_group_message([test_member], test_message)
+    assert dpytest.verify().message().content(test_message)
+    assert x == 1
+
+
+@pytest.mark.asyncio
+async def test_dm_plural_group_message():
+    test_message = 'default message'
+    test_member = dpytest.get_config().members[0]
+    test_member_2 = await dpytest.member_join()
+    await dpytest.empty_queue()
+    x = await dm_group_message([test_member, test_member_2], test_message)
+    assert dpytest.verify().message().content(test_message)
+    assert dpytest.verify().message().content(test_message)
+    assert x == 2
+
+
+@pytest.mark.asyncio
+async def test_dm_empty_group_message():
+    test_message = 'this should not be sent'
+    x = await dm_group_message([], test_message)
+    assert dpytest.verify().message().nothing()
+    assert x == 0

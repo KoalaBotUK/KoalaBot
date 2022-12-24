@@ -20,16 +20,21 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 # Futures
 # Built-in/Generic Imports
 import asyncio
+import datetime
+import sys
 import time
+from typing import Any
 
 # Libs
 from aiohttp import web
 import discord
+from discord import app_commands
 from discord.ext import commands
 
+from koala import checks, env
 # Own modules
 from koala.db import extension_enabled
-from koala.utils import error_embed
+from koala.utils import error_embed, interaction_data_to_str
 from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
 
@@ -56,20 +61,20 @@ intent.messages = True      # on_message
 intent.message_content = True
 is_dpytest = False
 
-global bot
-
 
 class KoalaBot(commands.Bot):
     """
     The commands.Bot subclass for Koala
     """
-
     async def setup_hook(self) -> None:
         """
         To perform asynchronous setup after the bot is logged in but before it has connected to the Websocket.
         """
         logger.debug("hook setup")
         await self.tree.sync()
+        await self.tree.sync(guild=discord.Object(863362407183286302))
+        # todo: sync all guilds, only syncing enabled commands
+        #   - add error for rate limiting on server
 
     async def on_command_error(self, ctx, error: Exception):
         if ctx.guild is None:
@@ -101,6 +106,38 @@ class KoalaBot(commands.Bot):
             await ctx.send(embed=error_embed(
                 description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}"))  # FIXME: better timestamp
             raise error
+
+
+bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
+
+
+@app_commands.guilds(863362407183286302)
+class OwnerGroup(app_commands.Group, name='owner', description='owner only commands'):
+    # todo: check implementation works across multiple cogs
+    async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
+        if env.BOT_OWNER is not None:
+            success = interaction.user.id == int(env.BOT_OWNER)
+        else:
+            success = bot.is_owner(interaction.user)
+        if not success:
+            interaction.data[checks.FAILURE_DESC_ATTR] = "You do not have permission to access this command: not owner"
+        return success
+
+
+@bot.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(
+            embed=error_embed(description=f"This command is still on cooldown for {str(error.retry_after)}s."),
+            ephemeral=True)
+    elif isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message(embed=error_embed(interaction.data[checks.FAILURE_DESC_ATTR]))
+    else:
+        logger.error(f"Unknown error in guild: {interaction.guild_id} for command: "
+                     f"`{interaction_data_to_str(interaction.data)}`", exc_info=error)
+        await interaction.response.send_message(embed=error_embed(
+                    description=f"An unexpected error occurred, "
+                                f"please contact an administrator Timestamp: {datetime.datetime.now()}"))
 
 
 def is_owner(interaction: discord.Interaction):
@@ -166,23 +203,6 @@ async def load_all_cogs(client):
     logger.info("All cogs loaded")
 
 
-async def dm_group_message(members: [discord.Member], message: str):
-    """
-    DMs members in a list of members
-    :param members: list of members to DM
-    :param message: The message to send to the group
-    :return: how many were dm'ed successfully.
-    """
-    count = 0
-    for member in members:
-        try:
-            await member.send(message)
-            count = count + 1
-        except Exception:  # In case of user dms being closed
-            pass
-    return count
-
-
 def check_guild_has_ext(ctx, extension_id):
     """
     A check for if a guild has a given koala extension
@@ -200,7 +220,6 @@ def check_guild_has_ext(ctx, extension_id):
 async def run_bot():
     global bot
     app = web.Application()
-    bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 
     setattr(bot, "koala_web_app", app)
     await load_all_cogs(bot)

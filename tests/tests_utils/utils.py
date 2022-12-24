@@ -177,21 +177,27 @@ class FakeAuthor:
 
 class MockInteraction:
     @property
+    def guild(self):
+        return dpytest.get_config().guilds[0]
+
+    @property
     def guild_id(self):
-        return dpytest.get_config().guilds[0].id
+        return self.guild.id
 
     @property
     def channel_id(self):
         return dpytest.get_config().channels[0].id
 
+
     class MockResponse:
         sent_message = {}
+        sent_modal = None
 
         async def send_message(self, content=None, **kwargs):
             kwargs['content'] = content
             self.sent_message = kwargs
 
-        def assert_eq(self, content=None, **kwargs):
+        def assert_eq(self, content=None, partial=False, **kwargs):
             actual_msg = self.sent_message
             actual_content = actual_msg.pop('content')
             assert actual_content == content, f"content is different Expected:{content}, Actual:{actual_content}"
@@ -205,7 +211,14 @@ class MockInteraction:
                 else:
                     assert actual == expected, f"{key} is different Expected:{expected}, Actual:{actual}"
 
-            assert not kwargs, f"Expected {kwargs}, but not found"
-            assert not actual_msg, f"Expected no other fields, but {actual_msg} found"
+            if not partial:
+                assert not kwargs, f"Expected {kwargs}, but not found"
+                assert not actual_msg, f"Expected no other fields, but {actual_msg} found"
+
+        async def send_modal(self, modal, /):
+            self.sent_modal = modal
 
     response = MockResponse()
+
+    async def edit_original_response(self, **kwargs):
+        await self.response.send_message(**kwargs)

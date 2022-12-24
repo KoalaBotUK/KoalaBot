@@ -14,17 +14,18 @@ import datetime
 # Libs
 
 import discord
-from discord import app_commands
+from discord import app_commands, Permissions
 from discord.ext import commands, tasks
 
 # Own modules
 from discord.ext.commands import BadArgument
 
 import koalabot
+from koala import checks
+from koala.transformers import DatetimeTransformer, ExtensionTransformer
 from . import core
 from .utils import AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
-from ...transformers import DatetimeTransformer, ExtensionTransformer
 
 
 # Constants
@@ -43,13 +44,16 @@ class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
-
-    koala_group = app_commands.Group(name="koala", description="KoalaBot")
-    cog_group = app_commands.Group(name="cog", description="control running cogs", parent=koala_group)
+    owner_group = koalabot.OwnerGroup()
+    koala_group = app_commands.Group(name="koala", description="KoalaBot",
+                                     default_permissions=Permissions(administrator=True))
+    cog_group = app_commands.Group(name="cog", description="control running cogs",
+                                        parent=owner_group)
     activity_group = app_commands.Group(name="activity", description="Modify the activity of the bot",
-                                        parent=koala_group)
+                                        parent=owner_group)
 
-    extension_group = app_commands.Group(name="extension", description="Enable or disable Koala functions")
+    extension_group = app_commands.Group(name="extension", description="Enable or disable Koala functions",
+                                         default_permissions=Permissions(administrator=True))
 
     def __init__(self, bot: commands.Bot):
         """
@@ -73,7 +77,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         logger.info("Bot is ready.")
 
     @activity_group.command(name="set", description="Change the activity of the bot")
-    @app_commands.check(koalabot.is_owner)
     async def activity_set(self, interaction: discord.Interaction, activity: discord.ActivityType,
                            message: str, url: str = None):
         """
@@ -87,7 +90,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await interaction.response.send_message(f"I am now {activity.name} {message}", ephemeral=True)
 
     @activity_group.command(name="schedule", description="Schedule an activity")
-    @app_commands.check(koalabot.is_owner)
     async def activity_schedule(self, interaction: discord.Interaction, activity: discord.ActivityType,
                                 message: str,
                                 start_time: app_commands.Transform[datetime.datetime, DatetimeTransformer],
@@ -106,7 +108,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await interaction.response.send_message("Activity saved", ephemeral=True)
 
     @activity_group.command(name="list", description="List scheduled activities")
-    @app_commands.check(koalabot.is_owner)
     async def activity_list(self, interaction: discord.Interaction, show_all: bool = False):
         """
         List scheduled activities
@@ -122,7 +123,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await interaction.response.send_message(result)
 
     @activity_group.command(name="remove", description="Remove a scheduled activity")
-    @app_commands.check(koalabot.is_owner)
     async def activity_remove(self, interaction: discord.Interaction, activity_id: int):
         """
         Remove an existing activity
@@ -146,7 +146,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         except Exception as err:
             logger.error("Error in update_activity loop %s" % err, exc_info=err)
 
-    @koala_group.command(name="ping", description="Ping the discord servers")
+    @owner_group.command(name="ping", description="Ping the discord servers")
     async def ping(self, interaction: discord.Interaction):
         """
         Returns the ping of the bot
@@ -163,7 +163,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await interaction.response.send_message(core.support_link())
 
     @app_commands.command(name="clear", description="Clear messages from this channel")
-    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.default_permissions(manage_messages=True)
     async def clear(self, interaction: discord.Interaction, amount: int = 1):
         """
         Clears a given number of messages from the given channel
@@ -173,7 +173,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await core.purge(self.bot, interaction.channel_id, amount)
 
     @cog_group.command(name="load", description="Load a cog")
-    @app_commands.check(koalabot.is_owner)
     async def load_cog(self, interaction: discord.Interaction, extension: str):
         """
         Loads a cog from the cogs folder
@@ -184,7 +183,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
                                                 ephemeral=True)
 
     @cog_group.command(name="unload", description="Unload a cog")
-    @app_commands.check(koalabot.is_owner)
     async def unload_cog(self, interaction: discord.Interaction, extension: str):
         """
         Unloads a running cog
@@ -194,8 +192,8 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await interaction.response.send_message(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
     @extension_group.command(name="enable", description="Enable a Koala extension")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def enable_koala_ext(self, interaction: discord.Interaction, koala_extension: app_commands.Transform[str, ExtensionTransformer]):
+    async def enable_koala_ext(self, interaction: discord.Interaction,
+                               koala_extension: app_commands.Transform[str, ExtensionTransformer]):
         """
         Enables a koala extension onto a server, all grants all extensions
         :param interaction:
@@ -205,8 +203,8 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             embed=await core.enable_extension(self.bot, interaction.guild_id, koala_extension))
 
     @extension_group.command(name="disable", description="Disable a Koala extension")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def disable_koala_ext(self, interaction: discord.Interaction, koala_extension: app_commands.Transform[str, ExtensionTransformer]):
+    async def disable_koala_ext(self, interaction: discord.Interaction,
+                                koala_extension: app_commands.Transform[str, ExtensionTransformer]):
         """
         Disables a koala extension onto a server
         :param interaction:
@@ -216,7 +214,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
             embed=await core.disable_extension(self.bot, interaction.guild_id, koala_extension))
 
     @extension_group.command(name="list", description="List available Koala extensions")
-    @app_commands.checks.has_permissions(administrator=True)
     async def list_koala_ext(self, interaction: discord.Interaction):
         """
         Lists the enabled koala extensions of a server
@@ -224,8 +221,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         await interaction.response.send_message(embed=await core.list_enabled_extensions(interaction.guild_id))
 
-    @koala_group.command(name="version", description="KoalaBot version")
-    @app_commands.check(koalabot.is_owner)
+    @owner_group.command(name="version", description="KoalaBot version")
     async def version(self, interaction: discord.Interaction):
         """
         Get the version of KoalaBot

@@ -35,7 +35,7 @@ def list_ext_embed(guild_id, **kwargs):
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {guild_id}")
     enabled_results = get_enabled_guild_extensions(guild_id, **kwargs)
-    all_results = get_all_available_guild_extensions(guild_id, **kwargs)
+    all_results = get_all_available_guild_extensions(**kwargs)
     enabled = ""
     disabled = ""
     for result in enabled_results:

@@ -16,7 +16,7 @@ import pytest
 
 # Own modules
 from koala import db as koala_db
-from koala.cogs.intro_cog import db as intro_db
+from koala.cogs.intro_cog import core
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, get_non_bot_members
 from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
 from tests.log import logger
@@ -27,13 +27,14 @@ from tests.log import logger
 
 # Welcome Message Database Manager Tests
 
+
 @pytest.mark.parametrize("guild_id, expected", [(101,
                                                  "fake guild welcome message"),
                                                 (non_existent_guild_id, None)])
 @pytest.mark.asyncio
 async def test_db_manager_fetch_welcome_message(guild_id, expected):
     await add_fake_guild_to_db(101)
-    val = intro_db.fetch_guild_welcome_message(guild_id)
+    val = core.fetch_guild_welcome_message(guild_id)
     assert val == expected, str(guild_id) + f": {val}"
 
 
@@ -43,22 +44,22 @@ async def test_db_manager_fetch_welcome_message(guild_id, expected):
 @pytest.mark.asyncio
 async def test_db_manager_update_welcome_message(guild_id, new_message, expected):
     await add_fake_guild_to_db(guild_id)
-    intro_db.update_guild_welcome_message(guild_id, new_message)
+    core.update_guild_welcome_message(guild_id, new_message)
     await asyncio.sleep(0.2)
-    val = intro_db.fetch_guild_welcome_message(guild_id)
-    assert val == expected, intro_db.fetch_guild_welcome_message(guild_id)
+    val = core.fetch_guild_welcome_message(guild_id)
+    assert val == expected, core.fetch_guild_welcome_message(guild_id)
 
 
 @pytest.mark.asyncio
 async def test_db_manager_new_guild_welcome_message():
-    val = intro_db.new_guild_welcome_message(fake_guild_id)
+    val = core.new_guild_welcome_message(fake_guild_id)
     assert val == DEFAULT_WELCOME_MESSAGE
 
 
 @pytest.mark.parametrize("guild_id, expected", [(fake_guild_id, 1), (non_existent_guild_id, 0)])
 @pytest.mark.asyncio
 async def test_db_manager_remove_guild_welcome_message(guild_id, expected):
-    count = intro_db.remove_guild_welcome_message(guild_id)
+    count = core.remove_guild_welcome_message(guild_id)
     assert count == expected
 
 
@@ -70,7 +71,7 @@ async def test_on_guild_join():
     test_config.guilds.append(guild)
     await dpytest.member_join(1, client.user)
     await asyncio.sleep(0.3)
-    val = intro_db.fetch_guild_welcome_message(1250)
+    val = core.fetch_guild_welcome_message(1250)
     assert val == DEFAULT_WELCOME_MESSAGE
 
 
@@ -81,7 +82,7 @@ async def test_on_guild_remove(bot):
     client = test_config.client
     bot_member = test_config.guilds[0].get_member(client.user.id)
     dpytest.backend.delete_member(bot_member)
-    val = intro_db.fetch_guild_welcome_message(guild.id)
+    val = core.fetch_guild_welcome_message(guild.id)
     assert val is None
 
 
@@ -90,8 +91,8 @@ async def test_on_guild_remove(bot):
                           (9999, DEFAULT_WELCOME_MESSAGE)])
 @pytest.mark.asyncio
 async def test_get_guild_welcome_message(guild_id, expected):
-    val = intro_db.get_guild_welcome_message(guild_id)
-    assert val == f"{expected}\r\n{BASE_LEGAL_MESSAGE}", val
+    val = core.get_guild_welcome_message(guild_id)
+    assert val == f"{expected}\n\r{BASE_LEGAL_MESSAGE}", val
 
 
 @pytest.mark.asyncio
@@ -125,12 +126,12 @@ async def test_on_member_join():
     test_config.guilds.append(guild)
     await dpytest.member_join(1, client.user)
     await asyncio.sleep(0.25)
-    welcome_message = intro_db.get_guild_welcome_message(guild.id)
+    welcome_message = core.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
     assert dpytest.verify().message().content(welcome_message)
-    intro_db.update_guild_welcome_message(guild.id, 'This is an updated welcome message.')
+    core.update_guild_welcome_message(guild.id, 'This is an updated welcome message.')
     await asyncio.sleep(0.25)
-    welcome_message = intro_db.get_guild_welcome_message(guild.id)
+    welcome_message = core.get_guild_welcome_message(guild.id)
     await dpytest.member_join(1)
     assert dpytest.verify().message().content(welcome_message)
 

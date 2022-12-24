@@ -128,3 +128,18 @@ def get_arg_config_path():
     path = Path(config_dir)
     path.mkdir(exist_ok=True, parents=True)
     return str(path.absolute())
+
+
+def interaction_data_to_str(data):
+    if type(data) == list:
+        return ' '.join([interaction_data_to_str(d) for d in data])
+
+    if data['type'] in [1, 2]:
+        value = data['name']
+    else:
+        value = data['value']
+
+    if data.get('options'):
+        return f"{value} {interaction_data_to_str(data['options'])}"
+    else:
+        return value

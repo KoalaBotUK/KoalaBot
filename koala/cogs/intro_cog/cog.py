@@ -12,26 +12,33 @@ Commented using reStructuredText (reST)
 # Libs
 import asyncio
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 # Own modules
 import koalabot
 
 from .log import logger
-from .db import get_guild_welcome_message, update_guild_welcome_message, new_guild_welcome_message, \
-    remove_guild_welcome_message
+from .ui import EditWelcomeMessage
 from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, \
-    BASE_LEGAL_MESSAGE
+    BASE_LEGAL_MESSAGE, dm_group_message
+from . import core
+from ...ui import Confirm
+
 
 # Constants
 
 # Variables
 
 
-class IntroCog(commands.Cog, name="Intro"):
+@app_commands.default_permissions(administrator=True)
+class IntroCog(commands.GroupCog, group_name="welcome", group_description="Welcome message DMed to users"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
+
+    # welcome_group = app_commands.Group(name="welcome", description="Welcome message DMed to users",
+    #                                    default_permissions=discord.Permissions(administrator=True))
 
     def __init__(self, bot):
         self.bot = bot
@@ -42,8 +49,7 @@ class IntroCog(commands.Cog, name="Intro"):
         On bot joining guild, add this guild to the database of guild welcome messages.
         :param guild: Guild KoalaBot just joined
         """
-        new_guild_welcome_message(guild.id)
-        logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
+        core.new_guild_welcome_message(guild.id)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -51,8 +57,7 @@ class IntroCog(commands.Cog, name="Intro"):
         On member joining guild, send DM to member with welcome message.
         :param member: Member which just joined guild
         """
-        await koalabot.dm_group_message([member], get_guild_welcome_message(member.guild.id))
-        logger.info(f"New member {member.name} joined guild id {member.guild.id}. Sent them welcome message.")
+        await core.send_member_welcome_message(member)
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild: discord.Guild):
@@ -60,78 +65,55 @@ class IntroCog(commands.Cog, name="Intro"):
         On bot leaving guild, remove the guild from the database of guild welcome messages
         :param guild: Guild KoalaBot just left
         """
-        count = remove_guild_welcome_message(guild.id)
-        logger.info(
-            f"KoalaBot left guild, id = {guild.id}, name = {guild.name}. Removed {count} rows from GuildWelcomeMessages")
+        core.remove_guild_welcome_message(guild.id)
 
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    @commands.check(koalabot.is_admin)
-    @commands.command(name="welcomeSendMsg", aliases=["send_welcome_message"])
-    async def send_welcome_message(self, ctx):
+    @app_commands.checks.cooldown(1, 60, key=lambda i: i.guild_id)
+    @app_commands.command(name="send", description="Send welcome message to all members")
+    async def send_welcome_message(self, interaction: discord.Interaction):
         """
         Allows admins to send out their welcome message manually to all members of a guild. Has a 60 second cooldown per
         guild.
 
-        :param ctx: Context of the command
+        :param interaction:
         """
-        non_bot_members = get_non_bot_members(ctx.guild)
-
-        await ctx.send(f"This will DM {len(non_bot_members)} people. Are you sure you wish to do this? Y/N")
-        try:
-            confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
-        except asyncio.TimeoutError:
-            await ctx.send('Timed out.')
-            confirmation_received = False
-        if confirmation_received:
-            await ctx.send("Okay, sending out the welcome message now.")
-            await koalabot.dm_group_message(non_bot_members, get_guild_welcome_message(ctx.guild.id))
+        view = Confirm()
+        await interaction.response.send_message(
+            f"This will DM {len(get_non_bot_members(interaction.guild))} people. Are you sure you wish to do this?",
+            view=view, ephemeral=True)
+        await view.wait()
+        if view.value is None:
+            await interaction.edit_original_response(content="Timed out. No message sent.", view=None)
+            return False
+        elif view.value:
+            await core.send_all_members_welcome_messages(interaction.guild)
+            await interaction.edit_original_response(content="Okay, sending out the welcome message now.", view=None)
             return True
         else:
-            await ctx.send("Okay, I won't send out the welcome message then.")
+            await interaction.edit_original_response(content="Okay, I won't send out the welcome message then.",
+                                                     view=None)
             return False
 
-    @commands.cooldown(1, 60, commands.BucketType.guild)
-    @commands.check(koalabot.is_admin)
-    @commands.command(name="welcomeUpdateMsg", aliases=["update_welcome_message"])
-    async def update_welcome_message(self, ctx, *, new_message: str):
+    @app_commands.checks.cooldown(1, 60, key=lambda i: i.guild_id)
+    @app_commands.command(name="edit", description="Edit the welcome message")
+    async def edit_welcome_message(self, interaction: discord.Interaction):
         """
         Allows admins to change their customisable part of the welcome message of a guild. Has a 60 second cooldown per
         guild.
 
-        :param ctx: Context of the command
-        :param new_message: New customised part of the welcome message
+        :param interaction:
         """
-        if len(new_message) > 1600:
-            await ctx.send("Your welcome message is too long to send, sorry. The maximum character limit is 1600.")
-        else:
-            await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
-            await ctx.send(f"""Your new welcome message will be:\n\r{new_message}\n\r{BASE_LEGAL_MESSAGE}\n\rWould """ +
-                           """you like to update the message? Y/N?""")
-            try:
-                confirmation_received = await ask_for_confirmation(await wait_for_message(self.bot, ctx), ctx.channel)
-            except asyncio.TimeoutError:
-                await ctx.send('Timed out.')
-                confirmation_received = False
-            if confirmation_received:
-                try:
-                    await ctx.send("Okay, updating the welcome message of the guild in the database now.")
-                    new_message = new_message.lstrip()
-                    updated_entry = update_guild_welcome_message(ctx.guild.id, new_message)
-                    await ctx.send(f"Updated in the database, your new welcome message is {updated_entry}.")
-                except None:
-                    await ctx.send("Something went wrong, please contact the bot developers for support.")
-            else:
-                await ctx.send("Okay, I won't update the welcome message then.")
+        await interaction.response.send_modal(EditWelcomeMessage(
+            core.fetch_guild_welcome_message(interaction.guild_id)))
 
-    @commands.check(koalabot.is_admin)
-    @commands.command(name="welcomeViewMsg")
-    async def view_welcome_message(self, ctx):
+    @app_commands.command(name="view", description="View your welcome message")
+    async def view_welcome_message(self, interaction: discord.Interaction):
         """
         Shows this server's current welcome message
         """
-        await ctx.send(f"""Your current welcome message is:\n\r{get_guild_welcome_message(ctx.guild.id)}""")
+        await interaction.response.send_message(
+            f"Your current welcome message is:\n\r{core.get_guild_welcome_message(interaction.guild_id)}")
 
-    @update_welcome_message.error
+    @edit_welcome_message.error
     async def on_update_error(self, ctx, error):
         if isinstance(error, discord.ext.commands.MissingRequiredArgument):
             await ctx.send('Please put in a welcome message to update to.')
