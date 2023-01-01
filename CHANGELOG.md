@@ -4,6 +4,9 @@ administrators
 
 ## [Unreleased]
 
+## [0.6.0] - 01-01-2023
+- Upgraded to discord.py 2.1.0
+
 ## [0.5.10] - 15-09-2022
 ### ReactForRole
 - Fix an issue where errors cause all reactions to be deleted
@@ -295,6 +298,7 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[0.6.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.10...v0.6.0
 [0.5.10]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.9...v0.5.10
 [0.5.9]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
 [0.5.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.7...v0.5.8
