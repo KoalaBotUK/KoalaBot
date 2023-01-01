@@ -3,7 +3,9 @@ name: CI
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [master, KoalaBotPublic]
+    branches:
+      - master
+      - 'release/**'
   pull_request:
   pull_request_target:
 
