@@ -426,7 +426,10 @@ class Voting(commands.Cog, name="Vote"):
         """
         Checks the results of a vote without closing it
         """
-        vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
+        vote_id = self.vote_manager.vote_lookup.get((ctx.author.id, title))
+        if vote_id is None:
+            raise ValueError(f"{title} is not a valid vote title for user {ctx.author.name}")
+
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
                 await ctx.send(
