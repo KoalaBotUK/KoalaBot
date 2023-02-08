@@ -86,7 +86,7 @@ class Voting(commands.Cog, name="Vote"):
             self.vote_end_loop.start()
             self.running = True
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.vote_end_loop.cancel()
         self.running = False
 
@@ -426,7 +426,10 @@ class Voting(commands.Cog, name="Vote"):
         """
         Checks the results of a vote without closing it
         """
-        vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
+        vote_id = self.vote_manager.vote_lookup.get((ctx.author.id, title))
+        if vote_id is None:
+            raise ValueError(f"{title} is not a valid vote title for user {ctx.author.name}")
+
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
                 await ctx.send(
@@ -463,10 +466,10 @@ class Voting(commands.Cog, name="Vote"):
             await msg.edit(embed=embed)
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(Voting(bot))
+    await bot.add_cog(Voting(bot))
     logger.info("Voting is ready.")

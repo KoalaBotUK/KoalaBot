@@ -83,7 +83,7 @@ async def create_team_alerts(bot: Bot, ta_database_manager, session):
                     team_twitch_alert_id = result.team_twitch_alert_id
                     custom_message = result.custom_message
                     channel_default_message = result.default_message
-                    channel: discord.TextChannel = bot.get_channel(id=channel_id)
+                    channel: discord.TextChannel = bot.get_channel(channel_id)
                     try:
                         # If no Alert is posted
                         if message_id is None:
@@ -182,7 +182,7 @@ async def create_user_alerts(bot: Bot, ta_database_manager, session):
                     custom_message = result.custom_message
                     channel_default_message = result.default_message
 
-                    channel = bot.get_channel(id=channel_id)
+                    channel = bot.get_channel(channel_id)
                     try:
                         # If no Alert is posted
                         if message_id is None:

@@ -12,6 +12,7 @@ Commented using reStructuredText (reST)
 # Libs
 
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 
 # Own modules
@@ -33,12 +34,27 @@ def convert_activity_type(argument):
         return discord.ActivityType[argument]
     except KeyError:
         raise BadArgument('Unknown activity type %s' % argument)
+
+
+class BaseCogSlash(commands.Cog, name='Koala'):
+    """
+    Temporary slash command cog. This will be used to get the new discord dev badge ;)
+    """
+    @app_commands.command(name="support", description="KoalaBot Support server link")
+    async def support(self, interaction: discord.Interaction):
+        """
+        KoalaBot Support server link
+        :param interaction:
+        """
+        await interaction.response.send_message(core.support_link())
+
+
 class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         """
         Initialises local variables
         :param bot: The bot client for this cog
@@ -47,7 +63,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self._last_member = None
         self.started = False
         self.current_activity = None
-        self.COGS_PACKAGE = koalabot.COGS_PACKAGE
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -173,7 +188,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.load_cog(self.bot, extension, self.COGS_PACKAGE))
+        await ctx.send(await core.load_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
@@ -183,7 +198,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.unload_cog(self.bot, extension, self.COGS_PACKAGE))
+        await ctx.send(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -223,11 +238,12 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(core.get_version())
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
 
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(BaseCog(bot))
+    await bot.add_cog(BaseCog(bot))
+    await bot.add_cog(BaseCogSlash())
     logger.info("BaseCog is ready.")

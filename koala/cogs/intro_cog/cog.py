@@ -28,7 +28,7 @@ from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, 
 # Variables
 
 
-class IntroCog(commands.Cog, name="KoalaBot"):
+class IntroCog(commands.Cog, name="Intro"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
@@ -137,10 +137,10 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             await ctx.send('Please put in a welcome message to update to.')
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot
     """
-    bot.add_cog(IntroCog(bot))
+    await bot.add_cog(IntroCog(bot))
     logger.info("IntroCog is ready.")
