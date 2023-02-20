@@ -180,9 +180,6 @@ def check_guild_has_ext(ctx, extension_id):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 
-
-
-@bot.event
 async def on_command_error(ctx, error: Exception):
     if ctx.guild is None:
         guild_id = "UNKNOWN"
