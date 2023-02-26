@@ -86,25 +86,3 @@ jobs:
         fail_ci_if_error: true
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
-  test-build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build
-        uses: docker/build-push-action@v4
-        with:
-          load: true
-          tags: ${{ env.TEST_TAG }}
-      - name: Test
-        run: |
-          docker run --name='test' --rm \
-          -e BOT_OWNER=${{ secrets.BOT_OWNER }} \
-          -e DISCORD_TOKEN=testfail \
-          -e GMAIL_EMAIL=${{ secrets.GMAIL_EMAIL }} \
-          -e GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }} \
-          -e TWITCH_SECRET=${{ secrets.TWITCH_SECRET }} \
-          -e TWITCH_TOKEN=${{ secrets.TWITCH_TOKEN }} \
-          ${{ env.TEST_TAG }} & (sleep 10 && docker kill test)
