@@ -100,7 +100,7 @@ jobs:
           tags: ${{ env.TEST_TAG }}
       - name: Test
         run: |
-          docker run --rm --stop-timeout 10 \
+          timeout 10 docker run --rm \
           -e BOT_OWNER=${{ secrets.BOT_OWNER }} \
           -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} \
           -e GMAIL_EMAIL=${{ secrets.GMAIL_EMAIL }} \
