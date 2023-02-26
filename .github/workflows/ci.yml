@@ -5,15 +5,14 @@ on:
   push:
     branches: [master, KoalaBotPublic]
   pull_request:
-#  pull_request_target:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+env:
+  TEST_TAG: jaydwee/koalabot:ci-test
+
 jobs:
-#  if: |
-#    (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
-#    (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
   test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -96,6 +95,9 @@ jobs:
         uses: docker/setup-buildx-action@v2
       - name: Build
         uses: docker/build-push-action@v4
+        with:
+          load: true
+          tags: ${{ env.TEST_TAG }}
       - name: Test
         run: |
           docker run --rm ${{ env.TEST_TAG }}
