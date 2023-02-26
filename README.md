@@ -9,17 +9,12 @@ KoalaBot is a free open source discord bot being developed by students from arou
 Our aim is to ensure university society committee leaders can access all they need and from one easy to use discord bot 
 to improve their server and society! 
 
-## Developers
+## Our Development Team/ Contributors
+<a href="https://github.com/KoalaBotUK/KoalaBot/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=KoalaBotUK/KoalaBot" />
+</a>
 
-* **Jack Draper** - *Project Manager* - [JayDwee](https://github.com/JayDwee)
-* **Stefan Cooper** - *Senior Developer* - [stefan-cooper](https://github.com/stefan-cooper)
-* **Viraj Shah** - *Senior Developer* - [VirajShah18](https://github.com/VirajShah18)
-* **Otto Hooper** - *Senior Developer* - [VottonDev](https://github.com/VottonDev)
-* **Zoe Tam** - *Senior Developer* - [abluey](https://github.com/abluey)
-
-All of our other amazing developers can be seen on our website https://koalabot.uk
-
-See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) to this repo.
+Our current Development Team can be found on our website [koalabot.uk](https://koalabot.uk)
 
 ## License
 
