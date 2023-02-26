@@ -149,7 +149,7 @@ class Announce(commands.Cog):
                 return
             self.messages[ctx.guild.id] = AnnounceMessage(f"",
                                                           message.content,
-                                                          ctx.guild.icon_url)
+                                                          ctx.guild.icon)
             self.roles[ctx.guild.id] = []
             await ctx.send(f"An announcement has been created for guild {ctx.guild.name}")
             await ctx.send(embed=self.construct_embed(ctx.guild))
@@ -301,10 +301,10 @@ class Announce(commands.Cog):
             await ctx.send("There is currently no active announcement")
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(Announce(bot))
+    await bot.add_cog(Announce(bot))
     logger.info("announce is ready.")

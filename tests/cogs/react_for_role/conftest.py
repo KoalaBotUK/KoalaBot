@@ -12,6 +12,7 @@ Commented using reStructuredText (reST)
 # Libs
 import discord.ext.test as dpytest
 import pytest
+from discord.ext import commands
 from sqlalchemy import delete
 
 # Own modules
@@ -29,18 +30,18 @@ from tests.log import logger
 
 
 @pytest.fixture(autouse=True)
-def utils_cog(bot):
+async def utils_cog(bot: commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog
 
 
 @pytest.fixture(autouse=True)
-def rfr_cog(bot):
+async def rfr_cog(bot: commands.Bot):
     rfr_cog = ReactForRole(bot)
-    bot.add_cog(rfr_cog)
+    await bot.add_cog(rfr_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return rfr_cog
