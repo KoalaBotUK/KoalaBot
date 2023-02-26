@@ -102,7 +102,7 @@ jobs:
         run: |
           docker run --name='test' --rm \
           -e BOT_OWNER=${{ secrets.BOT_OWNER }} \
-          -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} \
+          -e DISCORD_TOKEN=testfail \
           -e GMAIL_EMAIL=${{ secrets.GMAIL_EMAIL }} \
           -e GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }} \
           -e TWITCH_SECRET=${{ secrets.TWITCH_SECRET }} \
