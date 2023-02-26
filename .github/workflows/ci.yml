@@ -100,4 +100,11 @@ jobs:
           tags: ${{ env.TEST_TAG }}
       - name: Test
         run: |
-          docker run --rm ${{ env.TEST_TAG }}
+          docker run --rm \
+          -e BOT_OWNER=${{ secrets.BOT_OWNER }} \
+          -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }} \
+          -e GMAIL_EMAIL=${{ secrets.GMAIL_EMAIL }} \
+          -e GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }} \
+          -e TWITCH_SECRET=${{ secrets.TWITCH_SECRET }} \
+          -e TWITCH_TOKEN=${{ secrets.TWITCH_TOKEN }} \
+          ${{ env.TEST_TAG }}
