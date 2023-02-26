@@ -21,6 +21,9 @@ on:
           - dev
           - dev2
 
+env:
+  TEST_TAG: jaydwee/koalabot:test
+
 jobs:
   build-docker:
     runs-on: ubuntu-latest
