@@ -107,4 +107,4 @@ jobs:
           -e GMAIL_PASSWORD=${{ secrets.GMAIL_PASSWORD }} \
           -e TWITCH_SECRET=${{ secrets.TWITCH_SECRET }} \
           -e TWITCH_TOKEN=${{ secrets.TWITCH_TOKEN }} \
-          ${{ env.TEST_TAG }} || (sleep 10 && docker stop test)
+          ${{ env.TEST_TAG }} & (sleep 10 && docker kill test)
