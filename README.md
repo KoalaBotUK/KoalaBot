@@ -1,8 +1,8 @@
 # KoalaBot
 [![Discord Server](https://img.shields.io/discord/729325378681962576.svg?style=flat-square&logo=discord&logoColor=white&labelColor=697EC4&color=7289DA&label=%20)](https://discord.gg/5etEjVd)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/KoalaBotUK/KoalaBot/CI?label=tests&style=flat-square)](https://github.com/KoalaBotUK/KoalaBot/actions/)
+[![CI](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/ci.yml/badge.svg)](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/codeql-analysis.yml)
 ![Codecov](https://img.shields.io/codecov/c/github/KoalaBotUK/KoalaBot?style=flat-square)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/KoalaBotUK/KoalaBot.svg?style=flat-square)](https://lgtm.com/projects/g/KoalaBotUK/KoalaBot/context:python)
 
 
 KoalaBot is a free open source discord bot being developed by students from around the UK. 

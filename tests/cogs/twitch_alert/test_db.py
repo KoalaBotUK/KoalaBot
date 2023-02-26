@@ -35,7 +35,7 @@ DB_PATH = "Koala.db"
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = TwitchAlert(bot)
-    bot.add_cog(twitch_cog)
+    await bot.add_cog(twitch_cog)
     await dpytest.empty_queue()
     dpytest.configure(bot)
     return twitch_cog

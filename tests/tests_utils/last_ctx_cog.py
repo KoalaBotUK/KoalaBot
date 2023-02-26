@@ -51,9 +51,9 @@ class LastCtxCog(commands.Cog):
         return self.last_ctx
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(LastCtxCog(bot))
+    await bot.add_cog(LastCtxCog(bot))

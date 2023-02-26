@@ -376,7 +376,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         if self.is_moderation_channel_available(message.guild.id):
             channels = self.tf_database_manager.get_mod_channel(message.guild.id)
             for each_channel in channels:
-                channel = self.bot.get_channel(id=int(each_channel[0]))
+                channel = self.bot.get_channel(int(each_channel[0]))
                 await channel.send(embed=build_moderation_deleted_embed(message))
 
     def get_list_of_words(self, ctx):
@@ -428,10 +428,10 @@ class TextFilter(commands.Cog, name="TextFilter"):
         return embed
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
 
     :param  bot: The client of the KoalaBot
     """
-    bot.add_cog(TextFilter(bot))
+    await bot.add_cog(TextFilter(bot))
