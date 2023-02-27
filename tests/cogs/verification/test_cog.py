@@ -13,6 +13,7 @@ import asyncio
 import discord
 import discord.ext.test as dpytest
 import pytest
+import pytest_asyncio
 import sqlalchemy.orm
 from discord.ext import commands
 from sqlalchemy import select, delete
@@ -33,7 +34,7 @@ TEST_EMAIL_DOMAIN = 'koalabot.uk'
 # Variables
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def cog(bot: commands.Bot):
     cog = Verification(bot)
     await bot.add_cog(cog)

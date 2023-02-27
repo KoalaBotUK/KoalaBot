@@ -7,6 +7,7 @@ Testing KoalaBot TextFilter
 import discord
 import discord.ext.test as dpytest
 import pytest
+import pytest_asyncio
 from sqlalchemy import select, delete
 
 # Own modules
@@ -25,7 +26,7 @@ from tests.log import logger
 # Variables
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog(bot)
     await bot.add_cog(utils_cog)
@@ -34,7 +35,7 @@ async def utils_cog(bot: discord.ext.commands.Bot):
     return utils_cog
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def base_cog(bot: discord.ext.commands.Bot):
     base_cog = BaseCog(bot)
     await bot.add_cog(base_cog)
@@ -43,7 +44,7 @@ async def base_cog(bot: discord.ext.commands.Bot):
     return base_cog
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def tf_cog(bot: discord.ext.commands.Bot):
     tf_cog = TextFilterCog(bot)
     await bot.add_cog(tf_cog)
