@@ -17,7 +17,7 @@ packaging==23.0
 parsedatetime==2.6
 pluggy==1.0.0
 pyparsing==2.4.7
-pysqlcipher3==1.0.4
+pysqlcipher3==1.2.0
 pytest==7.2.1
 pytest-asyncio==0.20.3
 pytest-env==0.8.1
