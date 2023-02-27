@@ -23,7 +23,7 @@ pytest-asyncio==0.20.3
 pytest-env==0.8.1
 pytest-ordering==0.6
 python-dotenv==1.0.0
-requests==2.28.0
+requests==2.28.2
 six==1.16.0
 sqlalchemy==1.4.37
 toml==0.10.2
