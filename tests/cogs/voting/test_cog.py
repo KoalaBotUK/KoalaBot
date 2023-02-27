@@ -11,6 +11,7 @@ Commented using reStructuredText (reST)
 # Libs
 import discord.ext.test as dpytest
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 from sqlalchemy import select
 
@@ -23,7 +24,7 @@ from koala.db import session_manager, insert_extension
 from tests.log import logger
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def cog(bot: commands.Bot):
     cog = Voting(bot)
     insert_extension("Vote", 0, True, True)

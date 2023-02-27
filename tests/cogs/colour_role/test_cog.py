@@ -18,6 +18,7 @@ import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 
 # Own modules
@@ -36,7 +37,7 @@ from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_lis
 # Variables
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def utils_cog(bot: commands.Bot):
     utils_cog = LastCtxCog(bot)
     await bot.add_cog(utils_cog)
@@ -45,7 +46,7 @@ async def utils_cog(bot: commands.Bot):
     return utils_cog
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def role_colour_cog(bot: commands.Bot):
     role_colour_cog = ColourRole(bot)
     await bot.add_cog(role_colour_cog)

@@ -12,6 +12,7 @@ Commented using reStructuredText (reST)
 # Libs
 import discord.ext.test as dpytest
 import mock
+import pytest_asyncio
 import pytest_ordering as pytest
 import pytest
 import discord
@@ -31,7 +32,7 @@ DB_PATH = "Koala.db"
 
 # Variables
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = TwitchAlert(bot)
