@@ -26,6 +26,7 @@ from koala.cogs.twitch_alert.db import TwitchAlertDBManager
 from koala.cogs.twitch_alert import utils
 from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from koala.db import session_manager, setup
+from koala.models import mapper_registry
 
 # Constants
 DB_PATH = "Koala.db"
@@ -66,13 +67,11 @@ def twitch_alert_db_manager_tables(twitch_alert_db_manager):
 def test_create_tables():
     setup()
     tables = ['TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam']
-    sql_check_table_exists = "SELECT name FROM sqlite_master " \
-                             "WHERE type='table' AND " \
-                             "name IN ('TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam');"
-    with session_manager() as session:
-        tables_found = session.execute(sql_check_table_exists).all()
+    tables_found = mapper_registry.metadata.tables
     for table in tables_found:
-        assert table.name in tables
+        if table in tables:
+            tables.remove(table)
+    assert tables == []
 
 
 def test_new_ta(twitch_alert_db_manager_tables):

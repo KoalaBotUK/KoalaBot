@@ -59,7 +59,7 @@ Session.configure(bind=engine)
 
 
 @contextmanager
-def session_manager():
+def session_manager() -> Session:
     """
     Provide a transactional scope around a series of operations
     """
@@ -213,25 +213,15 @@ def get_all_available_guild_extensions(guild_id: int, session: Session):
         # [extension.extension_id for extension in session.execute(sql_select_all).all()]
 
 
-def fetch_all_tables():
+def clear_all_tables():
     """
-    Fetches all table names within the database
-    """
-    with session_manager() as session:
-        return [table.name for table in
-                session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
-
-
-def clear_all_tables(tables):
-    """
-    Clears al the data from the given tables
-
-    :param tables: a list of all tables to be cleared
+    Clears all the data from the given tables
     """
     with session_manager() as session:
-        for table in tables:
-            session.execute('DELETE FROM ' + table + ';')
-            session.commit()
+        for table in reversed(mapper_registry.metadata.sorted_tables):
+            print('Clear table %s' % table)
+            session.execute(table.delete())
+        session.commit()
 
 
 setup()
