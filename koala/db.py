@@ -14,6 +14,13 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 
+if os.name == 'nt':
+    print("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    print("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
+
 from sqlalchemy import select, delete, and_, create_engine, func as sql_func
 from sqlalchemy.orm import sessionmaker
 
@@ -53,13 +60,13 @@ DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "
 logger.debug("Database Path: "+DATABASE_PATH)
 engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
                                     encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
+                                    db_key=DB_KEY), module=sqlite3)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 
 
 @contextmanager
-def session_manager() -> Session:
+def session_manager():
     """
     Provide a transactional scope around a series of operations
     """
