@@ -13,8 +13,10 @@ import os
 from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
+from typing import Generator
 
 from sqlalchemy import select, delete, and_, create_engine, func as sql_func
+from sqlalchemy.dialects.sqlite import pysqlcipher, pysqlite
 from sqlalchemy.orm import sessionmaker
 
 # Own modules
@@ -41,25 +43,23 @@ def assign_session(func):
     return with_session
 
 
-def _get_sql_url(db_path, encrypted: bool, db_key=None):
+def _create_engine(db_path, encrypted: bool, db_key=None):
     if encrypted:
-        return "sqlite+pysqlcipher://:x'" + db_key + "'@/" + db_path
+        return create_engine("sqlite+pysqlcipher://:x'" + db_key + "'@/" + db_path, module=pysqlcipher)
     else:
-        return "sqlite:///" + db_path
+        return create_engine("sqlite:///" + db_path, module=pysqlite)
 
 
 CONFIG_DIR = get_arg_config_path()
 DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
 logger.debug("Database Path: "+DATABASE_PATH)
-engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
-                                    encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
-Session = sessionmaker(future=True)
+engine = _create_engine(db_path=DATABASE_PATH, encrypted=ENCRYPTED_DB, db_key=DB_KEY)
+Session = sessionmaker()
 Session.configure(bind=engine)
 
 
 @contextmanager
-def session_manager() -> Session:
+def session_manager() -> Generator[Session]:
     """
     Provide a transactional scope around a series of operations
     """
