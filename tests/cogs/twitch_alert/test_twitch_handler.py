@@ -1,35 +1,38 @@
+import pytest_asyncio
 from koala.cogs.twitch_alert.twitch_handler import TwitchAPIHandler
 from koala.cogs.twitch_alert.env import TWITCH_KEY, TWITCH_SECRET
 import pytest
 
-@pytest.fixture
-def twitch_api_handler():
-    return TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
+@pytest_asyncio.fixture
+async def twitch_api_handler():
+    twitch_api_handler = TwitchAPIHandler()
+    await twitch_api_handler.setup(TWITCH_KEY, TWITCH_SECRET)
+    return twitch_api_handler
 
 
 @pytest.mark.asyncio
 async def test_get_streams_data(twitch_api_handler):
     usernames = ['monstercat', 'jaydwee']
-    streams_data = twitch_api_handler.get_streams_data(usernames)
+    streams_data = await twitch_api_handler.get_streams_data(usernames)
     assert streams_data is not None
 
 
 @pytest.mark.asyncio
 async def test_get_user_data(twitch_api_handler):
-    assert twitch_api_handler.get_user_data('monstercat') is not None
+    assert await twitch_api_handler.get_user_data('monstercat') is not None
 
 
 @pytest.mark.asyncio
 async def test_get_game_data(twitch_api_handler):
-    assert 'music' in (twitch_api_handler.get_game_data('26936')).get('name').lower()
+    assert 'music' in (await twitch_api_handler.get_game_data('26936')).name.lower()
 
 
 @pytest.mark.asyncio
 async def test_get_team_users(twitch_api_handler):
     # assumes uosvge is in the team called uosvge
-    members = twitch_api_handler.get_team_users('uosvge')
+    members = await twitch_api_handler.get_team_users('uosvge')
     for member in members:
-        if member.get('user_login') == 'uosvge':
+        if member.user_login == 'uosvge':
             assert True
             return
     assert False
