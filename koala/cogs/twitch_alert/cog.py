@@ -395,6 +395,7 @@ class TwitchAlert(commands.Cog):
         When the bot is started up, the loop begins
         :return:
         """
+        await self.ta_database_manager.setup_twitch_handler()
         if not self.running:
             self.start_loops()
 
@@ -426,7 +427,7 @@ class TwitchAlert(commands.Cog):
     async def loop_update_teams(self):
         start = time.time()
         # logger.info("TwitchAlert: Started Update Teams")
-        self.ta_database_manager.update_all_teams_members()
+        await self.ta_database_manager.update_all_teams_members()
         time_diff = time.time() - start
         if time_diff > 5:
             logger.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
