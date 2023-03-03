@@ -6,7 +6,7 @@ certifi==2022.12.7
 chardet==5.1.0
 colorama==0.4.6
 discord.py==2.1.1
-dpytest==0.6.1
+dpytest==0.6.3
 emoji==1.7.0
 idna==3.4
 iniconfig==2.0.0
