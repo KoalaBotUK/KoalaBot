@@ -309,7 +309,9 @@ POST /enable-extension
 
 '''
 
-async def test_post_enable_extension(api_client):
+@mock.patch("koalabot.ENABLED_COGS", ["announce"])
+async def test_post_enable_extension(api_client, bot):
+    await koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     resp = await api_client.post('/enable-extension', data=({
         'guild_id': guild.id,
@@ -348,7 +350,9 @@ POST /disable-extension
 
 '''
 
-async def test_post_disable_extension(api_client):
+@mock.patch("koalabot.ENABLED_COGS", ['announce'])
+async def test_post_disable_extension(api_client, bot):
+    await koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     setup = await api_client.post('/enable-extension', data=({
         'guild_id': guild.id,
@@ -402,8 +406,9 @@ GET /extensions
 
 '''
 
-
-async def test_get_extension(api_client):
+@mock.patch("koalabot.ENABLED_COGS", ['announce'])
+async def test_get_extension(api_client, bot):
+    await koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     resp = await api_client.get('/extensions?guild_id={}'.format(guild.id))
     assert resp.status == OK
