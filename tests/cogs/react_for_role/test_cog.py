@@ -641,6 +641,7 @@ async def test_get_first_emoji_from_str():
     add_rfr_message(guild.id, channel.id, msg_id)
 
     emoji: discord.Emoji = testutils.fake_guild_emoji(guild)
+    role: discord.Role = testutils.fake_guild_role(guild)
 
     assert core.get_first_emoji_from_str(koalabot, guild, emoji)
 

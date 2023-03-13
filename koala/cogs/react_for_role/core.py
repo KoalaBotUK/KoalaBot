@@ -191,11 +191,8 @@ async def setup_rfr_reaction_permissions(guild: discord.Guild, channel: discord.
     role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
     overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
     overwrite.update(add_reactions=False)
-    try:
-        await channel.set_permissions(role, overwrite=overwrite)
-    except discord.Forbidden:
-        logger.error(f"ReactForRole: Failed to set permissions for channel {channel.id} in guild {guild.id}.")
-        return False
+    # TODO - tests fail here with 403, missing 'manage_roles' permission
+    await channel.set_permissions(role, overwrite=overwrite)
     bot_members = [member for member in guild.members if member.bot and member.id == bot.user.id]
     overwrite.update(add_reactions=True)
     for bot_member in bot_members:
