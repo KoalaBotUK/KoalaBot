@@ -770,7 +770,7 @@ class ReactForRole(commands.Cog):
         :return: List of Emoji-Role pairs parsed from the input message.
         """
         rows = input_str.splitlines()
-        
+
         arr = []
         for row in rows:
             emoji_role = row.split(',')
@@ -780,7 +780,7 @@ class ReactForRole(commands.Cog):
             if len(emoji_role) > 2:
                 raise commands.BadArgument("Too many/little categories/etc on one line.")
             emoji, err = await core.get_first_emoji_from_str(ctx.bot, ctx.guild, emoji_role[0].strip())
-            
+
             if not emoji:
                 await ctx.send(f"Yeah, didn't find emoji for `{emoji_role[0]}` - {err}")
                 continue
@@ -809,7 +809,7 @@ class ReactForRole(commands.Cog):
         for row in rows:
             # Try and match it to an raw_emoji first
             raw_emoji, err = await core.get_first_emoji_from_str(self.bot, ctx.guild, row.strip())
-            if err: 
+            if err:
                 await ctx.send(err)
             if not raw_emoji:
                 role = await commands.RoleConverter().convert(ctx, row.strip())
@@ -820,7 +820,7 @@ class ReactForRole(commands.Cog):
             else:
                 arr.append(raw_emoji)
         return arr
-    
+
 
     async def prompt_for_input(self, ctx: commands.Context, input_type: str) -> Union[discord.Attachment, str]:
         """
@@ -859,7 +859,7 @@ class ReactForRole(commands.Cog):
         for bot_member in bot_members:
             await channel.set_permissions(bot_member, overwrite=overwrite)
 
-    
+
     async def is_user_alive(self, ctx: commands.Context):
         """
         Prompts user for message to check if they're alive. Any message will do. We hope they're alive anyways.
@@ -889,9 +889,9 @@ class ReactForRole(commands.Cog):
             return field.value
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(ReactForRole(bot))
+    await bot.add_cog(ReactForRole(bot))

@@ -5,6 +5,7 @@ import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 
 # Own modules
@@ -14,28 +15,28 @@ from tests.tests_utils.last_ctx_cog import LastCtxCog
 
 from tests.log import logger
 
-@pytest.fixture(autouse=True)
-def utils_cog(bot: discord.ext.commands.Bot):
+@pytest_asyncio.fixture(autouse=True)
+async def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog
 
 
-@pytest.fixture(autouse=True)
-def announce_cog(bot: discord.ext.commands.Bot):
+@pytest_asyncio.fixture(autouse=True)
+async def announce_cog(bot: discord.ext.commands.Bot):
     announce_cog = announce.Announce(bot)
-    bot.add_cog(announce_cog)
+    await bot.add_cog(announce_cog)
     dpytest.configure(bot, 2, 1, 2)
     logger.info("Tests starting")
     return announce_cog
 
 
-def make_message(guild, announce_cog):
+def make_message(guild: discord.Guild, announce_cog):
     announce_cog.messages[guild.id] = announce.AnnounceMessage(f"This announcement is from {guild.name}",
                                                                "testMessage",
-                                                               guild.icon_url)
+                                                               guild.icon)
     announce_cog.roles[guild.id] = []
 
 
@@ -483,7 +484,7 @@ async def test_remove_non_existent_role(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     channel: discord.TextChannel = guild.channels[0]
-    guild.roles.append(await guild.create_role(name="testrole"))
+    await guild.create_role(name="testrole")
     assert len(guild.roles) == 2
     roles = guild.roles
     make_message(guild, announce_cog)
@@ -505,11 +506,11 @@ def test_embed_consistent(announce_cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     announce_cog.messages[guild.id] = announce.AnnounceMessage(f"This announcement is from {guild.name}",
                                                                "testMessage",
-                                                               guild.icon_url)
+                                                               guild.icon)
     embed: discord.Embed = announce_cog.construct_embed(guild)
     assert embed.title == f"This announcement is from {guild.name}"
     assert embed.description == "testMessage"
-    assert embed.thumbnail.url == ''
+    assert not embed.thumbnail.url
 
 
 def test_embed_consistent_with_url(announce_cog):

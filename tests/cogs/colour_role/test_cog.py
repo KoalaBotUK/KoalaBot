@@ -9,6 +9,8 @@ Commented using reStructuredText (reST)
 
 import random
 import re
+from typing import List
+
 # Built-in/Generic Imports
 
 # Libs
@@ -16,6 +18,7 @@ import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 
 # Own modules
@@ -34,19 +37,19 @@ from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_lis
 # Variables
 
 
-@pytest.fixture(autouse=True)
-def utils_cog(bot):
+@pytest_asyncio.fixture(autouse=True)
+async def utils_cog(bot: commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog
 
 
-@pytest.fixture(autouse=True)
-def role_colour_cog(bot):
+@pytest_asyncio.fixture(autouse=True)
+async def role_colour_cog(bot: commands.Bot):
     role_colour_cog = ColourRole(bot)
-    bot.add_cog(role_colour_cog)
+    await bot.add_cog(role_colour_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return role_colour_cog
@@ -171,9 +174,9 @@ async def test_prune_author_old_colour_roles(num_roles, utils_cog, role_colour_c
 
 @pytest.mark.parametrize("num_roles", [0, 1, 2, 5])
 @pytest.mark.asyncio
-async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog):
+async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog: ColourRole):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    roles = await make_list_of_roles(guild, 5)
+    roles: List[discord.Role] = await make_list_of_roles(guild, 5)
     # add num_roles roles to the protected roles
     chosen = random.sample(roles, k=num_roles)
     lowest_protected = 2000000000
@@ -186,16 +189,19 @@ async def test_calculate_custom_colour_role_position(num_roles, role_colour_cog)
     else:
         expected = lowest_protected
     assert role_colour_cog.calculate_custom_colour_role_position(guild) == expected, num_roles
+    for role in roles:
+        await role.delete()
 
 
 @pytest.mark.asyncio
-async def test_create_custom_colour_role(role_colour_cog, utils_cog):
+async def test_create_custom_colour_role(role_colour_cog: ColourRole, utils_cog: LastCtxCog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     colour: discord.Colour = discord.Colour.from_rgb(16, 16, 16)
     colour_str = "101010"
     with mock.patch('koala.cogs.ColourRole.calculate_custom_colour_role_position', return_value=2) as mock_calc:
+        await guild.create_role(name="TestRole1")
         role = await role_colour_cog.create_custom_colour_role(colour, colour_str, ctx)
         assert role in guild.roles
         assert re.match(COLOUR_ROLE_NAMING, role.name), role.name

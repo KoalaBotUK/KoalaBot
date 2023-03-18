@@ -13,6 +13,7 @@ import asyncio
 import discord
 import discord.ext.test as dpytest
 import pytest
+import pytest_asyncio
 import sqlalchemy.orm
 from discord.ext import commands
 from sqlalchemy import select, delete
@@ -33,10 +34,10 @@ TEST_EMAIL_DOMAIN = 'koalabot.uk'
 # Variables
 
 
-@pytest.fixture(autouse=True)
-def cog(bot: commands.Bot):
+@pytest_asyncio.fixture(autouse=True)
+async def cog(bot: commands.Bot):
     cog = Verification(bot)
-    bot.add_cog(cog)
+    await bot.add_cog(cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return cog
@@ -73,7 +74,7 @@ This email is stored so you don't need to verify it multiple times across server
 async def test_member_join_already_verified(bot: commands.Bot):
     with session_manager() as session:
         guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
-        bot.guilds.append(guild)
+        bot._connection._guilds[guild.id] = guild
 
         test_user = dpytest.back.make_user("TestUser", 1234, id_num=999)
         role = dpytest.back.make_role("testRole", guild, id_num=555)
@@ -209,7 +210,7 @@ async def test_re_verify():
     with session_manager() as session:
         test_config = dpytest.get_config()
         guild = test_config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
+        role = dpytest.back.make_role("testRole", guild, id_num=555555555555555)
         member = test_config.members[0]
         await dpytest.add_role(member, role)
         test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
@@ -218,7 +219,7 @@ async def test_re_verify():
         session.add(test_role)
         session.commit()
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555555555555555>")
         assert role not in member.roles
         blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
         assert blacklisted
@@ -234,7 +235,7 @@ async def test_re_verify_duplicate():
     with session_manager() as session:
         test_config = dpytest.get_config()
         guild = test_config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
+        role = dpytest.back.make_role("testRole", guild, id_num=555555555555555)
         member = test_config.members[0]
         await dpytest.add_role(member, role)
         test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
@@ -245,7 +246,7 @@ async def test_re_verify_duplicate():
         session.add(test_re_verify)
         session.commit()
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555555555555555>")
         assert role not in member.roles
         blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
         assert blacklisted

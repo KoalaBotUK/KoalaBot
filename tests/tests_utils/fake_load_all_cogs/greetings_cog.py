@@ -58,9 +58,9 @@ class Greetings(commands.Cog):
         await ctx.send(f'Hi {ctx.author}')
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot
     """
-    bot.add_cog(Greetings(bot))
+    await bot.add_cog(Greetings(bot))

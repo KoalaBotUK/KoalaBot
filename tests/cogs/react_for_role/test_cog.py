@@ -16,10 +16,12 @@ import mock
 import pytest
 from discord.ext import commands
 from discord.ext.test import factories as dpyfactory
+from discord.http import MultipartParameters
 
 # Own modules
 from koala.cogs.react_for_role import core
 import koalabot
+from koala.cogs import ReactForRole
 from koala.colours import KOALA_GREEN
 from koala.db import session_manager
 from tests.tests_utils import utils as testutils
@@ -196,7 +198,7 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
 
 
 @pytest.mark.asyncio
-async def test_setup_rfr_reaction_permissions(rfr_cog):
+async def test_overwrite_channel_add_reaction_perms(rfr_cog: ReactForRole):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
@@ -207,8 +209,8 @@ async def test_setup_rfr_reaction_permissions(rfr_cog):
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
         # await core.setup_rfr_reaction_permissions(guild, channel, bot)
         await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
-        calls = [mock.call(channel.id, role.id, 0, 64, 'role', reason=None),
-                 mock.call(channel.id, config.client.user.id, 64, 0, 'member',
+        calls = [mock.call(channel.id, role.id, '0', '64', discord.abc._Overwrites.ROLE, reason=None),
+                 mock.call(channel.id, config.client.user.id, '64', '0', discord.abc._Overwrites.MEMBER,
                            reason=None)]  # assert it's called the role perms change first, then the member change
         mock_edit_channel_perms.assert_has_calls(calls)
 
@@ -252,7 +254,7 @@ async def test_get_number_of_embed_fields(rfr_cog):
     channel: discord.TextChannel = guild.text_channels[0]
     test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
     bot: discord.Client = config.client
-    await bot.http.send_message(channel.id, '', embed=test_embed_dict)
+    await bot.http.send_message(channel.id, params=MultipartParameters({"embeds": [test_embed_dict]}, None, None))
     sent_msg: discord.Message = await dpytest.sent_queue.get()
     test_embed: discord.Embed = sent_msg.embeds[0]
     num_fields = 0

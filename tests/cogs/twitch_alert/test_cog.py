@@ -6,6 +6,7 @@ import asyncio
 # Libs
 import discord.ext.test as dpytest
 import mock
+import pytest_asyncio
 import pytest_ordering as pytest
 import pytest
 import discord
@@ -29,17 +30,17 @@ DB_PATH = "Koala.db"
 # Variables
 
 @pytest.mark.asyncio
-async def test_setup():
+async def test_setup(bot):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'add_cog') as mock1:
-        cog.setup(koalabot.bot)
+        await cog.setup(bot)
     mock1.assert_called()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = cog.TwitchAlert(bot)
-    bot.add_cog(twitch_cog)
+    await bot.add_cog(twitch_cog)
     await dpytest.empty_queue()
     dpytest.configure(bot)
     return twitch_cog
@@ -60,7 +61,7 @@ def test_twitch_is_enabled_dm():
 @pytest.mark.asyncio
 async def test_twitch_is_enabled_false(twitch_cog: cog.TwitchAlert):
     last_ctx_cog = LastCtxCog(bot=twitch_cog.bot)
-    twitch_cog.bot.add_cog(last_ctx_cog)
+    await twitch_cog.bot.add_cog(last_ctx_cog)
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx", channel=-1)
     ctx: commands.Context = last_ctx_cog.get_last_ctx()
 
