@@ -181,12 +181,12 @@ class ReactForRole(commands.Cog):
             await ctx.send(f"Okay, the description of the message will be \"{desc}\".\n Okay, "
                            f"I'll create the react for role message now.")
 
-            rfr_msg = await core.create_rfr_message(title, ctx.guild, desc, KOALA_GREEN, channel)
+            rfr_msg_id = await core.create_rfr_message(title, ctx.guild, desc, KOALA_GREEN, channel)
             # TODO - Get this working, for some reason we get 403 currently
             # await core.setup_rfr_reaction_permissions(ctx.guild, channel, self.bot)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
             await ctx.send(
-                f"Your react for role message ID is {rfr_msg.id}, it's in {channel.mention}. You can use the other "
+                f"Your react for role message ID is {rfr_msg_id}, it's in {channel.mention}. You can use the other "
                 "k!rfr subcommands to change the message and add functionality as required.")
             await del_msg.delete()
 
@@ -444,10 +444,9 @@ class ReactForRole(commands.Cog):
                     "Okay, I'll continue then. The new message will have the same title and description as the "
                     "old one.")
                 old_embed = core.get_embed_from_message(msg)
-                msg = core.create_rfr_message(title=old_embed.title, guild=ctx.guild, description=old_embed.description, colour=KOALA_GREEN, channel=channel)
-                msg_id = msg.id
-                await ctx.send(f"Okay, the new message has ID {msg.id} and is in {msg.channel.mention}.")
-                rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, msg_id)
+                rfr_msg_id = core.create_rfr_message(title=old_embed.title, guild=ctx.guild, description=old_embed.description, colour=KOALA_GREEN, channel=channel)
+                await ctx.send(f"Okay, the new message has ID {rfr_msg_id} and is in {msg.channel.mention}.")
+                rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, rfr_msg_id)
             else:
                 await ctx.send("Okay, I'll stop the command then.")
                 return

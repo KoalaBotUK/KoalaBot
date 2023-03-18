@@ -1,5 +1,7 @@
-from . import utils, db, models, cog, core
-from .cog import ReactForRole, setup
+from . import utils, db, models, cog, core, api
+from .cog import ReactForRole
 
-def setup(bot):
-    cog.setup(bot)
+
+async def setup(bot):
+    await cog.setup(bot)
+    api.setup(bot)

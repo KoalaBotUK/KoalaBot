@@ -8,6 +8,7 @@ import json
 # Libs
 from functools import wraps
 import aiohttp.web
+from aiohttp.abc import Request
 
 # Own modules
 from koala.models import BaseModel
@@ -40,8 +41,13 @@ def build_response(status_code, data):
     :param data:
     :return:
     """
+    if data:
+        body = json.dumps(data, cls=EnhancedJSONEncoder)
+    else:
+        body = None
+
     return aiohttp.web.Response(status=status_code,
-                    body=json.dumps(data, cls=EnhancedJSONEncoder),
+                    body=body,
                     content_type='application/json')
 
 
@@ -84,15 +90,15 @@ def parse_request(*args, **kwargs):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             self = args[0]
-            request = args[1]
+            request: Request = args[1]
 
             wanted_args = list(inspect.signature(func).parameters.keys())
             wanted_args.remove("self")
 
             available_args = {}
 
-            if (request.method == "POST" or request.method == "PUT") and request.has_body:
-                body = await request.post()
+            if (request.method == "POST" or request.method == "PUT") and request.can_read_body:
+                body = await request.json()
                 for arg in wanted_args:
                     if arg in body:
                         available_args[arg] = body[arg]

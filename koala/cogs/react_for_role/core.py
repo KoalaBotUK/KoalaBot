@@ -33,7 +33,7 @@ async def create_rfr_message(title: str, guild: discord.Guild, description: str,
     embed.set_thumbnail(url=koala_logo)
     rfr_msg: discord.Message = await channel.send(embed=embed)
     db.add_rfr_message(guild.id, channel.id, rfr_msg.id, **kwargs)
-    return rfr_msg
+    return rfr_msg.id
 
 
 @assign_session
