@@ -41,7 +41,7 @@ def build_response(status_code, data):
     :param data:
     :return:
     """
-    if data:
+    if data is not None:
         body = json.dumps(data, cls=EnhancedJSONEncoder)
     else:
         body = None

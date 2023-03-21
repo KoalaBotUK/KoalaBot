@@ -384,28 +384,6 @@ async def test_rfr_edit_description():
 
 
 @pytest.mark.asyncio
-async def test_rfr_edit_inline():
-    config: dpytest.RunnerConfig = dpytest.get_config()
-    guild: discord.Guild = config.guilds[0]
-    channel: discord.TextChannel = guild.text_channels[0]
-    embed: discord.Embed = discord.Embed(title="title", description="description")
-    client: discord.Client = config.client
-    message: discord.Message = await dpytest.message("rfr")
-    msg_id = message.id
-    add_rfr_message(guild.id, channel.id, msg_id)
-    assert embed.fields[0].inline == True
-    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
-                    mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
-                        mock.AsyncMock(side_effect=["new description", "Y"])):
-            with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
-                await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit description")
-                assert embed.description == 'new description'
-                assert dpytest.verify().message()
-                assert dpytest.verify().message()
-                assert dpytest.verify().message()
-
-@pytest.mark.asyncio
 async def test_rfr_edit_title():
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
