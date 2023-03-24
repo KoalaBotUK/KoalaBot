@@ -50,24 +50,23 @@ async def test_member_join_no_verify():
 
 
 @pytest.mark.asyncio
-async def test_member_join_verif_enabled():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
-        test_config.guilds.append(guild)
-        dpytest.back.make_role("testRole", guild, id_num=555)
-        test_role = Roles(s_id=1234, r_id=555, email_suffix=TEST_EMAIL_DOMAIN)
-        session.add(test_role)
-        session.commit()
-        welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
+async def test_member_join_verif_enabled(session):
+    test_config = dpytest.get_config()
+    guild = dpytest.back.make_guild("testMemberJoin", id_num=1234)
+    test_config.guilds.append(guild)
+    dpytest.back.make_role("testRole", guild, id_num=555)
+    test_role = Roles(s_id=1234, r_id=555, email_suffix=TEST_EMAIL_DOMAIN)
+    session.add(test_role)
+    session.commit()
+    welcome_message = f"""Welcome to testMemberJoin. This guild has verification enabled.
 Please verify one of the following emails to get the appropriate role using `{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers.
 `{TEST_EMAIL_DOMAIN}` for `@testRole`"""
-        await dpytest.member_join(1)
-        await asyncio.sleep(0.25)
-        assert dpytest.verify().message().content(welcome_message)
-        session.delete(test_role)
-        session.commit()
+    await dpytest.member_join(1)
+    await asyncio.sleep(0.25)
+    assert dpytest.verify().message().content(welcome_message)
+    session.delete(test_role)
+    session.commit()
 
 
 @pytest.mark.asyncio

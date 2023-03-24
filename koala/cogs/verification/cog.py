@@ -19,17 +19,16 @@ from sqlalchemy import select, delete, and_, text
 
 # Own modules
 import koalabot
-from koala.db import session_manager, insert_extension
+from koala.db import assign_session, session_manager, insert_extension
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
 from .log import logger
 from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
+from . import db
 
 
 # Constants
 
 # Variables
-
-
 
 
 def verify_is_enabled(ctx):
@@ -81,6 +80,7 @@ class Verification(commands.Cog, name="Verify"):
     async def on_ready(self):
         await self.assign_roles_on_startup()
 
+    @assign_session
     @commands.Cog.listener()
     async def on_member_join(self, member):
         """
@@ -88,31 +88,24 @@ class Verification(commands.Cog, name="Verify"):
         :param member: the member object who just joined a server
         :return:
         """
-        with session_manager() as session:
-            potential_emails = session.execute(select(Roles.r_id, Roles.email_suffix)
-                                               .filter_by(s_id=member.guild.id)).all()
+        potential_emails = db.get_potential_emails(member)
 
-            if potential_emails:
-                roles = {}
-                for role_id, suffix in potential_emails:
-                    role = discord.utils.get(member.guild.roles, id=role_id)
-                    roles[suffix] = role
-                    results = session.execute(select(VerifiedEmails).where(
-                        and_(
-                            VerifiedEmails.email.endswith(suffix),
-                            VerifiedEmails.u_id == member.id
-                        ))).all()
+        if potential_emails:
+            roles = {}
+            for role_id, suffix in potential_emails:
+                role = discord.utils.get(member.guild.roles, id=role_id)
+                roles[suffix] = role
+                results = db.member_join_email_results(member, suffix)
 
-                    blacklisted = session.execute(select(ToReVerify)
-                                                  .filter_by(r_id=role_id, u_id=member.id)).all()
+                blacklisted = db.member_join_blacklisted(member, role_id)
 
-                    if results and not blacklisted:
-                        await member.add_roles(role)
-                message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
+                if results and not blacklisted:
+                    await member.add_roles(role)
+            message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
 Please verify one of the following emails to get the appropriate role using `{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
 This email is stored so you don't need to verify it multiple times across servers."""
-                await member.send(
-                    content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
+            await member.send(
+                content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
