@@ -188,7 +188,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.load_cog(self.bot, extension, koalabot.COGS_PACKAGE))
+        await ctx.send(await core.load_cog(self.bot, extension))
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
@@ -198,7 +198,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
+        await ctx.send(await core.unload_cog(self.bot, extension))
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)
