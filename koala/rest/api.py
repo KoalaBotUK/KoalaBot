@@ -7,15 +7,20 @@ import json
 
 # Libs
 from functools import wraps
+from typing import OrderedDict
+
 import aiohttp.web
 from aiohttp.abc import Request
+from aiohttp.typedefs import Handler
 
+from koala.log import logger
 # Own modules
 from koala.models import BaseModel
 
 # Constants
 
 from http.client import OK
+
 
 # Variables
 
@@ -24,6 +29,7 @@ class EnhancedJSONEncoder(json.JSONEncoder):
     """
     A custom JSON encoder for datatypes used for this project
     """
+
     def default(self, o):
         if isinstance(o, BaseModel):
             return o.as_dict()
@@ -47,11 +53,11 @@ def build_response(status_code, data):
         body = None
 
     return aiohttp.web.Response(status=status_code,
-                    body=body,
-                    content_type='application/json')
+                                body=body,
+                                content_type='application/json')
 
 
-def parse_request(*args, **kwargs):
+def parse_request(*args, **kwargs) -> Handler:
     """
     A wrapper for API endpoints that provide the required args
     if raw_response = true, then the default response type is not applied
@@ -92,31 +98,39 @@ def parse_request(*args, **kwargs):
             self = args[0]
             request: Request = args[1]
 
-            wanted_args = list(inspect.signature(func).parameters.keys())
-            wanted_args.remove("self")
+            wanted_args: dict[str, inspect.Parameter] = dict(inspect.signature(func).parameters)
+            wanted_args.pop("self")
+
+            required_args: dict[str, inspect.Parameter] = {a: wanted_args.get(a) for a in wanted_args.keys() if
+                                                           wanted_args.get(a).default == inspect.Parameter.empty}
 
             available_args = {}
 
-            if (request.method == "POST" or request.method == "PUT") and request.can_read_body:
+            if (request.method in request.POST_METHODS) and request.can_read_body:
                 body = await request.json()
-                for arg in wanted_args:
+                for arg in wanted_args.keys():
                     if arg in body:
                         available_args[arg] = body[arg]
             else:
-                for arg in wanted_args:
+                for arg in wanted_args.keys():
                     if arg in request.query:
                         available_args[arg] = request.query[arg]
 
-            unsatisfied_args = set(wanted_args) - set(available_args.keys())
+            unsatisfied_args = set(required_args.keys()) - set(available_args.keys())
             if unsatisfied_args:
                 # Expected match info that doesn't exist
                 raise aiohttp.web.HTTPBadRequest(reason="Unsatisfied Arguments: %s" % unsatisfied_args)
 
-            result = await func(self, **{arg_name: available_args[arg_name] for arg_name in wanted_args})
+            try:
+                result = await func(self, **{arg_name: available_args[arg_name] for arg_name in available_args.keys()})
+            except Exception as e:
+                logger.error("API Failed", exc_info=e)
+                raise e
             if raw_response:
                 return result
             else:
                 return build_response(OK, result)
 
         return wrapper
+
     return parsed_request(func) if func else parsed_request

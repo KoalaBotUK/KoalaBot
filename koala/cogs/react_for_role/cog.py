@@ -181,7 +181,7 @@ class ReactForRole(commands.Cog):
             await ctx.send(f"Okay, the description of the message will be \"{desc}\".\n Okay, "
                            f"I'll create the react for role message now.")
 
-            rfr_msg_id = await core.create_rfr_message(title, ctx.guild, desc, KOALA_GREEN, channel)
+            rfr_msg_id = (await core.create_rfr_message(self.bot, ctx.guild.id, channel.id, title, desc, KOALA_GREEN)).message_id
             # TODO - Get this working, for some reason we get 403 currently
             # await core.setup_rfr_reaction_permissions(ctx.guild, channel, self.bot)
             await self.overwrite_channel_add_reaction_perms(ctx.guild, channel)
@@ -206,7 +206,7 @@ class ReactForRole(commands.Cog):
         await ctx.send("Please confirm that you would indeed like to delete the react for role message.")
         if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
             await ctx.send("Ok")
-            await core.delete_rfr_message(ctx.guild.id, channel.id, msg)
+            await core.delete_rfr_message(self.bot, msg.id, ctx.guild.id, channel.id)
             await ctx.send("ReactForRole Message deleted")
         else:
             await ctx.send("Cancelled command.")
@@ -234,7 +234,7 @@ class ReactForRole(commands.Cog):
         if desc != "":
             await ctx.send(f"Your new description would be {desc}. Please confirm that you'd like this change.")
             if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
-                await core.rfr_edit(embed, msg, description=desc)
+                await core.rfr_edit(msg, description=desc)
             else:
                 await ctx.send("Okay, cancelling command.")
         else:
@@ -259,7 +259,7 @@ class ReactForRole(commands.Cog):
         if title != "":
             await ctx.send(f"Your new title would be {title}. Please confirm that you'd like this change.")
             if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
-                await core.rfr_edit(embed, msg, title=title)
+                await core.rfr_edit(msg, title=title)
             else:
                 await ctx.send("Okay, cancelling command.")
         else:
@@ -292,13 +292,13 @@ class ReactForRole(commands.Cog):
                 logger.error(f"Attachment url not found, details : {image}")
                 raise commands.BadArgument("Couldn't get an image from the message you sent.")
             else:
-                await core.rfr_edit(embed, msg, image_url=str(image.url))
+                await core.rfr_edit(msg, thumbnail_url=str(image.url))
                 await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image. This will error if you "
                                "delete the message you sent with the image, so make sure you don't.")
         elif isinstance(image, str):
             # no attachment in message, just a raw URL in content
             img_url = await self.get_image_from_url(ctx, image)
-            await core.rfr_edit(embed, msg, image_url=img_url)
+            await core.rfr_edit(msg, thumbnail_url=img_url)
             await ctx.send("Okay, set the thumbnail of the thumbnail to your desired image.")
         else:
             raise commands.BadArgument("Couldn't get an image from the message you sent.")
@@ -361,7 +361,7 @@ class ReactForRole(commands.Cog):
                         await ctx.send("Invalid input, cancelling command")
                     else:
                         await ctx.send("Okay, I'll change it as requested.")
-                        await core.use_inline_rfr_specific(embed, msg)
+                        await core.use_inline_rfr_specific(msg)
                         await ctx.send("Okay, should be done. Please check.")
 
     @commands.check(koalabot.is_admin)
@@ -444,9 +444,10 @@ class ReactForRole(commands.Cog):
                     "Okay, I'll continue then. The new message will have the same title and description as the "
                     "old one.")
                 old_embed = core.get_embed_from_message(msg)
-                rfr_msg_id = core.create_rfr_message(title=old_embed.title, guild=ctx.guild, description=old_embed.description, colour=KOALA_GREEN, channel=channel)
+                rfr_msg_id = (await core.create_rfr_message(self.bot, ctx.guild.id, channel.id,
+                                                     title=old_embed.title, description=old_embed.description,
+                                                     colour=KOALA_GREEN)).message_id
                 await ctx.send(f"Okay, the new message has ID {rfr_msg_id} and is in {msg.channel.mention}.")
-                rfr_msg_row = get_rfr_message(ctx.guild.id, channel.id, rfr_msg_id)
             else:
                 await ctx.send("Okay, I'll stop the command then.")
                 return
@@ -460,8 +461,8 @@ class ReactForRole(commands.Cog):
 
         input_role_emojis = (await wait_for_message(self.bot, ctx, 180))[0].content
         emoji_role_list = await self.parse_emoji_and_role_input_str(ctx, input_role_emojis, remaining_slots)
-        rfr_embed = core.get_embed_from_message(msg)
-        duplicateRolesFound, duplicateEmojisFound, edited_msg = core.rfr_add_emoji_role(ctx.guild, channel, rfr_embed, msg, rfr_msg_row, emoji_role_list)
+        duplicateRolesFound, duplicateEmojisFound, edited_msg = core.rfr_add_emoji_role(ctx.guild, channel,
+                                                                                        msg, emoji_role_list)
         if (duplicateEmojisFound): await ctx.send("Found duplicate emoji in the message, I'm not accepting it.")
         if (duplicateRolesFound): await ctx.send("Found duplicate roles in the message, I'm not accepting it.")
         await ctx.send("Okay, you should see the message with its new emojis now.")
@@ -499,7 +500,7 @@ class ReactForRole(commands.Cog):
 
             if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
                 await ctx.send("Okay, deleting that message and removing it from the database.")
-                await core.delete_rfr_message(ctx.guild.id, channel.id, msg)
+                await core.delete_rfr_message(self.bot, msg.id, ctx.guild.id, channel.id)
                 await ctx.send("Okay, deleted that react for role message. Have a nice day.")
                 return
             else:
@@ -524,7 +525,7 @@ class ReactForRole(commands.Cog):
 
                 if (await self.prompt_for_input(ctx, "Y/N")).lstrip().strip().upper() == "Y":
                     await ctx.send("Okay, I'll delete the message then.")
-                    await core.delete_rfr_message(ctx.guild.id, channel.id, msg)
+                    await core.delete_rfr_message(self.bot, msg.id, ctx.guild.id, channel.id)
                     return
 
             await ctx.send("Okay, I've removed those options from the react for role message.")
@@ -586,17 +587,17 @@ class ReactForRole(commands.Cog):
     @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("addRequiredRole")
-    async def rfr_add_guild_required_role(self, ctx: commands.Context, role_str: str):
+    async def rfr_add_guild_required_role(self, ctx: commands.Context, role: discord.Role):
         """
         Adds a role to perms to use rfr functionality in a server, so you can specify that you need, e.g. "@Student" to
         be able to use rfr functionality in the server. It's server-wide permissions handling however. By default anyone
         can use rfr functionality in the server. User needs to have admin perms to use.
         :param ctx: Context of the command
-        :param role_str: Role ID/name/mention
+        :param role: Role ID/name/mention
         :return:
         """
         try:
-            role: discord.Role = await core.add_guild_rfr_required_role(self.bot, ctx.guild, role_str)
+            core.add_guild_rfr_required_role(ctx.guild, role.id)
             await ctx.send(f"Okay, I'll add {role.name} to the list of roles required for RFR usage on the server.")
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
@@ -604,17 +605,17 @@ class ReactForRole(commands.Cog):
     @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
     @react_for_role_group.command("removeRequiredRole")
-    async def rfr_remove_guild_required_role(self, ctx: commands.Context, role_str: str):
+    async def rfr_remove_guild_required_role(self, ctx: commands.Context, role: discord.Role):
         """
         Removes a role from perms for use of rfr functionality in a server, so you can specify that you need, e.g.
         "@Student" to be able to use rfr functionality in the server. It's server-wide permissions handling however. By
         default anyone can use rfr functionality in the server. User needs to have admin perms to use.
         :param ctx: Context of the command
-        :param role_str: Role ID/name/mention
+        :param role: Role ID/name/mention
         :return:
         """
         try:
-            role: discord.Role = await core.remove_guild_rfr_required_role(self.bot, ctx.guild, role_str)
+            core.remove_guild_rfr_required_role(ctx.guild, role.id)
             await ctx.send(
                 f"Okay, I'll remove {role.name} from the list of roles required for RFR usage on the server.")
         except (commands.CommandError, commands.BadArgument):
@@ -630,7 +631,7 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command.
         :return:
         """
-        role_ids = core.rfr_list_guild_required_roles(ctx.guild.id)
+        role_ids = core.rfr_list_guild_required_roles(ctx.guild).role_ids
         msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
         for role_id in role_ids:
 
@@ -745,6 +746,9 @@ class ReactForRole(commands.Cog):
         elif emoji_reacted.is_custom_emoji():
             rep = str(emoji_reacted)
             field = await self.get_field_by_emoji(embed, rep)
+            if not field:
+                # Look for animated version
+                field = await self.get_field_by_emoji(embed, rep[0]+"a"+rep[1:])
             if not field:
                 return
             role_str = field

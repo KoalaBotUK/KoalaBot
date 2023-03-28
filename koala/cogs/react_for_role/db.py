@@ -169,36 +169,36 @@ def get_guild_rfr_roles(guild_id: int) -> List[int]:
 
 
 @assign_session
-def get_rfr_message_emoji_roles(emoji_role_id: int, session: sqlalchemy.orm.Session):
+def get_rfr_message_emoji_roles(emoji_role_id: int, *, session: sqlalchemy.orm.Session):
     """
     Returns all the emoji-role combinations on an rfr message
 
     :param emoji_role_id: emoji-role combo identifier
+    :param session:
     :return: List of rows in the database if found, otherwise None
     """
-    with session_manager() as session:
-        rows = session.execute(select(RFRMessageEmojiRoles).filter_by(emoji_role_id=emoji_role_id)).scalars().all()
+    rows = session.execute(select(RFRMessageEmojiRoles).filter_by(emoji_role_id=emoji_role_id)).scalars().all()
 
-        return [(row.emoji_role_id, row.emoji_raw, row.role_id) for row in rows]
+    return [(row.emoji_role_id, row.emoji_raw, row.role_id) for row in rows]
 
 
 @assign_session
-def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int, session: sqlalchemy.orm.Session):
+def get_rfr_reaction_role(emoji_role_id: int, emoji_raw: str, role_id: int, *, session: sqlalchemy.orm.Session):
     """
     Returns a specific emoji-role combo on an rfr message
 
     :param emoji_role_id: emoji-role combo identifier
     :param emoji_raw: raw string representation of the emoji
     :param role_id: role ID of the emoji-role combo
+    :param session:
     :return: Unique row corresponding to a specific emoji-role combo
     """
-    with session_manager() as session:
-        row = session.execute(select(RFRMessageEmojiRoles).filter_by(
-            emoji_role_id=emoji_role_id, emoji_raw=emoji_raw, role_id=role_id)).scalar()
-        if row:
-            return row.emoji_role_id, row.emoji_raw, row.role_id
-        else:
-            return None
+    row = session.execute(select(RFRMessageEmojiRoles).filter_by(
+        emoji_role_id=emoji_role_id, emoji_raw=emoji_raw, role_id=role_id)).scalar()
+    if row:
+        return row.emoji_role_id, row.emoji_raw, row.role_id
+    else:
+        return None
 
 
 @assign_session
