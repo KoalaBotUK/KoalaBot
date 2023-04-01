@@ -331,7 +331,7 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.check(koalabot.is_admin)
     @commands.command(name="reVerify")
     @commands.check(verify_is_enabled)
-    async def re_verify(self, ctx, role):
+    async def re_verify(self, ctx, role: discord.Role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
         :param ctx: the context of the discord message
@@ -339,21 +339,14 @@ This email is stored so you don't need to verify it multiple times across server
         :return:
         """
         with session_manager() as session:
-            try:
-                role_id = int(role[3:-1])
-            except ValueError:
-                raise InvalidArgumentError("Please give a role by @mentioning it")
-            except TypeError:
-                raise InvalidArgumentError("Please give a role by @mentioning it")
-
-            exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role_id)).all()
+            exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role.id)).all()
 
             if not exists:
                 raise VerifyException("Verification is not enabled for that role")
-            role = discord.utils.get(ctx.guild.roles, id=role_id)
-            for member in ctx.guild.members:
-                if role in member.roles:
-                    await member.remove_roles(role)
+            existing_reverify = session.execute(select(ToReVerify.u_id).filter_by(r_id=role.id)).scalars().all()
+            for member in role.members:
+                await member.remove_roles(role)
+                if member.id not in existing_reverify:
                     session.add(ToReVerify(u_id=member.id, r_id=role.id))
 
             session.commit()
@@ -375,7 +368,7 @@ This email is stored so you don't need to verify it multiple times across server
                     logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles", exc_info=e)
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the koalabot.
     :param bot: the bot client for KoalaBot
@@ -384,5 +377,5 @@ def setup(bot: koalabot) -> None:
         logger.warning("Verification not started. API keys not found in environment.")
         insert_extension("Verify", 0, False, False)
     else:
-        bot.add_cog(Verification(bot))
+        await bot.add_cog(Verification(bot))
         logger.info("Verification is ready.")

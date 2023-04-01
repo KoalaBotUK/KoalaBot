@@ -7,6 +7,7 @@ Testing KoalaBot TextFilter
 import discord
 import discord.ext.test as dpytest
 import pytest
+import pytest_asyncio
 from sqlalchemy import select, delete
 
 # Own modules
@@ -25,28 +26,28 @@ from tests.log import logger
 # Variables
 
 
-@pytest.fixture(scope="function", autouse=True)
-def utils_cog(bot: discord.ext.commands.Bot):
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def utils_cog(bot: discord.ext.commands.Bot):
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return utils_cog
 
 
-@pytest.fixture(scope="function", autouse=True)
-def base_cog(bot: discord.ext.commands.Bot):
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def base_cog(bot: discord.ext.commands.Bot):
     base_cog = BaseCog(bot)
-    bot.add_cog(base_cog)
+    await bot.add_cog(base_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return base_cog
 
 
-@pytest.fixture(scope="function", autouse=True)
+@pytest_asyncio.fixture(scope="function", autouse=True)
 async def tf_cog(bot: discord.ext.commands.Bot):
     tf_cog = TextFilterCog(bot)
-    bot.add_cog(tf_cog)
+    await bot.add_cog(tf_cog)
     dpytest.configure(bot)
     logger.info("Tests starting")
     return tf_cog
@@ -88,7 +89,7 @@ def create_new_mod_channel_embed(channel):
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
     embed.add_field(name="Channel Name", value=channel.mention)
-    embed.add_field(name="Channel IDs", value=str(channel.id))
+    embed.add_field(name="Channel ID", value=str(channel.id))
     return embed
 
 
@@ -98,7 +99,7 @@ def list_mod_channel_embed(channels):
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
     for channel in channels:
-        embed.add_field(name="Name & Channel ID", value=channel.mention + " " + str(channel.id))
+        embed.add_field(name="Name & Channel ID", value=channel.mention + " " + str(channel.id), inline=False)
     return embed
 
 
@@ -138,8 +139,16 @@ def filtered_words_embed(words, filter, regex):
     embed.colour = KOALA_GREEN
     embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
     embed.add_field(name="Banned Words", value=word_string)
-    embed.add_field(name="Filter Type", value=filter_string)
-    embed.add_field(name="Is Regex", value=regex_string)
+    embed.add_field(name="Filter Types", value=filter_string)
+    embed.add_field(name="Is Regex?", value=regex_string)
+    return embed
+
+def no_filtered_words_embed():
+    embed = discord.Embed()
+    embed.title = "Koala Moderation - Filtered Words"
+    embed.colour = KOALA_GREEN
+    embed.set_footer(text=f"Guild ID: {dpytest.get_config().guilds[0].id}")
+    embed.add_field(name="No words found", value="For more help with using the Text Filter try k!help TextFilter")
     return embed
 
 
@@ -283,7 +292,7 @@ async def test_list_filtered_words(tf_cog):
 async def test_list_filtered_words_empty(tf_cog):
     with session_manager() as session:
         await dpytest.message(koalabot.COMMAND_PREFIX + "check_filtered_words")
-        assert_embed = filtered_words_embed([], [], [])
+        assert_embed = no_filtered_words_embed()
         assert dpytest.verify().message().embed(embed=assert_embed)
         cleanup(dpytest.get_config().guilds[0].id, tf_cog, session)
 

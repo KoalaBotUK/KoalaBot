@@ -3,6 +3,8 @@
 # Built-in/Generic Imports
 import re
 
+from twitchAPI.object import Stream
+
 # Own modules
 from koala.db import session_manager
 
@@ -65,6 +67,7 @@ class TwitchAlertDBManager:
     """
     A class for interacting with the Koala twitch database
     """
+    twitch_handler: TwitchAPIHandler
 
     def __init__(self, bot_client: discord.client):
         """
@@ -72,8 +75,6 @@ class TwitchAlertDBManager:
         :param bot_client:
         """
         delete_invalid_accounts()
-
-        self.twitch_handler = TwitchAPIHandler(TWITCH_KEY, TWITCH_SECRET)
         self.bot = bot_client
 
     def new_ta(self, guild_id, channel_id, default_message=None, replace=False):
@@ -248,7 +249,7 @@ class TwitchAlertDBManager:
             session.delete(team)
             session.commit()
 
-    def update_team_members(self, twitch_team_id, team_name):
+    async def update_team_members(self, twitch_team_id, team_name):
         """
         Users in a team are updated to ensure they are assigned to the correct team
         :param twitch_team_id: the team twitch alert id
@@ -256,21 +257,21 @@ class TwitchAlertDBManager:
         :return:
         """
         if re.search(TWITCH_USERNAME_REGEX, team_name):
-            users = self.twitch_handler.get_team_users(team_name)
+            users = await self.twitch_handler.get_team_users(team_name)
             for user_info in users:
                 with session_manager() as session:
                     user = session.execute(
                         select(UserInTwitchTeam)
-                        .filter_by(team_twitch_alert_id=twitch_team_id, twitch_username=user_info.get("user_login")))\
+                        .filter_by(team_twitch_alert_id=twitch_team_id, twitch_username=user_info.user_login))\
                         .scalars()\
                         .one_or_none()
 
                     if user is None:
                         session.add(UserInTwitchTeam(
-                            team_twitch_alert_id=twitch_team_id, twitch_username=user_info.get("user_login")))
+                            team_twitch_alert_id=twitch_team_id, twitch_username=user_info.user_login))
                         session.commit()
 
-    def update_all_teams_members(self):
+    async def update_all_teams_members(self):
         """
         Updates all teams with the current team members
         :return:
@@ -279,7 +280,7 @@ class TwitchAlertDBManager:
             teams_info = session.execute(select(TeamInTwitchAlert)).scalars().all()
 
         for team_info in teams_info:
-            self.update_team_members(team_info.team_twitch_alert_id, team_info.twitch_team_name)
+            await self.update_team_members(team_info.team_twitch_alert_id, team_info.twitch_team_name)
 
     async def delete_all_offline_team_streams(self, usernames):
         """
@@ -390,15 +391,19 @@ class TwitchAlertDBManager:
     #         session.execute("ALTER TABLE TeamInTwitchAlert RENAME COLUMN twitch_team_name TO twitch_team_id")
     #         session.commit()
 
-    async def create_alert_embed(self, stream_data, message):
+    async def create_alert_embed(self, stream: Stream, message):
         """
         Creates and sends an alert message
-        :param stream_data: The twitch stream data to have in the message
+        :param stream: The twitch stream data to have in the message
         :param message: The custom message to be added as a description
         :return: The discord message id of the sent message
         """
-        user_details = self.twitch_handler.get_user_data(
-            stream_data.get("user_name"))[0]
-        game_details = self.twitch_handler.get_game_data(
-            stream_data.get("game_id"))
-        return create_live_embed(stream_data, user_details, game_details, message)
+        user_details = (await self.twitch_handler.get_user_data(
+            stream.user_name))[0]
+        game_details = await self.twitch_handler.get_game_data(
+            stream.game_id)
+        return create_live_embed(stream, user_details, game_details, message)
+
+    async def setup_twitch_handler(self):
+        self.twitch_handler = TwitchAPIHandler()
+        await self.twitch_handler.setup(TWITCH_KEY, TWITCH_SECRET)

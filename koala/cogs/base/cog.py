@@ -10,19 +10,18 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
-import datetime
 
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 
 # Own modules
 from discord.ext.commands import BadArgument
+from koala.utils import convert_iso_datetime
 
 import koalabot
-from koala.db import get_all_available_guild_extensions, give_guild_extension, \
-    get_enabled_guild_extensions, remove_guild_extension
 from . import core
-from .utils import list_ext_embed, AUTO_UPDATE_ACTIVITY_DELAY
+from .utils import AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
 
 # Constants
@@ -37,11 +36,17 @@ def convert_activity_type(argument):
         raise BadArgument('Unknown activity type %s' % argument)
 
 
-def convert_iso_datetime(argument):
-    try:
-        return datetime.datetime.fromisoformat(argument)
-    except ValueError:
-        raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
+class BaseCogSlash(commands.Cog, name='Koala'):
+    """
+    Temporary slash command cog. This will be used to get the new discord dev badge ;)
+    """
+    @app_commands.command(name="support", description="KoalaBot Support server link")
+    async def support(self, interaction: discord.Interaction):
+        """
+        KoalaBot Support server link
+        :param interaction:
+        """
+        await interaction.response.send_message(core.support_link())
 
 
 class BaseCog(commands.Cog, name='KoalaBot'):
@@ -49,7 +54,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         A discord.py cog with general commands useful to managers of the bot and servers
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: commands.Bot):
         """
         Initialises local variables
         :param bot: The bot client for this cog
@@ -57,7 +62,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self.bot = bot
         self._last_member = None
         self.started = False
-        self.COGS_DIR = koalabot.COGS_DIR
         self.current_activity = None
 
     @commands.Cog.listener()
@@ -156,7 +160,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Returns the ping of the bot
         :param ctx: Context of the command
         """
-        await ctx.send(f"Pong! {round(self.bot.latency * 1000)}ms")
+        await ctx.send(await core.ping(self.bot))
 
     @commands.command()
     async def support(self, ctx):
@@ -164,7 +168,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         KoalaBot Support server link
         :param ctx: Context of the command
         """
-        await ctx.send(f"Join our support server for more help! https://discord.gg/5etEjVd")
+        await ctx.send(core.support_link())
 
     @commands.command(name="clear")
     @commands.check(koalabot.is_admin)
@@ -174,7 +178,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param amount: Amount of lines to delete
         """
-        await ctx.channel.purge(limit=amount + 1)
+        await core.purge(self.bot, ctx.channel.id, amount)
 
     @commands.command(name="loadCog", aliases=["load_cog"])
     @commands.check(koalabot.is_owner)
@@ -184,8 +188,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        self.bot.load_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
-        await ctx.send(f'{extension} Cog Loaded')
+        await ctx.send(await core.load_cog(self.bot, extension))
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
@@ -195,11 +198,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        if extension == "BaseCog":
-            await ctx.send("Sorry, you can't unload the base cog")
-        else:
-            self.bot.unload_extension(self.COGS_DIR.replace("/", ".") + f'.{extension}')
-            await ctx.send(f'{extension} Cog Unloaded')
+        await ctx.send(await core.unload_cog(self.bot, extension))
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -209,21 +208,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param koala_extension: The name of the koala
         """
-        guild_id = ctx.message.guild.id
-
-        if koala_extension.lower() in ["all"]:
-            available_extensions = get_all_available_guild_extensions(guild_id)
-            for extension in available_extensions:
-                give_guild_extension(guild_id, extension)
-            embed = list_ext_embed(guild_id)
-            embed.title = "All extensions enabled"
-
-        else:
-            give_guild_extension(guild_id, koala_extension)
-            embed = list_ext_embed(guild_id)
-            embed.title = koala_extension + " enabled"
-
-        await ctx.send(embed=embed)
+        await ctx.send(embed=await core.enable_extension(self.bot, ctx.message.guild.id, koala_extension))
 
     @commands.command(name="disableExt", aliases=["disable_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -233,17 +218,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param koala_extension: The name of the koala
         """
-        guild_id = ctx.message.guild.id
-        all_ext = get_enabled_guild_extensions(guild_id)
-        if koala_extension.lower() in ["all"]:
-            for ext in all_ext:
-                remove_guild_extension(guild_id, ext)
-        elif koala_extension not in all_ext:
-            raise NotImplementedError(f"{koala_extension} is not an enabled extension")
-        remove_guild_extension(guild_id, koala_extension)
-        embed = list_ext_embed(guild_id)
-        embed.title = koala_extension + " disabled"
-        await ctx.send(embed=embed)
+        await ctx.send(embed=await core.disable_extension(self.bot, ctx.message.guild.id, koala_extension))
 
     @commands.command(name="listExt", aliases=["list_koala_ext"])
     @commands.check(koalabot.is_admin)
@@ -252,10 +227,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         Lists the enabled koala extensions of a server
         :param ctx: Context of the command
         """
-        guild_id = ctx.message.guild.id
-        embed = list_ext_embed(guild_id)
-
-        await ctx.send(embed=embed)
+        await ctx.send(embed=await core.list_enabled_extensions(ctx.message.guild.id))
 
     @commands.command(name="version")
     @commands.check(koalabot.is_owner)
@@ -263,13 +235,15 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         Get the version of KoalaBot
         """
-        await ctx.send("version: "+koalabot.__version__)
+        await ctx.send(core.get_version())
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
+
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(BaseCog(bot))
+    await bot.add_cog(BaseCog(bot))
+    await bot.add_cog(BaseCogSlash())
     logger.info("BaseCog is ready.")

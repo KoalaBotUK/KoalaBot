@@ -2,7 +2,7 @@
 
 # Install the base requirements for the app.
 # This stage is to support development.
-FROM ubuntu:latest AS base
+FROM ubuntu:20.04 AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -16,23 +16,22 @@ RUN \
     jq \
     unzip \
     python3 \
-    python3-pip \
-    python3-venv
+    python3-pip
 
 RUN apt-get install -y software-properties-common && \
   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
   apt-get update
 
-RUN apt-get install -y sqlcipher libsqlcipher-dev
+RUN apt-get install -y \
+        sqlcipher=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1 \
+        libsqlcipher-dev=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1
 
 COPY . /app
 WORKDIR /app
 
-RUN python3 -m venv /opt/venv
-
-RUN /opt/venv/bin/python -m pip install --upgrade pip
-RUN /opt/venv/bin/pip install -r requirements.txt
-RUN /opt/venv/bin/python -m pip install pysqlcipher3
+RUN python3 -m pip install --upgrade pip
+RUN pip3 install -r requirements.txt
+RUN python3 -m pip install pysqlcipher3
 
 
 # docker settings
@@ -42,9 +41,10 @@ RUN /opt/venv/bin/python -m pip install pysqlcipher3
 VOLUME /config
 
 # Expose port
-# EXPOSE 5000
+ENV API_PORT=8080
+EXPOSE 8080
 
 # run app
 #########
 
-CMD [ "/opt/venv/bin/python", "koalabot.py"]
+CMD [ "python3", "koalabot.py"]

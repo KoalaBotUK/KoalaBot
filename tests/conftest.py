@@ -11,13 +11,15 @@ import pytest
 import discord
 import discord.ext.commands as commands
 import discord.ext.test as dpytest
-
+import pytest_asyncio
 
 # Own modules
 import koalabot
 from koala.db import session_manager
 from tests.log import logger
 # Constants
+
+pytest_plugins = 'aiohttp.pytest_plugin'
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -34,14 +36,16 @@ def teardown_config():
     shutil.rmtree(get_arg_config_path(), ignore_errors=True)
 
 
-@pytest.fixture
-async def bot(event_loop):
+@pytest_asyncio.fixture
+async def bot():
     import koalabot
     intents = discord.Intents.default()
     intents.members = True
     intents.guilds = True
     intents.messages = True
-    b = commands.Bot(koalabot.COMMAND_PREFIX, loop=event_loop, intents=intents)
+    intents.message_content = True
+    b = koalabot.KoalaBot(koalabot.COMMAND_PREFIX, intents=intents)
+    await b._async_setup_hook()
     await dpytest.empty_queue()
     dpytest.configure(b)
     return b
@@ -54,7 +58,7 @@ def setup_is_dpytest():
     koalabot.is_dpytest = False
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def session():
     with session_manager() as session:
         yield session

@@ -15,6 +15,7 @@ import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 
 # Own modules
@@ -30,11 +31,11 @@ from tests.tests_utils.last_ctx_cog import LastCtxCog
 utils_cog = None
 
 
-@pytest.fixture(autouse=True)
-async def test_ctx(bot):
+@pytest_asyncio.fixture(autouse=True)
+async def test_ctx(bot: commands.Bot):
     global utils_cog
     utils_cog = LastCtxCog(bot)
-    bot.add_cog(utils_cog)
+    await bot.add_cog(utils_cog)
     dpytest.configure(bot)
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     return utils_cog.get_last_ctx()
@@ -45,7 +46,7 @@ def setup_db():
     clear_all_tables(fetch_all_tables())
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest_asyncio.fixture(scope='function', autouse=True)
 async def setup_clean_messages():
     await dpytest.empty_queue()
     yield dpytest
@@ -56,15 +57,17 @@ def test_test_user_is_owner(test_ctx):
 
 
 def test_invalid_test_user_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER) + 1)
-    koalabot.is_dpytest = False
-    assert not koalabot.is_owner(test_ctx)
-    koalabot.is_dpytest = True
+    for i in range(len(koalabot.BOT_OWNER)):
+        test_ctx.author = FakeAuthor(id=koalabot.BOT_OWNER[i] + 1)
+        koalabot.is_dpytest = False
+        assert not koalabot.is_owner(test_ctx)
+        koalabot.is_dpytest = True
 
 
 def test_owner_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER))
-    assert koalabot.is_owner(test_ctx)
+    for i in range(len(koalabot.BOT_OWNER)):
+        test_ctx.author = FakeAuthor(id=(koalabot.BOT_OWNER[i]))
+        assert koalabot.is_owner(test_ctx)
 
 
 def test_test_user_is_admin(test_ctx):
@@ -72,7 +75,7 @@ def test_test_user_is_admin(test_ctx):
 
 
 def test_invalid_test_user_is_admin(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER) + 2)
+    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER[0]) + 2)
     koalabot.is_dpytest = False
     assert not koalabot.is_admin(test_ctx)
     koalabot.is_dpytest = True
@@ -95,12 +98,13 @@ def test_not_admin_is_admin(test_ctx):
     koalabot.is_dpytest = True
 
 
-@mock.patch("koalabot.COGS_DIR", "tests/tests_utils/fake_load_all_cogs")
-@mock.patch("koalabot.ENABLED_COGS", [])
-def test_load_all_cogs():
+@mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
+@mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
+@pytest.mark.asyncio
+async def test_load_all_cogs(bot):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
-        koalabot.load_all_cogs()
-    mock1.assert_called_with("tests.tests_utils.fake_load_all_cogs.greetings_cog")
+        await koalabot.load_all_cogs(bot)
+    mock1.assert_called_with(".greetings_cog", package="tests.tests_utils.fake_load_all_cogs")
 
 
 @pytest.mark.asyncio
