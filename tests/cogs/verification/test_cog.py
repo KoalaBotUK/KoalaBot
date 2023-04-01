@@ -105,9 +105,9 @@ async def test_enable_verification():
         config = dpytest.get_config()
         guild = config.guilds[0]
         role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
         assert dpytest.verify().message().content(
-            f"Verification enabled for <@&555> for emails ending with `{TEST_EMAIL_DOMAIN}`")
+            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
         entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
         assert entry
         session.execute(delete(Roles).filter_by(s_id=guild.id))
@@ -122,8 +122,8 @@ async def test_disable_verification():
         role = dpytest.back.make_role("testRole", guild, id_num=555)
         session.add(Roles(s_id=guild.id, r_id=555, email_suffix="egg.com"))
         session.commit()
-        await dpytest.message(koalabot.COMMAND_PREFIX + "removeVerification egg.com <@&555>")
-        assert dpytest.verify().message().content("Emails ending with egg.com no longer give <@&555>")
+        await dpytest.message(koalabot.COMMAND_PREFIX + "removeVerification egg.com testRole")
+        assert dpytest.verify().message().content("Emails ending with egg.com no longer give testRole")
         entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
         assert not entry
 
