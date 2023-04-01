@@ -53,7 +53,7 @@ PUT /scheduled-activity
 '''
 
 async def test_put_schedule_activity(api_client):
-    resp = await api_client.put('/scheduled-activity', data=(
+    resp = await api_client.put('/scheduled-activity', json=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -67,7 +67,7 @@ async def test_put_schedule_activity(api_client):
 
 
 async def test_put_schedule_activity_missing_param(api_client):
-    resp = await api_client.put('/scheduled-activity', data=(
+    resp = await api_client.put('/scheduled-activity', json=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -80,7 +80,7 @@ async def test_put_schedule_activity_missing_param(api_client):
 
 
 async def test_put_schedule_activity_bad_activity(api_client):
-    resp = await api_client.put('/scheduled-activity', data=(
+    resp = await api_client.put('/scheduled-activity', json=(
         {
             'activity_type': 'invalidActivity',
             'message': 'test',
@@ -93,7 +93,7 @@ async def test_put_schedule_activity_bad_activity(api_client):
 
 
 async def test_put_schedule_activity_bad_start_time(api_client):
-    resp = await api_client.put('/scheduled-activity', data=(
+    resp = await api_client.put('/scheduled-activity', json=(
         {
             'activity_type': 'playing',
             'message': 'test',
@@ -106,7 +106,7 @@ async def test_put_schedule_activity_bad_start_time(api_client):
 
 
 async def test_put_schedule_activity_bad_end_time(api_client):
-    resp = await api_client.put('/scheduled-activity', data=(
+    resp = await api_client.put('/scheduled-activity', json=(
         {
             'activity_type': 'invalidActivity',
             'message': 'test',
@@ -125,7 +125,7 @@ PUT /activity
 
 
 async def test_put_set_activity(api_client):
-    resp = await api_client.put('/activity', data=(
+    resp = await api_client.put('/activity', json=(
         {
             'activity_type': 'playing',
             'name': 'test',
@@ -138,7 +138,7 @@ async def test_put_set_activity(api_client):
 
 
 async def test_put_set_activity_bad_req(api_client):
-    resp = await api_client.put('/activity', data=(
+    resp = await api_client.put('/activity', json=(
         {
             'activity_type': 'invalidActivity',
             'name': 'test',
@@ -149,7 +149,7 @@ async def test_put_set_activity_bad_req(api_client):
 
 
 async def test_put_set_activity_missing_param(api_client):
-    resp = await api_client.put('/activity', data=(
+    resp = await api_client.put('/activity', json=(
         {
             'activity_type': 'invalidActivity',
             'url': 'test.com'
@@ -203,53 +203,53 @@ POST /load-cog
 '''
 
 async def test_post_load_cog(api_client):
-    resp = await api_client.post('/load-cog', data=(
+    resp = await api_client.post('/load-cog', json=(
         {
             'extension': 'announce',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == OK
     text = await resp.text()
     assert text == '{"message": "Cog loaded"}'
 
 async def test_post_load_base_cog(api_client):
-    resp = await api_client.post('/load-cog', data=(
+    resp = await api_client.post('/load-cog', json=(
         {
             'extension': 'base',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == OK
     text = await resp.text()
     assert text == '{"message": "Cog loaded"}'
 
 async def test_post_load_cog_bad_req(api_client):
-    resp = await api_client.post('/load-cog', data=(
+    resp = await api_client.post('/load-cog', json=(
         {
             'extension': 'invalidCog',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == UNPROCESSABLE_ENTITY
     assert await resp.text() == '422: Error loading cog: Invalid extension'
 
-async def test_post_load_cog_missing_param(api_client):
-    resp = await api_client.post('/load-cog', data=(
-        {
-            'extension': 'invalidCog'
-        }))
-    assert resp.status == BAD_REQUEST
-    assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
+# async def test_post_load_cog_missing_param(api_client):
+#     resp = await api_client.post('/load-cog', json=(
+#         {
+#             'extension': 'invalidCog'
+#         }))
+#     assert resp.status == BAD_REQUEST
+#     assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
 
 async def test_post_load_cog_already_loaded(api_client):
-    await api_client.post('/load-cog', data=(
+    await api_client.post('/load-cog', json=(
         {
             'extension': 'announce',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     
-    resp = await api_client.post('/load-cog', data=(
+    resp = await api_client.post('/load-cog', json=(
         {
             'extension': 'announce',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == UNPROCESSABLE_ENTITY
     assert await resp.text() == '422: Error loading cog: Already loaded'
@@ -261,43 +261,43 @@ POST /unload-cog
 '''
 
 async def test_post_unload_cog(api_client):
-    await api_client.post('/load-cog', data=(
+    await api_client.post('/load-cog', json=(
         {
             'extension': 'announce',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
 
-    resp = await api_client.post('/unload-cog', data=(
+    resp = await api_client.post('/unload-cog', json=(
         {
             'extension': 'announce',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == OK
     text = await resp.text()
     assert text == '{"message": "Cog unloaded"}'
 
 async def test_post_unload_cog_not_loaded(api_client):
-    resp = await api_client.post('/unload-cog', data=(
+    resp = await api_client.post('/unload-cog', json=(
         {
             'extension': 'announce',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == UNPROCESSABLE_ENTITY
     assert await resp.text() == '422: Error unloading cog: Extension not loaded'
 
-async def test_post_unload_cog_missing_param(api_client):
-    resp = await api_client.post('/unload-cog', data=(
-        {
-            'extension': 'invalidCog'
-        }))
-    assert resp.status == BAD_REQUEST
-    assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
+# async def test_post_unload_cog_missing_param(api_client):
+#     resp = await api_client.post('/unload-cog', json=(
+#         {
+#             'extension': 'invalidCog'
+#         }))
+#     assert resp.status == BAD_REQUEST
+#     assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
 
 async def test_post_unload_base_cog(api_client):
-    resp = await api_client.post('/unload-cog', data=(
+    resp = await api_client.post('/unload-cog', json=(
         {
             'extension': 'BaseCog',
-            'package': koalabot.COGS_PACKAGE
+            # 'package': koalabot.COGS_PACKAGE
         }))
     assert resp.status == UNPROCESSABLE_ENTITY
     text = await resp.text()
@@ -313,7 +313,7 @@ POST /enable-extension
 async def test_post_enable_extension(api_client, bot):
     await koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    resp = await api_client.post('/enable-extension', data=({
+    resp = await api_client.post('/enable-extension', json=({
         'guild_id': guild.id,
         'koala_ext': 'Announce'
     }))
@@ -325,7 +325,7 @@ async def test_post_enable_extension(api_client, bot):
 async def test_post_enable_extension_bad_req(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
 
-    resp = await api_client.post('/enable-extension', data=(
+    resp = await api_client.post('/enable-extension', json=(
         {
             'guild_id': guild.id,
             'koala_ext': 'Invalid Extension'
@@ -336,7 +336,7 @@ async def test_post_enable_extension_bad_req(api_client):
 
 async def test_post_enable_extension_missing_param(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    resp = await api_client.post('/enable-extension', data=(
+    resp = await api_client.post('/enable-extension', json=(
         {
             'guild_id': guild.id
         }))
@@ -354,13 +354,13 @@ POST /disable-extension
 async def test_post_disable_extension(api_client, bot):
     await koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    setup = await api_client.post('/enable-extension', data=({
+    setup = await api_client.post('/enable-extension', json=({
         'guild_id': guild.id,
         'koala_ext': 'Announce'
     }))
     assert setup.status == OK
 
-    resp = await api_client.post('/disable-extension', data=({
+    resp = await api_client.post('/disable-extension', json=({
         'guild_id': guild.id,
         'koala_ext': 'Announce'
     }))
@@ -370,7 +370,7 @@ async def test_post_disable_extension(api_client, bot):
 
 async def test_post_disable_extension_not_enabled(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    resp = await api_client.post('/disable-extension', data=({
+    resp = await api_client.post('/disable-extension', json=({
         'guild_id': guild.id,
         'koala_ext': 'Announce'
     }))
@@ -380,7 +380,7 @@ async def test_post_disable_extension_not_enabled(api_client):
 
 async def test_post_disable_extension_missing_param(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
-    resp = await api_client.post('/disable-extension', data=({
+    resp = await api_client.post('/disable-extension', json=({
         'guild_id': guild.id
     }))
     assert resp.status == BAD_REQUEST
@@ -390,7 +390,7 @@ async def test_post_disable_extension_missing_param(api_client):
 async def test_post_disable_extension_bad_req(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
 
-    resp = await api_client.post('/disable-extension', data=(
+    resp = await api_client.post('/disable-extension', json=(
         {
             'guild_id': guild.id,
             'koala_ext': 'Invalid Extension'
