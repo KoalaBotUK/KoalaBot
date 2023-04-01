@@ -54,7 +54,7 @@ async def assign_role_to_guild(guild, role, suffix, session):
                                                .filter_by(r_id=role.id, u_id=user_id)).all()
 
             blacklisted = session.execute(select(VerifyBlacklist)
-                                          .filter_by(user_id=user_id, role_id=role.id, email=suffix)).all()
+                                          .filter_by(user_id=user_id, role_id=role.id, email_suffix=suffix)).all()
             if blacklisted or should_re_verify:
                 continue
 
@@ -80,7 +80,7 @@ async def assign_roles_for_user(user_id, email, bot, session):
         should_re_verify = session.execute(select(ToReVerify).filter_by(r_id=r_id, u_id=user_id)).all()
 
         blacklisted = session.execute(select(VerifyBlacklist).filter_by(user_id=user_id, role_id=r_id)
-                                      .where(text(":email like ('%' || email)")), {"email": email}).all()
+                                      .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
 
         if blacklisted or should_re_verify:
             continue

@@ -175,14 +175,14 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.check(verify_is_enabled)
     async def blacklist(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
         await core.blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
-        await ctx.send(f"{user} will no longer receive {role} upon verifying with this email")
+        await ctx.send(f"{user} will no longer receive {role} upon verifying with this email suffix")
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyBlacklistRemove")
     @commands.check(verify_is_enabled)
     async def blacklist_remove(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
         await core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
-        await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email")
+        await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email suffix")
         await core.assign_role_to_guild(ctx.guild, role, suffix)
 
     @commands.check(koalabot.is_dm_channel)
@@ -196,12 +196,12 @@ This email is stored so you don't need to verify it multiple times across server
         """
         with session_manager() as session:
             email = email.lower()
-            already_verified = session.execute(select(VerifiedEmails).filter_by(email=email)).all()
+            already_verified = session.execute(select(VerifiedEmails).filter_by(email=email)).scalar()
 
-            in_blacklist = session.execute(select(ToReVerify).filter_by(u_id=ctx.author.id)).all()
+            to_reverify = session.execute(select(ToReVerify).filter_by(u_id=ctx.author.id)).all()
 
-            if already_verified and not in_blacklist:
-                if already_verified[0][0] == ctx.author.id:
+            if already_verified and not to_reverify:
+                if already_verified.u_id == ctx.author.id:
                     await ctx.send("This email is already assigned to your account. Would you like to re-verify? (y/n)")
                 else:
                     await ctx.send(
@@ -212,10 +212,13 @@ This email is stored so you don't need to verify it multiple times across server
                     return m.channel == ctx.channel and m.author == ctx.author
 
                 msg = await self.bot.wait_for('message', check=check)
-                if msg.content.lower() == "n" or msg.content.lower() == "no":
+                if msg.content.lower() == "y" or msg.content.lower() == "yes":
+                    session.delete(already_verified)
+                    session.commit()
+                    await core.remove_roles_for_user(already_verified.u_id, email, self.bot, session=session)
+                else:
                     await ctx.send("The email will remain registered to the old account.")
                     return
-
             verification_code = ''.join(random.choice(string.ascii_letters) for _ in range(8))
             session.add(NonVerifiedEmails(u_id=ctx.author.id, email=email, token=verification_code))
             session.commit()
@@ -259,17 +262,7 @@ This email is stored so you don't need to verify it multiple times across server
             if not entry:
                 raise InvalidArgumentError("That is not a valid token")
 
-            email_verified = session.execute(select(VerifiedEmails).filter_by(email=entry.email)).scalars().first()
-
-            if email_verified:
-                old_id = email_verified.u_id
-                email = email_verified.email
-
-                if email_verified[0][0] != ctx.author.id:
-                    email_verified.u_id = ctx.author.id
-                    await core.remove_roles_for_user(old_id, email, self.bot)
-            else:
-                session.add(VerifiedEmails(u_id=ctx.author.id, email=entry.email))
+            session.add(VerifiedEmails(u_id=ctx.author.id, email=entry.email))
 
             session.execute(delete(NonVerifiedEmails).filter_by(token=token, u_id=ctx.author.id))
 
