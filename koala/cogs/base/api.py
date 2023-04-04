@@ -130,15 +130,14 @@ class BaseEndpoint:
         return core.get_version()
 
     @parse_request
-    async def post_load_cog(self, extension, package):
+    async def post_load_cog(self, extension):
         """
         Loads a cog from the cogs folder
         :param extension: name of the cog
-        :param package: package of the cogs
         :return:
         """
         try:
-            await core.load_cog(self._bot, extension, package)
+            await core.load_cog(self._bot, extension)
         except BaseException as e:
             error = 'Error loading cog: {}'.format(handleActivityError(e))
             logger.error(error)
@@ -147,15 +146,14 @@ class BaseEndpoint:
         return {'message': 'Cog loaded'}
 
     @parse_request
-    async def post_unload_cog(self, extension, package):
+    async def post_unload_cog(self, extension):
         """
         Unloads a cog from the cogs folder
         :param extension: name of the cog
-        :param package: package of the cogs
         :return:
         """
         try:
-            await core.unload_cog(self._bot, extension, package)
+            await core.unload_cog(self._bot, extension)
         except BaseException as e:
             error = 'Error unloading cog: {}'.format(handleActivityError(e))
             logger.error(error)
