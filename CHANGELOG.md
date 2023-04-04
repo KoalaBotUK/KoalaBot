@@ -3,6 +3,11 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### Verify
+- Added new commands `verifyBlacklist` and `verifyBlacklistRemove` for blacklisting a given user from being verified
+- Updated look of verify emails
+- made email verification case insensitive
+- Added optimisations for verified roles
 
 ## [0.6.0] - 01-01-2023
 - Upgraded to discord.py 2.1.0

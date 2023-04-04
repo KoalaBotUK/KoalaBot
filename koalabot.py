@@ -27,6 +27,7 @@ from discord.ext import commands
 
 # Own modules
 from koala.db import extension_enabled
+from koala.errors import KoalaException
 from koala.utils import error_embed
 from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
@@ -73,7 +74,8 @@ class KoalaBot(commands.Bot):
         else:
             guild_id = ctx.guild.id
 
-        if error.__class__ in [commands.MissingRequiredArgument,
+        if error.__class__ in [KoalaException,
+                               commands.MissingRequiredArgument,
                                commands.CommandNotFound]:
             await ctx.send(embed=error_embed(description=error))
         if error.__class__ in [commands.CheckFailure]:
