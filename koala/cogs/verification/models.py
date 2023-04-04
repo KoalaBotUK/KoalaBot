@@ -50,4 +50,16 @@ class ToReVerify:
                (self.u_id, self.r_id)
 
 
+@mapper_registry.mapped
+class VerifyBlacklist:
+    __tablename__ = 'VerifyBlacklist'
+    user_id = Column(Integer, primary_key=True)
+    role_id = Column(Integer, primary_key=True)
+    email_suffix = Column(String, primary_key=True)
+
+    def __repr__(self):
+        return "<VerifyBlacklist(%s, %s, %s)>" % \
+               (self.user_id, self.role_id, self.email_suffix)
+
+
 setup()
