@@ -4,6 +4,7 @@
 
 # Libs
 import discord
+from twitchAPI.object import Game, Stream, TwitchUser
 
 # Own modules
 from koala.colours import KOALA_GREEN
@@ -21,7 +22,7 @@ REFRESH_TEAMS_DELAY = 5
 # Variables
 
 
-def create_live_embed(stream_info, user_info, game_info, message):
+def create_live_embed(stream_info: Stream, user_info: TwitchUser, game_info: Game, message):
     """
     Creates an embed for the go live announcement
     :param stream_info: The stream data from the Twitch API
@@ -34,16 +35,16 @@ def create_live_embed(stream_info, user_info, game_info, message):
     if message is not None and message != "":
         embed.description = message
 
-    embed.set_author(name=stream_info.get("user_name") + " is now streaming!",
+    embed.set_author(name=stream_info.user_name + " is now streaming!",
                      icon_url=TWITCH_ICON)
-    embed.title = "https://twitch.tv/" + str.lower(stream_info.get("user_login"))
+    embed.title = "https://twitch.tv/" + str.lower(stream_info.user_login)
 
-    embed.add_field(name="Stream Title", value=stream_info.get("title"))
+    embed.add_field(name="Stream Title", value=stream_info.title)
     if game_info is None:
         embed.add_field(name="Playing", value="No Category")
     else:
-        embed.add_field(name="Playing", value=game_info.get("name"))
-    embed.set_thumbnail(url=user_info.get("profile_image_url"))
+        embed.add_field(name="Playing", value=game_info.name)
+    embed.set_thumbnail(url=user_info.profile_image_url)
 
     return embed
 

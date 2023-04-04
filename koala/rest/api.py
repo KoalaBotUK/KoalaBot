@@ -40,8 +40,13 @@ def build_response(status_code, data):
     :param data:
     :return:
     """
+    if data is not None:
+        body = json.dumps(data, cls=EnhancedJSONEncoder)
+    else:
+        body = None
+
     return aiohttp.web.Response(status=status_code,
-                    body=json.dumps(data, cls=EnhancedJSONEncoder),
+                    body=body,
                     content_type='application/json')
 
 
@@ -92,7 +97,7 @@ def parse_request(*args, **kwargs):
             available_args = {}
 
             if (request.method == "POST" or request.method == "PUT") and request.has_body:
-                body = await request.post()
+                body = await request.json()
                 for arg in wanted_args:
                     if arg in body:
                         available_args[arg] = body[arg]

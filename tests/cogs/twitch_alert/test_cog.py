@@ -6,6 +6,7 @@ import asyncio
 # Libs
 import discord.ext.test as dpytest
 import mock
+import pytest_asyncio
 import pytest_ordering as pytest
 import pytest
 import discord
@@ -35,7 +36,7 @@ async def test_setup(bot):
     mock1.assert_called()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = cog.TwitchAlert(bot)

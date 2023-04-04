@@ -12,6 +12,7 @@ Commented using reStructuredText (reST)
 # Libs
 import discord.ext.test as dpytest
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 from sqlalchemy import delete
 
@@ -29,7 +30,7 @@ from tests.log import logger
 # Variables
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def utils_cog(bot: commands.Bot):
     utils_cog = LastCtxCog(bot)
     await bot.add_cog(utils_cog)
@@ -38,7 +39,7 @@ async def utils_cog(bot: commands.Bot):
     return utils_cog
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def rfr_cog(bot: commands.Bot):
     rfr_cog = ReactForRole(bot)
     await bot.add_cog(rfr_cog)
@@ -47,7 +48,7 @@ async def rfr_cog(bot: commands.Bot):
     return rfr_cog
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest_asyncio.fixture(scope='function', autouse=True)
 async def setup_clean_db():
     with session_manager() as session:
         session.execute(delete(GuildRFRMessages))

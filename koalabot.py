@@ -8,12 +8,10 @@ Commented using reStructuredText (reST)
 """
 __author__ = "KoalaBotUK"
 __copyright__ = "Copyright (c) 2020 KoalaBotUK"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh", "Harry Nelson",
-               "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
-               "see full list of developers at: https://koalabot.uk/"]
+__credits__ = ["See full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
 __version__ = "0.6.0"
-__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
+__maintainer__ = "Jack Draper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
 
@@ -102,7 +100,8 @@ class KoalaBot(commands.Bot):
 
 def is_owner(ctx: commands.Context):
     """
-    A command used to check if the user of a command is the owner, or the testing bot
+    A command used to check if the user of a command is the owner, or the testing bot.
+    The command also allows Senior Devs of KoalaBot to use owner only commands (as given by Admin role in the dev portal)
     e.g. @commands.check(koalabot.is_owner)
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
@@ -110,7 +109,7 @@ def is_owner(ctx: commands.Context):
     if is_dm_channel(ctx):
         return False
     elif BOT_OWNER is not None:
-        return ctx.author.id == int(BOT_OWNER) or is_dpytest
+        return ctx.author.id in BOT_OWNER or is_dpytest
     else:
         return ctx.bot.is_owner(ctx.author) or is_dpytest
 

@@ -86,54 +86,54 @@ async def test_purge(bot: commands.Bot):
 @mock.patch("koalabot.ENABLED_COGS", ['announce'])
 @pytest.mark.asyncio
 async def test_load_cog(bot: commands.Bot):
-    resp = await core.load_cog(bot, "announce", "koala.cogs")
+    resp = await core.load_cog(bot, "announce")
     assert resp == "announce Cog Loaded"
 
 
 @pytest.mark.asyncio
 async def test_load_base_cog(bot: commands.Bot):
-    resp = await core.load_cog(bot, "base", "koala.cogs")
+    resp = await core.load_cog(bot, "base")
     assert resp == "base Cog Loaded"
 
 
 @pytest.mark.asyncio
 async def test_load_invalid_cog(bot: commands.Bot):
     with pytest.raises(discord.ext.commands.errors.ExtensionNotFound, match="Extension 'koala.cogs.FakeCog' could not be loaded."):
-        await core.load_cog(bot, "FakeCog", "koala.cogs")
+        await core.load_cog(bot, "FakeCog")
 
 
 @mock.patch("koalabot.ENABLED_COGS", ['announce'])
 @pytest.mark.asyncio
 async def test_load_already_loaded_cog(bot: commands.Bot):
-    await core.load_cog(bot, "announce", "koala.cogs")
+    await core.load_cog(bot, "announce")
     with pytest.raises(discord.ext.commands.errors.ExtensionAlreadyLoaded, match="Extension 'koala.cogs.announce' is already loaded"):
-        await core.load_cog(bot, "announce", "koala.cogs")
+        await core.load_cog(bot, "announce")
 
 # Unload cogs
 
 @pytest.mark.asyncio
 async def test_unload_cog(bot: commands.Bot):
-    await core.load_cog(bot, "announce", "koala.cogs")
-    resp = await core.unload_cog(bot, "announce", "koala.cogs")
+    await core.load_cog(bot, "announce")
+    resp = await core.unload_cog(bot, "announce")
     assert resp == "announce Cog Unloaded"
 
 
 @pytest.mark.asyncio
 async def test_unload_base_cog(bot: commands.Bot):
     with pytest.raises(discord.ext.commands.errors.ExtensionError, match="Sorry, you can't unload the base cog"):
-        await core.unload_cog(bot, "base", "koala.cogs")
+        await core.unload_cog(bot, "base")
 
 
 @pytest.mark.asyncio
 async def test_unload_not_loaded_cog(bot: commands.Bot):
     with pytest.raises(discord.ext.commands.errors.ExtensionNotLoaded, match="Extension 'koala.cogs.announce' has not been loaded."):
-        await core.unload_cog(bot, "announce", "koala.cogs")
+        await core.unload_cog(bot, "announce")
 
 
 @pytest.mark.asyncio
 async def test_unload_invalid_cog(bot: commands.Bot):
     with pytest.raises(discord.ext.commands.errors.ExtensionNotLoaded, match="Extension 'koala.cogs.FakeCog' has not been loaded."):
-        await core.unload_cog(bot, "FakeCog", "koala.cogs")
+        await core.unload_cog(bot, "FakeCog")
 
 # Enable extensions
 
@@ -208,7 +208,7 @@ async def test_list_enabled_extensions(bot: commands.Bot):
 @mock.patch("koalabot.ENABLED_COGS", ["announce"])
 @pytest.mark.asyncio
 async def test_get_extensions(bot: commands.Bot):
-    koalabot.load_all_cogs(bot)
+    await koalabot.load_all_cogs(bot)
     guild: discord.Guild = dpytest.get_config().guilds[0]
     resp = core.get_all_available_guild_extensions(guild.id)
     print(resp)
