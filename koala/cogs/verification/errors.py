@@ -7,3 +7,9 @@ class VerifyException(KoalaException):
     """
     pass
 
+
+class VerifyExistsException(VerifyException):
+    """
+    Verify already exists
+    """
+    pass

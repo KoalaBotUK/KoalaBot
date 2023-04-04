@@ -23,7 +23,7 @@ from sqlalchemy import select, delete, and_, text
 import koalabot
 from koala.db import session_manager, insert_extension
 from koala.errors import InvalidArgumentError
-from . import core
+from . import core, errors
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
 from .errors import VerifyException
 from .log import logger
@@ -50,41 +50,11 @@ def verify_is_enabled(ctx):
     return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
-# FIXME: Move database commands to db.py
 class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot):
         self.bot = bot
         insert_extension("Verify", 0, True, True)
-
-    @staticmethod
-    def send_email(email, token):
-        """
-        Sends an email through gmails smtp server from the email stored in the environment variables
-        :param email: target to send an email to
-        :param token: the token the recipient will need to verify with
-        :return:
-        """
-        email_server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        email_server.ehlo()
-        username = GMAIL_EMAIL
-        password = GMAIL_PASSWORD
-
-        html = open("koala/cogs/verification/templates/emailtemplate.html").read()
-        soup = BeautifulSoup(html, features="html.parser")
-        soup.find(id="confirmbuttonbody").string = f"{koalabot.COMMAND_PREFIX}confirm {token}"
-        soup.find(id="backup").string = "Main body not loading? Send this command to the bot: " \
-                                        f"{koalabot.COMMAND_PREFIX}confirm {token}"
-
-        msg = MIMEMultipart('alternative')
-        msg.attach(MIMEText(str(soup), 'html'))
-        msg['Subject'] = "Koalabot Verification"
-        msg['From'] = username
-        msg['To'] = email
-
-        email_server.login(username, password)
-        email_server.sendmail(username, [email], msg.as_string())
-        email_server.quit()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -127,7 +97,7 @@ This email is stored so you don't need to verify it multiple times across server
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
     @commands.check(verify_is_enabled)
-    async def enable_verification(self, ctx, suffix: str, role: discord.Role):
+    async def enable_verification(self, ctx: commands.Context, suffix: str, role: discord.Role):
         """
         Set up a role and email pair for KoalaBot to verify users with
         :param ctx: context of the discord message
@@ -135,23 +105,8 @@ This email is stored so you don't need to verify it multiple times across server
         :param role: the role to give users with that email verified (e.g. @students)
         :return:
         """
-        with session_manager() as session:
-            suffix = suffix.lower()
-
-            role_valid = discord.utils.get(ctx.guild.roles, id=role.id)
-            if not role_valid:
-                raise InvalidArgumentError("Please mention a role in this guild")
-
-            exists = session.execute(select(Roles)
-                                     .filter_by(s_id=ctx.guild.id, r_id=role.id, email_suffix=suffix)).all()
-            if exists:
-                raise VerifyException("Verification is already enabled for that role")
-
-            session.add(Roles(s_id=ctx.guild.id, r_id=role.id, email_suffix=suffix))
-            session.commit()
-
-            await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
-            await core.assign_role_to_guild(ctx.guild, role_valid, suffix)
+        await core.add_verify_role(ctx.guild.id, suffix, role.id, self.bot)
+        await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
@@ -164,11 +119,9 @@ This email is stored so you don't need to verify it multiple times across server
         :param role: the role paired with the email (e.g. @students)
         :return:
         """
-        with session_manager() as session:
-            session.execute(delete(Roles).filter_by(s_id=ctx.guild.id, r_id=role.id, email_suffix=suffix))
-            session.commit()
+        core.remove_verify_role(ctx.guild.id, suffix, role.id)
 
-            await ctx.send(f"Emails ending with {suffix} no longer give {role}")
+        await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyBlacklist")
@@ -183,7 +136,6 @@ This email is stored so you don't need to verify it multiple times across server
     async def blacklist_remove(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
         await core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email suffix")
-        await core.assign_role_to_guild(ctx.guild, role, suffix)
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="verify")
@@ -194,37 +146,21 @@ This email is stored so you don't need to verify it multiple times across server
         :param email: the email you want to verify
         :return:
         """
-        with session_manager() as session:
-            email = email.lower()
-            already_verified = session.execute(select(VerifiedEmails).filter_by(email=email)).scalar()
+        try:
+            await core.email_verify_send(ctx.author.id, email, self.bot)
+        except errors.VerifyExistsException as e:
+            await ctx.send(e.__str__()+" Would you like to verify anyway? (y/n)")
 
-            to_reverify = session.execute(select(ToReVerify).filter_by(u_id=ctx.author.id)).all()
+            def check(m):
+                return m.channel == ctx.channel and m.author == ctx.author
 
-            if already_verified and not to_reverify:
-                if already_verified.u_id == ctx.author.id:
-                    await ctx.send("This email is already assigned to your account. Would you like to re-verify? (y/n)")
-                else:
-                    await ctx.send(
-                        "This email is already assigned to a different account. "
-                        "Would you like to transfer it to this one? (y/n)")
-
-                def check(m):
-                    return m.channel == ctx.channel and m.author == ctx.author
-
-                msg = await self.bot.wait_for('message', check=check)
-                if msg.content.lower() == "y" or msg.content.lower() == "yes":
-                    session.delete(already_verified)
-                    session.commit()
-                    await core.remove_roles_for_user(already_verified.u_id, email, self.bot, session=session)
-                else:
-                    await ctx.send("The email will remain registered to the old account.")
-                    return
-            verification_code = ''.join(random.choice(string.ascii_letters) for _ in range(8))
-            session.add(NonVerifiedEmails(u_id=ctx.author.id, email=email, token=verification_code))
-            session.commit()
-
-            self.send_email(email, verification_code)
-            await ctx.send("Please verify yourself using the command you have been emailed")
+            msg = await self.bot.wait_for('message', check=check)
+            if msg.content.lower() == "y" or msg.content.lower() == "yes":
+                await core.email_verify_send(ctx.author.id, email, self.bot, force=True)
+            else:
+                await ctx.send(f"Okay, you will not be verified with {email}")
+                return
+        await ctx.send("Please verify yourself using the command you have been emailed")
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="unVerify")
