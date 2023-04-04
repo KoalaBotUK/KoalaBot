@@ -97,6 +97,10 @@ def test_not_admin_is_admin(test_ctx):
     assert not koalabot.is_admin(test_ctx)
     koalabot.is_dpytest = True
 
+@pytest.mark.asyncio
+async def test_command_not_found():
+    with pytest.raises(discord.ext.commands.errors.CommandNotFound):
+        await dpytest.message(koalabot.COMMAND_PREFIX + 'fakecommand')
 
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
