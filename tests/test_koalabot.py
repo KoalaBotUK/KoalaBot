@@ -15,6 +15,7 @@ import discord
 import discord.ext.test as dpytest
 import mock
 import pytest
+import pytest_asyncio
 from discord.ext import commands
 
 # Own modules
@@ -30,7 +31,7 @@ from tests.tests_utils.last_ctx_cog import LastCtxCog
 utils_cog = None
 
 
-@pytest.fixture(autouse=True)
+@pytest_asyncio.fixture(autouse=True)
 async def test_ctx(bot: commands.Bot):
     global utils_cog
     utils_cog = LastCtxCog(bot)
@@ -45,7 +46,7 @@ def setup_db():
     clear_all_tables(fetch_all_tables())
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest_asyncio.fixture(scope='function', autouse=True)
 async def setup_clean_messages():
     await dpytest.empty_queue()
     yield dpytest
@@ -56,15 +57,17 @@ def test_test_user_is_owner(test_ctx):
 
 
 def test_invalid_test_user_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER) + 1)
-    koalabot.is_dpytest = False
-    assert not koalabot.is_owner(test_ctx)
-    koalabot.is_dpytest = True
+    for i in range(len(koalabot.BOT_OWNER)):
+        test_ctx.author = FakeAuthor(id=koalabot.BOT_OWNER[i] + 1)
+        koalabot.is_dpytest = False
+        assert not koalabot.is_owner(test_ctx)
+        koalabot.is_dpytest = True
 
 
 def test_owner_is_owner(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER))
-    assert koalabot.is_owner(test_ctx)
+    for i in range(len(koalabot.BOT_OWNER)):
+        test_ctx.author = FakeAuthor(id=(koalabot.BOT_OWNER[i]))
+        assert koalabot.is_owner(test_ctx)
 
 
 def test_test_user_is_admin(test_ctx):
@@ -72,7 +75,7 @@ def test_test_user_is_admin(test_ctx):
 
 
 def test_invalid_test_user_is_admin(test_ctx):
-    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER) + 2)
+    test_ctx.author = FakeAuthor(id=int(koalabot.BOT_OWNER[0]) + 2)
     koalabot.is_dpytest = False
     assert not koalabot.is_admin(test_ctx)
     koalabot.is_dpytest = True

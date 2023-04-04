@@ -50,7 +50,7 @@ async def base_cog(bot: commands.Bot):
 
 
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
-@mock.patch("koalabot.ENABLED_COGS", [])
+@mock.patch("koalabot.ENABLED_COGS", ["greetings_cog"])
 @pytest.mark.asyncio
 async def test_list_koala_ext_disabled(bot, base_cog):
     await koalabot.load_all_cogs(bot)

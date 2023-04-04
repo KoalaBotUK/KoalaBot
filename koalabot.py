@@ -8,12 +8,10 @@ Commented using reStructuredText (reST)
 """
 __author__ = "KoalaBotUK"
 __copyright__ = "Copyright (c) 2020 KoalaBotUK"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh", "Harry Nelson",
-               "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
-               "see full list of developers at: https://koalabot.uk/"]
+__credits__ = ["See full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
 __version__ = "0.6.0"
-__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
+__maintainer__ = "Jack Draper"
 __email__ = "koalabotuk@gmail.com"
 __status__ = "Development"  # "Prototype", "Development", or "Production"
 
@@ -103,6 +101,7 @@ class KoalaBot(commands.Bot):
 def is_owner(ctx: commands.Context):
     """
     A command used to check if the user of a command is the owner, or the testing bot.
+    The command also allows Senior Devs of KoalaBot to use owner only commands (as given by Admin role in the dev portal)
     e.g. @commands.check(koalabot.is_owner)
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
@@ -110,7 +109,7 @@ def is_owner(ctx: commands.Context):
     if is_dm_channel(ctx):
         return False
     elif BOT_OWNER is not None:
-        return ctx.author.id == int(BOT_OWNER) or is_dpytest
+        return ctx.author.id in BOT_OWNER or is_dpytest
     else:
         return ctx.bot.is_owner(ctx.author) or is_dpytest
 
@@ -180,43 +179,6 @@ def check_guild_has_ext(ctx, extension_id):
         raise PermissionError(PERMISSION_ERROR_TEXT)
     return True
 
-async def on_command_error(ctx, error: Exception):
-    if ctx.guild is None:
-        guild_id = "UNKNOWN"
-        logger.warn("Unknown guild ID threw exception", exc_info=error)
-    else:
-        guild_id = ctx.guild.id
-
-    if error.__class__ in [commands.MissingRequiredArgument]:
-        await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
-                                         description=str(error)+"\nAn argument is missing from this command. "
-                                                                "Use k!help <command> for more information.")) #TODO: Make <command> actually change to the command inputted
-    if error.__class__ in [commands.CommandNotFound]:
-        await ctx.send(embed=error_embed(description=error))
-    if error.__class__ in [commands.CheckFailure]:
-        await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
-                                         description=str(error)+"\nThere was an issue executing the code with the "
-                                                                "given parameter. Use k!help <command> for more "
-                                                                "information."))
-    elif isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(embed=error_embed(description=f"{ctx.author.mention}, this command is still on cooldown for "
-                                                     f"{str(error.retry_after)}s."))
-    elif isinstance(error, commands.errors.ChannelNotFound):
-        await ctx.send(embed=error_embed(description=f"The channel ID provided is either invalid, or not in this server."))
-    elif isinstance(error, commands.errors.Forbidden):
-        await ctx.send(embed=error.embed(description=f"The bot lacks necessary guild permissions, please ensure the bot "
-                                                     f"has Administrator permissions, and permission to edit all other "
-                                                     f"roles in the server."))
-    elif isinstance(error, commands.CommandInvokeError):
-        logger.error("CommandInvokeError(%s), guild_id: %s, message: %s", error.original, guild_id, ctx.message, exc_info=error)
-        await ctx.send(embed=error_embed(description=error.original))
-    else:
-        logger.error(f"Unexpected Error in guild %s : %s", guild_id, error, exc_info=error)
-        await ctx.send(embed=error_embed(
-            description=f"An unexpected error occurred, please contact an administrator. Timestamp: {time.asctime(time.gmtime(time.time()))}"))
-        raise error
-
-
 
 async def run_bot():
     app = web.Application()
@@ -242,6 +204,5 @@ async def run_bot():
         await runner.cleanup()
 
 if __name__ == '__main__': # pragma: no cover
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_bot())
-
+    # loop = asyncio.get_event_loop()
+    asyncio.run(run_bot())
