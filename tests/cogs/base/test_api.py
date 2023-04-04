@@ -232,12 +232,9 @@ async def test_post_load_cog_bad_req(api_client):
     assert await resp.text() == '422: Error loading cog: Invalid extension'
 
 async def test_post_load_cog_missing_param(api_client):
-    resp = await api_client.post('/load-cog', json=
-        {
-            'extension': 'invalidCog'
-        })
+    resp = await api_client.post('/load-cog', json={})
     assert resp.status == BAD_REQUEST
-    assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
+    assert await resp.text() == "400: Unsatisfied Arguments: {'extension'}"
 
 async def test_post_load_cog_already_loaded(api_client):
     await api_client.post('/load-cog', json=
@@ -286,12 +283,9 @@ async def test_post_unload_cog_not_loaded(api_client):
     assert await resp.text() == '422: Error unloading cog: Extension not loaded'
 
 async def test_post_unload_cog_missing_param(api_client):
-    resp = await api_client.post('/unload-cog', json=
-        {
-            'extension': 'invalidCog'
-        })
+    resp = await api_client.post('/unload-cog', json={})
     assert resp.status == BAD_REQUEST
-    assert await resp.text() == "400: Unsatisfied Arguments: {'package'}"
+    assert await resp.text() == "400: Unsatisfied Arguments: {'extension'}"
 
 async def test_post_unload_base_cog(api_client):
     resp = await api_client.post('/unload-cog', json=
