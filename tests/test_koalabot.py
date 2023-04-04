@@ -20,7 +20,7 @@ from discord.ext import commands
 
 # Own modules
 import koalabot
-from koala.db import clear_all_tables, fetch_all_tables
+from koala.db import clear_all_tables
 
 from tests.tests_utils.utils import FakeAuthor
 from tests.tests_utils.last_ctx_cog import LastCtxCog
@@ -43,7 +43,7 @@ async def test_ctx(bot: commands.Bot):
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    clear_all_tables(fetch_all_tables())
+    clear_all_tables()
 
 
 @pytest_asyncio.fixture(scope='function', autouse=True)

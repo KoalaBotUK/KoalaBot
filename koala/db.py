@@ -14,6 +14,13 @@ from contextlib import contextmanager
 from functools import wraps
 from pathlib import Path
 
+if os.name == 'nt':
+    print("Windows Detected: Database Encryption Disabled")
+    import sqlite3
+else:
+    print("Linux Detected: Database Encryption Enabled")
+    from pysqlcipher3 import dbapi2 as sqlite3
+
 from sqlalchemy import select, delete, and_, create_engine, func as sql_func
 from sqlalchemy.orm import sessionmaker
 
@@ -53,7 +60,7 @@ DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "
 logger.debug("Database Path: "+DATABASE_PATH)
 engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
                                     encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
+                                    db_key=DB_KEY), module=sqlite3)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 
@@ -213,25 +220,15 @@ def get_all_available_guild_extensions(guild_id: int, session: Session):
         # [extension.extension_id for extension in session.execute(sql_select_all).all()]
 
 
-def fetch_all_tables():
+def clear_all_tables():
     """
-    Fetches all table names within the database
-    """
-    with session_manager() as session:
-        return [table.name for table in
-                session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
-
-
-def clear_all_tables(tables):
-    """
-    Clears al the data from the given tables
-
-    :param tables: a list of all tables to be cleared
+    Clears all the data from the given tables
     """
     with session_manager() as session:
-        for table in tables:
-            session.execute('DELETE FROM ' + table + ';')
-            session.commit()
+        for table in reversed(mapper_registry.metadata.sorted_tables):
+            print('Clear table %s' % table)
+            session.execute(table.delete())
+        session.commit()
 
 
 setup()

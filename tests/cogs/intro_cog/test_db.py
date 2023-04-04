@@ -137,4 +137,5 @@ async def test_on_member_join():
 
 @pytest.fixture(scope='session', autouse=True)
 def setup_db():
-    koala_db.clear_all_tables(koala_db.fetch_all_tables())
+
+    koala_db.clear_all_tables()
