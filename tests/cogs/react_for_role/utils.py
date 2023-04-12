@@ -15,13 +15,7 @@ import sqlalchemy.orm
 from sqlalchemy import select
 
 # Own modules
-from koala.cogs.react_for_role.db import ReactForRoleDBManager
 from koala.cogs.react_for_role.models import GuildRFRRequiredRoles, GuildRFRMessages, RFRMessageEmojiRoles
-
-# Constants
-
-# Variables
-DBManager = ReactForRoleDBManager()
 
 
 def independent_get_guild_rfr_message(session: sqlalchemy.orm.Session, guild_id=None, channel_id=None, message_id=None
@@ -37,7 +31,8 @@ def independent_get_guild_rfr_message(session: sqlalchemy.orm.Session, guild_id=
     return [row.old_format() for row in rows]
 
 
-def independent_get_rfr_message_emoji_role(session: sqlalchemy.orm.Session, emoji_role_id=None, emoji_raw=None, role_id=None) -> List[
+def independent_get_rfr_message_emoji_role(session: sqlalchemy.orm.Session, emoji_role_id=None, emoji_raw=None,
+                                           role_id=None) -> List[
     Tuple[int, str, int]]:
     sql_select = select(RFRMessageEmojiRoles)
     if emoji_role_id is not None:
