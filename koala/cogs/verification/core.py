@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import random
 import string
+from typing import List, Dict
 
 # Futures
 # Built-in/Generic Imports
 # Libs
 import discord
 from discord.ext.commands import Bot
-from sqlalchemy import select, text, delete
+from sqlalchemy import select, text, delete, and_
 from sqlalchemy.orm import Session
 
 import koalabot
@@ -52,6 +53,40 @@ async def add_verify_role(guild_id, email_suffix, role_id, bot: koalabot.KoalaBo
 def remove_verify_role(guild_id, email_suffix, role_id, *, session: Session):
     email_suffix = email_suffix.lower()
     session.execute(delete(Roles).filter_by(s_id=guild_id, r_id=role_id, email_suffix=email_suffix))
+    session.commit()
+
+
+@assign_session
+def grouped_list_verify_role(guild_id, bot: koalabot.KoalaBot, *, session: Session) -> Dict[str, List[str]]:
+    guild = bot.get_guild(guild_id)
+    roles = session.execute(select(Roles).filter_by(s_id=guild_id)).scalars()
+    role_dict = {}
+    for role in roles:
+        d_role = guild.get_role(role.r_id)
+        if d_role is None:
+            session.execute(delete(Roles).filter_by(r_id=role.r_id))
+        elif role.email_suffix in role_dict:
+            role_dict[role.email_suffix].append("@" + d_role.name)
+        else:
+            role_dict[role.email_suffix] = ["@" + d_role.name]
+    session.commit()
+    return role_dict
+
+
+@assign_session
+async def re_verify_role(guild_id, role_id, bot: koalabot.KoalaBot, *, session: Session):
+    exists = session.execute(select(Roles).filter_by(s_id=guild_id, r_id=role_id)).all()
+
+    if not exists:
+        raise VerifyException("Verification is not enabled for that role")
+    existing_reverify = session.execute(select(ToReVerify.u_id).filter_by(r_id=role_id)).scalars().all()
+    guild = bot.get_guild(guild_id)
+    role = guild.get_role(role_id)
+    for member in role.members:
+        await member.remove_roles(role)
+        if member.id not in existing_reverify:
+            session.add(ToReVerify(u_id=member.id, r_id=role_id))
+
     session.commit()
 
 
@@ -105,8 +140,93 @@ async def email_verify_send(user_id, email, bot, force=False, *, session: Sessio
 
 
 @assign_session
-async def email_verify_confirm(user_id, email, *, session: Session):
-    pass
+async def email_verify_remove(user_id, email, bot, *, session: Session):
+    entry = session.execute(select(VerifiedEmails).filter_by(u_id=user_id, email=email)).all()
+
+    if not entry:
+        raise VerifyException("You have not verified that email")
+
+    session.execute(delete(VerifiedEmails).filter_by(u_id=user_id, email=email))
+    session.commit()
+
+    await remove_roles_for_user(user_id, email, bot, session=session)
+
+
+@assign_session
+async def email_verify_confirm(user_id, token, bot, *, session: Session):
+    entry = session.execute(select(NonVerifiedEmails).filter_by(token=token, u_id=user_id)).scalar()
+
+    if not entry:
+        raise InvalidArgumentError("That is not a valid token")
+
+    session.add(VerifiedEmails(u_id=user_id, email=entry.email))
+
+    session.execute(delete(NonVerifiedEmails).filter_by(token=token, u_id=user_id))
+
+    potential_roles = session.execute(select(Roles.r_id)
+                                      .where(text(":email like ('%' || email_suffix)")),
+                                      {"email": entry.email}).all()
+    if potential_roles:
+        for role_id in potential_roles:
+            session.execute(delete(ToReVerify).filter_by(r_id=role_id[0], u_id=user_id))
+
+    session.commit()
+    await assign_roles_for_user(user_id, entry.email, bot, session=session)
+
+
+@assign_session
+def email_verify_list(user_id, *, session: Session):
+    return session.execute(select(VerifiedEmails.email).filter_by(u_id=user_id)).scalars().all()
+
+
+'''
+EVENTS
+'''
+
+@assign_session
+async def assign_roles_on_startup(bot: koalabot.KoalaBot, *, session: Session):
+    results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)).all()
+    for g_id, r_id, suffix in results:
+        try:
+            guild = bot.get_guild(g_id)
+            role = discord.utils.get(guild.roles, id=r_id)
+            await assign_role_to_guild(guild, role, suffix)
+        except AttributeError as e:
+            # bot not in guild
+            logger.error("Verify bot not in guild %s", guild.id, exc_info=e)
+        except VerifyException as e:
+            logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles",
+                         exc_info=e)
+
+@assign_session
+async def send_verify_intro_message(member: discord.Member, *, session: Session):
+    guild = member.guild
+
+    potential_emails = session.execute(select(Roles.r_id, Roles.email_suffix)
+                                       .filter_by(s_id=guild.id)).all()
+
+    if potential_emails:
+        roles = {}
+        for role_id, suffix in potential_emails:
+            role = guild.get_role(role_id)
+            roles[suffix] = role
+            results = session.execute(select(VerifiedEmails).where(
+                and_(
+                    VerifiedEmails.email.endswith(suffix),
+                    VerifiedEmails.u_id == member.id
+                ))).all()
+
+            blacklisted = session.execute(select(ToReVerify)
+                                          .filter_by(r_id=role_id, u_id=member.id)).all()
+
+            if results and not blacklisted:
+                await member.add_roles(role)
+        message_string = f"""Welcome to {guild.name}. This guild has verification enabled.
+Please verify one of the following emails to get the appropriate role using \
+`{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
+This email is stored so you don't need to verify it multiple times across servers."""
+        await member.send(
+            content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
 
 '''
 UTILS
@@ -143,7 +263,7 @@ async def assign_role_to_guild(guild, role, suffix, session):
 
 
 @assign_session
-async def assign_roles_for_user(user_id, email, bot, session):
+async def assign_roles_for_user(user_id, email, bot, *, session):
     results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
                               .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
 
@@ -176,7 +296,7 @@ async def assign_roles_for_user(user_id, email, bot, session):
 
 
 @assign_session
-async def remove_roles_for_user(user_id, email, bot, session):
+async def remove_roles_for_user(user_id, email, bot, *, session):
     results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
                               .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
 

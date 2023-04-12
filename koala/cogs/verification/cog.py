@@ -7,27 +7,17 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import random
-import smtplib
-import string
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from bs4 import BeautifulSoup
 
 # Libs
 import discord
 from discord.ext import commands
-from sqlalchemy import select, delete, and_, text
 
 # Own modules
 import koalabot
-from koala.db import session_manager, insert_extension
-from koala.errors import InvalidArgumentError
+from koala.db import insert_extension
 from . import core, errors
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
-from .errors import VerifyException
 from .log import logger
-from .models import VerifiedEmails, NonVerifiedEmails, Roles, ToReVerify
 
 
 # Constants
@@ -58,7 +48,7 @@ class Verification(commands.Cog, name="Verify"):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.assign_roles_on_startup()
+        await core.assign_roles_on_startup(self.bot)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -67,32 +57,7 @@ class Verification(commands.Cog, name="Verify"):
         :param member: the member object who just joined a server
         :return:
         """
-        with session_manager() as session:
-            potential_emails = session.execute(select(Roles.r_id, Roles.email_suffix)
-                                               .filter_by(s_id=member.guild.id)).all()
-
-            if potential_emails:
-                roles = {}
-                for role_id, suffix in potential_emails:
-                    role = discord.utils.get(member.guild.roles, id=role_id)
-                    roles[suffix] = role
-                    results = session.execute(select(VerifiedEmails).where(
-                        and_(
-                            VerifiedEmails.email.endswith(suffix),
-                            VerifiedEmails.u_id == member.id
-                        ))).all()
-
-                    blacklisted = session.execute(select(ToReVerify)
-                                                  .filter_by(r_id=role_id, u_id=member.id)).all()
-
-                    if results and not blacklisted:
-                        await member.add_roles(role)
-                message_string = f"""Welcome to {member.guild.name}. This guild has verification enabled.
-Please verify one of the following emails to get the appropriate role using \
-`{koalabot.COMMAND_PREFIX}verify your_email@example.com`.
-This email is stored so you don't need to verify it multiple times across servers."""
-                await member.send(
-                    content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
+        await core.send_verify_intro_message(member)
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
@@ -171,17 +136,8 @@ This email is stored so you don't need to verify it multiple times across server
         :param email: the email you want to un-verify
         :return:
         """
-        with session_manager() as session:
-            entry = session.execute(select(VerifiedEmails).filter_by(u_id=ctx.author.id, email=email)).all()
-
-            if not entry:
-                raise VerifyException("You have not verified that email")
-
-            session.execute(delete(VerifiedEmails).filter_by(u_id=ctx.author.id, email=email))
-            session.commit()
-
-            await core.remove_roles_for_user(ctx.author.id, email, self.bot)
-            await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
+        await core.email_verify_remove(ctx.author.id, email, self.bot)
+        await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
 
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="confirm")
@@ -192,26 +148,8 @@ This email is stored so you don't need to verify it multiple times across server
         :param token: the token emailed to you to verify with
         :return:
         """
-        with session_manager() as session:
-            entry = session.execute(select(NonVerifiedEmails).filter_by(token=token, u_id=ctx.author.id)).scalar()
-
-            if not entry:
-                raise InvalidArgumentError("That is not a valid token")
-
-            session.add(VerifiedEmails(u_id=ctx.author.id, email=entry.email))
-
-            session.execute(delete(NonVerifiedEmails).filter_by(token=token, u_id=ctx.author.id))
-
-            potential_roles = session.execute(select(Roles.r_id)
-                                              .where(text(":email like ('%' || email_suffix)")),
-                                              {"email": entry.email}).all()
-            if potential_roles:
-                for role_id in potential_roles:
-                    session.execute(delete(ToReVerify).filter_by(r_id=role_id[0], u_id=ctx.author.id))
-
-            session.commit()
-            await ctx.send("Your email has been verified, thank you")
-            await core.assign_roles_for_user(ctx.author.id, entry.email, self.bot)
+        await core.email_verify_confirm(ctx.author.id, token, self.bot)
+        await ctx.send("Your email has been verified, thank you")
 
     @commands.check(koalabot.is_owner)
     @commands.command(name="getEmails")
@@ -219,14 +157,11 @@ This email is stored so you don't need to verify it multiple times across server
         """
         See the emails a user is verified with
         :param ctx: the context of the discord message
-        :param user_id: the id of the user who's emails you want to find
+        :param user_id: the id of the user whose emails you want to find
         :return:
         """
-        with session_manager() as session:
-            results = session.execute(select(VerifiedEmails.email).filter_by(u_id=user_id)).all()
-
-            emails = '\n'.join([x[0] for x in results])
-            await ctx.send(f"This user has registered with:\n{emails}")
+        emails = '\n'.join(core.email_verify_list(user_id))
+        await ctx.send(f"This user has registered with:\n{emails}")
 
     @commands.command(name="verifyList", aliases=["checkVerifications"])
     @commands.check(verify_is_enabled)
@@ -236,26 +171,13 @@ This email is stored so you don't need to verify it multiple times across server
         :param ctx: the context of the discord message
         :return:
         """
-        with session_manager() as session:
-            embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
-            roles = session.execute(select(Roles.r_id, Roles.email_suffix).filter_by(s_id=ctx.guild.id)).all()
+        embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
+        role_dict = core.grouped_list_verify_role(ctx.guild.id, self.bot)
 
-            role_dict = {}
-            for role_id, suffix in roles:
-                role = discord.utils.get(ctx.guild.roles, id=role_id)
-                try:
-                    if suffix in role_dict:
-                        role_dict[suffix].append("@" + role.name)
-                    else:
-                        role_dict[suffix] = ["@" + role.name]
-                except AttributeError:
-                    session.execute(delete(Roles).filter_by(r_id=role_id))
+        for rd_suffix, rd_roles in role_dict.items():
+            embed.add_field(name=rd_suffix, value='\n'.join(rd_roles))
 
-            session.commit()
-            for suffix, roles in role_dict.items():
-                embed.add_field(name=suffix, value='\n'.join(roles))
-
-            await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
 
     @commands.check(koalabot.is_admin)
     @commands.command(name="reVerify")
@@ -267,39 +189,14 @@ This email is stored so you don't need to verify it multiple times across server
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
-        with session_manager() as session:
-            exists = session.execute(select(Roles).filter_by(s_id=ctx.guild.id, r_id=role.id)).all()
-
-            if not exists:
-                raise VerifyException("Verification is not enabled for that role")
-            existing_reverify = session.execute(select(ToReVerify.u_id).filter_by(r_id=role.id)).scalars().all()
-            for member in role.members:
-                await member.remove_roles(role)
-                if member.id not in existing_reverify:
-                    session.add(ToReVerify(u_id=member.id, r_id=role.id))
-
-            session.commit()
-            await ctx.send("That role has now been removed from all users and they will need to "
-                           "re-verify the associated email.")
-
-    async def assign_roles_on_startup(self):
-        with session_manager() as session:
-            results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)).all()
-            for g_id, r_id, suffix in results:
-                try:
-                    guild = self.bot.get_guild(g_id)
-                    role = discord.utils.get(guild.roles, id=r_id)
-                    await core.assign_role_to_guild(guild, role, suffix)
-                except AttributeError as e:
-                    # bot not in guild
-                    logger.error("Verify bot not in guild %s", guild.id, exc_info=e)
-                except VerifyException as e:
-                    logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles", exc_info=e)
+        await core.re_verify_role(ctx.guild.id, role.id, self.bot)
+        await ctx.send("That role has now been removed from all users and they will need to "
+                       "re-verify the associated email.")
 
 
 async def setup(bot: koalabot) -> None:
     """
-    Load this cog to the koalabot.
+    Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
     if GMAIL_EMAIL is None or GMAIL_PASSWORD is None:

@@ -255,16 +255,15 @@ async def test_verify_twice():
         session.add(test_role)
         session.commit()
 
-        dm = await member.create_dm()
+    dm = await member.create_dm()
 
-        msg_mock: discord.Message = dpytest.back.make_message("n", member, dm)
-        with mock.patch('discord.client.Client.wait_for',
-                        mock.AsyncMock(return_value=msg_mock)):
-            await dpytest.message(koalabot.COMMAND_PREFIX + "verify test@egg.com", dm)
-        assert dpytest.verify().message().content(
-            "This email is already assigned to your account. Would you like to re-verify? (y/n)")
-        assert dpytest.verify().message().content(
-            "The email will remain registered to the old account.")
+    msg_mock: discord.Message = dpytest.back.make_message("n", member, dm)
+    with mock.patch('discord.client.Client.wait_for',
+                    mock.AsyncMock(return_value=msg_mock)):
+        await dpytest.message(koalabot.COMMAND_PREFIX + "verify test@egg.com", dm)
+    assert dpytest.verify().message().content(
+        "This email is already assigned to your account. Would you like to verify anyway? (y/n)")
+    assert dpytest.verify().message().content("Okay, you will not be verified with test@egg.com")
 
 
 @pytest.mark.asyncio
@@ -300,9 +299,9 @@ async def test_verify_alternate_account_no():
                         mock.AsyncMock(return_value=msg_mock)):
             await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm2, member2)
         assert dpytest.verify().message().content(
-            "This email is already assigned to a different account. Would you like to transfer it to this one? (y/n)")
+            "This email is already assigned to a different account. Would you like to verify anyway? (y/n)")
         assert dpytest.verify().message().content(
-            "The email will remain registered to the old account.")
+            f"Okay, you will not be verified with {TEST_EMAIL}")
 
 
 @pytest.mark.asyncio
@@ -338,7 +337,7 @@ async def test_verify_alternate_account_yes():
                         mock.AsyncMock(return_value=msg_mock)):
             await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm2, member2)
         assert dpytest.verify().message().content(
-            "This email is already assigned to a different account. Would you like to transfer it to this one? (y/n)")
+            "This email is already assigned to a different account. Would you like to verify anyway? (y/n)")
         assert dpytest.verify().message().content(
             "Please verify yourself using the command you have been emailed")
 
@@ -431,8 +430,9 @@ async def test_get_emails():
         test_verified_email = VerifiedEmails(u_id=123, email=TEST_EMAIL)
         session.add(test_verified_email)
         session.commit()
-        await dpytest.message(koalabot.COMMAND_PREFIX + "getEmails 123")
-        assert dpytest.verify().message().content(f"""This user has registered with:\n{TEST_EMAIL}""")
+    await dpytest.message(koalabot.COMMAND_PREFIX + "getEmails 123")
+    assert dpytest.verify().message().content(f"""This user has registered with:\n{TEST_EMAIL}""")
+    with session_manager() as session:
         session.delete(test_verified_email)
         session.commit()
 
