@@ -1,19 +1,16 @@
-from ast import Tuple
 from typing import *
 
 import discord
-from discord.ext.commands import Bot
-from discord.ext import commands
 import emoji
+from discord.ext import commands
+from discord.ext.commands import Bot
 
 import koalabot
+from koala.db import assign_session
 from . import db
 from .db import get_rfr_message
 from .dto import ReactMessage, ReactRole, RequiredRoles
 from .log import logger
-
-from koala.db import assign_session
-from koala.colours import KOALA_GREEN
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
 
 # Constants

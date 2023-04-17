@@ -9,7 +9,6 @@ from discord.ext.commands import Bot
 
 import koalabot
 from koala.rest.api import parse_request
-
 # Own modules
 from . import core
 from .dto import ReactRole

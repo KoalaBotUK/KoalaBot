@@ -8,7 +8,6 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import argparse
 
 # Libs
 import discord
@@ -21,9 +20,8 @@ from discord.ext import commands
 # Own modules
 import koalabot
 from koala.db import clear_all_tables, fetch_all_tables
-
-from tests.tests_utils.utils import FakeAuthor
 from tests.tests_utils.last_ctx_cog import LastCtxCog
+from tests.tests_utils.utils import FakeAuthor
 
 # Constants
 

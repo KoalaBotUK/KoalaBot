@@ -11,8 +11,6 @@ import random
 import re
 from typing import List
 
-# Built-in/Generic Imports
-
 # Libs
 import discord
 import discord.ext.test as dpytest
@@ -26,11 +24,13 @@ import koalabot
 from koala.cogs import ColourRole
 from koala.cogs import colour_role
 from koala.cogs.colour_role.utils import COLOUR_ROLE_NAMING
-
-from tests.tests_utils.last_ctx_cog import LastCtxCog
 from tests.log import logger
-from .utils import make_list_of_roles, make_list_of_custom_colour_roles,make_list_of_protected_colour_roles,\
+from tests.tests_utils.last_ctx_cog import LastCtxCog
+from .utils import make_list_of_roles, make_list_of_custom_colour_roles, make_list_of_protected_colour_roles, \
     random_colour, independent_get_protected_colours, independent_get_colour_change_roles, DBManager
+
+
+# Built-in/Generic Imports
 
 # Constants
 

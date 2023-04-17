@@ -8,8 +8,6 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 
-import asyncio
-
 # Libs
 import discord.ext.test as dpytest
 import pytest

@@ -13,15 +13,15 @@ from sqlalchemy import select, delete
 # Own modules
 import koalabot
 from koala.cogs import BaseCog
-from tests.tests_utils.last_ctx_cog import LastCtxCog
-from koala.colours import KOALA_GREEN
-from koala.utils import is_int
-from koala.db import session_manager
-
 from koala.cogs import TextFilter as TextFilterCog
 from koala.cogs.text_filter.db import TextFilterDBManager
 from koala.cogs.text_filter.models import TextFilter, TextFilterModeration
+from koala.colours import KOALA_GREEN
+from koala.db import session_manager
+from koala.utils import is_int
 from tests.log import logger
+from tests.tests_utils.last_ctx_cog import LastCtxCog
+
 
 # Variables
 

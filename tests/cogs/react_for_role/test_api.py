@@ -1,17 +1,12 @@
-from http.client import BAD_REQUEST, CREATED, OK, UNPROCESSABLE_ENTITY
-
-from mock import mock
-from koala.db import get_all_available_guild_extensions
-from koala.rest.api import parse_request
-
-import koalabot
-from koala.cogs.react_for_role.api import RfrEndpoint, MESSAGE, REQUIRED_ROLES
+from http.client import OK
 
 # Libs
 import discord
-from aiohttp import web
-import pytest
 import discord.ext.test as dpytest
+import pytest
+from aiohttp import web
+
+from koala.cogs.react_for_role.api import RfrEndpoint, MESSAGE, REQUIRED_ROLES
 
 
 @pytest.fixture

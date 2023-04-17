@@ -14,15 +14,15 @@ Commented using reStructuredText (reST)
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-
 # Own modules
 from discord.ext.commands import BadArgument
-from koala.utils import convert_iso_datetime
 
 import koalabot
+from koala.utils import convert_iso_datetime
 from . import core
-from .utils import AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
+from .utils import AUTO_UPDATE_ACTIVITY_DELAY
+
 
 # Constants
 

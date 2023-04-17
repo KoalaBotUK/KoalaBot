@@ -3,24 +3,23 @@
 # Built-in/Generic Imports
 import asyncio
 
+import discord
 # Libs
 import discord.ext.test as dpytest
 import mock
+import pytest
 import pytest_asyncio
 import pytest_ordering as pytest
-import pytest
-import discord
 from discord.ext import commands
 from sqlalchemy import select, and_
 
-
 # Own modules
 import koalabot
-from koala.db import session_manager
 from koala.cogs import twitch_alert
 from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.colours import KOALA_GREEN
+from koala.db import session_manager
 from tests.tests_utils.last_ctx_cog import LastCtxCog
 
 # Constants

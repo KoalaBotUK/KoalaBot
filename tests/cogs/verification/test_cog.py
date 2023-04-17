@@ -15,17 +15,14 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 import pytest_asyncio
-import sqlalchemy.orm
 from discord.ext import commands
 from sqlalchemy import select, delete
 
 # Own modules
 import koalabot
-from koala.db import session_manager
-
 from koala.cogs import Verification
 from koala.cogs.verification.models import VerifiedEmails, ToReVerify, NonVerifiedEmails, Roles, VerifyBlacklist
-
+from koala.db import session_manager
 from tests.log import logger
 
 # Constants

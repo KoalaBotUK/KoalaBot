@@ -9,12 +9,11 @@ KoalaBot Cog for guild members wishing to change their role colour
 # Built-in/Generic Imports
 from typing import List, Optional
 
-# Own modules
-from koala.db import session_manager
-
 # Libs
 from sqlalchemy import select, delete, and_
 
+# Own modules
+from koala.db import session_manager
 # Own modules
 from .models import GuildColourChangePermissions, GuildInvalidCustomColourRoles
 

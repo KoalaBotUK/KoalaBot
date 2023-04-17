@@ -3,21 +3,19 @@
 # Built-in/Generic Imports
 import re
 
+# Libs
+import discord
+from sqlalchemy import select, delete, and_, null
+from sqlalchemy.orm import joinedload
 from twitchAPI.object import Stream
 
 # Own modules
 from koala.db import session_manager
-
-from .twitch_handler import TwitchAPIHandler
-from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, create_live_embed
-from .log import logger
 from .env import TWITCH_KEY, TWITCH_SECRET
-
-# Libs
-import discord
-from sqlalchemy import select, delete, and_, null
-from sqlalchemy.orm import selectinload, joinedload
+from .log import logger
+from .models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
+from .twitch_handler import TwitchAPIHandler
+from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, create_live_embed
 
 
 # Constants

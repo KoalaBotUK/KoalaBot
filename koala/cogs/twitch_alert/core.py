@@ -6,10 +6,10 @@ from discord.ext.commands import Bot
 from sqlalchemy import select, func, or_, and_, null, update, delete
 from twitchAPI.object import Stream
 
-from .log import logger
-from .models import UserInTwitchTeam, TeamInTwitchAlert, TwitchAlerts, UserInTwitchAlert
 from koala.db import assign_session
 from koala.models import GuildExtensions
+from .log import logger
+from .models import UserInTwitchTeam, TeamInTwitchAlert, TwitchAlerts, UserInTwitchAlert
 
 
 @assign_session

@@ -14,12 +14,12 @@ from sqlalchemy.orm import Session
 import koalabot
 # Own modules
 from koala.cogs.verification import db, errors
+from koala.cogs.verification.dto import VerifyConfig, VerifyRole
 from koala.cogs.verification.errors import VerifyException
 from koala.cogs.verification.log import logger
 from koala.cogs.verification.models import VerifiedEmails, ToReVerify, VerifyBlacklist, Roles, NonVerifiedEmails
 from koala.cogs.verification.utils import send_email
 from koala.db import assign_session
-
 # Constants
 # Variables
 from koala.errors import InvalidArgumentError
@@ -27,6 +27,25 @@ from koala.errors import InvalidArgumentError
 '''
 COMMANDS
 '''
+
+
+@assign_session
+async def set_verify_role(guild_id, roles: List[VerifyRole], bot, **kwargs):
+    add_roles: List[VerifyRole] = []
+    remove_roles: List[VerifyRole] = [VerifyRole.from_db_roles(r) for r in list_verify_role(guild_id, **kwargs)]
+    for role in roles:
+        if role in remove_roles:
+            remove_roles.remove(role)
+        else:
+            add_roles.append(role)
+
+    for role in add_roles:
+        await add_verify_role(guild_id, role.email_suffix, role.role_id, bot, **kwargs)
+
+    for role in remove_roles:
+        remove_verify_role(guild_id, role.email_suffix, role.role_id, **kwargs)
+
+    return get_verify_config_dto(guild_id)
 
 
 @assign_session
@@ -57,9 +76,19 @@ def remove_verify_role(guild_id, email_suffix, role_id, *, session: Session):
 
 
 @assign_session
+def get_verify_config_dto(guild_id, **kwargs) -> VerifyConfig:
+    return VerifyConfig(guild_id, [VerifyRole(r.email_suffix, r.r_id) for r in list_verify_role(guild_id, **kwargs)])
+
+
+@assign_session
+def list_verify_role(guild_id, *, session: Session) -> List[Roles]:
+    return session.execute(select(Roles).filter_by(s_id=guild_id)).scalars().all()
+
+
+@assign_session
 def grouped_list_verify_role(guild_id, bot: koalabot.KoalaBot, *, session: Session) -> Dict[str, List[str]]:
     guild = bot.get_guild(guild_id)
-    roles = session.execute(select(Roles).filter_by(s_id=guild_id)).scalars()
+    roles = list_verify_role(guild_id, session=session)
     role_dict = {}
     for role in roles:
         d_role = guild.get_role(role.r_id)
@@ -183,20 +212,23 @@ def email_verify_list(user_id, *, session: Session):
 EVENTS
 '''
 
+
 @assign_session
 async def assign_roles_on_startup(bot: koalabot.KoalaBot, *, session: Session):
     results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)).all()
     for g_id, r_id, suffix in results:
+        guild = bot.get_guild(g_id)
+        if not guild:
+            logger.error("Verify bot not in guild %s", guild.id)
+            continue
+
+        role = guild.get_role(r_id)
         try:
-            guild = bot.get_guild(g_id)
-            role = discord.utils.get(guild.roles, id=r_id)
             await assign_role_to_guild(guild, role, suffix)
-        except AttributeError as e:
-            # bot not in guild
-            logger.error("Verify bot not in guild %s", guild.id, exc_info=e)
         except VerifyException as e:
             logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles",
                          exc_info=e)
+
 
 @assign_session
 async def send_verify_intro_message(member: discord.Member, *, session: Session):
@@ -227,6 +259,7 @@ Please verify one of the following emails to get the appropriate role using \
 This email is stored so you don't need to verify it multiple times across servers."""
         await member.send(
             content=message_string + "\n" + "\n".join([f"`{x}` for `@{y}`" for x, y in roles.items()]))
+
 
 '''
 UTILS

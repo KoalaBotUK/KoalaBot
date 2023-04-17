@@ -12,6 +12,7 @@ from koala.cogs.verification import errors
 from koala.cogs.verification.models import VerifyBlacklist
 from koala.db import assign_session
 
+
 # Constants
 # Variables
 

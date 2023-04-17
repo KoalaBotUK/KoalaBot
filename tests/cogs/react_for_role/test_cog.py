@@ -18,17 +18,15 @@ from discord.ext import commands
 from discord.ext.test import factories as dpyfactory
 from discord.http import MultipartParameters
 
-# Own modules
-from koala.cogs.react_for_role import core
 import koalabot
 from koala.cogs import ReactForRole
-from koala.colours import KOALA_GREEN
-from koala.db import session_manager
-from tests.tests_utils import utils as testutils
+# Own modules
+from koala.cogs.react_for_role import core
 from koala.cogs.react_for_role.db import *
-from .utils import independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
+from koala.colours import KOALA_GREEN
 from tests.log import logger
-from koala.cogs import ReactForRole
+from tests.tests_utils import utils as testutils
+from .utils import independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
 
 
 # Constants
