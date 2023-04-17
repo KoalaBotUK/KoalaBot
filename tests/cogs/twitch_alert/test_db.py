@@ -15,7 +15,6 @@ import discord.ext.test as dpytest
 import mock
 import pytest
 import pytest_asyncio
-import pytest_ordering as pytest
 from discord.ext import commands
 from sqlalchemy import select, update, insert, delete, and_, or_
 from twitchAPI.object import Stream
