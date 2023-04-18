@@ -22,7 +22,7 @@ REVERIFY_ENDPOINT = 'reverify'
 
 class VerifyEndpoint:
     """
-    The API endpoints for BaseCog
+    The API endpoints for Verify
     """
     def __init__(self, bot):
         self._bot = bot

@@ -9,6 +9,7 @@ from typing import List, Dict
 import discord
 from discord.ext.commands import Bot
 from sqlalchemy import select, text, delete, and_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import koalabot
@@ -120,28 +121,39 @@ async def re_verify_role(guild_id, role_id, bot: koalabot.KoalaBot, *, session: 
 
 
 @assign_session
-async def blacklist_member(user_id, guild_id, role_id, suffix, bot: Bot, **kwargs):
+async def blacklist_member(user_id, guild_id, role_id, suffix, bot: Bot, *, session: Session):
     guild: discord.Guild = bot.get_guild(guild_id)
     role = guild.get_role(role_id)
 
     if not role:
         raise InvalidArgumentError("Please mention a role in this guild")
 
-    db.add_to_blacklist(user_id, role.id, suffix, **kwargs)
-    await remove_roles_for_user(user_id, suffix, bot, **kwargs)
+    blacklisted = VerifyBlacklist(user_id=user_id, role_id=role_id, email_suffix=suffix)
+    try:
+        session.add(blacklisted)
+        session.commit()
+    except IntegrityError:
+        raise errors.VerifyException("This user verification is already blacklisted.")
+    await remove_roles_for_user(user_id, suffix, bot, session=session)
 
 
 @assign_session
-async def remove_blacklist_member(user_id, guild_id, role_id, suffix, bot: Bot, **kwargs):
+async def remove_blacklist_member(user_id, guild_id, role_id, suffix, bot: Bot, *, session: Session):
     guild: discord.Guild = bot.get_guild(guild_id)
     role = guild.get_role(role_id)
 
     if not role:
         raise InvalidArgumentError("Please mention a role in this guild")
 
-    db.remove_from_blacklist(user_id, role.id, suffix, **kwargs)
-    await assign_roles_for_user(user_id, suffix, bot, **kwargs)
-    await assign_role_to_guild(guild, role, suffix)
+    blacklisted = session.execute(select(VerifyBlacklist)
+                                  .filter_by(user_id=user_id, role_id=role_id, email_suffix=suffix)).scalar()
+    if not blacklisted:
+        raise errors.VerifyException("This user verification blacklist doesn't exist.")
+    session.delete(blacklisted)
+    session.commit()
+
+    await assign_roles_for_user(user_id, suffix, bot, session=session)
+    await assign_role_to_guild(guild, role, suffix, session=session)
 
 
 @assign_session
