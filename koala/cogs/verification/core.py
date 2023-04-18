@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 import koalabot
 # Own modules
-from koala.cogs.verification import db, errors
+from koala.cogs.verification import errors
 from koala.cogs.verification.dto import VerifyConfig, VerifyRole
 from koala.cogs.verification.errors import VerifyException
 from koala.cogs.verification.log import logger

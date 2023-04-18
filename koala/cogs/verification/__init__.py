@@ -1,4 +1,4 @@
-from . import db, log, models, api, cog
+from . import log, models, api, cog
 from .cog import Verification
 
 
