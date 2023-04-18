@@ -8,16 +8,13 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 
-import asyncio
-
 # Libs
 import discord.ext.test.factories as dpyfactory
 
-# Own modules
-import koalabot
-from koala.db import session_manager
 from koala.cogs.intro_cog import db as intro_db
 from koala.cogs.intro_cog.models import GuildWelcomeMessages
+# Own modules
+from koala.db import session_manager
 
 # Constants
 fake_guild_id = 1000

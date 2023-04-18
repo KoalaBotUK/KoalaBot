@@ -5,8 +5,6 @@ Testing KoalaBot ReactForRole Cog
 
 Commented using reStructuredText (reST)
 """
-# Futures
-
 # Built-in/Generic Imports
 import random
 
@@ -18,14 +16,18 @@ import mock
 import pytest
 from discord.ext import commands
 from discord.ext.test import factories as dpyfactory
+from discord.http import MultipartParameters
 
-# Own modules
 import koalabot
+from koala.cogs import ReactForRole
+# Own modules
+from koala.cogs.react_for_role import core
+from koala.cogs.react_for_role.db import *
 from koala.colours import KOALA_GREEN
-from koala.db import session_manager
-from tests.tests_utils import utils as testutils
-from .utils import DBManager, independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
 from tests.log import logger
+from tests.tests_utils import utils as testutils
+from .utils import independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
+
 
 # Constants
 
@@ -56,7 +58,7 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
                 await rfr_cog.get_rfr_message_from_prompts(ctx)
             assert str(
                 exc.value) == "Message ID given is not that of a react for role message."
-    DBManager.add_rfr_message(msg.guild.id, channel_id, msg_id)
+    add_rfr_message(msg.guild.id, channel_id, msg_id)
     with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                     side_effect=[str(channel_id), str(msg_id)]) as mock_input:
         with mock.patch('discord.abc.Messageable.fetch_message', mock.AsyncMock(return_value=msg)):
@@ -65,7 +67,6 @@ async def test_get_rfr_message_from_prompts(bot, utils_cog, rfr_cog):
             assert rfr_msg_channel.id == channel_id
 
 
-# TODO Actually implement the test.
 @pytest.mark.parametrize("num_rows", [0, 1, 2, 20, 100, 250])
 @pytest.mark.asyncio
 async def test_parse_emoji_and_role_input_str(num_rows, utils_cog, rfr_cog):
@@ -195,17 +196,19 @@ async def test_prompt_for_input_attachment(rfr_cog, utils_cog):
 
 
 @pytest.mark.asyncio
-async def test_overwrite_channel_add_reaction_perms(rfr_cog):
+async def test_overwrite_channel_add_reaction_perms(rfr_cog: ReactForRole):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
+    bot: discord.Client = config.client
     with mock.patch('discord.ext.test.backend.FakeHttp.edit_channel_permissions') as mock_edit_channel_perms:
         for i in range(15):
             await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
+        # await core.setup_rfr_reaction_permissions(guild, channel, bot)
         await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
-        calls = [mock.call(channel.id, role.id, 0, 64, 'role', reason=None),
-                 mock.call(channel.id, config.client.user.id, 64, 0, 'member',
+        calls = [mock.call(channel.id, role.id, '0', '64', discord.abc._Overwrites.ROLE, reason=None),
+                 mock.call(channel.id, config.client.user.id, '64', '0', discord.abc._Overwrites.MEMBER,
                            reason=None)]  # assert it's called the role perms change first, then the member change
         mock_edit_channel_perms.assert_has_calls(calls)
 
@@ -225,21 +228,20 @@ async def test_is_user_alive(utils_cog, rfr_cog):
 
 
 @pytest.mark.asyncio
-async def test_get_embed_from_message(rfr_cog):
+async def test_get_embed_from_message(rfr_cog, bot: commands.Bot):
     config: dpytest.RunnerConfig = dpytest.get_config()
     author: discord.Member = config.members[0]
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
-    bot: discord.Client = config.client
-    await bot.http.send_message(channel.id, '', embed=test_embed_dict)
+    embed = discord.Embed(title="title", description="descr", type="rich", url="https://www.google.com")
+    await channel.send(embed=embed)
     sent_msg: discord.Message = await dpytest.sent_queue.get()
     msg_mock: discord.Message = dpytest.back.make_message('a', author, channel)
-    result = rfr_cog.get_embed_from_message(None)
+    result = core.get_embed_from_message(None)
     assert result is None
-    result = rfr_cog.get_embed_from_message(msg_mock)
+    result = core.get_embed_from_message(msg_mock)
     assert result is None
-    result = rfr_cog.get_embed_from_message(sent_msg)
+    result = core.get_embed_from_message(sent_msg)
     assert dpytest.embed_eq(result, sent_msg.embeds[0])
 
 
@@ -250,19 +252,19 @@ async def test_get_number_of_embed_fields(rfr_cog):
     channel: discord.TextChannel = guild.text_channels[0]
     test_embed_dict: dict = {'title': 'title', 'description': 'descr', 'type': 'rich', 'url': 'https://www.google.com'}
     bot: discord.Client = config.client
-    await bot.http.send_message(channel.id, '', embed=test_embed_dict)
+    await bot.http.send_message(channel.id, params=MultipartParameters({"embeds": [test_embed_dict]}, None, None))
     sent_msg: discord.Message = await dpytest.sent_queue.get()
     test_embed: discord.Embed = sent_msg.embeds[0]
     num_fields = 0
     for i in range(20):
         test_embed.add_field(name=f'field{i}', value=f'num{i}')
         num_fields += 1
-        assert rfr_cog.get_number_of_embed_fields(test_embed) == num_fields
+        assert core.get_number_of_embed_fields(embed=test_embed) == num_fields
 
 
 @pytest.mark.skip('dpytest currently has non-implemented functionality for construction of guild custom emojis')
 @pytest.mark.asyncio
-async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
+async def test_get_first_emoji_from_str(bot, utils_cog, rfr_cog):
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx")
     ctx: commands.Context = utils_cog.get_last_ctx()
     config: dpytest.RunnerConfig = dpytest.get_config()
@@ -279,7 +281,7 @@ async def test_get_first_emoji_from_str(utils_cog, rfr_cog):
     author: discord.Member = config.members[0]
     channel: discord.TextChannel = guild.text_channels[0]
     msg: discord.Message = dpytest.back.make_message(str(guild_emoji), author, channel)
-    result = await rfr_cog.get_first_emoji_from_str(ctx, msg.content)
+    result = await core.get_first_emoji_from_str(bot, guild, msg.content)
     logger.debug(result)
     assert isinstance(result, discord.Emoji), msg.content
     assert guild_emoji == result
@@ -340,7 +342,7 @@ async def test_rfr_delete_message():
         channel: discord.TextChannel = guild.text_channels[0]
         message: discord.Message = await dpytest.message("rfr")
         msg_id = message.id
-        DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+        add_rfr_message(guild.id, channel.id, msg_id)
         await dpytest.empty_queue()
         with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                         mock.AsyncMock(return_value=(message, channel))):
@@ -365,13 +367,13 @@ async def test_rfr_edit_description():
     client: discord.Client = config.client
     message: discord.Message = await dpytest.message("rfr")
     msg_id = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.description == 'description'
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new description", "Y"])):
-            with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
                 await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit description")
                 assert embed.description == 'new description'
                 assert dpytest.verify().message()
@@ -388,13 +390,13 @@ async def test_rfr_edit_title():
     client: discord.Client = config.client
     message: discord.Message = await dpytest.message("rfr")
     msg_id = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.title == 'title'
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
         with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
                         mock.AsyncMock(side_effect=["new title", "Y"])):
-            with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+            with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
                 await dpytest.message(koalabot.COMMAND_PREFIX + "rfr edit title")
                 assert embed.title == 'new title'
                 assert dpytest.verify().message()
@@ -420,12 +422,12 @@ async def test_rfr_edit_thumbnail_attach():
                                                                                                  content_type="image/jpeg"))
     msg_id = message.id
     bad_attach = "something that's not an attachment"
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=attach):
                 await dpytest.message("k!rfr edit image")
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/some_number/random_number/test.jpg"
@@ -445,12 +447,12 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
         url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
     message: discord.Message = await dpytest.message("rfr")
     msg_id = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=attach):
                 with pytest.raises((aiohttp.ClientError, aiohttp.InvalidURL, commands.BadArgument,
                                     commands.CommandInvokeError)) as exc:
@@ -474,12 +476,12 @@ async def test_rfr_edit_thumbnail_links(image_url):
         url="https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg")
     message: discord.Message = await dpytest.message("rfr")
     msg_id = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('koala.cogs.ReactForRole.prompt_for_input', return_value=image_url):
                 assert embed.thumbnail.url == "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
                 await dpytest.message("k!rfr edit image")
@@ -501,14 +503,14 @@ async def test_rfr_edit_inline_all(arg):
     message2: discord.Message = await dpytest.message("rfr")
     msg1_id = message1.id
     msg2_id = message2.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg1_id)
-    DBManager.add_rfr_message(guild.id, channel.id, msg2_id)
+    add_rfr_message(guild.id, channel.id, msg1_id)
+    add_rfr_message(guild.id, channel.id, msg2_id)
     await dpytest.sent_queue.empty()
     calls = [mock.call(0, name="field1", value="value1", inline=(arg == "Y")),
              mock.call(0, name="field2", value="value2", inline=(arg == "Y"))]
     with mock.patch("koala.cogs.ReactForRole.prompt_for_input", side_effects=["all", arg]):
         with mock.patch("discord.abc.Messageable.fetch_message", side_effects=[message1, message2]):
-            with mock.patch("koala.cogs.ReactForRole.get_embed_from_message", side_effects=[embed1, embed2]):
+            with mock.patch("koala.cogs.react_for_role.core.get_embed_from_message", side_effects=[embed1, embed2]):
                 with mock.patch('discord.Embed.set_field_at') as mock_call:
                     await dpytest.message("k!rfr edit inline")
                     assert dpytest.verify().message()
@@ -533,7 +535,7 @@ async def test_rfr_add_roles_to_msg():
     author: discord.Member = config.members[0]
     message: discord.Message = await dpytest.message("rfr")
     msg_id: int = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     input_em_ro_content = ""
     em_list = []
     ro_list = []
@@ -547,7 +549,7 @@ async def test_rfr_add_roles_to_msg():
 
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('discord.client.Client.wait_for',
                             mock.AsyncMock(return_value=input_em_ro_msg)):
                 with mock.patch('discord.Embed.add_field') as add_field:
@@ -567,7 +569,7 @@ async def test_rfr_remove_roles_from_msg():
     author: discord.Member = config.members[0]
     message: discord.Message = await dpytest.message("rfr")
     msg_id: int = message.id
-    DBManager.add_rfr_message(guild.id, channel.id, msg_id)
+    add_rfr_message(guild.id, channel.id, msg_id)
     input_em_ro_content = ""
     em_ro_list = []
     for i in range(5):
@@ -577,17 +579,17 @@ async def test_rfr_remove_roles_from_msg():
         input_em_ro_content += f"{x}\n\r"
         em_ro_list.append(x)
         embed.add_field(name=str(em), value=ro.mention, inline=False)
-        DBManager.add_rfr_message_emoji_role(1, str(em), ro.id)
+        add_rfr_message_emoji_role(1, str(em), ro.id)
 
     input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
     with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
                     mock.AsyncMock(return_value=(message, channel))):
-        with mock.patch('koala.cogs.ReactForRole.get_embed_from_message', return_value=embed):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
             with mock.patch('discord.client.Client.wait_for',
                             mock.AsyncMock(return_value=input_em_ro_msg)):
                 with mock.patch('discord.Embed.add_field') as add_field:
                     with mock.patch(
-                            'koala.cogs.react_for_role.db.ReactForRoleDBManager.remove_rfr_message_emoji_role') as remove_emoji_role:
+                            'koala.cogs.react_for_role.db.remove_rfr_message_emoji_role') as remove_emoji_role:
                         add_field.reset_mock()
                         await dpytest.message(koalabot.COMMAND_PREFIX + "rfr removeRoles")
                         add_field.assert_not_called()
@@ -611,7 +613,7 @@ async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
             r_list.append(role)
         required = random.sample(list(r_list), num_required)
         for r in required:
-            DBManager.add_guild_rfr_required_role(guild.id, r.id)
+            add_guild_rfr_required_role(guild.id, r.id)
             assert independent_get_guild_rfr_required_role(session, guild.id, r.id) is not None
         for i in range(num_roles):
             mem_roles = []
@@ -626,3 +628,22 @@ async def test_can_have_rfr_role(num_roles, num_required, rfr_cog):
             else:
                 assert rfr_cog.can_have_rfr_role(member) == any(
                     x in required for x in member.roles), f"\n\r{member.roles}\n\r{required}"
+
+
+@pytest.mark.asyncio
+async def test_get_first_emoji_from_str():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id: int = message.id
+    add_rfr_message(guild.id, channel.id, msg_id)
+
+    emoji: discord.Emoji = testutils.fake_guild_emoji(guild)
+    role: discord.Role = testutils.fake_guild_role(guild)
+
+    assert core.get_first_emoji_from_str(koalabot, guild, emoji)
+
+    uni_emoji = testutils.fake_unicode_emoji()
+    assert core.get_first_emoji_from_str(koalabot, guild, uni_emoji)

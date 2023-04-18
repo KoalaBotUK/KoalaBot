@@ -17,8 +17,9 @@ from .log import logger
 from .models import Votes, VoteTargetRoles, VoteOptions, VoteSent
 from .option import Option
 from .two_way import TwoWay
-from .vote import Vote
 from .utils import MAX_ID_VALUE, MIN_ID_VALUE
+from .vote import Vote
+
 
 # Constants
 

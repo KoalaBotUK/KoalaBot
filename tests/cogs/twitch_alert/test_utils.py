@@ -2,9 +2,10 @@
 
 # Built-in/Generic Imports
 
+import discord
 # Libs
 import discord.ext.test as dpytest
-import discord
+from twitchAPI.object import Stream, TwitchUser, Game
 
 # Own modules
 from koala.cogs.twitch_alert import utils
@@ -26,9 +27,9 @@ def test_create_live_embed():
     expected.set_thumbnail(url="http://koalabot.uk")
 
     # Create JSON required to pass to method
-    stream_info = {'user_name': "Test", 'user_login': "test", 'title': "Test Title"}
-    user_info = {'profile_image_url': "http://koalabot.uk"}
-    game_info = {'name': "TestGame"}
+    stream_info = Stream(user_name="Test", user_login="test", title="Test Title")
+    user_info = TwitchUser(profile_image_url="http://koalabot.uk")
+    game_info = Game(name="TestGame")
 
     # Get response and assert equal
     result = utils.create_live_embed(stream_info, user_info, game_info, "")
@@ -44,9 +45,9 @@ def test_create_live_embed_with_message():
     expected.set_thumbnail(url="http://koalabot.uk")
 
     # Create JSON required to pass to method
-    stream_info = {'user_name': "Test", 'user_login': "test", 'title': "Test Title"}
-    user_info = {'profile_image_url': "http://koalabot.uk"}
-    game_info = {'name': "TestGame"}
+    stream_info = Stream(user_name="Test", user_login="test", title="Test Title")
+    user_info = TwitchUser(profile_image_url="http://koalabot.uk")
+    game_info = Game(name="TestGame")
 
     # Get response and assert equal
     result = utils.create_live_embed(stream_info, user_info, game_info, "Hello Message")
@@ -62,8 +63,8 @@ def test_create_live_embed_without_game():
     expected.set_thumbnail(url="http://koalabot.uk")
 
     # Create JSON required to pass to method
-    stream_info = {'user_name': "Test", 'user_login': "test", 'title': "Test Title"}
-    user_info = {'profile_image_url': "http://koalabot.uk"}
+    stream_info = Stream(user_name="Test", user_login="test", title="Test Title")
+    user_info = TwitchUser(profile_image_url="http://koalabot.uk")
 
     # Get response and assert equal
     result = utils.create_live_embed(stream_info, user_info, None, "Hello Message")

@@ -9,14 +9,19 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import argparse
-
+import datetime
+from pathlib import Path
+from pathlib import PurePath
 # Libs
 from typing import Tuple, Optional
-from pathlib import PurePath
+
 import discord
 from discord.ext import commands
+from discord.ext.commands import BadArgument
 
+from koala.colours import ERROR_RED
 # Own modules
+from koala.env import CONFIG_PATH
 from koala.colours import ERROR_RED
 
 # Constants
@@ -113,3 +118,9 @@ def __parse_args(args):
     args, unknown = parser.parse_known_args(args)
     return args
 
+
+def convert_iso_datetime(argument):
+    try:
+        return datetime.datetime.fromisoformat(argument)
+    except ValueError:
+        raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)

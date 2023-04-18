@@ -47,3 +47,15 @@ class ToReVerify:
     def __repr__(self):
         return "<to_re_verify(%s, %s)>" % \
                (self.u_id, self.r_id)
+
+
+@mapper_registry.mapped
+class VerifyBlacklist:
+    __tablename__ = 'VerifyBlacklist'
+    user_id = Column(DiscordSnowflake, primary_key=True)
+    role_id = Column(DiscordSnowflake, primary_key=True)
+    email_suffix = Column(VARCHAR(100), primary_key=True)
+
+    def __repr__(self):
+        return "<VerifyBlacklist(%s, %s, %s)>" % \
+               (self.user_id, self.role_id, self.email_suffix)

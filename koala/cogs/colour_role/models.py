@@ -1,4 +1,5 @@
 from sqlalchemy import Column, ForeignKey
+
 from koala.models import mapper_registry, DiscordSnowflake
 
 

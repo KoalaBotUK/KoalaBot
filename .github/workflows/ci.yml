@@ -5,23 +5,18 @@ on:
   push:
     branches: [master, KoalaBotPublic]
   pull_request:
-  pull_request_target:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   test:
-
     runs-on: ${{ matrix.os }}
-    if: |
-        (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
-        (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.8', '3.9'] # todo: 3.10 should be enabled after mysql migration
 
     defaults:
       run:
@@ -56,7 +51,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         pip install pytest-cov
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt; 
+        fi
+        
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          pip install pysqlcipher3==1.2.0;
+        fi
 
     - name: Lint with flake8
       run: |
@@ -88,17 +89,3 @@ jobs:
         fail_ci_if_error: true
         path_to_write_report: ./coverage/codecov_report.txt
         verbose: true
-  test-build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Build
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: false

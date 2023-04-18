@@ -11,6 +11,7 @@ KoalaBot Cog for guild members wishing to change their role colour
 import math
 import re
 from typing import List, Tuple, Any
+
 # Libs
 import discord
 from discord.ext import commands
@@ -21,6 +22,7 @@ from koala.db import insert_extension
 from .db import ColourRoleDBManager
 from .log import logger
 from .utils import COLOUR_ROLE_NAMING
+
 
 # Variables
 
@@ -266,10 +268,9 @@ class ColourRole(commands.Cog):
         colour_role: discord.Role = await ctx.guild.create_role(name=f"KoalaBot[0x{colour_str}]",
                                                                 colour=colour,
                                                                 mentionable=False, hoist=False)
+        colour_role = ctx.guild.get_role(colour_role.id)
         role_pos = self.calculate_custom_colour_role_position(ctx.guild)
-        await colour_role.edit(position=role_pos)
-        await colour_role.edit(position=role_pos)
-        return colour_role
+        return await colour_role.edit(position=role_pos)
 
     def calculate_custom_colour_role_position(self, guild: discord.Guild) -> int:
         """
@@ -553,10 +554,10 @@ class ColourRole(commands.Cog):
             await self.prune_guild_empty_colour_roles(ctx)
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
     """
-    bot.add_cog(ColourRole(bot))
+    await bot.add_cog(ColourRole(bot))
     logger.info("ColourRole is ready.")

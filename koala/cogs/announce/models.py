@@ -6,6 +6,7 @@ from koala.models import mapper_registry, DiscordSnowflake
 @mapper_registry.mapped
 class GuildUsage:
     __tablename__ = 'GuildUsage'
+    __table_args__= {'extend_existing': True}
     guild_id = Column(DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True)
     last_message_epoch_time = Column(INT)
 

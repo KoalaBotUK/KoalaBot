@@ -5,7 +5,7 @@ from discord import ActivityType
 from sqlalchemy import Column, TIMESTAMP, VARCHAR, INT, types
 
 # Own modules
-from koala.models import mapper_registry
+from koala.models import mapper_registry, BaseModel
 
 
 # Constants
@@ -38,7 +38,7 @@ class DiscordActivityType(types.TypeDecorator):
 
 
 @mapper_registry.mapped
-class ScheduledActivities:
+class ScheduledActivities(BaseModel):
     __tablename__ = 'ScheduledActivities'
     activity_id = Column(INT, primary_key=True, autoincrement=True)
     activity_type = Column(DiscordActivityType, comment="-1: unknown, 0: Playing, 1: Streaming, 2: Listening, "

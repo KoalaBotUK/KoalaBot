@@ -1,25 +1,25 @@
 # Futures
 
+import re
 # Built-in/Generic Imports
 import time
-import re
-
-# Own modules
-import koalabot
-from koalabot import COMMAND_PREFIX as CP
-from koala.db import insert_extension
-from koala.colours import KOALA_GREEN
-from koala.utils import error_embed, is_channel_in_guild
-from . import core
-from .log import logger
-from .db import TwitchAlertDBManager
-from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
-    LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
-from .env import TWITCH_KEY, TWITCH_SECRET
 
 # Libs
 import discord
 from discord.ext import commands, tasks
+
+# Own modules
+import koalabot
+from koala.colours import KOALA_GREEN
+from koala.db import insert_extension
+from koala.utils import error_embed, is_channel_in_guild
+from koalabot import COMMAND_PREFIX as CP
+from . import core
+from .db import TwitchAlertDBManager
+from .env import TWITCH_KEY, TWITCH_SECRET
+from .log import logger
+from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
+    LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
 
 
 # Constants
@@ -183,7 +183,7 @@ class TwitchAlert(commands.Cog):
         channel_id = channel.id
         twitch_username = str.lower(twitch_username)
         if not re.search(TWITCH_USERNAME_REGEX, twitch_username):
-            raise discord.errors.InvalidArgument(
+            raise ValueError(
                 "The given twitch_username is not a valid username (please use lowercase)")
 
         # Check the channel specified is in this guild
@@ -275,7 +275,7 @@ class TwitchAlert(commands.Cog):
         team_name = str.lower(team_name)
 
         if not re.search(TWITCH_USERNAME_REGEX, team_name):
-            raise discord.errors.InvalidArgument(
+            raise ValueError(
                 "The given team_name is not a valid twitch team name (please use lowercase)")
 
         # Check the channel specified is in this guild
@@ -395,6 +395,7 @@ class TwitchAlert(commands.Cog):
         When the bot is started up, the loop begins
         :return:
         """
+        await self.ta_database_manager.setup_twitch_handler()
         if not self.running:
             self.start_loops()
 
@@ -422,12 +423,11 @@ class TwitchAlert(commands.Cog):
         except Exception as err:
             logger.error("Twitch user live loop error: ", exc_info=err)
 
-
     @tasks.loop(minutes=REFRESH_TEAMS_DELAY)
     async def loop_update_teams(self):
         start = time.time()
         # logger.info("TwitchAlert: Started Update Teams")
-        self.ta_database_manager.update_all_teams_members()
+        await self.ta_database_manager.update_all_teams_members()
         time_diff = time.time() - start
         if time_diff > 5:
             logger.warning(f"TwitchAlert: Teams updated in > 5s | {time_diff}s")
@@ -444,7 +444,8 @@ class TwitchAlert(commands.Cog):
         except Exception as err:
             logger.error("Twitch team live loop error: ", exc_info=err)
 
-def setup(bot: koalabot) -> None:
+
+async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
     :param bot: the bot client for KoalaBot
@@ -453,5 +454,5 @@ def setup(bot: koalabot) -> None:
         logger.error("TwitchAlert not started. API keys not found in environment.")
         insert_extension("TwitchAlert", 0, False, False)
     else:
-        bot.add_cog(TwitchAlert(bot))
+        await bot.add_cog(TwitchAlert(bot))
         logger.info("TwitchAlert is ready.")

@@ -1,12 +1,13 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from enum import Enum
 
-import discord
-from sqlalchemy import Column, INT, VARCHAR, BOOLEAN, ForeignKey
+import sqlalchemy.dialects.mssql.information_schema
 import sqlalchemy.types as types
-from sqlalchemy.orm import registry, validates
+from sqlalchemy import Column, ForeignKey
+from sqlalchemy import INT, VARCHAR, BOOLEAN
+from sqlalchemy.orm import registry
+from sqlalchemy.orm import validates
 
 # Own modules
 
@@ -52,6 +53,16 @@ class Guilds:
     def __repr__(self):
         return "<Guilds(%s, %s)>" % \
                (self.guild_id, self.subscription)
+
+
+class BaseModel:
+    """
+    The base, serializable model for all sqlalchemy models in this project
+    """
+    __table__: sqlalchemy.dialects.mssql.information_schema.tables
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 @mapper_registry.mapped

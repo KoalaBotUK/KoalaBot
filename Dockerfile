@@ -15,10 +15,10 @@ RUN \
 	curl \
     jq \
     unzip \
-    python3=3.8.2-0ubuntu2 \
-    python3-pip=20.0.2-5ubuntu1.6
+    python3 \
+    python3-pip
 
-RUN apt-get install -y software-properties-common=0.99.9.8 && \
+RUN apt-get install -y software-properties-common && \
   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
   apt-get update
 
@@ -41,7 +41,8 @@ RUN python3 -m pip install pysqlcipher3
 VOLUME /config
 
 # Expose port
-# EXPOSE 5000
+ENV API_PORT=8080
+EXPOSE 8080
 
 # run app
 #########

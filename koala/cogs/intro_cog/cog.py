@@ -11,24 +11,25 @@ Commented using reStructuredText (reST)
 
 # Libs
 import asyncio
+
 import discord
 from discord.ext import commands
 
 # Own modules
 import koalabot
-
-from .log import logger
 from .db import get_guild_welcome_message, update_guild_welcome_message, new_guild_welcome_message, \
     remove_guild_welcome_message
+from .log import logger
 from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, \
     BASE_LEGAL_MESSAGE
+
 
 # Constants
 
 # Variables
 
 
-class IntroCog(commands.Cog, name="KoalaBot"):
+class IntroCog(commands.Cog, name="Intro"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
@@ -137,10 +138,10 @@ class IntroCog(commands.Cog, name="KoalaBot"):
             await ctx.send('Please put in a welcome message to update to.')
 
 
-def setup(bot: koalabot) -> None:
+async def setup(bot: koalabot) -> None:
     """
     Loads this cog into the selected bot
     :param bot: The client of the KoalaBot
     """
-    bot.add_cog(IntroCog(bot))
+    await bot.add_cog(IntroCog(bot))
     logger.info("IntroCog is ready.")

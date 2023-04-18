@@ -10,6 +10,7 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import re
+
 import emoji
 
 # Own modules
