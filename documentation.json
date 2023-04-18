@@ -263,37 +263,37 @@
     "name": "TwitchAlert",
     "commands": [
       {
-        "command": "twitchAdd",
-        "parameters": ["channel_id", "twitch_username", "custom_live_message"],
+        "command": "twitch add",
+        "parameters": ["twitch_username", "channel", "custom_live_message"],
         "description": "Add a Twitch user to a Twitch Alert"
       },
       {
-        "command": "twitchRemove",
-        "parameters": ["channel_id", "twitch_username"],
+        "command": "twitch remove",
+        "parameters": ["twitch_username", "channel"],
         "description": "Remove a user from a Twitch Alert"
       },
       {
-        "command": "twitchAddTeam",
-        "parameters": ["channel_id", "team_name", "custom_live_message"],
+        "command": "twitch addTeam",
+        "parameters": ["team_name", "channel", "custom_live_message"],
         "description": "Add a Twitch team to a Twitch alert"
       },
       {
-        "command": "twitchRemoveTeam",
-        "parameters": ["channel_id", "team_name"],
+        "command": "twitch removeTeam",
+        "parameters": ["team_name", "channel"],
         "description": "Edit the default message put in a Twitch Alert Notification"
       },
       {
-        "command": "twitchEditMsg",
+        "command": "twitch editMsg",
         "parameters": ["channel", "default_live_message"],
         "description": "Edit the default message put in a Twitch Alert Notification"
       },
       {
-        "command": "twitchViewMsg",
+        "command": "twitch viewMsg",
         "parameters": ["channel"],
         "description": "Shows the current default message for Twitch Alerts"
       },
       {
-        "command": "twitchList",
+        "command": "twitch list",
         "parameters": ["channel"],
         "description": "Shows all current TwitchAlert users and teams in a channel"
       }
@@ -415,3 +415,4 @@
     ]
   }
 ]
+  

@@ -1,24 +1,20 @@
 # KoalaBot
 [![Discord Server](https://img.shields.io/discord/729325378681962576.svg?style=flat-square&logo=discord&logoColor=white&labelColor=697EC4&color=7289DA&label=%20)](https://discord.gg/5etEjVd)
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/KoalaBotUK/KoalaBot/CI?label=tests&style=flat-square)](https://github.com/KoalaBotUK/KoalaBot/actions/)
+[![CI](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/ci.yml/badge.svg)](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/KoalaBotUK/KoalaBot/actions/workflows/codeql-analysis.yml)
 ![Codecov](https://img.shields.io/codecov/c/github/KoalaBotUK/KoalaBot?style=flat-square)
-[![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/KoalaBotUK/KoalaBot.svg?style=flat-square)](https://lgtm.com/projects/g/KoalaBotUK/KoalaBot/context:python)
 
 
 KoalaBot is a free open source discord bot being developed by students from around the UK. 
 Our aim is to ensure university society committee leaders can access all they need and from one easy to use discord bot 
 to improve their server and society! 
 
-## Authors
+## Our Development Team/ Contributors
+<a href="https://github.com/KoalaBotUK/KoalaBot/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=KoalaBotUK/KoalaBot" />
+</a>
 
-* **Jack Draper** - *Project Manager* - [JayDwee](https://github.com/JayDwee)
-* **Stefan Cooper** - *Senior Developer* - [stefan-cooper](https://github.com/stefan-cooper)
-* **Kieran Allinson** - *Senior Developer* - [Kaspiaan](https://github.com/Kaspiaan)
-* **Viraj Shah** - *Senior Developer* - [VirajShah18](https://github.com/VirajShah18)
-
-All of our other amazing developers can be seen on our website https://koalabot.uk
-
-See also the list of [contributors](https://github.com/KoalaBotUK/KoalaBot/graphs/contributors) to this repo.
+Our current Development Team can be found on our website [koalabot.uk](https://koalabot.uk)
 
 ## License
 
@@ -55,8 +51,9 @@ DISCORD_TOKEN = AdiSc0RdT0k3N # A discord Token taken from the discord developer
 BOT_OWNER = 123456789 # (optional) A discord ID for the person who should have access to owner commands (will default to bot owner)
 
 # Encryption (optional)
-ENCRIPTION = False # or True (default) for disabling/enabling the database encryption
+ENCRYPTED = False # or True (default) for disabling/enabling the database encryption
 SQLITE_KEY = 123EXAMPLE456ENCRYPTION789KEY0 # A custom SQLcipher key
+CONFIG_PATH = ./config # directory of logs and database (default=./config)
 
 # Twitch Alert (Required for TwitchAlert Extension)
 TWITCH_TOKEN = tw1tch70k3n # Twitch Token taken from the twitch developers portal
@@ -65,20 +62,80 @@ TWITCH_SECRET = tw1tch53cr3t # Twitch Secret taken from the twitch developers po
 # Verification (Required for Verify Extension)
 GMAIL_EMAIL = example@gmail.com # email for a gmail account
 GMAIL_PASSWORD = example_password123 # password for the same gmail account
+
+# API
+API_PORT = 8080 # port for the API to listen on (default=8080)
+```
+
 ```
 `DISCORD_TOKEN` is the only required environment variable for KoalaBot to be run.
 
 ## Running the tests
 Tests are run using the pytest library
 ```bash
-$ pytest
+$ pytest tests
 ```
 
 ## Running KoalaBot
 If all prerequisites have been followed, you can start KoalaBot with the following command
 ```bash
-$ python3 KoalaBot.py
+$ python3 koalabot.py
 ```
+
+## Running KoalaBot with Docker
+Here are some example snippets to help you get started creating a container.
+
+### docker-compose (recommended, [click here for more info](https://docs.linuxserver.io/general/docker-compose))
+```yaml
+---
+version: "3.9"
+services:
+  transmission:
+    image: jaydwee/koalabot
+    container_name: KoalaBot
+    environment:
+      - DISCORD_TOKEN = bot_token
+      - BOT_OWNER = owner_user_id #optional
+      - ENCRYPTED = boolean #optional
+      - SQLITE_KEY = key #optional
+      - TWITCH_TOKEN = twitch_application_token #optional (TwitchAlert)
+      - TWITCH_SECRET = twitch_application_secret #optional (TwitchAlert)
+      - GMAIL_EMAIL = example@gmail.com #optional (Verify)
+      - GMAIL_PASSWORD = example_password123 #optional (Verify)
+    ports:
+      - "8080:8080"
+    volumes:
+      - <path to data>:/config
+    restart: unless-stopped
+```
+
+### docker cli ([click here for more info](https://docs.docker.com/engine/reference/commandline/cli/))
+
+```bash
+docker run \
+  --name=Koala \
+  -e DISCORD_TOKEN=bot_token \
+  -e BOT_OWNER=owner_user_id `#optional` \
+  -e ENCRYPTED=boolean `#optional` \
+  -e SQLITE_KEY=key `#optional` \
+  -e TWITCH_TOKEN=twitch_application_token `#optional (TwitchAlert)` \
+  -e TWITCH_SECRET=twitch_application_secret `#optional (TwitchAlert)` \
+  -e GMAIL_EMAIL=example@gmail.com `#optional (Verify)` \
+  -e GMAIL_PASSWORD=example_password123 `#optional (Verify)` \
+  -p 8080:8080
+  -v <path to data>:/config \
+  --restart unless-stopped \
+  jaydwee/koalabot
+```
+
+### Using Env File
+Add `--env-file .env` to your command
+
+### Versions
+`jaydwee/koalabot:latest` The latest stable release\
+`jaydwee/koalabot:prerelease` The latest prerelease\
+`jaydwee/koalabot:master` The current state of the master branch\
+`jaydwee/koalabot:v<x.y.z>` The specified version of KoalaBot
 
 ## Links
 * Website & Dashboard: [koalabot.uk](https://koalabot.uk)

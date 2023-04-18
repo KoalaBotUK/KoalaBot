@@ -5,23 +5,18 @@ on:
   push:
     branches: [master, KoalaBotPublic]
   pull_request:
-  pull_request_target:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
   test:
-
     runs-on: ${{ matrix.os }}
-    if: |
-        (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
-        (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
     strategy:
       fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.8', '3.9'] # todo: 3.10 should be enabled after mysql migration
 
     defaults:
       run:
@@ -74,7 +69,7 @@ jobs:
         TWITCH_SECRET: ${{ secrets.TWITCH_SECRET }}
         TWITCH_TOKEN: ${{ secrets.TWITCH_TOKEN }}
       run: |
-        pytest --cov=./ --cov-report=xml
+        pytest --cov=./ --cov-report=xml tests
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1

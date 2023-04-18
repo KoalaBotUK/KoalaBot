@@ -1,3 +1,5 @@
+/config
+
 # Databases (avoid saving private info to git)
 *.db
 *.db-journal
