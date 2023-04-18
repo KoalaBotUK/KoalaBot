@@ -1,16 +1,17 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED, OK, BAD_REQUEST
-from aiohttp import web
+from http.client import CREATED
+
 import discord
+from aiohttp import web
 from discord.ext.commands import Bot
 
+from koala.rest.api import parse_request, build_response
+from koala.utils import convert_iso_datetime
 # Own modules
 from . import core
 from .log import logger
-from koala.rest.api import parse_request, build_response
-from koala.utils import convert_iso_datetime
 
 # Constants
 BASE_ENDPOINT = 'base'
@@ -187,7 +188,7 @@ class BaseEndpoint:
         """
         Disables a koala extension onto a server
         :param guild_id: id for the Discord guild
-        :param koala_extension: name of the extension
+        :param koala_ext: name of the extension
         :return:
         """
         try:

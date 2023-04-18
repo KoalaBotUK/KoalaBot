@@ -9,7 +9,6 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import random
-from typing import *
 
 # Libs
 import discord
@@ -19,12 +18,10 @@ import mock
 import pytest
 from discord.ext.test import factories as dpyfactory
 
-# Own modules
-from koala.db import session_manager
-from tests.tests_utils import utils as testutils
-
-from tests.log import logger
 from koala.cogs.react_for_role.db import *
+from tests.log import logger
+# Own modules
+from tests.tests_utils import utils as testutils
 from .utils import independent_get_guild_rfr_message, independent_get_rfr_message_emoji_role, \
     independent_get_guild_rfr_required_role, get_rfr_reaction_role_by_role_id
 

@@ -1,25 +1,25 @@
 # Futures
 
+import re
 # Built-in/Generic Imports
 import time
-import re
-
-# Own modules
-import koalabot
-from koalabot import COMMAND_PREFIX as CP
-from koala.db import insert_extension
-from koala.colours import KOALA_GREEN
-from koala.utils import error_embed, is_channel_in_guild
-from . import core
-from .log import logger
-from .db import TwitchAlertDBManager
-from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
-    LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
-from .env import TWITCH_KEY, TWITCH_SECRET
 
 # Libs
 import discord
 from discord.ext import commands, tasks
+
+# Own modules
+import koalabot
+from koala.colours import KOALA_GREEN
+from koala.db import insert_extension
+from koala.utils import error_embed, is_channel_in_guild
+from koalabot import COMMAND_PREFIX as CP
+from . import core
+from .db import TwitchAlertDBManager
+from .env import TWITCH_KEY, TWITCH_SECRET
+from .log import logger
+from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
+    LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
 
 
 # Constants

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, orm
+
 from koala.db import setup
 from koala.models import mapper_registry
 

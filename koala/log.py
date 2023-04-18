@@ -1,11 +1,10 @@
-import sys
 import logging
+import sys
 from datetime import date
-
 from pathlib import Path
 
-from koala.utils import format_config_path
 from koala.env import CONFIG_PATH, LOGGING_FILE
+from koala.utils import format_config_path
 
 # load_dotenv()
 _LOG_LEVEL = logging.DEBUG

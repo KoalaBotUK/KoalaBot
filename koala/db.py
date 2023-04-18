@@ -19,9 +19,10 @@ from sqlalchemy.orm import sessionmaker
 
 # Own modules
 from koala.env import DB_KEY, ENCRYPTED_DB
+from koala.log import logger
 from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
 from koala.utils import get_arg_config_path, format_config_path
-from koala.log import logger
+
 
 # Constants
 

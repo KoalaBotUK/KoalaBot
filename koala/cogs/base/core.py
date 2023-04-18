@@ -5,10 +5,11 @@ import discord
 from discord.ext.commands import Bot
 
 import koalabot
+from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, \
+    give_guild_extension, remove_guild_extension
 from . import db
 from .log import logger
 from .models import ScheduledActivities
-from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, give_guild_extension, remove_guild_extension
 from .utils import DEFAULT_ACTIVITY, activity_eq, list_ext_embed
 
 # Constants

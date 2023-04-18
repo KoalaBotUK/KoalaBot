@@ -7,11 +7,11 @@ import sqlalchemy.exc
 import sqlalchemy.orm
 from sqlalchemy import select, delete, and_
 
+from koala.db import assign_session
 # Own modules
 from koala.db import session_manager
 from .log import logger
 from .models import GuildRFRMessages, RFRMessageEmojiRoles, GuildRFRRequiredRoles
-from koala.db import assign_session
 
 
 @assign_session

@@ -6,17 +6,17 @@ A configuration file for methods useful in all testing with pytest
 # Built-in/Generic Imports
 import shutil
 
+import discord
+import discord.ext.test as dpytest
 # Libs
 import pytest
-import discord
-import discord.ext.commands as commands
-import discord.ext.test as dpytest
 import pytest_asyncio
 
 # Own modules
 import koalabot
 from koala.db import session_manager
 from tests.log import logger
+
 # Constants
 
 pytest_plugins = 'aiohttp.pytest_plugin'

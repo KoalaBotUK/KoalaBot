@@ -20,17 +20,17 @@ __status__ = "Development"  # "Prototype", "Development", or "Production"
 import asyncio
 import time
 
+import discord
 # Libs
 from aiohttp import web
-import discord
 from discord.ext import commands
 
 # Own modules
 from koala.db import extension_enabled
-from koala.errors import KoalaException
-from koala.utils import error_embed
-from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
+from koala.errors import KoalaException
+from koala.log import logger
+from koala.utils import error_embed
 
 # Constants
 COMMAND_PREFIX = "k!"
