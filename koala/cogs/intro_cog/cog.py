@@ -11,17 +11,18 @@ Commented using reStructuredText (reST)
 
 # Libs
 import asyncio
+
 import discord
 from discord.ext import commands
 
 # Own modules
 import koalabot
-
-from .log import logger
 from .db import get_guild_welcome_message, update_guild_welcome_message, new_guild_welcome_message, \
     remove_guild_welcome_message
+from .log import logger
 from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, \
     BASE_LEGAL_MESSAGE
+
 
 # Constants
 

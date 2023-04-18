@@ -20,7 +20,6 @@ import koalabot
 from koala.cogs import Voting
 from koala.cogs.voting.models import Votes
 from koala.db import session_manager, insert_extension
-
 from tests.log import logger
 
 

@@ -13,10 +13,9 @@ from discord.ext import commands
 
 # Own modules
 import koalabot
-from koala.db import insert_extension
 from koala.colours import KOALA_GREEN
+from koala.db import insert_extension
 from koala.utils import extract_id
-
 from .db import TextFilterDBManager
 from .utils import type_exists, build_word_list_embed, build_moderation_channel_embed, \
     create_default_embed, build_moderation_deleted_embed

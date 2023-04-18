@@ -1,7 +1,9 @@
-import pytest_asyncio
-from koala.cogs.twitch_alert.twitch_handler import TwitchAPIHandler
-from koala.cogs.twitch_alert.env import TWITCH_KEY, TWITCH_SECRET
 import pytest
+import pytest_asyncio
+
+from koala.cogs.twitch_alert.env import TWITCH_KEY, TWITCH_SECRET
+from koala.cogs.twitch_alert.twitch_handler import TwitchAPIHandler
+
 
 @pytest_asyncio.fixture
 async def twitch_api_handler():

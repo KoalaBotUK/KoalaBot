@@ -2,9 +2,9 @@
 
 # Built-in/Generic Imports
 
+import discord
 # Libs
 import discord.ext.test as dpytest
-import discord
 from twitchAPI.object import Stream, TwitchUser, Game
 
 # Own modules

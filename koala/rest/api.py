@@ -4,22 +4,22 @@ import dataclasses
 import datetime
 import inspect
 import json
-
 # Libs
 from functools import wraps
-from typing import OrderedDict
+from http.client import OK, BAD_REQUEST
 
 import aiohttp.web
 from aiohttp.abc import Request
 from aiohttp.typedefs import Handler
 
+from koala.errors import KoalaException
 from koala.log import logger
 # Own modules
 from koala.models import BaseModel
+from koala.rest.dto import ApiError
+
 
 # Constants
-
-from http.client import OK
 
 
 # Variables
@@ -123,6 +123,10 @@ def parse_request(*args, **kwargs) -> Handler:
 
             try:
                 result = await func(self, **{arg_name: available_args[arg_name] for arg_name in available_args.keys()})
+
+            except KoalaException as e:
+                logger.error("API Failed", exc_info=e)
+                return build_response(BAD_REQUEST, ApiError(type(e).__name__, str(e)))
             except Exception as e:
                 logger.error("API Failed", exc_info=e)
                 raise e

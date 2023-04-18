@@ -4,9 +4,10 @@
 from discord import ActivityType
 from sqlalchemy import Column, Integer, String, TIMESTAMP, Enum
 
+from koala.db import setup
 # Own modules
 from koala.models import mapper_registry, BaseModel
-from koala.db import setup
+
 
 # Constants
 

@@ -17,13 +17,14 @@ import discord
 import emoji
 from discord.ext import commands
 
-# Own modules
-from . import core
 import koalabot
 from koala.colours import KOALA_GREEN
-from koala.utils import wait_for_message
 from koala.db import insert_extension
-from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_messages, get_guild_rfr_roles, get_guild_rfr_required_roles
+from koala.utils import wait_for_message
+# Own modules
+from . import core
+from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_messages, get_guild_rfr_roles, \
+    get_guild_rfr_required_roles
 from .log import logger
 
 

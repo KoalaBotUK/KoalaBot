@@ -2,16 +2,16 @@
 from typing import List
 
 from twitchAPI.object import Stream, TwitchUser, Game, ChannelTeam
-
-# Built-in/Generic Imports
-
-# Own modules
-from .utils import split_to_100s
-from .log import logger
-
 # Libs
 from twitchAPI.twitch import Twitch
 from twitchAPI.types import TwitchAPIException
+
+from .log import logger
+# Own modules
+from .utils import split_to_100s
+
+
+# Built-in/Generic Imports
 
 # Constants
 

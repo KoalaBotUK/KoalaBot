@@ -1,8 +1,7 @@
 import pytest
-from sqlalchemy import delete
-
 from aiohttp import web
 from discord.ext.commands import Bot
+from sqlalchemy import delete
 
 from koala.cogs.base.api import BaseEndpoint
 from koala.cogs.base.models import ScheduledActivities

@@ -16,15 +16,11 @@ import mock
 import pytest
 import pytest_asyncio
 from discord.ext import commands
-from sqlalchemy import delete
 
 # Own modules
 import koalabot
-from koala.cogs import BaseCog
 from koala.cogs.base.cog import setup as setup_cog, BaseCog
-from koala.db import session_manager
 from koala.colours import KOALA_GREEN
-from koala.models import KoalaExtensions, GuildExtensions
 
 
 # Constants
