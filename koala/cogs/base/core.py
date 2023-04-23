@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import discord
 from discord.ext.commands import Bot
-from sqlalchemy import select
+from sqlalchemy import select, exists
 from sqlalchemy.orm import Session
 
 import koalabot
@@ -13,7 +13,7 @@ from . import db
 from .log import logger
 from .models import ScheduledActivities
 from .utils import DEFAULT_ACTIVITY, activity_eq, list_ext_embed
-from ...models import GuildExtensions
+from ...models import GuildExtensions, Guilds
 
 # Constants
 
@@ -233,3 +233,13 @@ def get_version():
     :return:
     """
     return "version: "+koalabot.__version__
+
+
+@assign_session
+def add_all_guilds(bot: koalabot.KoalaBot, *, session: Session):
+    guilds = bot.guilds
+    for guild in guilds:
+        db_guild = session.execute(select(Guilds).where(Guilds.guild_id == guild.id)).one_or_none()
+        if db_guild is None:
+            session.add(Guilds(guild_id=guild.id, subscription=0))
+    session.commit()

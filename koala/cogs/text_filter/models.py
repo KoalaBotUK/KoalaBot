@@ -31,7 +31,7 @@ class TextFilterModeration:
 @mapper_registry.mapped
 class TextFilterIgnoreList:
     __tablename__ = 'TextFilterIgnoreList'
-    ignore_id = Column(VARCHAR(36), primary_key=True)
+    ignore_id = Column(VARCHAR(40), primary_key=True)
     guild_id = Column(DiscordSnowflake)
     ignore_type = Column(VARCHAR(10))
     ignore = Column(DiscordSnowflake)

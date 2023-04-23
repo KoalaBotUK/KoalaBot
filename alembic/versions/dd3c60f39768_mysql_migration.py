@@ -208,7 +208,7 @@ def unsafe_upgrade():
                                              Column('channel_id', DiscordSnowflake, primary_key=True),
                                              Column('guild_id', DiscordSnowflake))
     text_filter_ignore_list = op.create_table('TextFilterIgnoreList',
-                                              Column('ignore_id', VARCHAR(36), primary_key=True),
+                                              Column('ignore_id', VARCHAR(40), primary_key=True),
                                               Column('guild_id', DiscordSnowflake),
                                               Column('ignore_type', VARCHAR(10)),
                                               Column('ignore', DiscordSnowflake))
