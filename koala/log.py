@@ -4,7 +4,6 @@ from datetime import date
 from pathlib import Path
 
 from koala.env import CONFIG_PATH, LOGGING_FILE
-from koala.utils import format_config_path
 
 _LOG_LEVEL = logging.DEBUG
 _FORMATTER = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")

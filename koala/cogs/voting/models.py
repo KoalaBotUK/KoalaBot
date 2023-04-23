@@ -1,5 +1,7 @@
 from sqlalchemy import Column, VARCHAR, FLOAT
+
 from koala.models import mapper_registry, DiscordSnowflake
+
 
 # FIXME: Previous approach had no primary keys, this sets all as primary key but shouldn't affect existing databases
 # FIXME: When refactoring database, set a primary key

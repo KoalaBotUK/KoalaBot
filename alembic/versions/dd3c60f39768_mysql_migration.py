@@ -7,7 +7,6 @@ Create Date: 2022-02-23 18:54:15.064055
 """
 import logging
 import os
-from enum import Enum
 from pathlib import Path
 from sqlite3 import OperationalError
 
@@ -15,10 +14,9 @@ import discord
 import sqlalchemy.dialects.mysql.base
 from alembic import op
 from discord import ActivityType
+from pymysql.err import IntegrityError as PmyIntegrityError
 from sqlalchemy import Column, String, VARCHAR, INT, FLOAT, BOOLEAN, ForeignKey, TIMESTAMP, types
 from sqlalchemy.exc import IntegrityError as SaIntegrityError
-from pymysql.err import IntegrityError as PmyIntegrityError
-
 
 # Config Path
 CONFIG_PATH = os.environ.get("CONFIG_PATH")

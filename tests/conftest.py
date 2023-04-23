@@ -12,9 +12,9 @@ import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
 
+import koala.db as db
 # Own modules
 import koalabot
-import koala.db as db
 from koala.db import session_manager
 from tests.log import logger
 

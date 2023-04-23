@@ -12,15 +12,14 @@ Commented using reStructuredText (reST)
 from contextlib import contextmanager
 from functools import wraps
 
-from sqlalchemy import select, delete, and_, create_engine, VARCHAR, func as sql_func
+from sqlalchemy import select, delete, and_, create_engine, VARCHAR
 from sqlalchemy.orm import sessionmaker
 
+from koala.env import DB_URL, DB_TYPE
+from koala.log import logger
+from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
 # Own modules
 from .enums import DatabaseType
-from koala.env import DB_URL, DB_TYPE
-from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
-from koala.log import logger
-
 
 # Constants
 

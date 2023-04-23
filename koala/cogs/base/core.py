@@ -3,7 +3,7 @@ from typing import List, Optional
 
 import discord
 from discord.ext.commands import Bot
-from sqlalchemy import select, exists
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 import koalabot

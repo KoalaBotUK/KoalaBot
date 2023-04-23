@@ -1,4 +1,5 @@
 from sqlalchemy import Column, INT, VARCHAR, ForeignKey, orm
+
 from koala.models import mapper_registry, DiscordSnowflake
 
 

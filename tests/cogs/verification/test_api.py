@@ -1,4 +1,4 @@
-from http.client import OK, BAD_REQUEST, INTERNAL_SERVER_ERROR
+from http.client import OK, BAD_REQUEST
 
 # Libs
 import discord
@@ -6,7 +6,6 @@ import discord.ext.test as dpytest
 import pytest
 from aiohttp import web
 
-from koala.cogs.verification import core
 from koala.cogs.verification.api import VerifyEndpoint, CONFIG_ENDPOINT, REVERIFY_ENDPOINT
 
 TEST_EMAIL = 'verify_test@koalabot.uk'

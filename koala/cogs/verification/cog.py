@@ -11,11 +11,9 @@ Commented using reStructuredText (reST)
 # Libs
 import discord
 from discord.ext import commands
-from sqlalchemy import select, delete, and_
 
 # Own modules
 import koalabot
-from koala.db import session_manager, insert_extension
 from koala.db import insert_extension
 from . import core, errors
 from .env import GMAIL_EMAIL, GMAIL_PASSWORD
