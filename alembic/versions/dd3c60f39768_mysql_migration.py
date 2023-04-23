@@ -133,6 +133,13 @@ class DiscordSnowflake(types.TypeDecorator):
 
 
 def upgrade():
+    try:
+        unsafe_upgrade()
+    except Exception as e:
+        downgrade(exception=e)
+
+
+def unsafe_upgrade():
     guilds = op.create_table("Guilds",
                              Column('guild_id', DiscordSnowflake, primary_key=True),
                              Column('subscription', INT, server_default='0'))
@@ -155,11 +162,9 @@ def upgrade():
                                            Column('message', VARCHAR(100)),
                                            Column('time_start', TIMESTAMP),
                                            Column('time_end', TIMESTAMP))
-
     guild_usage = op.create_table('GuildUsage',
                                   Column('guild_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
                                   Column('last_message_epoch_time', INT))
-
     guild_colour_change_permissions = op.create_table('GuildColourChangePermissions',
                                                       Column('guild_id', DiscordSnowflake,
                                                              ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
@@ -375,40 +380,23 @@ def upgrade():
     conn.close()
 
 
-def downgrade():
-    op.drop_table("VoteSent")
-    op.drop_table("VoteOptions")
-    op.drop_table("VoteTargetRoles")
-    op.drop_table("Votes")
+def downgrade(exception=None):
+    tables = ["VoteSent", "VoteOptions", "VoteTargetRoles", "Votes",
+              "VerifyBlacklist", "to_re_verify", "non_verified_emails", "verified_emails", "roles",
+              "UserInTwitchTeam", "TeamInTwitchAlert", "UserInTwitchAlert", "TwitchAlerts",
+              "TextFilterIgnoreList", "TextFilterModeration", "TextFilter",
+              "GuildRFRRequiredRoles", "RFRMessageEmojiRoles", "GuildRFRMessages",
+              "GuildWelcomeMessages",
+              "GuildUsage",
+              "GuildInvalidCustomColourRoles", "GuildColourChangePermissions",
+              "ScheduledActivities",
+              "GuildExtensions", "KoalaExtensions", "Guilds"]
 
-    op.drop_table("to_re_verify")
-    op.drop_table("non_verified_emails")
-    op.drop_table("verified_emails")
-    op.drop_table("roles")
+    for table in tables:
+        try:
+            op.drop_table(table)
+        except Exception:
+            continue
 
-    op.drop_table("UserInTwitchTeam")
-    op.drop_table("TeamInTwitchAlert")
-    op.drop_table("UserInTwitchAlert")
-    op.drop_table("TwitchAlerts")
-
-    op.drop_table("TextFilterIgnoreList")
-    op.drop_table("TextFilterModeration")
-    op.drop_table("TextFilter")
-
-    op.drop_table("GuildRFRRequiredRoles")
-    op.drop_table("RFRMessageEmojiRoles")
-    op.drop_table("GuildRFRMessages")
-
-    op.drop_table("GuildWelcomeMessages")
-
-    op.drop_table("GuildUsage")
-
-    op.drop_table("GuildInvalidCustomColourRoles")
-    op.drop_table("GuildColourChangePermissions")
-
-    op.drop_table("ScheduledActivities")
-
-    op.drop_table("GuildExtensions")
-    op.drop_table("KoalaExtensions")
-    op.drop_table("Guilds")
-
+    if exception:
+        raise exception
