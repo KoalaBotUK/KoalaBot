@@ -246,6 +246,11 @@ def upgrade():
     to_re_verify = op.create_table('to_re_verify',
                                    Column('u_id', DiscordSnowflake, primary_key=True),
                                    Column('r_id', DiscordSnowflake, primary_key=True))
+    verify_blacklist = op.create_table('VerifyBlacklist',
+                                   Column('user_id', DiscordSnowflake, primary_key=True),
+                                   Column('role_id', DiscordSnowflake, primary_key=True),
+                                   Column('email_suffix', DiscordSnowflake, primary_key=True))
+
 
     votes = op.create_table('Votes',
                             Column('vote_id', DiscordSnowflake, primary_key=True),
@@ -349,6 +354,9 @@ def upgrade():
 
     c.execute("SELECT * FROM to_re_verify")
     op.bulk_insert(to_re_verify, c.fetchall())
+
+    c.execute("SELECT * FROM VerifyBlacklist")
+    op.bulk_insert(verify_blacklist, c.fetchall())
 
     # voting
     c.execute("SELECT * FROM Votes")

@@ -125,15 +125,15 @@ def give_guild_extension(guild_id, extension_id: str, session: Session):
 
     :raises NotImplementedError: extension_id doesnt exist
     """
-    extension_exists = extension_id == "All" or session.execute(
-            select(sql_func.count(KoalaExtensions.extension_id))
-            .filter_by(extension_id=extension_id, available=1)).scalars().one() > 0
+    db_extension: KoalaExtensions = session.execute(
+            select(KoalaExtensions)
+            .filter_by(extension_id=extension_id, available=1)).scalar()
 
-    if extension_exists:
+    if db_extension is not None:
         if session.execute(
                 select(GuildExtensions)
-                .filter_by(extension_id=extension_id, guild_id=guild_id)).one_or_none() is None:
-            session.add(GuildExtensions(extension_id=extension_id, guild_id=guild_id))
+                .filter_by(extension_id=db_extension.extension_id, guild_id=guild_id)).one_or_none() is None:
+            session.add(GuildExtensions(extension_id=db_extension.extension_id, guild_id=guild_id))
             session.commit()
     else:
         raise NotImplementedError(f"{extension_id} is not a valid extension")

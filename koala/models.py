@@ -20,10 +20,10 @@ mapper_registry = registry()
 
 class DiscordSnowflake(types.TypeDecorator):
     """
-    Uses int for python, but VARCHAR(18) for storing in db
+    Uses int for python, but VARCHAR(20) for storing in db
     """
 
-    impl = types.VARCHAR(18)
+    impl = types.VARCHAR(20)
 
     cache_ok = True
 
@@ -44,6 +44,16 @@ class DiscordSnowflake(types.TypeDecorator):
         return int
 
 
+class BaseModel:
+    """
+    The base, serializable model for all sqlalchemy models in this project
+    """
+    __table__: sqlalchemy.dialects.mssql.information_schema.tables
+
+    def as_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
 @mapper_registry.mapped
 class Guilds:
     __tablename__ = 'Guilds'
@@ -53,16 +63,6 @@ class Guilds:
     def __repr__(self):
         return "<Guilds(%s, %s)>" % \
                (self.guild_id, self.subscription)
-
-
-class BaseModel:
-    """
-    The base, serializable model for all sqlalchemy models in this project
-    """
-    __table__: sqlalchemy.dialects.mssql.information_schema.tables
-
-    def as_dict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 @mapper_registry.mapped
