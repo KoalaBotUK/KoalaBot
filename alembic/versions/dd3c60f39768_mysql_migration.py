@@ -5,9 +5,11 @@ Revises:
 Create Date: 2022-02-23 18:54:15.064055
 
 """
+import logging
 import os
 from enum import Enum
 from pathlib import Path
+from sqlite3 import OperationalError
 
 import discord
 import sqlalchemy.dialects.mysql.base
@@ -286,7 +288,11 @@ def unsafe_upgrade():
         c.execute('''PRAGMA key="x'{}'"'''.format(SQLITE_DB_KEY))
 
     # koala
-    c.execute("SELECT DISTINCT guild_id FROM GuildExtensions")
+    try:
+        c.execute("SELECT DISTINCT guild_id FROM GuildExtensions")
+    except OperationalError:
+        logging.warning("Query error for old database, assuming no prior setup, insert will stop")
+        return
     op.bulk_insert(guilds, c.fetchall())
 
     c.execute("SELECT * FROM KoalaExtensions")
