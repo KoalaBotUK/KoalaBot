@@ -21,13 +21,13 @@ class DiscordActivityType(types.TypeDecorator):
     cache_ok = True
 
     def process_bind_param(self, value, dialect):
-        return value.value if value else None
+        return value.value if value is not None else None
 
     def process_literal_param(self, value, dialect):
-        return value.value if value else None
+        return value.value if value is not None else None
 
     def process_result_value(self, value, dialect):
-        return ActivityType(value) if value else None
+        return ActivityType(value) if value is not None else None
 
     def copy(self, **kw):
         return DiscordActivityType()
