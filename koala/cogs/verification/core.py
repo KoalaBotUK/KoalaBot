@@ -2,6 +2,7 @@
 import random
 import string
 from typing import List, Dict
+import re
 
 # Futures
 # Built-in/Generic Imports
@@ -159,6 +160,16 @@ async def remove_blacklist_member(user_id, guild_id, role_id, suffix, bot: Bot, 
 @assign_session
 async def email_verify_send(user_id, email, bot, force=False, *, session: Session):
     email = email.lower()
+    
+    # Take only the first email, preventing injection / verification bypass with ',' , ';' , ':', etc.
+    email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    valid_emails = re.findall(email_regex, email)
+    if valid_emails:
+        email = valid_emails[0]
+    else:
+        raise errors.VerifyExistsException("No Valid Emails found") # Wrong Exception, suggest alternate?
+    
+    
     already_verified = session.execute(select(VerifiedEmails).filter_by(email=email)).scalar()
 
     to_reverify = session.execute(select(ToReVerify).filter_by(u_id=user_id)).all()
