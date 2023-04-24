@@ -167,7 +167,7 @@ async def email_verify_send(user_id, email, bot, force=False, *, session: Sessio
     if valid_emails:
         email = valid_emails[0]
     else:
-        raise errors.VerifyExistsException("No Valid Emails found") # Wrong Exception, suggest alternate?
+        raise errors.VerifyException("No Valid Emails found")
     
     
     already_verified = session.execute(select(VerifiedEmails).filter_by(email=email)).scalar()
