@@ -13,6 +13,7 @@ administrators
 - made email verification case insensitive
 - Added optimisations for verified roles
 - Add backend API
+- Fix an issue where multiple emails can be passed to bypass domain-specific verification
 
 ## [0.6.0] - 01-01-2023
 - Upgraded to discord.py 2.1.0
