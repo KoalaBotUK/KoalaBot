@@ -16,7 +16,7 @@ from koala.errors import KoalaException
 from koala.log import logger
 # Own modules
 from koala.models import BaseModel
-from koala.rest.dto import ApiError
+from koala.rest.dto import ApiError, StringApiResponse
 
 
 # Constants
@@ -119,17 +119,17 @@ def parse_request(*args, **kwargs) -> Handler:
             unsatisfied_args = set(required_args.keys()) - set(available_args.keys())
             if unsatisfied_args:
                 # Expected match info that doesn't exist
-                raise aiohttp.web.HTTPBadRequest(reason="Unsatisfied Arguments: %s" % unsatisfied_args)
+                return build_response(BAD_REQUEST, ApiError("BAD_REQUEST",
+                                                            "Unsatisfied Arguments: %s" % unsatisfied_args))
 
             try:
                 result = await func(self, **{arg_name: available_args[arg_name] for arg_name in available_args.keys()})
+                if isinstance(result, str):
+                    result = StringApiResponse(result)
 
-            except KoalaException as e:
-                logger.error("API Failed", exc_info=e)
-                return build_response(BAD_REQUEST, ApiError(type(e).__name__, str(e)))
             except Exception as e:
                 logger.error("API Failed", exc_info=e)
-                raise e
+                return build_response(BAD_REQUEST, ApiError(type(e).__name__, str(e)))
             if raw_response:
                 return result
             else:
