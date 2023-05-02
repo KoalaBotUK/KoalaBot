@@ -224,7 +224,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         ignore_exists = self.bot.get_channel(int(ignore_id))
         if ignore_exists is not None:
             self.tf_database_manager.new_ignore(ctx.guild.id, 'channel', ignore_id)
-            await ctx.channel.send("New ignore added: " + channel.name)
+            await ctx.channel.send(f"New ignore added: {channel.mention}")
             return
         raise (Exception(error))
 
