@@ -1,6 +1,7 @@
 #Libs
 import discord
 import discord.ext.test as dpytest
+import mock
 import pytest
 import pytest_asyncio
 from discord.ext import commands
@@ -70,7 +71,7 @@ async def test_add_role(bot: commands.Bot, cog, session):
 
 
 @pytest.mark.asyncio
-async def test_remove_role(bot: commands.Bot, cog, session):
+async def test_remove_role(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     role: discord.Role = dpytest.back.make_role("testRole", guild, id_num=555)
@@ -79,3 +80,58 @@ async def test_remove_role(bot: commands.Bot, cog, session):
     core.set_roles(cog.vote_manager, author, role, "add")
     
     assert core.set_roles(cog.vote_manager, author, role, "remove") == f"Vote will no longer be sent to those with the {role.name} role"
+
+
+@pytest.mark.asyncio
+async def test_set_chair(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    chair: discord.Member = guild.members[1]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+
+    assert await core.set_chair(cog.vote_manager, author, chair) == f"Set chair to {chair.name}"
+
+
+# failing because idk how to mock a blocked dm channel
+@pytest.mark.asyncio
+async def test_set_chair_no_dms(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    chair: discord.Member = guild.members[1]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+
+    # dpytest.back.start_private_message
+    with mock.patch('discord.channel.DMChannel', mock.Mock(side_effect=Exception('discord.Forbidden'))):
+        with pytest.raises(discord.Forbidden, match="Chair not set as requested user is not accepting direct messages."):
+            await core.set_chair(cog.vote_manager, author, chair)
+
+
+@pytest.mark.asyncio
+async def test_set_no_chair(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+
+    assert await core.set_chair(cog.vote_manager, author) == "Results will be sent to the channel vote is closed in"
+
+
+# make_voice_channel doesn't exist even though it's in their documentation
+@pytest.mark.asyncio
+async def test_set_channel(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    channel = dpytest.back.make_voice_channel("Voice Channel", guild)
+
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+
+    assert core.set_channel(cog.vote_manager, author, channel) == f"Set target channel to {channel.name}"
+
+
+@pytest.mark.asyncio
+async def test_set_no_channel(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+
+    assert core.set_channel(cog.vote_manager, author) == "Removed channel restriction on vote"
