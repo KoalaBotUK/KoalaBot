@@ -21,3 +21,5 @@ if not CONFIG_PATH:
         CONFIG_PATH = '.'+CONFIG_PATH
 
 LOGGING_FILE = eval(os.environ.get("LOGGING_FILE", "True"))
+
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
