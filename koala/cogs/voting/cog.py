@@ -120,7 +120,8 @@ class Voting(commands.Cog, name="Vote"):
         """
         Use k!vote create <title> to create a vote!
         """
-        await ctx.send(core.vote(ctx.invoked_subcommand))
+        if ctx.invoked_subcommand is None:
+            await ctx.send(f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information")
 
 
     @commands.check(koalabot.is_admin)
