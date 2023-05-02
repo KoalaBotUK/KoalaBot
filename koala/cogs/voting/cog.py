@@ -5,23 +5,17 @@ Koala Bot Vote Cog code and additional base cog functions
 Commented using reStructuredText (reST)
 """
 # Built-in/Generic Imports
-import time
 
 # Libs
 import discord
-import parsedatetime.parsedatetime
 from discord.ext import commands, tasks
-from sqlalchemy import select, delete, update
 
 # Own modules
 import koalabot
-from koala.db import session_manager, insert_extension
+from koala.db import insert_extension
 from . import core
-from .db import VoteManager, get_results, create_embed, add_reactions
+from .db import VoteManager
 from .log import logger
-from .models import Votes
-from .option import Option
-from .utils import make_result_embed
 
 
 # Constants
@@ -118,6 +112,7 @@ class Voting(commands.Cog, name="Vote"):
         await core.update_vote_message(self.bot, payload.message_id, payload.user_id)
 
 
+    # how do you even procc this
     @commands.check(koalabot.is_admin)
     @commands.check(vote_is_enabled)
     @commands.group(name="vote")

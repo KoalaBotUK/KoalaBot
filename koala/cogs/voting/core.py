@@ -4,13 +4,12 @@ import time
 # Libs
 import discord
 import parsedatetime.parsedatetime
-from discord.ext import commands, tasks
 from sqlalchemy import select, delete, update
 from sqlalchemy.orm import Session
 
 # Own modules
 import koalabot
-from koala.db import assign_session, insert_extension
+from koala.db import assign_session
 from .db import VoteManager, get_results, create_embed, add_reactions
 from .log import logger
 from .models import Votes
@@ -82,6 +81,7 @@ async def vote_end_loop(bot: koalabot.KoalaBot, vm: VoteManager, session: Sessio
         logger.error("Exception in outer vote loop: %s" % e, exc_info=e)
 
 
+# is needed? raises a CommandNotFound error
 def vote(cmd):
     if cmd is None:
         return f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information"
@@ -94,10 +94,10 @@ def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author, guild, se
     # instantiating get_configuring_vote(ctx.author.id) in cog also gives same error so it's not the vm's problem
     # guild_name = bot.get_guild(vm.get_configuring_vote(author.id).guild)
 
-    # is there a reason we use this instead of guild.name
+    # is there a reason we use the above instead of this
     guild_name = author.guild.name
     
-    # assertion error. I don't know how or what or why. They look the same sentence.
+    # assertion error in test_cog. I don't know how or what or why. They look the same sentence.
     if vm.has_active_vote(author.id):
         return f"You already have an active vote in {guild_name}. Please send that with `{koalabot.COMMAND_PREFIX}vote send` before creating a new one."
 
