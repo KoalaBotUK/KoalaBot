@@ -39,6 +39,7 @@ async def test_discord_create_vote():
         config = dpytest.get_config()
         guild = config.guilds[0]
         await dpytest.message(f"{koalabot.COMMAND_PREFIX}vote create Test Vote")
+        dpytest.sent_queue.peek()
         assert dpytest.verify().message().content(
             f"Vote titled `Test Vote` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote`"
             f" to see how to configure it.")
