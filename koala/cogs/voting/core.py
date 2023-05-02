@@ -83,15 +83,8 @@ async def vote_end_loop(bot: koalabot.KoalaBot, vm: VoteManager, session: Sessio
 
 @assign_session
 def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author, guild, session: Session):
-    
-    # Key Error: author id in get_configuring_vote line 144 in db.py
-    # instantiating get_configuring_vote(ctx.author.id) in cog also gives same error so it's not the vm's problem
-    # guild_name = bot.get_guild(vm.get_configuring_vote(author.id).guild)
-
-    # is there a reason we use the above instead of this
     guild_name = author.guild.name
     
-    # assertion error in test_cog. I don't know how or what or why. They look the same sentence.
     if vm.has_active_vote(author.id):
         return f"You already have an active vote in {guild_name}. Please send that with `{koalabot.COMMAND_PREFIX}vote send` before creating a new one."
 
@@ -107,8 +100,6 @@ def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author, guild, se
 
 
 def set_roles(vm: VoteManager, author, role, action):
-    
-    # get_configuring_vote might break
     vote = vm.get_configuring_vote(author.id)
 
     if action == "add":
@@ -136,7 +127,6 @@ async def set_chair(vm: VoteManager, author, chair=None):
     
 
 def set_channel(vm: VoteManager, author, channel=None):
-    # get_configuring_vote might break
     vote = vm.get_configuring_vote(author.id)
 
     if channel:
@@ -148,7 +138,6 @@ def set_channel(vm: VoteManager, author, channel=None):
     
 
 def add_option(vm: VoteManager, author, option_string):
-    # get_configuring_vote might break
     vote = vm.get_configuring_vote(author.id)
     
     if len(vote.options) > 9:
@@ -168,10 +157,12 @@ def add_option(vm: VoteManager, author, option_string):
 
 
 def remove_option(vm: VoteManager, author, index):
-    # you know hte drill
     vote = vm.get_configuring_vote(author.id)
-    vote.remove_option(index)
-    return f"Option number {index} removed"
+    try:
+        vote.remove_option(index)
+        return f"Option number {index} removed"
+    except IndexError:
+        return f"Option number {index} not found"
 
 
 def set_end_time(vm: VoteManager, author, time_string):
@@ -189,14 +180,12 @@ def set_end_time(vm: VoteManager, author, time_string):
 
 
 async def preview(vm: VoteManager, ctx):
-    # get configuring vote potential error
     vote = vm.get_configuring_vote(ctx.author.id)
     msg = await ctx.send(embed=create_embed(vote))
     await add_reactions(vote, msg)
 
 
 def cancel_vote(vm: VoteManager, author, title):
-    # i don't even know what errors this could have but there will be
     v_id = vm.vote_lookup[(author.id, title)]
     if v_id in vm.sent_votes.keys():
         vm.cancel_sent_vote(v_id)
