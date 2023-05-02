@@ -120,7 +120,7 @@ def set_roles(vm: VoteManager, author, role, action):
         return f"Vote will no longer be sent to those with the {role.name} role"
     
 
-async def set_chair(vm: VoteManager, author, chair):
+async def set_chair(vm: VoteManager, author, chair=None):
     vote = vm.get_configuring_vote(author.id)
 
     if chair:
@@ -135,7 +135,7 @@ async def set_chair(vm: VoteManager, author, chair):
         return "Results will be sent to the channel vote is closed in"
     
 
-async def set_channel(vm: VoteManager, author, channel):
+def set_channel(vm: VoteManager, author, channel=None):
     # get_configuring_vote might break
     vote = vm.get_configuring_vote(author.id)
 
