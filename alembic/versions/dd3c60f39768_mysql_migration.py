@@ -8,7 +8,6 @@ Create Date: 2022-02-23 18:54:15.064055
 import logging
 import os
 from pathlib import Path
-from sqlite3 import OperationalError
 
 import discord
 import sqlalchemy.dialects.mysql.base
@@ -288,7 +287,7 @@ def unsafe_upgrade():
     # koala
     try:
         c.execute("SELECT DISTINCT guild_id FROM GuildExtensions")
-    except OperationalError:
+    except sqlite3.dbapi2.OperationalError:
         logging.warning("Query error for old database, assuming no prior setup, insert will stop")
         return
     op.bulk_insert(guilds, c.fetchall())
