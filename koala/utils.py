@@ -10,6 +10,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 import argparse
 import datetime
+import typing
 from pathlib import Path
 from pathlib import PurePath
 # Libs
@@ -129,8 +130,22 @@ def get_arg_config_path():
     path.mkdir(exist_ok=True, parents=True)
     return str(path.absolute())
 
+
 def convert_iso_datetime(argument):
     try:
         return datetime.datetime.fromisoformat(argument)
     except ValueError:
         raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
+
+
+def cast(type_class, value):
+    if isinstance(value, dict):
+        return type_class(**value)
+    elif isinstance(type_class, typing._BaseGenericAlias):
+        if type_class.__origin__ == list:
+            return [cast(type_class.__args__[0], v) for v in list(value)]
+        if type_class.__origin__ == dict:
+            return {cast(type_class.__args__[0], k): cast(type_class.__args__[1], v) for k, v in dict(value)}
+        return type_class.__origin__(value)
+    else:
+        return type_class(value)
