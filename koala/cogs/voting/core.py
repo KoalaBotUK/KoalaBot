@@ -103,7 +103,7 @@ def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author, guild, se
         return "Title too long"
 
     vm.create_vote(author.id, guild.id, title)
-    return f"Vote titled `Test Vote` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it."
+    return f"Vote titled `{title}` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it."
 
 
 def set_roles(vm: VoteManager, author, role, action):

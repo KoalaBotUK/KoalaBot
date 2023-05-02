@@ -9,6 +9,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+import discord
 import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
@@ -36,10 +37,8 @@ async def cog(bot: commands.Bot):
 @pytest.mark.asyncio
 async def test_discord_create_vote():
     with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
+        guild: discord.Guild = dpytest.get_config().guilds[0]
         await dpytest.message(f"{koalabot.COMMAND_PREFIX}vote create Test Vote")
-        dpytest.sent_queue.peek()
         assert dpytest.verify().message().content(
             f"Vote titled `Test Vote` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote`"
             f" to see how to configure it.")
