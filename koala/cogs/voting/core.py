@@ -81,12 +81,6 @@ async def vote_end_loop(bot: koalabot.KoalaBot, vm: VoteManager, session: Sessio
         logger.error("Exception in outer vote loop: %s" % e, exc_info=e)
 
 
-# is needed? raises a CommandNotFound error
-def vote(cmd):
-    if cmd is None:
-        return f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information"
-
-
 @assign_session
 def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author, guild, session: Session):
     
