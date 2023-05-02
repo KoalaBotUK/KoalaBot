@@ -30,13 +30,6 @@ async def test_update_vote_message(bot: commands.Bot):
     # await core.update_vote_message(bot)
 
 
-# CommandNotFound error
-# @pytest.mark.asyncio
-# async def test_vote_command():
-#     await dpytest.message(f"{koalabot.COMMAND_PREFIX}vote")
-#     assert dpytest.verify().message().content(f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information")
-
-
 def test_create_vote(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
