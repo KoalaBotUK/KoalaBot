@@ -16,6 +16,7 @@ from sqlalchemy import select, delete, update
 # Own modules
 import koalabot
 from koala.db import session_manager, insert_extension
+from . import core
 from .db import VoteManager, get_results, create_embed, add_reactions
 from .log import logger
 from .models import Votes
@@ -92,49 +93,12 @@ class Voting(commands.Cog, name="Vote"):
 
     @tasks.loop(seconds=60.0)
     async def vote_end_loop(self):
-        try:
-            with session_manager() as session:
-                now = time.time()
-                votes = session.execute(select(Votes.vote_id, Votes.author_id, Votes.guild_id, Votes.title, Votes.end_time)
-                                        .where(Votes.end_time < now)).all()
-                for v_id, a_id, g_id, title, end_time in votes:
-                    if v_id in self.vote_manager.sent_votes.keys():
-                        vote = self.vote_manager.get_vote_from_id(v_id)
-                        results = await get_results(self.bot, vote)
-                        embed = await make_result_embed(vote, results)
-                        try:
-                            if vote.chair:
-                                try:
-                                    chair = await self.bot.fetch_user(vote.chair)
-                                    await chair.send(f"Your vote {title} has closed")
-                                    await chair.send(embed=embed)
-                                except discord.Forbidden:
-                                    user = await self.bot.fetch_user(vote.author)
-                                    await user.send(f"Your vote {title} has closed")
-                                    await user.send(embed=embed)
-                            else:
-                                try:
-                                    user = await self.bot.fetch_user(vote.author)
-                                    await user.send(f"Your vote {title} has closed")
-                                    await user.send(embed=embed)
-                                except discord.Forbidden:
-                                    guild = await self.bot.fetch_guild(vote.guild)
-                                    user = await self.bot.fetch_user(guild.owner_id)
-                                    await user.send(f"A vote in your guild titled {title} has closed and the chair is unavailable.")
-                                    await user.send(embed=embed)
-                            session.execute(delete(Votes).filter_by(vote_id=vote.id))
-                            session.commit()
-                            self.vote_manager.cancel_sent_vote(vote.id)
-                        except Exception as e:
-                            session.execute(update(Votes).filter_by(vote_id=vote.id).values(end_time=time.time() + 86400))
-                            session.commit()
-                            logger.error(f"error in vote loop: {e}")
-        except Exception as e:
-            logger.error("Exception in outer vote loop: %s" % e, exc_info=e)
+        await core.vote_end_loop(self.bot, self.vote_manager)
 
     @vote_end_loop.before_loop
     async def before_vote_loop(self):
         await self.bot.wait_until_ready()
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -142,7 +106,8 @@ class Voting(commands.Cog, name="Vote"):
         Listens for when a reaction is added to a message
         :param payload: payload of data about the reaction
         """
-        await self.update_vote_message(payload.message_id, payload.user_id)
+        await core.update_vote_message(self.bot, payload.message_id, payload.user_id)
+
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
@@ -150,7 +115,8 @@ class Voting(commands.Cog, name="Vote"):
         Listens for when a reaction is removed from a message
         :param payload: payload of data about the reaction
         """
-        await self.update_vote_message(payload.message_id, payload.user_id)
+        await core.update_vote_message(self.bot, payload.message_id, payload.user_id)
+
 
     @commands.check(koalabot.is_admin)
     @commands.check(vote_is_enabled)
@@ -159,8 +125,8 @@ class Voting(commands.Cog, name="Vote"):
         """
         Use k!vote create <title> to create a vote!
         """
-        if ctx.invoked_subcommand is None:
-            await ctx.send(f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information")
+        await ctx.send(core.vote(ctx.invoked_subcommand))
+
 
     @commands.check(koalabot.is_admin)
     @commands.check(vote_is_enabled)
@@ -170,23 +136,8 @@ class Voting(commands.Cog, name="Vote"):
         Creates a new vote
         :param title: The title of the vote
         """
-        with session_manager() as session:
-            if self.vote_manager.has_active_vote(ctx.author.id):
-                guild_name = self.bot.get_guild(self.vote_manager.get_configuring_vote(ctx.author.id).guild)
-                await ctx.send(f"You already have an active vote in {guild_name}. Please send that with `{koalabot.COMMAND_PREFIX}vote send` before creating a new one.")
-                return
+        await ctx.send(core.start_vote(self.bot, self.vote_manager, title, ctx.author, ctx.guild))
 
-            in_db = session.execute(select(Votes).filter_by(title=title, author_id=ctx.author.id)).all()
-            if in_db:
-                await ctx.send(f"You already have a vote with title {title} sent!")
-                return
-
-            if len(title) > 200:
-                await ctx.send("Title too long")
-                return
-
-            self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title)
-            await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it.")
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -197,9 +148,8 @@ class Voting(commands.Cog, name="Vote"):
         If no roles are added, the vote will go to all users in a guild (unless a target voice channel has been set)
         :param role: role id (e.g. 135496683009081345) or a role ping (e.g. @Student)
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        vote.add_role(role.id)
-        await ctx.send(f"Vote will be sent to those with the {role.name} role")
+        await ctx.send(core.set_roles(self.vote_manager, ctx.author, role, "add"))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -209,9 +159,8 @@ class Voting(commands.Cog, name="Vote"):
        Removes a role to the list of roles the vote will be sent to
        :param role: role id (e.g. 135496683009081345) or a role ping (e.g. @Student)
        """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        vote.remove_role(role.id)
-        await ctx.send(f"Vote will no longer be sent to those with the {role.name} role")
+        await ctx.send(core.set_roles(self.vote_manager, ctx.author, role, "remove"))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -222,17 +171,8 @@ class Voting(commands.Cog, name="Vote"):
         If no chair defaults to sending the message to the channel the vote is closed in
         :param chair: user id (e.g. 135496683009081345) or ping (e.g. @ito#8813)
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        if chair:
-            try:
-                await chair.send(f"You have been selected as the chair for vote titled {vote.title}")
-                vote.set_chair(chair.id)
-                await ctx.send(f"Set chair to {chair.name}")
-            except discord.Forbidden:
-                await ctx.send("Chair not set as requested user is not accepting direct messages.")
-        else:
-            vote.set_chair(None)
-            await ctx.send(f"Results will be sent to the channel vote is closed in")
+        await ctx.send(await core.set_chair(self.vote_manager, ctx.author, chair))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -243,13 +183,8 @@ class Voting(commands.Cog, name="Vote"):
         If there isn't one set votes will go to all users in a guild (unless target roles have been added)
         :param channel: channel id (e.g. 135496683009081345) or mention (e.g. #cool-channel)
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        if channel:
-            vote.set_vc(channel.id)
-            await ctx.send(f"Set target channel to {channel.name}")
-        else:
-            vote.set_vc()
-            await ctx.send("Removed channel restriction on vote")
+        await ctx.send(core.set_channel(self.vote_manager, ctx.author, channel))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -260,20 +195,8 @@ class Voting(commands.Cog, name="Vote"):
         separate the title and description with a "+" e.g. option title+option description
         :param option_string: a title and description for the option separated by a '+'
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        if len(vote.options) > 9:
-            await ctx.send("Vote has maximum number of options already (10)")
-            return
-        current_option_length = sum([len(x.head) + len(x.body) for x in vote.options])
-        if current_option_length + len(option_string) > 1500:
-            await ctx.send(f"Option string is too long. The total length of all the vote options cannot be over 1500 characters.")
-            return
-        if "+" not in option_string:
-            await ctx.send("Example usage: k!vote addOption option title+option description")
-            return
-        header, body = option_string.split("+")
-        vote.add_option(Option(header, body, self.vote_manager.generate_unique_opt_id()))
-        await ctx.send(f"Option {header} with description {body} added to vote")
+        await ctx.send(core.add_option(self.vote_manager, ctx.author, option_string))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -283,9 +206,8 @@ class Voting(commands.Cog, name="Vote"):
         Removes an option from a vote based on it's index
         :param index: the number of the option
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        vote.remove_option(index)
-        await ctx.send(f"Option number {index} removed")
+        await ctx.send(core.remove_option(self.vote_manager, ctx.author, index))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -297,19 +219,8 @@ class Voting(commands.Cog, name="Vote"):
         :param time_string: string representing a time e.g. "2021-03-22 12:56" or "tomorrow at 10am" or "in 5 days and 15 minutes"
         :return:
         """
-        now = time.time()
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        cal = parsedatetime.Calendar()
-        end_time_readable = cal.parse(time_string)[0]
-        end_time = time.mktime(end_time_readable)
-        if (end_time - now) < 0:
-            await ctx.send("You can't set a vote to end in the past")
-            return
-        # if (end_time - now) < 599:
-        #     await ctx.send("Please set the end time to be at least 10 minutes in the future.")
-        #     return
-        vote.set_end_time(end_time)
-        await ctx.send(f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC")
+        await ctx.send(core.set_end_time(self.vote_manager, ctx.author, time_string))
+
 
     @currently_configuring()
     @commands.check(vote_is_enabled)
@@ -318,9 +229,8 @@ class Voting(commands.Cog, name="Vote"):
         """
         Generates a preview of what users will see with the current configuration of the vote
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
-        msg = await ctx.send(embed=create_embed(vote))
-        await add_reactions(vote, msg)
+        await core.preview(self.vote_manager, ctx)
+
 
     @commands.check(vote_is_enabled)
     @has_current_votes()
@@ -330,12 +240,8 @@ class Voting(commands.Cog, name="Vote"):
         Cancels a vote you are setting up or have sent
         :param title: title of the vote to cancel
         """
-        v_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
-        if v_id in self.vote_manager.sent_votes.keys():
-            self.vote_manager.cancel_sent_vote(v_id)
-        else:
-            self.vote_manager.cancel_configuring_vote(ctx.author.id)
-        await ctx.send(f"Vote {title} has been cancelled.")
+        await ctx.send(core.cancel_vote(self.vote_manager, ctx.author, title))
+
 
     @commands.check(vote_is_enabled)
     @has_current_votes()
@@ -345,14 +251,8 @@ class Voting(commands.Cog, name="Vote"):
         Return a list of all votes you have in this guild.
         :return:
         """
-        with session_manager() as session:
-            embed = discord.Embed(title="Your current votes")
-            votes = session.execute(select(Votes.title).filter_by(author_id=ctx.author.id, guild_id=ctx.guild.id)).all()
-            body_string = ""
-            for title in votes:
-                body_string += f"{title[0]}\n"
-            embed.add_field(name="Vote Title", value=body_string, inline=False)
-            await ctx.send(embed=embed)
+        await ctx.send(embed=core.current_votes(ctx.author, ctx.guild))
+
 
     @currently_configuring()
     @vote.command(name="send")
@@ -360,34 +260,8 @@ class Voting(commands.Cog, name="Vote"):
         """
         Sends a vote to all users within the restrictions set with the current options added
         """
-        vote = self.vote_manager.get_configuring_vote(ctx.author.id)
+        await ctx.send(await core.send_vote(self.vote_manager, ctx.author, ctx.guild))
 
-        if not vote.is_ready():
-            await ctx.send("Please add more than 1 option to vote for")
-            return
-
-        self.vote_manager.configuring_votes.pop(ctx.author.id)
-        self.vote_manager.sent_votes[vote.id] = vote
-
-        users = [x for x in ctx.guild.members if not x.bot]
-        if vote.target_voice_channel:
-            vc_users = discord.utils.get(ctx.guild.voice_channels, id=vote.target_voice_channel).members
-            users = list(set(vc_users) & set(users))
-        if vote.target_roles:
-            role_users = []
-            for role_id in vote.target_roles:
-                role = discord.utils.get(ctx.guild.roles, id=role_id)
-                role_users += role.members
-            role_users = list(dict.fromkeys(role_users))
-            users = list(set(role_users) & set(users))
-        for user in users:
-            try:
-                msg = await user.send(f"You have been asked to participate in this vote from {ctx.guild.name}.\nPlease react to make your choice (You can change your mind until the vote is closed)", embed=create_embed(vote))
-                vote.register_sent(user.id, msg.id)
-                await add_reactions(vote, msg)
-            except discord.Forbidden:
-                logger.error(f"tried to send vote to user {user.id} but direct messages are turned off.")
-        await ctx.send(f"Sent vote to {len(users)} users")
 
     @commands.check(vote_is_enabled)
     @has_current_votes()
@@ -396,28 +270,14 @@ class Voting(commands.Cog, name="Vote"):
         """
         Ends a vote, and collects the results
         """
-        vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
-        if vote_id not in self.vote_manager.sent_votes.keys():
-            if ctx.author.id in self.vote_manager.configuring_votes.keys():
-                await ctx.send(f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}")
-            else:
-                await ctx.send("You have no votes of that title to close")
-            return
-
-        vote = self.vote_manager.get_vote_from_id(vote_id)
-        results = await get_results(self.bot, vote)
-        self.vote_manager.cancel_sent_vote(vote.id)
-        embed = await make_result_embed(vote, results)
-        if vote.chair:
-            try:
-                chair = await self.bot.fetch_user(vote.chair)
-                await chair.send(embed=embed)
-                await ctx.send(f"Sent results to {chair}")
-            except discord.Forbidden:
-                await ctx.send("Chair does not accept direct messages, sending results here.")
-                await ctx.send(embed=embed)
+        msg = await core.close(self.bot, self.vote_manager, ctx.author)
+        if type(msg) is list:
+            await ctx.send(msg[0], embed=msg[1])
+        elif type(msg) is discord.Embed:
+            await ctx.send(embed=msg)
         else:
-            await ctx.send(embed=embed)
+            await ctx.send(msg)
+
 
     @commands.check(vote_is_enabled)
     @has_current_votes()
@@ -426,44 +286,11 @@ class Voting(commands.Cog, name="Vote"):
         """
         Checks the results of a vote without closing it
         """
-        vote_id = self.vote_manager.vote_lookup.get((ctx.author.id, title))
-        if vote_id is None:
-            raise ValueError(f"{title} is not a valid vote title for user {ctx.author.name}")
-
-        if vote_id not in self.vote_manager.sent_votes.keys():
-            if ctx.author.id in self.vote_manager.configuring_votes.keys():
-                await ctx.send(
-                    f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}")
-            else:
-                await ctx.send("You have no votes of that title to check")
-            return
-
-        vote = self.vote_manager.get_vote_from_id(vote_id)
-        results = await get_results(self.bot, vote)
-        embed = await make_result_embed(vote, results)
-        await ctx.send(embed=embed)
-
-    async def update_vote_message(self, message_id, user_id):
-        """
-        Updates the vote message with the currently selected option
-        :param message_id: id of the message that was reacted on
-        :param user_id: id of the user who reacted
-        """
-        vote = self.vote_manager.was_sent_to(message_id)
-        user = self.bot.get_user(user_id)
-        if vote and not user.bot:
-            msg = await user.fetch_message(message_id)
-            embed = msg.embeds[0]
-            choice = None
-            for reaction in msg.reactions:
-                if reaction.count > 1:
-                    choice = reaction
-                    break
-            if choice:
-                embed.set_footer(text=f"You will be voting for {choice.emoji} - {vote.options[VoteManager.emote_reference[choice.emoji]].head}")
-            else:
-                embed.set_footer(text="There are no valid choices selected")
-            await msg.edit(embed=embed)
+        msg = await core.results(self.bot, self.vote_manager, ctx.author, title)
+        if type(msg) is discord.Embed:
+            await ctx.send(embed=msg)
+        else:
+            await ctx.send(msg)
 
 
 async def setup(bot: koalabot) -> None:
