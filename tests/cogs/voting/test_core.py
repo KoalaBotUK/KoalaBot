@@ -216,51 +216,134 @@ def test_set_impossible_end_time(bot: commands.Bot, cog):
 
 
 def test_preview(bot: commands.Bot, cog):
-    # guild: discord.Guild = dpytest.get_config().guilds[0]
-    # author: discord.Member = guild.members[0]
-    # core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
 
-    pass
-
-
-def test_cancel_vote(bot: commands.Bot, cog):
-    # guild: discord.Guild = dpytest.get_config().guilds[0]
-    # author: discord.Member = guild.members[0]
-    # core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
-
-    pass
-
-
-def test_current_votes(bot: commands.Bot, cog):
-    # guild: discord.Guild = dpytest.get_config().guilds[0]
-    # author: discord.Member = guild.members[0]
-    # core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
-
-    pass
+    prev = core.preview(cog.vote_manager, author)
+    assert prev[0].title == "Test Vote"
 
 
 @pytest.mark.asyncio
-async def test_close(bot: commands.Bot, cog):
-    # guild: discord.Guild = dpytest.get_config().guilds[0]
-    # author: discord.Member = guild.members[0]
-    # core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+async def test_cancel_sent_vote(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    core.add_option(cog.vote_manager, author, "Option 2+Option description2")
 
-    pass
+    await core.send_vote(cog.vote_manager, author, guild)
 
+    assert core.cancel_vote(cog.vote_manager, author, "Test Vote") == "Vote Test Vote has been cancelled."
+
+
+def test_cancel_unsent_vote(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+
+    assert core.cancel_vote(cog.vote_manager, author, "Test Vote") == "Vote Test Vote has been cancelled."
+
+
+@pytest.mark.asyncio
+async def test_current_votes(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    
+    embed = core.current_votes(author, guild)
+    assert embed.title == "Your current votes"
+
+
+@pytest.mark.asyncio
+async def test_close_no_chair(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    core.add_option(cog.vote_manager, author, "Option 2+Option description2")
+
+    await core.send_vote(cog.vote_manager, author, guild)
+
+    embed = await core.close(bot, cog.vote_manager, author, "Test Vote")
+    assert embed.title == "Test Vote Results:"
+    assert embed.fields[0].name == "Option 1"
+    assert embed.fields[1].name == "Option 2"
+
+
+@pytest.mark.asyncio
+async def test_close_with_chair(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    chair: discord.Member = guild.members[1]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    core.add_option(cog.vote_manager, author, "Option 2+Option description2")
+    await core.set_chair(cog.vote_manager, author, chair)
+
+    await core.send_vote(cog.vote_manager, author, guild)
+
+    assert await core.close(bot, cog.vote_manager, author, "Test Vote") == f"Sent results to {chair}"
+    
 
 @pytest.mark.asyncio
 async def test_send_vote(bot: commands.Bot, cog):
-    # guild: discord.Guild = dpytest.get_config().guilds[0]
-    # author: discord.Member = guild.members[0]
-    # core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    core.add_option(cog.vote_manager, author, "Option 2+Option description2")
 
-    pass
+    # not sure how to assert DM sent
+
+    assert await core.send_vote(cog.vote_manager, author, guild) == "Sent vote to 1 users"
+
+
+@pytest.mark.asyncio
+async def test_send_vote_bad_options(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    
+    # no options
+    assert await core.send_vote(cog.vote_manager, author, guild) == "Please add more than 1 option to vote for"
+
+    # only 1 option
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    assert await core.send_vote(cog.vote_manager, author, guild) == "Please add more than 1 option to vote for"
 
 
 @pytest.mark.asyncio
 async def test_get_results(bot: commands.Bot, cog):
-    # guild: discord.Guild = dpytest.get_config().guilds[0]
-    # author: discord.Member = guild.members[0]
-    # core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    core.add_option(cog.vote_manager, author, "Option 2+Option description2")
 
-    pass
+    await core.send_vote(cog.vote_manager, author, guild)
+
+    embed = await core.results(bot, cog.vote_manager, author, "Test Vote")
+    assert embed.title == "Test Vote Results:"
+    assert embed.fields[0].name == "Option 1"
+    assert embed.fields[1].name == "Option 2"
+
+
+@pytest.mark.asyncio
+async def test_results_vote_not_sent(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    core.start_vote(bot, cog.vote_manager, "Test Vote", author, guild)
+    core.add_option(cog.vote_manager, author, "Option 1+Option description")
+    core.add_option(cog.vote_manager, author, "Option 2+Option description2")
+
+    assert await core.results(bot, cog.vote_manager, author, "Test Vote") == "That vote has not been sent yet. Please send it to your audience with k!vote send Test Vote"
+
+
+@pytest.mark.asyncio
+async def test_results_invalid_vote(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+
+    with pytest.raises(ValueError, match=f"invalid is not a valid vote title for user {author.name}"):
+        await core.results(bot, cog.vote_manager, author, "invalid")

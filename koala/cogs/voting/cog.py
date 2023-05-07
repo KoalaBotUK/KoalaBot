@@ -14,7 +14,7 @@ from discord.ext import commands, tasks
 import koalabot
 from koala.db import insert_extension
 from . import core
-from .db import VoteManager
+from .db import VoteManager, add_reactions
 from .log import logger
 
 
@@ -225,7 +225,9 @@ class Voting(commands.Cog, name="Vote"):
         """
         Generates a preview of what users will see with the current configuration of the vote
         """
-        await core.preview(self.vote_manager, ctx)
+        prev = core.preview(self.vote_manager, ctx.author)
+        msg = await ctx.send(embed=prev[0])
+        await add_reactions(prev[1], msg)
 
 
     @commands.check(vote_is_enabled)

@@ -179,10 +179,9 @@ def set_end_time(vm: VoteManager, author, time_string):
     return f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC"
 
 
-async def preview(vm: VoteManager, ctx):
-    vote = vm.get_configuring_vote(ctx.author.id)
-    msg = await ctx.send(embed=create_embed(vote))
-    await add_reactions(vote, msg)
+def preview(vm: VoteManager, author):
+    vote = vm.get_configuring_vote(author.id)
+    return [create_embed(vote), vote]
 
 
 def cancel_vote(vm: VoteManager, author, title):
@@ -206,7 +205,6 @@ def current_votes(author, guild, session: Session):
 
 
 async def send_vote(vm: VoteManager, author, guild):
-    # configuring votes
     vote = vm.get_configuring_vote(author.id)
 
     if not vote.is_ready():
