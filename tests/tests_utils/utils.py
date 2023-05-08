@@ -20,6 +20,7 @@ from discord.ext.test import factories as dpyfactory
 
 # Constants
 unicode_emojis = list(dict(emoji.UNICODE_EMOJI.get('en')).values())
+flag_emojis = list([":regional_indicator_a:", ":regional_indicator_b:", ":regional_indicator_c:"])
 emoji_unicodes = list(dict(emoji.EMOJI_UNICODE.get('en')).values())
 
 
@@ -69,9 +70,11 @@ def fake_guild_emoji(guild: discord.Guild) -> discord.Emoji:
                                      'name': fake_custom_emoji_name_str(), 'id': fake_id_str(), 'available': True})
     return fake_emoji
 
+
 def fake_partial_emoji() -> discord.PartialEmoji:
     if random.choice([True, False]):
-        fake_emoji = discord.PartialEmoji(name=fake_custom_emoji_name_str(), animated=random.choice([True, False]), id=dpyfactory.make_id)
+        fake_emoji = discord.PartialEmoji(name=fake_custom_emoji_name_str(), animated=random.choice([True, False]),
+                                          id=dpyfactory.make_id)
     else:
         fake_emoji = discord.PartialEmoji(name=fake_unicode_emoji())
     return fake_emoji
@@ -109,11 +112,21 @@ def fake_unicode_emoji() -> str:
     """
     return random.choice(unicode_emojis)
 
+
+def fake_flag_emoji() -> str:
+    """
+    Creates a fake unicode emoji (the string representation with colons)
+    :return:
+    """
+    return random.choice(flag_emojis)
+
+
 def fake_emoji_unicode() -> str:
     """
     Returns a random unicode emoji's unicode codepoint
     """
     return random.choice(emoji_unicodes)
+
 
 def fake_role_mention() -> str:
     """

@@ -559,6 +559,40 @@ async def test_rfr_add_roles_to_msg():
                         calls.append(mock.call(name=str(em_list[i]), value=ro_list[i], inline=False))
                     add_field.has_calls(calls)
 
+@pytest.mark.asyncio
+async def test_rfr_add_flag_roles_to_msg():
+    config: dpytest.RunnerConfig = dpytest.get_config()
+    guild: discord.Guild = config.guilds[0]
+    channel: discord.TextChannel = guild.text_channels[0]
+    embed: discord.Embed = discord.Embed(title="title", description="description")
+    author: discord.Member = config.members[0]
+    message: discord.Message = await dpytest.message("rfr")
+    msg_id: int = message.id
+    add_rfr_message(guild.id, channel.id, msg_id)
+    input_em_ro_content = ""
+    em_list = []
+    ro_list = []
+    for i in range(5):
+        em = testutils.fake_flag_emoji()
+        ro = testutils.fake_guild_role(guild)
+        input_em_ro_content += f"{str(em)}, {ro.id}\n\r"
+        em_list.append(em)
+        ro_list.append(ro.mention)
+    input_em_ro_msg: discord.Message = dpytest.back.make_message(input_em_ro_content, author, channel)
+
+    with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
+                    mock.AsyncMock(return_value=(message, channel))):
+        with mock.patch('koala.cogs.react_for_role.core.get_embed_from_message', return_value=embed):
+            with mock.patch('discord.client.Client.wait_for',
+                            mock.AsyncMock(return_value=input_em_ro_msg)):
+                with mock.patch('discord.Embed.add_field') as add_field:
+                    await dpytest.message(koalabot.COMMAND_PREFIX + "rfr addRoles")
+                    calls = []
+                    for i in range(5):
+                        calls.append(mock.call(name=str(em_list[i]), value=ro_list[i], inline=False))
+                    add_field.has_calls(calls)
+
+
 
 @pytest.mark.asyncio
 async def test_rfr_remove_roles_from_msg():
