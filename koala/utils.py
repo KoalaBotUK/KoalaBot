@@ -141,11 +141,12 @@ def convert_iso_datetime(argument):
 def cast(type_class, value):
     if isinstance(value, dict):
         return type_class(**value)
-    elif isinstance(type_class, typing._BaseGenericAlias):
-        if type_class.__origin__ == list:
-            return [cast(type_class.__args__[0], v) for v in list(value)]
-        if type_class.__origin__ == dict:
-            return {cast(type_class.__args__[0], k): cast(type_class.__args__[1], v) for k, v in dict(value)}
-        return type_class.__origin__(value)
+    elif typing.get_origin(type_class) == list:
+        return [cast(type_class.__args__[0], v) for v in list(value)]
+    if typing.get_origin(type_class) == dict:
+        return {cast(type_class.__args__[0], k): cast(type_class.__args__[1], v) for k, v in dict(value)}
+    if typing.get_origin(type_class) is not None:
+        return typing.get_origin(type_class)(type_class)
     else:
         return type_class(value)
+
