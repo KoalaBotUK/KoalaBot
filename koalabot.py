@@ -119,7 +119,7 @@ class OwnerGroup(app_commands.Group, name='owner', description='owner only comma
     # todo: check implementation works across multiple cogs
     async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
         if env.BOT_OWNER is not None:
-            success = interaction.user.id == int(env.BOT_OWNER)
+            success = interaction.user.id in env.BOT_OWNER
         else:
             success = bot.is_owner(interaction.user)
         if not success:
@@ -151,7 +151,7 @@ def is_owner(interaction: discord.Interaction):
     :return: Whether the user is the owner.
     """
     if BOT_OWNER is not None:
-        return interaction.user.id == int(BOT_OWNER) or is_dpytest
+        return interaction.user.id in BOT_OWNER or is_dpytest
     else:
         return bot.is_owner(interaction.user) or is_dpytest
 

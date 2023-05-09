@@ -45,8 +45,6 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         A discord.py cog with general commands useful to managers of the bot and servers
     """
     owner_group = koalabot.OwnerGroup()
-    koala_group = app_commands.Group(name="koala", description="KoalaBot",
-                                     default_permissions=Permissions(administrator=True))
     cog_group = app_commands.Group(name="cog", description="control running cogs",
                                         parent=owner_group)
     activity_group = app_commands.Group(name="activity", description="Modify the activity of the bot",
@@ -154,7 +152,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         await interaction.response.send_message(await core.ping(self.bot), ephemeral=True)
 
-    @koala_group.command(name="support", description="KoalaBot Support server link")
+    @app_commands.command(name="support", description="KoalaBot Support server link")
     async def support(self, interaction: discord.Interaction):
         """
         KoalaBot Support server link

@@ -14,10 +14,9 @@ def is_owner():
     def predicate(interaction: discord.Interaction) -> bool:
         import koalabot
         if env.BOT_OWNER is not None:
-            success = interaction.user.id == int(env.BOT_OWNER)
+            success = interaction.user.id in env.BOT_OWNER
         else:
             success = koalabot.bot.is_owner(interaction.user)
-        success = False
         if not success:
             interaction.data[FAILURE_DESC_ATTR] = "You do not have permission to access this command: not owner"
         return success
