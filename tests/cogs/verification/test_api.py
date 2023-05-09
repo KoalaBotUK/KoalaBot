@@ -195,7 +195,7 @@ async def test_post_reverify_nothing(api_client):
     assert resp.status == BAD_REQUEST
     result: dict = await resp.json()
     assert result["error"] == "VerifyException"
-    assert result["description"] == "Verification is not enabled for that role"
+    assert result["message"] == "Verification is not enabled for that role"
 
 
 async def test_post_reverify(api_client):
