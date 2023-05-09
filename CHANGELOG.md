@@ -3,6 +3,20 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### BaseCog
+- Add backend API
+### RFR
+- Add backend API
+- Fix regional indicators as reactions
+### Verify
+- Added new commands `verifyBlacklist` and `verifyBlacklistRemove` for blacklisting a given user from being verified
+- Updated look of verify emails
+- made email verification case insensitive
+- Added optimisations for verified roles
+- Add backend API
+- Fix an issue where multiple emails can be passed to bypass domain-specific verification
+
+## [0.6.0] - 01-01-2023
 - Upgraded to discord.py 2.1.0
 
 ## [0.5.9] - 13-07-2022
@@ -292,7 +306,8 @@ manually if a timer is deleted.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
 [Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.5.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
+[0.6.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.9...v0.6.0
+[0.5.9]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
 [0.5.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.6...v0.5.7
 [0.5.6]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.5...v0.5.6

@@ -5,10 +5,11 @@ import discord
 from discord.ext.commands import Bot
 
 import koalabot
+from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, \
+    give_guild_extension, remove_guild_extension
 from . import db
 from .log import logger
 from .models import ScheduledActivities
-from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, give_guild_extension, remove_guild_extension
 from .utils import DEFAULT_ACTIVITY, activity_eq, list_ext_embed
 
 # Constants
@@ -127,18 +128,18 @@ async def purge(bot: Bot, channel_id, amount):
     return await channel.purge(limit=amount+1)
 
 
-async def load_cog(bot: Bot, extension, package):
+async def load_cog(bot: Bot, extension):
     """
     Loads a cog from the cogs folder
     :param extension:
     :param package:
     :return:
     """
-    await bot.load_extension("."+extension, package=package)
+    await bot.load_extension("."+extension, package=koalabot.COGS_PACKAGE)
     return f'{extension} Cog Loaded'
 
 
-async def unload_cog(bot: Bot, extension, package):
+async def unload_cog(bot: Bot, extension):
     """
     Unloads a cog from the cogs folder
     :param extension:
@@ -148,7 +149,7 @@ async def unload_cog(bot: Bot, extension, package):
     if extension == "base" or extension == "BaseCog":
         raise discord.ext.commands.errors.ExtensionError(message=f"Sorry, you can't unload the base cog", name=extension)
     else:
-        await bot.unload_extension("."+extension, package=package)
+        await bot.unload_extension("."+extension, package=koalabot.COGS_PACKAGE)
         return f'{extension} Cog Unloaded'
 
 

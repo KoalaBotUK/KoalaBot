@@ -8,9 +8,6 @@ Commented using reStructuredText (reST)
 # Futures
 
 # Built-in/Generic Imports
-import random
-import re
-from typing import List
 
 # Libs
 import discord
@@ -18,12 +15,12 @@ import discord.ext.test as dpytest
 import pytest
 from sqlalchemy import delete
 
+from koala.cogs.colour_role.models import GuildColourChangePermissions, GuildInvalidCustomColourRoles
 # Own modules
 from koala.db import session_manager
-from koala.cogs.colour_role.models import GuildColourChangePermissions, GuildInvalidCustomColourRoles
-
 from .utils import make_list_of_roles, independent_get_colour_change_roles, independent_get_protected_colours, \
     DBManager
+
 
 # Constants
 

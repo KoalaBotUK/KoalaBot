@@ -9,19 +9,20 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 
+import discord
 # Libs
 import discord.ext.test as dpytest
 import mock
-import pytest_ordering as pytest
 import pytest
-import discord
+import pytest_asyncio
 from discord.ext import commands
 from sqlalchemy import select, update, insert, delete, and_, or_
+from twitchAPI.object import Stream
 
+from koala.cogs.twitch_alert import utils
 # Own modules
 from koala.cogs.twitch_alert.cog import TwitchAlert
 from koala.cogs.twitch_alert.db import TwitchAlertDBManager
-from koala.cogs.twitch_alert import utils
 from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
 from koala.db import session_manager, setup
 
@@ -31,7 +32,7 @@ DB_PATH = "Koala.db"
 
 # Variables
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = TwitchAlert(bot)
@@ -41,9 +42,11 @@ async def twitch_cog(bot: discord.ext.commands.Bot):
     return twitch_cog
 
 
-@pytest.fixture
-def twitch_alert_db_manager(twitch_cog: TwitchAlert):
-    return TwitchAlertDBManager(twitch_cog.bot)
+@pytest_asyncio.fixture
+async def twitch_alert_db_manager(twitch_cog: TwitchAlert):
+    twitch_alert_db_manager = TwitchAlertDBManager(twitch_cog.bot)
+    await twitch_alert_db_manager.setup_twitch_handler()
+    return twitch_alert_db_manager
 
 
 @pytest.fixture(autouse=True)
@@ -228,7 +231,7 @@ async def test_update_team_members(twitch_alert_db_manager_tables):
         session.execute(sql_insert_monstercat_team)
         session.commit()
 
-        twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
+        await twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
 
         sql_select_monstercat_team = select(UserInTwitchTeam).where(and_(UserInTwitchTeam.team_twitch_alert_id == 604,
                                                                          UserInTwitchTeam.twitch_username == 'monstercat'))
@@ -249,7 +252,7 @@ async def test_update_all_teams_members(twitch_alert_db_manager_tables):
         session.execute(sql_insert_monstercat_team)
         session.commit()
 
-        twitch_alert_db_manager_tables.update_all_teams_members()
+        await twitch_alert_db_manager_tables.update_all_teams_members()
 
         sql_select_monstercats_team = select(UserInTwitchTeam.twitch_username).where(and_(
                 or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
@@ -310,8 +313,7 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
 
 @pytest.mark.asyncio
 async def test_create_alert_embed(twitch_alert_db_manager_tables):
-    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-                   "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
-                   'title': 'Music 24/7'}
+    stream_data = Stream(id='3215560150671170227', user_id='27446517', user_name="Monstercat", user_login="monstercat",
+                         game_id="26936", type='live', title='Music 24/7')
 
     assert type(await twitch_alert_db_manager_tables.create_alert_embed(stream_data, None)) is discord.Embed

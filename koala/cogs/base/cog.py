@@ -16,7 +16,6 @@ import datetime
 import discord
 from discord import app_commands, Permissions
 from discord.ext import commands, tasks
-
 # Own modules
 from discord.ext.commands import BadArgument
 
@@ -24,8 +23,9 @@ import koalabot
 from koala import checks
 from koala.transformers import DatetimeTransformer, ExtensionTransformer
 from . import core
-from .utils import AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
+from .utils import AUTO_UPDATE_ACTIVITY_DELAY
+
 
 
 # Constants
@@ -179,7 +179,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param interaction:
         :param extension: The name of the cog
         """
-        await interaction.response.send_message(await core.load_cog(self.bot, extension, koalabot.COGS_PACKAGE),
+        await interaction.response.send_message(await core.load_cog(self.bot, extension),
                                                 ephemeral=True)
 
     @cog_group.command(name="unload", description="Unload a cog")
@@ -189,7 +189,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param interaction:
         :param extension: The name of the cog
         """
-        await interaction.response.send_message(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
+        await interaction.response.send_message(await core.unload_cog(self.bot, extension))
 
     @extension_group.command(name="enable", description="Enable a Koala extension")
     async def enable_koala_ext(self, interaction: discord.Interaction,

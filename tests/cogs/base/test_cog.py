@@ -18,15 +18,11 @@ import mock
 import pytest
 import pytest_asyncio
 from discord.ext import commands
-from sqlalchemy import delete
 
 # Own modules
 import koalabot
-from koala.cogs import BaseCog
 from koala.cogs.base.cog import setup as setup_cog, BaseCog
-from koala.db import session_manager
 from koala.colours import KOALA_GREEN
-from koala.models import KoalaExtensions, GuildExtensions
 from koala.transformers import DatetimeTransformer
 
 
@@ -53,7 +49,7 @@ async def base_cog_fixture(bot: commands.Bot):
 
 
 @mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
-@mock.patch("koalabot.ENABLED_COGS", [])
+@mock.patch("koalabot.ENABLED_COGS", ["greetings_cog"])
 @pytest.mark.asyncio
 async def test_list_koala_ext_disabled(base_cog: BaseCog, mock_interaction):
     await koalabot.load_all_cogs(base_cog.bot)

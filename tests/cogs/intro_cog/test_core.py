@@ -18,8 +18,9 @@ import pytest
 from koala import db as koala_db
 from koala.cogs.intro_cog import core
 from koala.cogs.intro_cog.utils import DEFAULT_WELCOME_MESSAGE, BASE_LEGAL_MESSAGE, get_non_bot_members
-from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
 from tests.log import logger
+from .utils import fake_guild_id, non_existent_guild_id, add_fake_guild_to_db
+
 
 # Constants
 

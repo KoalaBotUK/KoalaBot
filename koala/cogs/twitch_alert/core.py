@@ -1,13 +1,15 @@
 import time
+from typing import List
 
 import discord
 from discord.ext.commands import Bot
 from sqlalchemy import select, func, or_, and_, null, update, delete
+from twitchAPI.object import Stream
 
-from .log import logger
-from .models import UserInTwitchTeam, TeamInTwitchAlert, TwitchAlerts, UserInTwitchAlert
 from koala.db import assign_session
 from koala.models import GuildExtensions
+from .log import logger
+from .models import UserInTwitchTeam, TeamInTwitchAlert, TwitchAlerts, UserInTwitchAlert
 
 
 @assign_session
@@ -34,20 +36,20 @@ async def create_team_alerts(bot: Bot, ta_database_manager, session):
     if not usernames:
         return
 
-    streams_data = ta_database_manager.twitch_handler.get_streams_data(usernames)
+    streams: List[Stream] = await ta_database_manager.twitch_handler.get_streams_data(usernames)
 
-    if streams_data is None:
+    if streams is None:
         return
 
-    for stream_data in streams_data:
+    for stream in streams:
         try:
-            if stream_data.get('type') == "live":
-                current_username = str.lower(stream_data.get("user_login"))
+            if stream.type == "live":
+                current_username = str.lower(stream.user_login)
                 logger.debug("Creating team stream alert for %s" % current_username)
                 old_len = len(usernames)
                 usernames.remove(current_username)
                 if len(usernames) == old_len:
-                    logger.error(f"TwitchAlert: {stream_data.get('user_login')} not found in the user teams list")
+                    logger.error(f"TwitchAlert: {stream.user_login} not found in the user teams list")
                 sql_find_message_id = select(TeamInTwitchAlert.channel_id,
                                              UserInTwitchTeam.message_id,
                                              TeamInTwitchAlert.team_twitch_alert_id,
@@ -93,7 +95,7 @@ async def create_team_alerts(bot: Bot, ta_database_manager, session):
                                 else:
                                     message = channel_default_message
 
-                                new_message_embed = await ta_database_manager.create_alert_embed(stream_data, message)
+                                new_message_embed = await ta_database_manager.create_alert_embed(stream, message)
 
                             if new_message_embed is not None and channel is not None:
                                 new_message = await channel.send(embed=new_message_embed)
@@ -140,19 +142,19 @@ async def create_user_alerts(bot: Bot, ta_database_manager, session):
     if not usernames:
         return
 
-    user_streams = ta_database_manager.twitch_handler.get_streams_data(usernames)
+    user_streams: List[Stream] = await ta_database_manager.twitch_handler.get_streams_data(usernames)
     if user_streams is None:
         return
 
     # Deals with online streams
     for streams_details in user_streams:
         try:
-            if streams_details.get('type') == "live":
-                current_username = str.lower(streams_details.get("user_login"))
+            if streams_details.type == "live":
+                current_username = str.lower(streams_details.user_login)
                 old_len = len(usernames)
                 usernames.remove(current_username)
                 if len(usernames) == old_len:
-                    logger.error(f"TwitchAlert: {streams_details.get('user_login')} not found in the user list")
+                    logger.error(f"TwitchAlert: {streams_details.user_login} not found in the user list")
 
                 sql_find_message_id = select(UserInTwitchAlert.channel_id,
                                              UserInTwitchAlert.message_id,

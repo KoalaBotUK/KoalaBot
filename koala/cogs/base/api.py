@@ -1,21 +1,22 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED, OK, BAD_REQUEST
-from aiohttp import web
+from http.client import CREATED
+
 import discord
+from aiohttp import web
 from discord.ext.commands import Bot
 
+from koala.rest.api import parse_request, build_response
+from koala.transformers import DatetimeTransformer
 # Own modules
 from . import core
 from .log import logger
-from koala.rest.api import parse_request, build_response
-from koala.transformers import DatetimeTransformer
 
 # Constants
 BASE_ENDPOINT = 'base'
-ACTIVITY_ENDPOINT = 'activity' # PUT
-SCHEDULED_ACTIVITY_ENDPOINT = 'scheduled-activity' # POST
+ACTIVITY_ENDPOINT = 'activity'  # PUT
+SCHEDULED_ACTIVITY_ENDPOINT = 'scheduled-activity'  # POST
 
 PING_ENDPOINT = 'ping'
 SUPPORT_ENDPOINT = 'support'
@@ -26,12 +27,14 @@ ENABLE_EXTENSION_ENDPOINT = 'enable-extension'
 DISABLE_EXTENSION_ENDPOINT = 'disable-extension'
 EXTENSIONS_ENDPOINT = 'extensions'
 
+
 # Variables
 
 class BaseEndpoint:
     """
     The API endpoints for BaseCog
     """
+
     def __init__(self, bot):
         self._bot = bot
 
@@ -51,7 +54,8 @@ class BaseEndpoint:
                         web.post('/{endpoint}'.format(endpoint=LOAD_COG_ENDPOINT), self.post_load_cog),
                         web.post('/{endpoint}'.format(endpoint=UNLOAD_COG_ENDPOINT), self.post_unload_cog),
                         web.post('/{endpoint}'.format(endpoint=ENABLE_EXTENSION_ENDPOINT), self.post_enable_extension),
-                        web.post('/{endpoint}'.format(endpoint=DISABLE_EXTENSION_ENDPOINT), self.post_disable_extension),
+                        web.post('/{endpoint}'.format(endpoint=DISABLE_EXTENSION_ENDPOINT),
+                                 self.post_disable_extension),
                         web.get('/{endpoint}'.format(endpoint=EXTENSIONS_ENDPOINT), self.get_extensions)])
         return app
 
@@ -130,37 +134,35 @@ class BaseEndpoint:
         return core.get_version()
 
     @parse_request
-    async def post_load_cog(self, extension, package):
+    async def post_load_cog(self, extension):
         """
         Loads a cog from the cogs folder
         :param extension: name of the cog
-        :param package: package of the cogs
         :return:
         """
         try:
-            await core.load_cog(self._bot, extension, package)
+            await core.load_cog(self._bot, extension)
         except BaseException as e:
             error = 'Error loading cog: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
-        
+
         return {'message': 'Cog loaded'}
 
     @parse_request
-    async def post_unload_cog(self, extension, package):
+    async def post_unload_cog(self, extension):
         """
         Unloads a cog from the cogs folder
         :param extension: name of the cog
-        :param package: package of the cogs
         :return:
         """
         try:
-            await core.unload_cog(self._bot, extension, package)
+            await core.unload_cog(self._bot, extension)
         except BaseException as e:
             error = 'Error unloading cog: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
-        
+
         # if resp == "Sorry, you can't unload the base cog":
         #     return build_response(BAD_REQUEST, {'message': "Sorry, you can't unload the base cog"})
         # else:
@@ -181,7 +183,7 @@ class BaseEndpoint:
             error = 'Error enabling extension: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
-        
+
         return {'message': 'Extension enabled'}
 
     @parse_request
@@ -189,7 +191,7 @@ class BaseEndpoint:
         """
         Disables a koala extension onto a server
         :param guild_id: id for the Discord guild
-        :param koala_extension: name of the extension
+        :param koala_ext: name of the extension
         :return:
         """
         try:
@@ -199,7 +201,7 @@ class BaseEndpoint:
             error = 'Error disabling extension: {}'.format(handleActivityError(e))
             logger.error(error)
             raise web.HTTPUnprocessableEntity(reason="{}".format(error))
-        
+
         return {'message': 'Extension disabled'}
 
     @parse_request
@@ -210,7 +212,6 @@ class BaseEndpoint:
         :return:
         """
         return await core.get_available_extensions(guild_id)
-
 
 
 def getActivityType(activity_type):

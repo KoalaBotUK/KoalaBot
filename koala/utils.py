@@ -9,19 +9,18 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 import argparse
+import typing
 from pathlib import Path
-
+from pathlib import PurePath
 # Libs
 from typing import Tuple, Optional
-from pathlib import PurePath
+
 import discord
 from discord.ext import commands
-import datetime
-from discord.ext.commands import BadArgument
 
+from koala.colours import ERROR_RED
 # Own modules
 from koala.env import CONFIG_PATH
-from koala.colours import ERROR_RED
 
 # Constants
 ID_LENGTH = 18
@@ -143,3 +142,16 @@ def interaction_data_to_str(data):
         return f"{value} {interaction_data_to_str(data['options'])}"
     else:
         return value
+
+
+def cast(type_class, value):
+    if isinstance(value, dict):
+        return type_class(**value)
+    elif typing.get_origin(type_class) == list:
+        return [cast(type_class.__args__[0], v) for v in list(value)]
+    if typing.get_origin(type_class) == dict:
+        return {cast(type_class.__args__[0], k): cast(type_class.__args__[1], v) for k, v in dict(value)}
+    if typing.get_origin(type_class) is not None:
+        return typing.get_origin(type_class)(type_class)
+    else:
+        return type_class(value)

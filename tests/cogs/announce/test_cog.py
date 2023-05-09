@@ -11,9 +11,9 @@ from discord.ext import commands
 # Own modules
 import koalabot
 from koala.cogs import announce
+from tests.log import logger
 from tests.tests_utils.last_ctx_cog import LastCtxCog
 
-from tests.log import logger
 
 @pytest_asyncio.fixture(autouse=True)
 async def utils_cog(bot: discord.ext.commands.Bot):

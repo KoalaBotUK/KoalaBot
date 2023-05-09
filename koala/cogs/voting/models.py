@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, Float, String
-from koala.models import mapper_registry
+
 from koala.db import setup
+from koala.models import mapper_registry
+
 
 # FIXME: Previous approach had no primary keys, this sets all as primary key but shouldn't affect existing databases
 # FIXME: When refactoring database, set a primary key

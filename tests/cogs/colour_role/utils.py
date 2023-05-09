@@ -7,28 +7,17 @@ Commented using reStructuredText (reST)
 """
 # Futures
 
-import random
-import re
 # Built-in/Generic Imports
 from typing import List
 
 import discord
 # Libs
-import discord.ext.test as dpytest
-import mock
-import pytest
-from discord.ext import commands
-from sqlalchemy import delete, select
+from sqlalchemy import select
 
-# Own modules
-import koalabot
-from koala.db import session_manager
-from koala.cogs import ColourRole
-from koala.cogs import colour_role
-from koala.cogs.colour_role.utils import COLOUR_ROLE_NAMING
 from koala.cogs.colour_role.db import ColourRoleDBManager
 from koala.cogs.colour_role.models import GuildColourChangePermissions, GuildInvalidCustomColourRoles
-from tests.tests_utils import last_ctx_cog
+# Own modules
+from koala.db import session_manager
 
 # Constants
 

@@ -11,6 +11,7 @@ Commented using reStructuredText (reST)
 
 # Libs
 import asyncio
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -20,10 +21,11 @@ import koalabot
 
 from .log import logger
 from .ui import EditWelcomeMessage
-from .utils import get_non_bot_members, ask_for_confirmation, wait_for_message, \
-    BASE_LEGAL_MESSAGE, dm_group_message
+from .log import logger
+from .utils import get_non_bot_members
 from . import core
 from ...ui import Confirm
+
 
 
 # Constants

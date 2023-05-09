@@ -21,6 +21,7 @@ from discord.ext.test import factories as dpyfactory
 
 # Constants
 unicode_emojis = list(dict(emoji.UNICODE_EMOJI.get('en')).values())
+flag_emojis = list([":regional_indicator_a:", ":regional_indicator_b:", ":regional_indicator_c:"])
 emoji_unicodes = list(dict(emoji.EMOJI_UNICODE.get('en')).values())
 
 
@@ -111,6 +112,14 @@ def fake_unicode_emoji() -> str:
     :return:
     """
     return random.choice(unicode_emojis)
+
+
+def fake_flag_emoji() -> str:
+    """
+    Creates a fake unicode emoji (the string representation with colons)
+    :return:
+    """
+    return random.choice(flag_emojis)
 
 
 def fake_emoji_unicode() -> str:

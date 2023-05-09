@@ -12,9 +12,10 @@ Commented using reStructuredText (reST)
 import discord.ext.test.factories as dpyfactory
 
 # Own modules
-from koala.db import session_manager
 from koala.cogs.intro_cog import core
 from koala.cogs.intro_cog.models import GuildWelcomeMessages
+# Own modules
+from koala.db import session_manager
 
 # Constants
 fake_guild_id = 1000

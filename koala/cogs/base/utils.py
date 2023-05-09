@@ -14,9 +14,8 @@ import discord
 
 # Own modules
 import koalabot
-from koala.db import get_enabled_guild_extensions, get_all_available_guild_extensions
 from koala.colours import KOALA_GREEN
-
+from koala.db import get_enabled_guild_extensions, get_all_available_guild_extensions
 
 # Constants
 DEFAULT_ACTIVITY = discord.Activity(type=discord.ActivityType.playing, name=f"{koalabot.COMMAND_PREFIX}help koalabot.uk")
