@@ -23,8 +23,10 @@ import time
 import discord
 # Libs
 from aiohttp import web
+import aiohttp_cors
 from discord.ext import commands
 
+from koala import env
 # Own modules
 from koala.db import extension_enabled
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
@@ -184,8 +186,8 @@ def check_guild_has_ext(ctx, extension_id):
 
 async def run_bot():
     app = web.Application()
+    aiohttp_cors.setup(app, defaults={env.FRONTEND_URL: aiohttp_cors.ResourceOptions()})
     bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
-
     setattr(bot, "koala_web_app", app)
     await load_all_cogs(bot)
 

@@ -462,7 +462,7 @@ class ReactForRole(commands.Cog):
 
         input_role_emojis = (await wait_for_message(self.bot, ctx, 180))[0].content
         emoji_role_list = await self.parse_emoji_and_role_input_str(ctx, input_role_emojis, remaining_slots)
-        duplicateRolesFound, duplicateEmojisFound, edited_msg = core.rfr_add_emoji_role(ctx.guild, channel,
+        duplicateRolesFound, duplicateEmojisFound, edited_msg = await core.rfr_add_emoji_role(ctx.guild, channel,
                                                                                         msg, emoji_role_list)
         if (duplicateEmojisFound): await ctx.send("Found duplicate emoji in the message, I'm not accepting it.")
         if (duplicateRolesFound): await ctx.send("Found duplicate roles in the message, I'm not accepting it.")

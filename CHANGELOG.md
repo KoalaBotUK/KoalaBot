@@ -7,6 +7,7 @@ administrators
 - Add backend API
 ### RFR
 - Add backend API
+- Fix regional indicators as reactions
 ### Verify
 - Added new commands `verifyBlacklist` and `verifyBlacklistRemove` for blacklisting a given user from being verified
 - Updated look of verify emails

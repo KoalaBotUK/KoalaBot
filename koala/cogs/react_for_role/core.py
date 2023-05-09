@@ -11,7 +11,7 @@ from . import db
 from .db import get_rfr_message
 from .dto import ReactMessage, ReactRole, RequiredRoles
 from .log import logger
-from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP
+from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP, FLAG_EMOJI_REGEXP
 
 # Constants
 
@@ -353,13 +353,7 @@ async def get_first_emoji_from_str(bot: Bot, guild: discord.Guild,
 
     # First check for a custom discord emoji in the string
     search_result = CUSTOM_EMOJI_REGEXP.search(str(content))
-    if not search_result:
-        # Check for a unicode emoji in the string
-        search_result = UNICODE_EMOJI_REGEXP.search(content)
-        if not search_result:
-            return None, "No emoji found."
-        return content, None
-    else:
+    if search_result:
         emoji_id = int(search_result[:-1].split(":")[-1])
         try:
             discord_emoji: discord.Emoji = await guild.fetch_emoji(emoji_id)
@@ -370,3 +364,11 @@ async def get_first_emoji_from_str(bot: Bot, guild: discord.Guild,
             return None, "An error occurred when trying to get the emoji. Please contact the bot developers for support."
         except commands.BadArgument:
             return None, "Couldn't get the emoji you used - is it from this server or a server I'm in?"
+
+    # Check for a unicode emoji in the string
+    search_result = UNICODE_EMOJI_REGEXP.search(content)
+    search_result_flag = FLAG_EMOJI_REGEXP.search(content)
+    if search_result or search_result_flag:
+       return content, None
+
+    return None, "No emoji found."
