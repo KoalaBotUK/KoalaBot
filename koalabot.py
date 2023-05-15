@@ -186,10 +186,16 @@ def check_guild_has_ext(ctx, extension_id):
 
 async def run_bot():
     app = web.Application()
-    aiohttp_cors.setup(app, defaults={env.FRONTEND_URL: aiohttp_cors.ResourceOptions()})
+
     bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
     setattr(bot, "koala_web_app", app)
     await load_all_cogs(bot)
+
+    cors = aiohttp_cors.setup(app, defaults={
+        env.FRONTEND_URL: aiohttp_cors.ResourceOptions()
+    })
+    for route in list(app.router.routes()):
+        cors.add(route)
 
     runner = web.AppRunner(app)
     await runner.setup()
