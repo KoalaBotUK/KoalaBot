@@ -132,7 +132,7 @@ class Voting(commands.Cog, name="Vote"):
         Creates a new vote
         :param title: The title of the vote
         """
-        await ctx.send(core.start_vote(self.bot, self.vote_manager, title, ctx.author, ctx.guild))
+        await ctx.send(core.start_vote(self.bot, self.vote_manager, title, ctx.author.id, ctx.guild.id))
 
 
     @currently_configuring()
@@ -144,7 +144,7 @@ class Voting(commands.Cog, name="Vote"):
         If no roles are added, the vote will go to all users in a guild (unless a target voice channel has been set)
         :param role: role id (e.g. 135496683009081345) or a role ping (e.g. @Student)
         """
-        await ctx.send(core.set_roles(self.vote_manager, ctx.author, role, "add"))
+        await ctx.send(core.set_roles(self.bot, self.vote_manager, ctx.author.id, ctx.guild.id, role.id, "add"))
 
 
     @currently_configuring()
@@ -155,7 +155,7 @@ class Voting(commands.Cog, name="Vote"):
        Removes a role to the list of roles the vote will be sent to
        :param role: role id (e.g. 135496683009081345) or a role ping (e.g. @Student)
        """
-        await ctx.send(core.set_roles(self.vote_manager, ctx.author, role, "remove"))
+        await ctx.send(core.set_roles(self.bot, self.vote_manager, ctx.author.id, ctx.guild.id, role.id, "remove"))
 
 
     @currently_configuring()
@@ -167,7 +167,7 @@ class Voting(commands.Cog, name="Vote"):
         If no chair defaults to sending the message to the channel the vote is closed in
         :param chair: user id (e.g. 135496683009081345) or ping (e.g. @ito#8813)
         """
-        await ctx.send(await core.set_chair(self.vote_manager, ctx.author, chair))
+        await ctx.send(await core.set_chair(self.bot, self.vote_manager, ctx.author.id, getattr(chair, 'id', None)))
 
 
     @currently_configuring()
@@ -179,7 +179,7 @@ class Voting(commands.Cog, name="Vote"):
         If there isn't one set votes will go to all users in a guild (unless target roles have been added)
         :param channel: channel id (e.g. 135496683009081345) or mention (e.g. #cool-channel)
         """
-        await ctx.send(core.set_channel(self.vote_manager, ctx.author, channel))
+        await ctx.send(core.set_channel(self.bot, self.vote_manager, ctx.author.id, channel.id))
 
 
     @currently_configuring()
@@ -191,7 +191,7 @@ class Voting(commands.Cog, name="Vote"):
         separate the title and description with a "+" e.g. option title+option description
         :param option_string: a title and description for the option separated by a '+'
         """
-        await ctx.send(core.add_option(self.vote_manager, ctx.author, option_string))
+        await ctx.send(core.add_option(self.vote_manager, ctx.author.id, option_string))
 
 
     @currently_configuring()
@@ -202,7 +202,7 @@ class Voting(commands.Cog, name="Vote"):
         Removes an option from a vote based on it's index
         :param index: the number of the option
         """
-        await ctx.send(core.remove_option(self.vote_manager, ctx.author, index))
+        await ctx.send(core.remove_option(self.vote_manager, ctx.author.id, index))
 
 
     @currently_configuring()
@@ -215,7 +215,7 @@ class Voting(commands.Cog, name="Vote"):
         :param time_string: string representing a time e.g. "2021-03-22 12:56" or "tomorrow at 10am" or "in 5 days and 15 minutes"
         :return:
         """
-        await ctx.send(core.set_end_time(self.vote_manager, ctx.author, time_string))
+        await ctx.send(core.set_end_time(self.vote_manager, ctx.author.id, time_string))
 
 
     @currently_configuring()
@@ -225,7 +225,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         Generates a preview of what users will see with the current configuration of the vote
         """
-        prev = core.preview(self.vote_manager, ctx.author)
+        prev = core.preview(self.vote_manager, ctx.author.id)
         msg = await ctx.send(embed=prev[0])
         await add_reactions(prev[1], msg)
 
@@ -238,7 +238,7 @@ class Voting(commands.Cog, name="Vote"):
         Cancels a vote you are setting up or have sent
         :param title: title of the vote to cancel
         """
-        await ctx.send(core.cancel_vote(self.vote_manager, ctx.author, title))
+        await ctx.send(core.cancel_vote(self.vote_manager, ctx.author.id, title))
 
 
     @commands.check(vote_is_enabled)
@@ -249,7 +249,7 @@ class Voting(commands.Cog, name="Vote"):
         Return a list of all votes you have in this guild.
         :return:
         """
-        await ctx.send(embed=core.current_votes(ctx.author, ctx.guild))
+        await ctx.send(embed=core.current_votes(ctx.author.id, ctx.guild.id))
 
 
     @currently_configuring()
@@ -258,7 +258,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         Sends a vote to all users within the restrictions set with the current options added
         """
-        await ctx.send(await core.send_vote(self.vote_manager, ctx.author, ctx.guild))
+        await ctx.send(await core.send_vote(self.bot, self.vote_manager, ctx.author.id, ctx.guild))
 
 
     @commands.check(vote_is_enabled)
@@ -268,7 +268,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         Ends a vote, and collects the results
         """
-        msg = await core.close(self.bot, self.vote_manager, ctx.author)
+        msg = await core.close(self.bot, self.vote_manager, ctx.author.id, title)
         if type(msg) is list:
             await ctx.send(msg[0], embed=msg[1])
         elif type(msg) is discord.Embed:
@@ -284,7 +284,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         Checks the results of a vote without closing it
         """
-        msg = await core.results(self.bot, self.vote_manager, ctx.author, title)
+        msg = await core.results(self.bot, self.vote_manager, ctx.author.id, title)
         if type(msg) is discord.Embed:
             await ctx.send(embed=msg)
         else:

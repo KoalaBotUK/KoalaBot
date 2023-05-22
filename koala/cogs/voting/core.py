@@ -82,39 +82,41 @@ async def vote_end_loop(bot: koalabot.KoalaBot, vm: VoteManager, session: Sessio
 
 
 @assign_session
-def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author, guild, session: Session):
-    guild_name = author.guild.name
+def start_vote(bot: koalabot.KoalaBot, vm: VoteManager, title, author_id, guild_id, session: Session):
+    guild_name = bot.get_guild(guild_id)
     
-    if vm.has_active_vote(author.id):
+    if vm.has_active_vote(author_id):
         return f"You already have an active vote in {guild_name}. Please send that with `{koalabot.COMMAND_PREFIX}vote send` before creating a new one."
 
-    in_db = session.execute(select(Votes).filter_by(title=title, author_id=author.id)).all()
+    in_db = session.execute(select(Votes).filter_by(title=title, author_id=author_id)).all()
     if in_db:
         return f"You already have a vote with title {title} sent!"
 
     if len(title) > 200:
         return "Title too long"
 
-    vm.create_vote(author.id, guild.id, title)
-    return f"Vote titled `{title}` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it."
+    vm.create_vote(author_id, guild_id, title)
+    return f"Vote titled `{title}` created for guild {guild_name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it."
 
 
-def set_roles(vm: VoteManager, author, role, action):
-    vote = vm.get_configuring_vote(author.id)
+def set_roles(bot: koalabot.KoalaBot, vm: VoteManager, author_id, guild_id, role_id, action):
+    vote = vm.get_configuring_vote(author_id)
+    role = bot.get_guild(guild_id).get_role(role_id)
 
     if action == "add":
-        vote.add_role(role.id)
+        vote.add_role(role_id)
         return f"Vote will be sent to those with the {role.name} role"
 
     if action == "remove":
-        vote.remove_role(role.id)
+        vote.remove_role(role_id)
         return f"Vote will no longer be sent to those with the {role.name} role"
     
 
-async def set_chair(vm: VoteManager, author, chair=None):
-    vote = vm.get_configuring_vote(author.id)
+async def set_chair(bot: koalabot.KoalaBot, vm: VoteManager, author_id, chair_id=None):
+    vote = vm.get_configuring_vote(author_id)
 
-    if chair:
+    if chair_id:
+        chair = bot.get_user(chair_id)
         try:
             await chair.send(f"You have been selected as the chair for vote titled {vote.title}")
             vote.set_chair(chair.id)
@@ -126,8 +128,9 @@ async def set_chair(vm: VoteManager, author, chair=None):
         return "Results will be sent to the channel vote is closed in"
     
 
-def set_channel(vm: VoteManager, author, channel=None):
-    vote = vm.get_configuring_vote(author.id)
+def set_channel(bot: koalabot.KoalaBot, vm: VoteManager, author_id, channel_id=None):
+    vote = vm.get_configuring_vote(author_id)
+    channel = bot.get_channel(channel_id)
 
     if channel:
         vote.set_vc(channel.id)
@@ -137,8 +140,8 @@ def set_channel(vm: VoteManager, author, channel=None):
         return "Removed channel restriction on vote"
     
 
-def add_option(vm: VoteManager, author, option_string):
-    vote = vm.get_configuring_vote(author.id)
+def add_option(vm: VoteManager, author_id, option_string):
+    vote = vm.get_configuring_vote(author_id)
     
     if len(vote.options) > 9:
         return "Vote has maximum number of options already (10)"
@@ -156,8 +159,8 @@ def add_option(vm: VoteManager, author, option_string):
     return f"Option {header} with description {body} added to vote"
 
 
-def remove_option(vm: VoteManager, author, index):
-    vote = vm.get_configuring_vote(author.id)
+def remove_option(vm: VoteManager, author_id, index):
+    vote = vm.get_configuring_vote(author_id)
     try:
         vote.remove_option(index)
         return f"Option number {index} removed"
@@ -165,9 +168,9 @@ def remove_option(vm: VoteManager, author, index):
         return f"Option number {index} not found"
 
 
-def set_end_time(vm: VoteManager, author, time_string):
+def set_end_time(vm: VoteManager, author_id, time_string):
     now = time.time()
-    vote = vm.get_configuring_vote(author.id)
+    vote = vm.get_configuring_vote(author_id)
     cal = parsedatetime.Calendar()
     end_time_readable = cal.parse(time_string)[0]
     end_time = time.mktime(end_time_readable)
@@ -179,24 +182,24 @@ def set_end_time(vm: VoteManager, author, time_string):
     return f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC"
 
 
-def preview(vm: VoteManager, author):
-    vote = vm.get_configuring_vote(author.id)
+def preview(vm: VoteManager, author_id):
+    vote = vm.get_configuring_vote(author_id)
     return [create_embed(vote), vote]
 
 
-def cancel_vote(vm: VoteManager, author, title):
-    v_id = vm.vote_lookup[(author.id, title)]
+def cancel_vote(vm: VoteManager, author_id, title):
+    v_id = vm.vote_lookup[(author_id, title)]
     if v_id in vm.sent_votes.keys():
         vm.cancel_sent_vote(v_id)
     else:
-        vm.cancel_configuring_vote(author.id)
+        vm.cancel_configuring_vote(author_id)
     return f"Vote {title} has been cancelled."
 
 
 @assign_session
-def current_votes(author, guild, session: Session):
+def current_votes(author_id, guild_id, session: Session):
     embed = discord.Embed(title="Your current votes")
-    votes = session.execute(select(Votes.title).filter_by(author_id=author.id, guild_id=guild.id)).all()
+    votes = session.execute(select(Votes.title).filter_by(author_id=author_id, guild_id=guild_id)).all()
     body_string = ""
     for title in votes:
         body_string += f"{title[0]}\n"
@@ -204,13 +207,14 @@ def current_votes(author, guild, session: Session):
     return embed
 
 
-async def send_vote(vm: VoteManager, author, guild):
-    vote = vm.get_configuring_vote(author.id)
+async def send_vote(bot: koalabot.KoalaBot, vm: VoteManager, author_id, guild_id):
+    vote = vm.get_configuring_vote(author_id)
+    guild = bot.get_guild(guild_id)
 
     if not vote.is_ready():
         return "Please add more than 1 option to vote for"
 
-    vm.configuring_votes.pop(author.id)
+    vm.configuring_votes.pop(author_id)
     vm.sent_votes[vote.id] = vote
 
     users = [x for x in guild.members if not x.bot]
@@ -234,10 +238,10 @@ async def send_vote(vm: VoteManager, author, guild):
     return f"Sent vote to {len(users)} users"
 
 
-async def close(bot: koalabot.KoalaBot, vm: VoteManager, author, title):
-    vote_id = vm.vote_lookup[(author.id, title)]
+async def close(bot: koalabot.KoalaBot, vm: VoteManager, author_id, title):
+    vote_id = vm.vote_lookup[(author_id, title)]
     if vote_id not in vm.sent_votes.keys():
-        if author.id in vm.configuring_votes.keys():
+        if author_id in vm.configuring_votes.keys():
             return f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}"
         else:
             return "You have no votes of that title to close"
@@ -257,8 +261,10 @@ async def close(bot: koalabot.KoalaBot, vm: VoteManager, author, title):
         return embed
     
 
-async def results(bot: koalabot.KoalaBot, vm: VoteManager, author, title):
-    vote_id = vm.vote_lookup.get((author.id, title))
+async def results(bot: koalabot.KoalaBot, vm: VoteManager, author_id, title):
+    vote_id = vm.vote_lookup.get((author_id, title))
+    author = bot.get_user(author_id)
+    
     if vote_id is None:
         raise ValueError(f"{title} is not a valid vote title for user {author.name}")
 
