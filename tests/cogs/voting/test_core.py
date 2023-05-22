@@ -245,14 +245,22 @@ def test_cancel_unsent_vote(bot: commands.Bot, cog):
     assert core.cancel_vote(cog.vote_manager, author.id, "Test Vote") == "Vote Test Vote has been cancelled."
 
 
-@pytest.mark.asyncio
-async def test_current_votes(bot: commands.Bot, cog):
+def test_current_votes(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     core.start_vote(bot, cog.vote_manager, "Test Vote", author.id, guild.id)
     
     embed = core.current_votes(author.id, guild.id)
     assert embed.title == "Your current votes"
+
+
+def test_current_votes_no_votes(bot: commands.Bot, cog):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    author: discord.Member = guild.members[0]
+    
+    embed = core.current_votes(author.id, guild.id)
+    assert embed.title == "Your current votes"
+    assert embed.description == "No current votes"
 
 
 @pytest.mark.asyncio
