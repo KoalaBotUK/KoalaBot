@@ -1,7 +1,8 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED
+from http.client import CREATED, OK
+from typing import Optional
 
 import discord
 from aiohttp import web
@@ -40,38 +41,95 @@ class VotingEndpoint:
         return app
     
 
+# how to do vote_manager
     @parse_request
-    async def post_new_vote(self):
+    async def post_new_vote(self, title, author_id, guild_id, options: list,
+                            roles: Optional[list], chair_id: Optional[int], end_time: Optional[str]):
         """
         Create a new vote.
-        :param : 
-        :return: The list of ScheduledActivities
+        :param title: The name of the vote
+        :param author_id: The author id of the vote
+        :param guild_id: The guild id of the vote 
+        :param options: The options for the votes
+        :param roles: The target roles for the votes
+        :param chair_id: The chair id of the vote
+        :param end_time: The end time of the vote
+        :return:
         """
-        pass
+        try:
+            await core.start_vote(self, self.vote_manager, title, author_id, guild_id)
+
+            for item in options:
+                core.add_option(self.vote_manager, author_id, item)
+
+            if roles:
+                for item in roles:
+                    core.set_roles(self, self.vote_manager, author_id, guild_id, item, "add")
+
+            if chair_id:
+                core.set_chair(self, self.vote_manager, author_id, chair_id)
+
+            if end_time:
+                core.set_end_time(self.vote_manager, author_id, end_time)
+
+            await core.send_vote(self, self.vote_manager, author_id, guild_id)
+
+        except Exception as e:
+            logger.error(e)
+            raise web.HTTPUnprocessableEntity()
+
+        return build_response(CREATED, {'message': f'Vote {title} created'})
     
 
     @parse_request
-    async def get_current_votes(self):
+    def get_current_votes(self, author_id, guild_id):
         """
         Gets list of open votes.
+        :param author_id: The author id of the vote
+        :param guild: The guild id of the vote
+        :return:
         """
-        pass
+        try:
+            embed = core.current_votes(author_id, guild_id)
+        except Exception as e:
+            logger.error(e)
+            raise web.HTTPUnprocessableEntity()
+        
+        return build_response(OK, embed)
     
 
     @parse_request
-    async def post_close_results(self):
+    async def post_close_results(self, author_id, title):
         """
         Gets results and closes the vote.
+        :param author_id: The author id of the vote
+        :param title: The title of the vote
+        :return:
         """
-        pass
-
+        try:
+            embed = await core.close(self, self.vote_manager, author_id, title)
+        except Exception as e:
+            logger.error(e)
+            raise web.HTTPUnprocessableEntity()
+        
+        return build_response(OK, embed)
+    
 
     @parse_request
-    async def get_results(self):
+    async def get_results(self, author_id, title):
         """
         Gets results, but does not close the vote.
+        :param author_id: The author id of the vote
+        :param title: The title of the vote
+        :return:
         """
-        pass
+        try:
+            embed = core.results(self, self.vote_manager, author_id, title)
+        except Exception as e:
+            logger.error(e)
+            raise web.HTTPUnprocessableEntity()
+        
+        return build_response(OK, embed)
     
 
 def setup(bot: Bot):
