@@ -33,8 +33,8 @@ from discord.ext import commands
 
 from koala import checks, env
 # Own modules
-from koala.db import extension_enabled
-from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
+from koala.db import extension_enabled, get_enabled_commands
+from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT, BOT_OWNER_GUILD
 from koala.errors import KoalaException
 from koala.utils import error_embed, interaction_data_to_str
 from koala.log import logger
@@ -65,6 +65,7 @@ is_dpytest = False
 
 
 class KoalaBot(commands.Bot):
+
     """
     The commands.Bot subclass for Koala
     """
@@ -73,10 +74,38 @@ class KoalaBot(commands.Bot):
         To perform asynchronous setup after the bot is logged in but before it has connected to the Websocket.
         """
         logger.debug("hook setup")
+        for guild in self.guilds:
+            if guild.id != BOT_OWNER_GUILD:
+                await self.setup_guild(guild)
+        await self.tree.sync(guild=discord.Object(BOT_OWNER_GUILD))
         await self.tree.sync()
-        await self.tree.sync(guild=discord.Object(863362407183286302))
         # todo: sync all guilds, only syncing enabled commands
         #   - add error for rate limiting on server
+
+    async def on_ready(self):
+        for guild in self.guilds:
+            await self.setup_guild(guild)
+        asyncio.get_event_loop().create_task(self.sync_global())
+
+    async def sync_global(self):
+        logger.info("Global sync has started")
+        await self.tree.sync()
+        logger.info("Global sync has completed")
+
+    async def sync_guild(self, guild):
+        logger.info(f"Guild {guild.id} sync has started")
+        await self.tree.sync(guild=guild)
+        logger.info(f"Guild {guild.id} sync has completed")
+
+    async def setup_guild(self, guild: discord.Guild):
+        if guild.id != BOT_OWNER_GUILD:
+            self.tree.clear_commands(guild=guild)
+            enabled_commands = get_enabled_commands(guild.id)
+            for enabled_command in enabled_commands:
+                command = self.tree.get_command(enabled_command, guild=self.get_guild(BOT_OWNER_GUILD))
+                self.tree.add_command(command, guild=guild)
+
+        asyncio.get_event_loop().create_task(self.sync_guild(guild=guild))
 
     async def on_command_error(self, ctx, error: Exception):
         if ctx.guild is None:
@@ -89,7 +118,7 @@ class KoalaBot(commands.Bot):
                                commands.MissingRequiredArgument,
                                commands.CommandNotFound]:
             await ctx.send(embed=error_embed(description=error))
-        if error.__class__ in [commands.CheckFailure]:
+        elif error.__class__ in [commands.CheckFailure]:
             await ctx.send(embed=error_embed(error_type=str(type(error).__name__),
                                              description=str(
                                                  error) + "\nPlease ensure you have administrator permissions, "
@@ -114,7 +143,7 @@ class KoalaBot(commands.Bot):
 bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 
 
-@app_commands.guilds(863362407183286302)
+@app_commands.guilds(BOT_OWNER_GUILD)
 class OwnerGroup(app_commands.Group, name='owner', description='owner only commands'):
     # todo: check implementation works across multiple cogs
     async def interaction_check(self, interaction: discord.Interaction, /) -> bool:
@@ -135,6 +164,10 @@ async def on_app_command_error(interaction: discord.Interaction, error: discord.
             ephemeral=True)
     elif isinstance(error, app_commands.CheckFailure):
         await interaction.response.send_message(embed=error_embed(interaction.data[checks.FAILURE_DESC_ATTR]))
+    elif isinstance(error, app_commands.CommandNotFound):
+        await interaction.response.send_message(embed=
+                                                error_embed(description="This command is unavailable in your Guild"),
+                                                ephemeral=True)
     else:
         logger.error(f"Unknown error in guild: {interaction.guild_id} for command: "
                      f"`{interaction_data_to_str(interaction.data)}`", exc_info=error)

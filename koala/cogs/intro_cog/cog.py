@@ -27,20 +27,15 @@ from . import core
 from ...ui import Confirm
 
 
-
 # Constants
 
 # Variables
-
 
 @app_commands.default_permissions(administrator=True)
 class IntroCog(commands.GroupCog, group_name="welcome", group_description="Welcome message DMed to users"):
     """
     A discord.py cog with commands pertaining to the welcome messages that a member will receive
     """
-
-    # welcome_group = app_commands.Group(name="welcome", description="Welcome message DMed to users",
-    #                                    default_permissions=discord.Permissions(administrator=True))
 
     def __init__(self, bot):
         self.bot = bot

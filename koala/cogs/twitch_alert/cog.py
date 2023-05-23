@@ -6,6 +6,7 @@ import time
 
 # Libs
 import discord
+from discord import app_commands
 from discord.ext import commands, tasks
 
 # Own modules
@@ -43,7 +44,9 @@ def twitch_is_enabled(ctx):
     return result
 
 
-class TwitchAlert(commands.Cog):
+@app_commands.guilds(590643624358969350)
+@app_commands.default_permissions(administrator=True)
+class TwitchAlert(commands.GroupCog, group_name="twitch", group_description="TwitchAlert"):
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
@@ -340,29 +343,21 @@ class TwitchAlert(commands.Cog):
 
         await ctx.send(embed=new_embed)
 
-    @twitch_group.command(name="list",
-                          brief="Show twitch alerts in a channel",
-                          usage=f"{CP}twitch list <channel>",
-                          help=f"""Shows all current TwitchAlert users and teams in a channel
-                          
-                          <channel> : The discord channel (e.g. #text-channel)
-                          
-                          Example: {CP}twitch list #text-channel""")
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel):
+    @app_commands.command(name="list",
+                          description="Show twitch alerts in a channel")
+    async def list_twitch_alert(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
         """
         Shows all current TwitchAlert users and teams in a channel
-        :param ctx:
+        :param interaction:
         :param channel: The discord channel ID of the Twitch Alert
         """
-        if not channel:
-            channel = ctx.channel
+        if channel:
+            channel_id = channel.id
+        else:
+            channel_id = interaction.channel_id
 
-        channel_id = channel.id
-
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
+        if not is_channel_in_guild(self.bot, interaction.guild_id, channel_id):
+            await interaction.response.send_message(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
         embed = discord.Embed()
         embed.title = "Twitch Alerts"
@@ -387,7 +382,7 @@ class TwitchAlert(commands.Cog):
         else:
             embed.add_field(name=":busts_in_silhouette: Teams", value="None")
 
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @commands.Cog.listener()
     async def on_ready(self):

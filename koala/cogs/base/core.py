@@ -154,9 +154,10 @@ async def unload_cog(bot: Bot, extension):
 
 
 @assign_session
-async def enable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
+async def enable_extension(bot: koalabot.KoalaBot, guild_id, koala_extension, **kwargs):
     """
     Enables a koala extension
+    :param bot: KoalaBot
     :param guild_id:
     :param koala_extension:
     :return:
@@ -173,14 +174,15 @@ async def enable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
         give_guild_extension(guild_id, koala_extension, **kwargs)
         embed = list_ext_embed(guild_id, **kwargs)
         embed.title = koala_extension + " enabled"
-    
+    await bot.setup_guild(bot.get_guild(guild_id))
     return embed
 
 
 @assign_session
-async def disable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
+async def disable_extension(bot: koalabot.KoalaBot, guild_id, koala_extension, **kwargs):
     """
     Disables a koala extension
+    :param bot: KoalaBot
     :param guild_id:
     :param koala_extension:
     :return:
@@ -196,7 +198,7 @@ async def disable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
     remove_guild_extension(guild_id, koala_extension, **kwargs)
     embed = list_ext_embed(guild_id, **kwargs)
     embed.title = koala_extension + " disabled"
-
+    await bot.setup_guild(bot.get_guild(guild_id))
     return embed
 
 

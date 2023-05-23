@@ -235,3 +235,15 @@ def clear_all_tables(tables):
 
 
 setup()
+
+
+@assign_session
+def get_enabled_commands(guild_id: int, *, session: Session):
+    # command_mapping = {"Announce": "announce", "ColourRole": "colour", "ReactForRole": "rfr", "TextFilter": "filter", "TwitchAlert": "twitch", "Verify": "verify", "Vote": "vote"}
+    command_mapping = {"TwitchAlert": "twitch"}
+    enabled_exts = session.execute(select(GuildExtensions.extension_id).filter_by(guild_id=guild_id)).scalars()
+    enabled_commands = []
+    for enabled_ext in enabled_exts:
+        if enabled_ext in command_mapping.keys():
+            enabled_commands.append(command_mapping[enabled_ext])
+    return enabled_commands

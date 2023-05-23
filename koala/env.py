@@ -8,6 +8,7 @@ BOT_TOKEN = os.environ['DISCORD_TOKEN']
 BOT_OWNER_ENV = os.environ.get('BOT_OWNER')
 BOT_OWNER_STR = BOT_OWNER_ENV.split(',')
 BOT_OWNER = [int(item) for item in BOT_OWNER_STR]
+BOT_OWNER_GUILD = int(os.environ['BOT_OWNER_GUILD'])
 
 API_PORT = os.environ.get("API_PORT", 8080)
 
