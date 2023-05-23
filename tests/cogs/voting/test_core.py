@@ -359,5 +359,5 @@ async def test_results_invalid_vote(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
 
-    with pytest.raises(ValueError, match=f"invalid is not a valid vote title for user {author.name}"):
+    with pytest.raises(ValueError, match=f"invalid is not a valid vote title for user with id {author.id}"):
         await core.results(bot, author.id, "invalid")

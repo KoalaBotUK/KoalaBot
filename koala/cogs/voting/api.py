@@ -1,12 +1,13 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED, OK
+from http.client import BAD_REQUEST, CREATED, OK
 from typing import Optional
 
 import discord
 from aiohttp import web
 from discord.ext.commands import Bot
+from koala.cogs.voting.db import VoteManager
 
 from koala.rest.api import parse_request, build_response
 # Own modules
@@ -14,7 +15,6 @@ from . import core
 from .log import logger
 
 # Constants
-VOTING_ENDPOINT = 'voting'
 CONFIG_ENDPOINT = 'config'
 RESULTS_ENDOPINT = 'results'
 
@@ -41,10 +41,9 @@ class VotingEndpoint:
         return app
     
 
-# how to do vote_manager
-    @parse_request
+    @parse_request(raw_response=True)
     async def post_new_vote(self, title, author_id, guild_id, options: list,
-                            roles: Optional[list], chair_id: Optional[int], end_time: Optional[str]):
+                            roles=None, chair_id=None, end_time=None):
         """
         Create a new vote.
         :param title: The name of the vote
@@ -57,22 +56,22 @@ class VotingEndpoint:
         :return:
         """
         try:
-            await core.start_vote(self, self.vote_manager, title, author_id, guild_id)
+            core.start_vote(self._bot, title, author_id, guild_id)
 
             for item in options:
-                core.add_option(self.vote_manager, author_id, item)
+                core.add_option(author_id, item)
 
-            if roles:
+            if roles is not None:
                 for item in roles:
-                    core.set_roles(self, self.vote_manager, author_id, guild_id, item, "add")
+                    core.set_roles(self._bot, author_id, guild_id, item, "add")
 
-            if chair_id:
-                core.set_chair(self, self.vote_manager, author_id, chair_id)
+            if chair_id is not None:
+                await core.set_chair(self._bot, author_id, chair_id)
 
-            if end_time:
-                core.set_end_time(self.vote_manager, author_id, end_time)
+            if end_time is not None:
+                core.set_end_time(author_id, end_time)
 
-            await core.send_vote(self, self.vote_manager, author_id, guild_id)
+            await core.send_vote(self._bot, author_id, guild_id)
 
         except Exception as e:
             logger.error(e)
@@ -81,8 +80,8 @@ class VotingEndpoint:
         return build_response(CREATED, {'message': f'Vote {title} created'})
     
 
-    @parse_request
-    def get_current_votes(self, author_id, guild_id):
+    @parse_request(raw_response=True)
+    async def get_current_votes(self, author_id, guild_id):
         """
         Gets list of open votes.
         :param author_id: The author id of the vote
@@ -91,14 +90,20 @@ class VotingEndpoint:
         """
         try:
             embed = core.current_votes(author_id, guild_id)
+
+            if embed.description:
+                body = embed.description
+            else:
+                body = embed.fields[0].value
+
+            return build_response(OK, {'embed_title': f'{embed.title}', 'embed_body': f'{body}'})
+        
         except Exception as e:
             logger.error(e)
             raise web.HTTPUnprocessableEntity()
-        
-        return build_response(OK, embed)
     
 
-    @parse_request
+    @parse_request(raw_response=True)
     async def post_close_results(self, author_id, title):
         """
         Gets results and closes the vote.
@@ -107,15 +112,24 @@ class VotingEndpoint:
         :return:
         """
         try:
-            embed = await core.close(self, self.vote_manager, author_id, title)
+            embed = await core.close(self._bot, author_id, title)
+            if embed.fields[0].name == "No votes yet!":
+                body = embed.fields[0].value
+            else:
+                body = ""
+                for item in embed.fields:
+                    body += item.name + ", " + item.value + "\n"
+
+            return build_response(OK, {'embed_title': f'{embed.title}',
+                                   'embed_body': f'{body}'})
+        
         except Exception as e:
             logger.error(e)
             raise web.HTTPUnprocessableEntity()
-        
-        return build_response(OK, embed)
+    
     
 
-    @parse_request
+    @parse_request(raw_response=True)
     async def get_results(self, author_id, title):
         """
         Gets results, but does not close the vote.
@@ -124,12 +138,23 @@ class VotingEndpoint:
         :return:
         """
         try:
-            embed = core.results(self, self.vote_manager, author_id, title)
+            message = await core.results(self._bot, author_id, title)
+            if type(message) is discord.Embed:
+                if message.fields[0].name == "No votes yet!":
+                    body = message.fields[0].value
+                else:
+                    body = ""
+                    for item in message.fields:
+                        body += item.name + ", " + item.value + "\n"
+                return build_response(OK, {'embed_title': f'{message.title}',
+                                   'embed_body': f'{body}'})
+                
+            else:
+                return build_response(BAD_REQUEST, {'message': message})
+                
         except Exception as e:
             logger.error(e)
             raise web.HTTPUnprocessableEntity()
-        
-        return build_response(OK, embed)
     
 
 def setup(bot: Bot):
