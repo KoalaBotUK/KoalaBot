@@ -148,23 +148,24 @@ def set_channel(bot: koalabot.KoalaBot, author_id, channel_id=None):
 # OPTION ATTRIBUTES TITLE, DESCRPTION (OBJECT!)
 # NO MORE +
 
-def add_option(author_id, option_string):
+def add_option(author_id, option):
     vote = vm.get_configuring_vote(author_id)
     
     if len(vote.options) > 9:
         return "Vote has maximum number of options already (10)"
     
+    if 'header' not in option or 'body' not in option:
+        return "Option should have both header and body."
+    
     current_option_length = sum([len(x.head) + len(x.body) for x in vote.options])
 
-    if current_option_length + len(option_string) > 1500:
+    if current_option_length + len(option['header']) + len(option['body']) > 1500:
         return "Option string is too long. The total length of all the vote options cannot be over 1500 characters."
     
-    if "+" not in option_string:
-        return "Example usage: k!vote addOption option title+option description"
+    # moved check for '+' in string to cog
     
-    header, body = option_string.split("+")
-    vote.add_option(Option(header, body, vm.generate_unique_opt_id()))
-    return f"Option {header} with description {body} added to vote"
+    vote.add_option(Option(option['header'], option['body'], vm.generate_unique_opt_id()))
+    return f"Option {option['header']} with description {option['body']} added to vote"
 
 
 def remove_option(author_id, index):
