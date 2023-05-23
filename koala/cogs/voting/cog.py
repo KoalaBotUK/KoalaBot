@@ -191,7 +191,12 @@ class Voting(commands.Cog, name="Vote"):
         separate the title and description with a "+" e.g. option title+option description
         :param option_string: a title and description for the option separated by a '+'
         """
-        await ctx.send(core.add_option(ctx.author.id, option_string))
+        if "+" not in option_string:
+            await ctx.send("Example usage: k!vote addOption option title+option description")
+        else:
+            header, body = option_string.split("+")
+            option = {'header': header, 'body': body}
+            await ctx.send(core.add_option(ctx.author.id, option))
 
 
     @currently_configuring()
