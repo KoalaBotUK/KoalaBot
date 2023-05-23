@@ -275,13 +275,13 @@ async def close(bot: koalabot.KoalaBot, author_id, title):
 
 async def results(bot: koalabot.KoalaBot, author_id, title):
     vote_id = vm.vote_lookup.get((author_id, title))
-    author = bot.get_user(author_id)
-    
+    # author = bot.get_user(author_id)
+
     if vote_id is None:
-        raise ValueError(f"{title} is not a valid vote title for user {author.name}")
+        raise ValueError(f"{title} is not a valid vote title for user with id {author_id}")
 
     if vote_id not in vm.sent_votes.keys():
-        if author.id in vm.configuring_votes.keys():
+        if author_id in vm.configuring_votes.keys():
             return f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}"
         else:
             return "You have no votes of that title to check"
