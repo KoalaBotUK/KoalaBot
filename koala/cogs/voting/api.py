@@ -1,7 +1,7 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import BAD_REQUEST, CREATED, OK
+from http.client import BAD_REQUEST, CREATED, OK, UNPROCESSABLE_ENTITY
 from typing import Optional
 
 import discord
@@ -72,7 +72,7 @@ class VotingEndpoint:
                 core.set_end_time(author_id, end_time)
 
             await core.send_vote(self._bot, author_id, guild_id)
-
+        
         except Exception as e:
             logger.error(e)
             raise web.HTTPUnprocessableEntity()
@@ -140,18 +140,24 @@ class VotingEndpoint:
         try:
             message = await core.results(self._bot, author_id, title)
             if type(message) is discord.Embed:
+
                 if message.fields[0].name == "No votes yet!":
                     body = message.fields[0].value
+                    
                 else:
                     body = ""
                     for item in message.fields:
                         body += item.name + ", " + item.value + "\n"
+
                 return build_response(OK, {'embed_title': f'{message.title}',
                                    'embed_body': f'{body}'})
                 
             else:
                 return build_response(BAD_REQUEST, {'message': message})
-                
+        
+        except ValueError as e:
+            return build_response(UNPROCESSABLE_ENTITY, {'message': message})
+        
         except Exception as e:
             logger.error(e)
             raise web.HTTPUnprocessableEntity()

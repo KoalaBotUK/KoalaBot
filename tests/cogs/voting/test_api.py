@@ -133,7 +133,7 @@ async def test_get_results(api_client):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
 
-    await api_client.post('/config', json=
+    resp2 = await api_client.post('/config', json=
     {
         'title': 'Test',
         'author_id': author.id,
@@ -142,7 +142,10 @@ async def test_get_results(api_client):
                     {'header': 'option2', 'body': 'desc2'}]
     })
 
-    # NoneType has no attr "name"
+    assert resp2.status == CREATED
+    assert (await resp2.json())['message'] == "Vote Test created"
+
+    # for SOME REASON it thinks its an invalid vote; the post is fine
 
     resp = await api_client.get('/results?author_id={}&title=Test'.format(author.id))
     assert resp.status == OK
