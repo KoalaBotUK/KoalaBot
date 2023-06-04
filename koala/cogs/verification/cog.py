@@ -10,6 +10,7 @@ Commented using reStructuredText (reST)
 
 # Libs
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 # Own modules
@@ -41,6 +42,9 @@ def verify_is_enabled(ctx):
 
 
 class Verification(commands.Cog, name="Verify"):
+    owner_group = koalabot.OwnerGroup()
+    verify_group = app_commands.Group(name="verify", description="lmao get verified",
+                                        parent=owner_group)
 
     def __init__(self, bot):
         self.bot = bot
@@ -60,137 +64,142 @@ class Verification(commands.Cog, name="Verify"):
         await core.send_verify_intro_message(member)
 
     @commands.check(koalabot.is_admin)
-    @commands.command(name="verifyAdd", aliases=["addVerification"])
+    @verify_group.command(name="add", description="Set up a role and email pair to verify users with")
     @commands.check(verify_is_enabled)
-    async def enable_verification(self, ctx: commands.Context, suffix: str, role: discord.Role):
+    async def enable_verification(self, interaction: discord.Interaction, suffix: str, role: discord.Role):
         """
         Set up a role and email pair for KoalaBot to verify users with
-        :param ctx: context of the discord message
+        :param interaction:
         :param suffix: end of the email (e.g. "example.com")
         :param role: the role to give users with that email verified (e.g. @students)
         :return:
         """
-        await core.add_verify_role(ctx.guild.id, suffix, role.id, self.bot)
-        await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
+        await core.add_verify_role(interaction.guild_id, suffix, role.id, self.bot)
+        await interaction.response.send_message(f"Verification enabled for {role} for emails ending with `{suffix}`")
 
     @commands.check(koalabot.is_admin)
-    @commands.command(name="verifyRemove", aliases=["removeVerification"])
+    @verify_group.command(name="remove", description="Disable an existing verification pair")
     @commands.check(verify_is_enabled)
-    async def disable_verification(self, ctx, suffix: str, role: discord.Role):
+    async def disable_verification(self, interaction: discord.Interaction, suffix: str, role: discord.Role):
         """
         Disable an existing verification listener
-        :param ctx: context of the discord message
+        :param interaction:
         :param suffix: end of the email (e.g. "example.com")
         :param role: the role paired with the email (e.g. @students)
         :return:
         """
-        core.remove_verify_role(ctx.guild.id, suffix, role.id)
+        core.remove_verify_role(interaction.guild_id, suffix, role.id)
 
-        await ctx.send(f"Emails ending with {suffix} no longer give {role}")
-
-    @commands.check(koalabot.is_admin)
-    @commands.command(name="verifyBlacklist")
-    @commands.check(verify_is_enabled)
-    async def blacklist(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
-        await core.blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
-        await ctx.send(f"{user} will no longer receive {role} upon verifying with this email suffix")
+        await interaction.response.send_message(f"Emails ending with {suffix} no longer give {role}")
 
     @commands.check(koalabot.is_admin)
-    @commands.command(name="verifyBlacklistRemove")
+    @verify_group.command(name="blacklist", description="Prevent a user from receiving a specific role")
     @commands.check(verify_is_enabled)
-    async def blacklist_remove(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
-        await core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
-        await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email suffix")
+    async def blacklist(self, interaction: discord.Interaction, user: discord.Member, role: discord.Role, suffix: str):
+        await core.blacklist_member(user.id, interaction.guild_id, role.id, suffix, self.bot)
+        await interaction.response.send_message(f"{user} will no longer receive {role} upon verifying with this email suffix")
+
+    @commands.check(koalabot.is_admin)
+    @verify_group.command(name="blacklistremove", description="Lift a blacklist restriction on a user")
+    @commands.check(verify_is_enabled)
+    async def blacklist_remove(self, interaction: discord.Interaction, user: discord.Member, role: discord.Role, suffix: str):
+        await core.remove_blacklist_member(user.id, interaction.guild_id, role.id, suffix, self.bot)
+        await interaction.response.send_message(f"{user} will now be able to receive {role} upon verifying with this email suffix")
+
+
+# can slash commands even work with DMs???? No way
 
     @commands.check(koalabot.is_dm_channel)
-    @commands.command(name="verify")
-    async def verify(self, ctx, email: str):
+    @verify_group.command(name="verify", description="Send to KoalaBot in DMs to verify an email")
+    async def verify(self, interaction: discord.Interaction, email: str):
         """
         Send to KoalaBot in dms to verify an email with our system
-        :param ctx: the context of the discord message
+        :param interaction:
         :param email: the email you want to verify
         :return:
         """
         try:
-            await core.email_verify_send(ctx.author.id, email, self.bot)
+            await core.email_verify_send(interaction.user.id, email, self.bot)
         except errors.VerifyExistsException as e:
-            await ctx.send(e.__str__()+" Would you like to verify anyway? (y/n)")
+            await interaction.response.send_message(e.__str__()+" Would you like to verify anyway? (y/n)")
 
             def check(m):
-                return m.channel == ctx.channel and m.author == ctx.author
+                return m.channel == interaction.channel and m.author == interaction.user
 
             msg = await self.bot.wait_for('message', check=check)
             if msg.content.lower() == "y" or msg.content.lower() == "yes":
-                await core.email_verify_send(ctx.author.id, email, self.bot, force=True)
+                await core.email_verify_send(interaction.user.id, email, self.bot, force=True)
             else:
-                await ctx.send(f"Okay, you will not be verified with {email}")
+                await interaction.response.send_message(f"Okay, you will not be verified with {email}")
                 return
-        await ctx.send("Please verify yourself using the command you have been emailed")
+        await interaction.response.send_message("Please verify yourself using the command you have been emailed")
+
 
     @commands.check(koalabot.is_dm_channel)
-    @commands.command(name="unVerify")
-    async def un_verify(self, ctx, email):
+    @verify_group.command(name="unverify", description="Send to KoalaBot in DMs to unverify an email")
+    async def un_verify(self, interaction: discord.Interaction, email):
         """
         Send to KoalaBot in dms to un-verify an email with our system
-        :param ctx: the context of the discord message
+        :param interaction:
         :param email: the email you want to un-verify
         :return:
         """
-        await core.email_verify_remove(ctx.author.id, email, self.bot)
-        await ctx.send(f"{email} has been un-verified and relevant roles have been removed")
+        await core.email_verify_remove(interaction.user.id, email, self.bot)
+        await interaction.response.send_message(f"{email} has been un-verified and relevant roles have been removed")
+
 
     @commands.check(koalabot.is_dm_channel)
-    @commands.command(name="confirm")
-    async def confirm(self, ctx, token):
+    @verify_group.command(name="confirm", description="Send to KoalaBot in DMs to confirm verification of an email")
+    async def confirm(self, interaction: discord.Interaction, token):
         """
         Send to KoalaBot in dms to confirm the verification of an email
-        :param ctx: the context of the discord message
+        :param interaction:
         :param token: the token emailed to you to verify with
         :return:
         """
-        await core.email_verify_confirm(ctx.author.id, token, self.bot)
-        await ctx.send("Your email has been verified, thank you")
+        await core.email_verify_confirm(interaction.user.id, token, self.bot)
+        await interaction.response.send_message("Your email has been verified, thank you")
 
     @commands.check(koalabot.is_owner_ctx)
-    @commands.command(name="getEmails")
-    async def get_emails(self, ctx, user_id: int):
+    @verify_group.command(name="emails", description="See the emails a user is verified with")
+    async def get_emails(self, interaction: discord.Interaction, user_id: int):
         """
         See the emails a user is verified with
-        :param ctx: the context of the discord message
+        :param interaction:
         :param user_id: the id of the user whose emails you want to find
         :return:
         """
         emails = '\n'.join(core.email_verify_list(user_id))
-        await ctx.send(f"This user has registered with:\n{emails}")
+        await interaction.response.send_message(f"This user has registered with:\n{emails}")
 
-    @commands.command(name="verifyList", aliases=["checkVerifications"])
+    @verify_group.command(name="list", description="List the current verification setup for the server")
     @commands.check(verify_is_enabled)
-    async def check_verifications(self, ctx):
+    async def check_verifications(self, interaction: discord.Interaction):
         """
         List the current verification setup for the server
-        :param ctx: the context of the discord message
+        :param interaction:
         :return:
         """
-        embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
-        role_dict = core.grouped_list_verify_role(ctx.guild.id, self.bot)
+        embed = discord.Embed(title=f"Current verification setup for {interaction.guild.name}")
+        role_dict = core.grouped_list_verify_role(interaction.guild_id, self.bot)
 
         for rd_suffix, rd_roles in role_dict.items():
             embed.add_field(name=rd_suffix, value='\n'.join(rd_roles))
 
-        await ctx.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
     @commands.check(koalabot.is_admin)
-    @commands.command(name="reVerify")
+    @verify_group.command(name="reverify", description="Remove a role from all users and marks them as needing to reverify before giving it back")
     @commands.check(verify_is_enabled)
-    async def re_verify(self, ctx, role: discord.Role):
+    async def re_verify(self, interaction: discord.Interaction, role: discord.Role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
-        :param ctx: the context of the discord message
+        :param interaction:
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
-        await core.re_verify_role(ctx.guild.id, role.id, self.bot)
-        await ctx.send("That role has now been removed from all users and they will need to "
+        await core.re_verify_role(interaction.guild_id, role.id, self.bot)
+        await interaction.response.send_message("That role has now been removed from all users and they will need to "
                        "re-verify the associated email.")
 
 
