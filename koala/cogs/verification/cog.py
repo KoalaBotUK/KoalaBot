@@ -10,7 +10,7 @@ Commented using reStructuredText (reST)
 
 # Libs
 import discord
-from discord import app_commands
+from discord import Button, ButtonStyle, app_commands
 from discord.ext import commands
 
 # Own modules
@@ -104,11 +104,8 @@ class Verification(commands.Cog, name="Verify"):
         await core.remove_blacklist_member(user.id, interaction.guild_id, role.id, suffix, self.bot)
         await interaction.response.send_message(f"{user} will now be able to receive {role} upon verifying with this email suffix")
 
-
-# can slash commands even work with DMs???? No way
-
     @commands.check(koalabot.is_dm_channel)
-    @verify_group.command(name="verify", description="Send to KoalaBot in DMs to verify an email")
+    @verify_group.command(name="me", description="Verify an email")
     async def verify(self, interaction: discord.Interaction, email: str):
         """
         Send to KoalaBot in dms to verify an email with our system
@@ -117,9 +114,15 @@ class Verification(commands.Cog, name="Verify"):
         :return:
         """
         try:
+            await interaction.response.defer()
             await core.email_verify_send(interaction.user.id, email, self.bot)
+
         except errors.VerifyExistsException as e:
-            await interaction.response.send_message(e.__str__()+" Would you like to verify anyway? (y/n)")
+            # embed: discord.Embed = discord.Embed(title="Verify Exists", description=e.__str__()+" Would you like to verify anyway?")
+
+            # await interaction.response.send_message(embed=embed, components=[Button(ButtonStyle.green, custom_id="yesButton", label="Yes"), Button(ButtonStyle.red, custom_id="noButton", label="No")])
+
+            await interaction.followup.send_message(e.__str__()+" Would you like to verify anyway? (y/n)")
 
             def check(m):
                 return m.channel == interaction.channel and m.author == interaction.user
@@ -128,13 +131,13 @@ class Verification(commands.Cog, name="Verify"):
             if msg.content.lower() == "y" or msg.content.lower() == "yes":
                 await core.email_verify_send(interaction.user.id, email, self.bot, force=True)
             else:
-                await interaction.response.send_message(f"Okay, you will not be verified with {email}")
+                await interaction.followup.send_message(f"Okay, you will not be verified with {email}")
                 return
-        await interaction.response.send_message("Please verify yourself using the command you have been emailed", ephemeral=True)
+        await interaction.followup.send_message("Please verify yourself using the command you have been emailed", ephemeral=True)
 
 
     @commands.check(koalabot.is_dm_channel)
-    @verify_group.command(name="unverify", description="Send to KoalaBot in DMs to unverify an email")
+    @verify_group.command(name="unverify", description="Unverify an email")
     async def un_verify(self, interaction: discord.Interaction, email: str):
         """
         Send to KoalaBot in dms to un-verify an email with our system
@@ -143,20 +146,21 @@ class Verification(commands.Cog, name="Verify"):
         :return:
         """
         await core.email_verify_remove(interaction.user.id, email, self.bot)
-        await interaction.response.send_message(f"{email} has been un-verified and relevant roles have been removed")
+        await interaction.response.send_message(f"{email} has been un-verified and relevant roles have been removed", ephemeral=True)
 
 
     @commands.check(koalabot.is_dm_channel)
-    @verify_group.command(name="confirm", description="Send to KoalaBot in DMs to confirm verification of an email")
+    @verify_group.command(name="confirm", description="Confirm verification of an email")
     async def confirm(self, interaction: discord.Interaction, token: str):
         """
-        Send to KoalaBot in dms to confirm the verification of an email
+        Confirm the verification of an email
         :param interaction:
         :param token: the token emailed to you to verify with
         :return:
         """
         await core.email_verify_confirm(interaction.user.id, token, self.bot)
-        await interaction.response.send_message("Your email has been verified, thank you")
+        await interaction.response.send_message("Your email has been verified, thank you", ephemeral=True)
+
 
     @commands.check(koalabot.is_owner_ctx)
     @verify_group.command(name="getemails", description="See the emails a user is verified with")
@@ -168,7 +172,8 @@ class Verification(commands.Cog, name="Verify"):
         :return:
         """
         emails = '\n'.join(core.email_verify_list(int(user_id)))
-        await interaction.response.send_message(f"This user has registered with:\n{emails}")
+        await interaction.response.send_message(f"This user has registered with:\n{emails}", ephemeral=True)
+
 
     @verify_group.command(name="list", description="List the current verification setup for the server")
     @commands.check(verify_is_enabled)
@@ -185,6 +190,7 @@ class Verification(commands.Cog, name="Verify"):
             embed.add_field(name=rd_suffix, value='\n'.join(rd_roles))
 
         await interaction.response.send_message(embed=embed)
+
 
     @commands.check(koalabot.is_admin)
     @verify_group.command(name="reverify", description="Remove a role from all users and marks them as needing to reverify before giving it back")
