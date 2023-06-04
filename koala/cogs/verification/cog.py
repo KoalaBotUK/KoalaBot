@@ -42,9 +42,7 @@ def verify_is_enabled(ctx):
 
 
 class Verification(commands.Cog, name="Verify"):
-    owner_group = koalabot.OwnerGroup()
-    verify_group = app_commands.Group(name="verify", description="lmao get verified",
-                                        parent=owner_group)
+    verify_group = app_commands.Group(name="verify", description="lmao get verified")
 
     def __init__(self, bot):
         self.bot = bot
@@ -132,12 +130,12 @@ class Verification(commands.Cog, name="Verify"):
             else:
                 await interaction.response.send_message(f"Okay, you will not be verified with {email}")
                 return
-        await interaction.response.send_message("Please verify yourself using the command you have been emailed")
+        await interaction.response.send_message("Please verify yourself using the command you have been emailed", ephemeral=True)
 
 
     @commands.check(koalabot.is_dm_channel)
     @verify_group.command(name="unverify", description="Send to KoalaBot in DMs to unverify an email")
-    async def un_verify(self, interaction: discord.Interaction, email):
+    async def un_verify(self, interaction: discord.Interaction, email: str):
         """
         Send to KoalaBot in dms to un-verify an email with our system
         :param interaction:
@@ -150,7 +148,7 @@ class Verification(commands.Cog, name="Verify"):
 
     @commands.check(koalabot.is_dm_channel)
     @verify_group.command(name="confirm", description="Send to KoalaBot in DMs to confirm verification of an email")
-    async def confirm(self, interaction: discord.Interaction, token):
+    async def confirm(self, interaction: discord.Interaction, token: str):
         """
         Send to KoalaBot in dms to confirm the verification of an email
         :param interaction:
@@ -161,15 +159,15 @@ class Verification(commands.Cog, name="Verify"):
         await interaction.response.send_message("Your email has been verified, thank you")
 
     @commands.check(koalabot.is_owner_ctx)
-    @verify_group.command(name="emails", description="See the emails a user is verified with")
-    async def get_emails(self, interaction: discord.Interaction, user_id: int):
+    @verify_group.command(name="getemails", description="See the emails a user is verified with")
+    async def get_emails(self, interaction: discord.Interaction, user_id: str):
         """
         See the emails a user is verified with
         :param interaction:
         :param user_id: the id of the user whose emails you want to find
         :return:
         """
-        emails = '\n'.join(core.email_verify_list(user_id))
+        emails = '\n'.join(core.email_verify_list(int(user_id)))
         await interaction.response.send_message(f"This user has registered with:\n{emails}")
 
     @verify_group.command(name="list", description="List the current verification setup for the server")
