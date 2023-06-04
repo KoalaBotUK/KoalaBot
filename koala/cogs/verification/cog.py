@@ -10,7 +10,7 @@ Commented using reStructuredText (reST)
 
 # Libs
 import discord
-from discord import Button, ButtonStyle, app_commands
+from discord import app_commands
 from discord.ext import commands
 
 # Own modules
@@ -118,22 +118,21 @@ class Verification(commands.Cog, name="Verify"):
             await core.email_verify_send(interaction.user.id, email, self.bot)
 
         except errors.VerifyExistsException as e:
-            # embed: discord.Embed = discord.Embed(title="Verify Exists", description=e.__str__()+" Would you like to verify anyway?")
-
-            # await interaction.response.send_message(embed=embed, components=[Button(ButtonStyle.green, custom_id="yesButton", label="Yes"), Button(ButtonStyle.red, custom_id="noButton", label="No")])
-
-            await interaction.followup.send_message(e.__str__()+" Would you like to verify anyway? (y/n)")
+            await interaction.followup.send(e.__str__()+" Would you like to verify anyway? (y/n)")
 
             def check(m):
                 return m.channel == interaction.channel and m.author == interaction.user
 
             msg = await self.bot.wait_for('message', check=check)
+            
             if msg.content.lower() == "y" or msg.content.lower() == "yes":
+                await interaction.channel.send("Okay, please wait")
                 await core.email_verify_send(interaction.user.id, email, self.bot, force=True)
             else:
-                await interaction.followup.send_message(f"Okay, you will not be verified with {email}")
+                await interaction.channel.send(f"Okay, you will not be verified with {email}")
                 return
-        await interaction.followup.send_message("Please verify yourself using the command you have been emailed", ephemeral=True)
+
+        await interaction.followup.send("Please verify yourself using `/verify confirm` and the token you have been emailed", ephemeral=True)
 
 
     @commands.check(koalabot.is_dm_channel)

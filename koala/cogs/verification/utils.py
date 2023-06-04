@@ -22,9 +22,9 @@ def send_email(email, token):
 
     html = open("koala/cogs/verification/templates/emailtemplate.html").read()
     soup = BeautifulSoup(html, features="html.parser")
-    soup.find(id="confirmbuttonbody").string = f"{koalabot.COMMAND_PREFIX}confirm {token}"
+    soup.find(id="confirmbuttonbody").string = f"/verify confirm {token}"
     soup.find(id="backup").string = "Main body not loading? Send this command to the bot: " \
-                                    f"{koalabot.COMMAND_PREFIX}confirm {token}"
+                                    f"/verify confirm {token}"
 
     msg = MIMEMultipart('alternative')
     msg.attach(MIMEText(str(soup), 'html'))
