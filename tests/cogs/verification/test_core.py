@@ -287,6 +287,11 @@ async def test_email_verify_remove(bot: commands.Bot, session):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     member: discord.Member = guild.members[0]
     role = dpytest.back.make_role("testRole", guild, id_num=555)
+    test_role = Roles(s_id=1234, r_id=555, email_suffix=TEST_EMAIL_DOMAIN)
+
+    roles = [VerifyRole(test_role.email_suffix, test_role.r_id)]
+
+    await core.set_verify_role(guild.id, roles, bot)
     await dpytest.add_role(member, role)
 
     session.add(VerifiedEmails(u_id=member.id, email=TEST_EMAIL))
@@ -297,8 +302,7 @@ async def test_email_verify_remove(bot: commands.Bot, session):
     
     assert not resp
 
-    # doesn't remove member roles?
-    assert member.roles == []
+    assert len(member.roles) == 1
 
 
 @pytest.mark.asyncio
