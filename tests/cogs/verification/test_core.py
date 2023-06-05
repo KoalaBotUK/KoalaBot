@@ -280,3 +280,85 @@ async def test_email_verify_send_another_email(bot: commands.Bot, session):
     
     with pytest.raises(VerifyException, match="This email is already assigned to a different account"):
         await core.email_verify_send(member.id, TEST_EMAIL, bot)
+
+
+@pytest.mark.asyncio
+async def test_email_verify_remove(bot: commands.Bot, session):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    member: discord.Member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await dpytest.add_role(member, role)
+
+    session.add(VerifiedEmails(u_id=member.id, email=TEST_EMAIL))
+    session.commit()
+
+    await core.email_verify_remove(member.id, TEST_EMAIL, bot)
+    resp = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
+    
+    assert not resp
+
+    # doesn't remove member roles?
+    assert member.roles == []
+
+
+@pytest.mark.asyncio
+async def test_email_verify_remove_bad_email(bot: commands.Bot):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    member: discord.Member = guild.members[0]
+    dpytest.back.make_role("testRole", guild, id_num=555)
+    test_role = Roles(s_id=1234, r_id=555, email_suffix=TEST_EMAIL_DOMAIN)
+
+    roles = [VerifyRole(test_role.email_suffix, test_role.r_id)]
+
+    await core.set_verify_role(guild.id, roles, bot)
+
+    with pytest.raises(VerifyException, match="You have not verified that email"):
+        await core.email_verify_remove(member.id, TEST_EMAIL, bot)
+
+
+@pytest.mark.asyncio
+async def test_email_verify_confirm(bot: commands.Bot, session):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    member: discord.Member = guild.members[0]
+    dpytest.back.make_role("testRole", guild, id_num=555)
+    test_role = Roles(s_id=1234, r_id=555, email_suffix=TEST_EMAIL_DOMAIN)
+    token = "asdfjkl"
+
+    roles = [VerifyRole(test_role.email_suffix, test_role.r_id)]
+    await core.set_verify_role(guild.id, roles, bot)
+
+    session.add(NonVerifiedEmails(u_id=member.id, email=TEST_EMAIL, token=token))
+    session.commit()
+
+    await core.email_verify_confirm(member.id, token, bot)
+    assert len(member.roles) == 2
+
+
+@pytest.mark.asyncio
+async def test_email_verify_confirm_bad_token(bot: commands.Bot, session):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    member: discord.Member = guild.members[0]
+    dpytest.back.make_role("testRole", guild, id_num=555)
+
+    session.add(NonVerifiedEmails(u_id=member.id, email=TEST_EMAIL, token="asdfjkl"))
+    session.commit()
+
+    with pytest.raises(InvalidArgumentError, match="That is not a valid token"):
+        await core.email_verify_confirm(member.id, "fakeToken", bot)
+
+    assert len(member.roles) == 1
+
+
+@pytest.mark.asyncio
+async def test_email_verify_list(session):
+    guild: discord.Guild = dpytest.get_config().guilds[0]
+    member: discord.Member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await dpytest.add_role(member, role)
+
+    session.add(VerifiedEmails(u_id=member.id, email=TEST_EMAIL))
+    session.commit()
+
+    resp = core.email_verify_list(member.id)
+    assert len(resp) == 1
+    assert resp[0] == TEST_EMAIL
