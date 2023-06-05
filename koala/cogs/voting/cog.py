@@ -85,7 +85,7 @@ class Voting(commands.Cog, name="Vote"):
 
     @tasks.loop(seconds=60.0)
     async def vote_end_loop(self):
-        await core.vote_end_loop(self.bot, self.vote_manager)
+        await core.vote_end_loop(self.bot, core.vm)
 
     @vote_end_loop.before_loop
     async def before_vote_loop(self):
