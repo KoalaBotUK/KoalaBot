@@ -107,12 +107,12 @@ async def test_re_verify_role(bot: commands.Bot):
     await core.set_verify_role(guild.id, roles, bot)
     await dpytest.add_role(member, role)
 
-    assert len(member.roles) == 2
+    assert role in member.roles
 
     await core.re_verify_role(guild.id, test_role.r_id, bot)
 
     # a member will always have the @everyone role
-    assert len(member.roles) == 1
+    assert roles not in member.roles
 
 
 @pytest.mark.asyncio
@@ -157,10 +157,10 @@ async def test_blacklist(bot: commands.Bot, session):
     await core.set_verify_role(guild.id, roles, bot)
 
     await dpytest.add_role(member, role)
-    assert len(member.roles) == 2
+    assert role in member.roles
 
     await core.blacklist_member(member.id, guild.id, role.id, TEST_EMAIL_DOMAIN, bot)
-    assert len(member.roles) == 1
+    assert role not in member.roles
 
     resp = session.execute(select(VerifyBlacklist).filter_by(user_id=member.id)).scalars().all()
     assert len(resp) == 1
@@ -212,7 +212,7 @@ async def test_remove_blacklist(bot: commands.Bot, session):
 
     resp = session.execute(select(VerifyBlacklist).filter_by(user_id=member.id)).scalars().all()
     assert len(resp) == 0
-    assert len(member.roles) == 2
+    assert role in member.roles
 
 
 @pytest.mark.asyncio
@@ -302,7 +302,7 @@ async def test_email_verify_remove(bot: commands.Bot, session):
     
     assert not resp
 
-    assert len(member.roles) == 1
+    assert roles not in member.roles
 
 
 @pytest.mark.asyncio
@@ -335,14 +335,14 @@ async def test_email_verify_confirm(bot: commands.Bot, session):
     session.commit()
 
     await core.email_verify_confirm(member.id, token, bot)
-    assert len(member.roles) == 2
+    assert roles in member.roles
 
 
 @pytest.mark.asyncio
 async def test_email_verify_confirm_bad_token(bot: commands.Bot, session):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     member: discord.Member = guild.members[0]
-    dpytest.back.make_role("testRole", guild, id_num=555)
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
 
     session.add(NonVerifiedEmails(u_id=member.id, email=TEST_EMAIL, token="asdfjkl"))
     session.commit()
@@ -350,7 +350,7 @@ async def test_email_verify_confirm_bad_token(bot: commands.Bot, session):
     with pytest.raises(InvalidArgumentError, match="That is not a valid token"):
         await core.email_verify_confirm(member.id, "fakeToken", bot)
 
-    assert len(member.roles) == 1
+    assert role not in member.roles
 
 
 @pytest.mark.asyncio

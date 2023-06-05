@@ -88,7 +88,7 @@ class Verification(commands.Cog, name="Verify"):
         """
         core.remove_verify_role(interaction.guild_id, suffix, role.id)
 
-        await interaction.response.send_message(f"Emails ending with {suffix} no longer give {role}")
+        await interaction.response.send_message(f"Emails ending with `{suffix}` no longer give {role}")
 
     @commands.check(koalabot.is_admin)
     @verify_group.command(name="blacklist", description="Prevent a user from receiving a specific role")

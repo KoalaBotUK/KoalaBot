@@ -32,12 +32,13 @@ TEST_EMAIL_DOMAIN = 'koalabot.uk'
 # Variables
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def cog(bot: commands.Bot):
+@pytest_asyncio.fixture(name='verify_cog', scope='function', autouse=True)
+async def verify_cog_fixture(bot: commands.Bot):
+    """ setup any state specific to the execution of the given module."""
     cog = Verification(bot)
     await bot.add_cog(cog)
+    await dpytest.empty_queue()
     dpytest.configure(bot)
-    logger.info("Tests starting")
     return cog
 
 
@@ -108,381 +109,345 @@ This email is stored so you don't need to verify it multiple times across server
 
 
 @pytest.mark.asyncio
-async def test_enable_verification():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
-        entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
-        assert entry
-        session.execute(delete(Roles).filter_by(s_id=guild.id))
-        session.commit()
+async def test_enable_verification(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+
+    entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
+    assert entry
+    session.execute(delete(Roles).filter_by(s_id=guild.id))
+    session.commit()
 
 
 @pytest.mark.asyncio
-async def test_disable_verification():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        session.add(Roles(s_id=guild.id, r_id=555, email_suffix="egg.com"))
-        session.commit()
-        await dpytest.message(koalabot.COMMAND_PREFIX + "removeVerification egg.com testRole")
-        assert dpytest.verify().message().content("Emails ending with egg.com no longer give testRole")
-        entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
-        assert not entry
+async def test_disable_verification(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    session.add(Roles(s_id=guild.id, r_id=555, email_suffix=TEST_EMAIL_DOMAIN))
+    session.commit()
+
+    await verify_cog.disable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Emails ending with `{TEST_EMAIL_DOMAIN}` no longer give testRole")
+
+    entry = session.execute(select(Roles).filter_by(s_id=guild.id, r_id=role.id)).all()
+    assert not entry
+
+
+# how to defer?
+@pytest.mark.asyncio
+async def test_full_flow(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+        
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+
+    await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
+    mock_interaction.response.assert_eq("Please verify yourself using `/verify confirm` and the token you have been emailed")
+
+    token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
+
+    assert role not in member.roles
+
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, token)
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
+
+    assert role in member.roles
 
 
 @pytest.mark.asyncio
-async def test_full_flow():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        member = guild.members[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+async def test_blacklist(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+    
+    await verify_cog.blacklist.callback(verify_cog, mock_interaction, member, role, TEST_EMAIL_DOMAIN)
+    mock_interaction.response.assert_eq(f"{member} will no longer receive testRole upon verifying with this email suffix")
 
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-        assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
+    await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
+    mock_interaction.response.assert_eq("Please verify yourself using `/verify confirm` and the token you have been emailed")
 
-        token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
+    token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
 
-        assert role not in member.roles
+    assert role not in member.roles
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"confirm {token}", dm)
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, token)
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
 
-        assert role in member.roles
-
-
-@pytest.mark.asyncio
-async def test_blacklist():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        member = guild.members[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
-
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verifyBlacklist {member.id} testRole {TEST_EMAIL_DOMAIN}")
-        assert dpytest.verify().message().content(
-            f"{member} will no longer receive testRole upon verifying with this email suffix")
-
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-        assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
-
-        token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
-
-        assert role not in member.roles
-
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"confirm {token}", dm)
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
-
-        assert role not in member.roles
+    assert role not in member.roles
 
 
 @pytest.mark.asyncio
-async def test_blacklist_remove():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        member = guild.members[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+async def test_blacklist_remove(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+    
+    await verify_cog.blacklist.callback(verify_cog, mock_interaction, member, role, TEST_EMAIL_DOMAIN)
+    mock_interaction.response.assert_eq(f"{member} will no longer receive testRole upon verifying with this email suffix")
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verifyBlacklist {member.id} testRole {TEST_EMAIL_DOMAIN}")
-        assert dpytest.verify().message().content(
-            f"{member} will no longer receive testRole upon verifying with this email suffix")
+    await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
+    mock_interaction.response.assert_eq("Please verify yourself using `/verify confirm` and the token you have been emailed")
 
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-        assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
+    token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
 
-        token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
+    assert role not in member.roles
 
-        assert role not in member.roles
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, token)
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"confirm {token}", dm)
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
+    assert role not in member.roles
+    
+    await verify_cog.blacklist_remove.callback(verify_cog, mock_interaction, member, role.id, TEST_EMAIL_DOMAIN)
+    mock_interaction.response.assert_eq(f"{member} will be able to receive testRole upon verifying with this email suffix")
 
-        assert role not in member.roles
-
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verifyBlacklistRemove {member.id} testRole {TEST_EMAIL_DOMAIN}")
-        assert dpytest.verify().message().content(
-            f"{member} will now be able to receive testRole upon verifying with this email suffix")
-
-        assert role in member.roles
+    assert role in member.roles
 
 
 @pytest.mark.asyncio
-async def test_verify():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = test_config.guilds[0]
-        member = guild.members[0]
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-        assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
-        entry = session.execute(select(NonVerifiedEmails).filter_by(u_id=member.id, email=TEST_EMAIL)).all()
-        assert entry
+async def test_verify(verify_cog: Verification, mock_interaction, session):
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    member = guild.members[0]
+
+    await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
+    mock_interaction.response.assert_eq("Please verify yourself using `/verify confirm` and the token you have been emailed")
+
+    entry = session.execute(select(NonVerifiedEmails).filter_by(u_id=member.id, email=TEST_EMAIL)).all()
+    assert entry
 
 
 @pytest.mark.asyncio
-async def test_verify_twice():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = test_config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        member = test_config.members[0]
-        await dpytest.add_role(member, role)
-        test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
-        test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
-        session.add(test_verified_email)
-        session.add(test_role)
-        session.commit()
+async def test_verify_twice(verify_cog: Verification, mock_interaction, session):
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    channel = guild.channels[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    member = test_config.members[0]
+    await dpytest.add_role(member, role)
+    test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
+    test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
+    session.add(test_verified_email)
+    session.add(test_role)
+    session.commit()
 
-    dm = await member.create_dm()
-
-    msg_mock: discord.Message = dpytest.back.make_message("n", member, dm)
+    msg_mock: discord.Message = dpytest.back.make_message("n", member, channel)
     with mock.patch('discord.client.Client.wait_for',
                     mock.AsyncMock(return_value=msg_mock)):
-        await dpytest.message(koalabot.COMMAND_PREFIX + "verify test@egg.com", dm)
+        await verify_cog.verify.callback(verify_cog, mock_interaction, "test@egg.com")
     assert dpytest.verify().message().content(
         "This email is already assigned to your account. Would you like to verify anyway? (y/n)")
     assert dpytest.verify().message().content("Okay, you will not be verified with test@egg.com")
 
 
 @pytest.mark.asyncio
-async def test_verify_alternate_account_no():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        member = guild.members[0]
-        member2 = await dpytest.member_join(guild)
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+async def test_verify_alternate_account_no(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    channel = guild.channels[0]
+    member = guild.members[0]
+    member2 = await dpytest.member_join(guild)
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
 
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-        assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
+    await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
+    mock_interaction.response.assert_eq("Please verify yourself using `/verify confirm` and the token you have been emailed")
 
-        token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
+    token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
 
-        assert role not in member.roles
+    assert role not in member.roles
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"confirm {token}", dm)
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, token)
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
 
-        assert role in member.roles
-        assert role not in member2.roles
+    assert role in member.roles
+    assert role not in member2.roles
 
-        dm2 = await member2.create_dm()
+    msg_mock: discord.Message = dpytest.back.make_message("n", member2, channel)
+    with mock.patch('discord.client.Client.wait_for',
+                    mock.AsyncMock(return_value=msg_mock)):
+        await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
 
-        msg_mock: discord.Message = dpytest.back.make_message("n", member2, dm2)
-        with mock.patch('discord.client.Client.wait_for',
-                        mock.AsyncMock(return_value=msg_mock)):
-            await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm2, member2)
-        assert dpytest.verify().message().content(
-            "This email is already assigned to a different account. Would you like to verify anyway? (y/n)")
-        assert dpytest.verify().message().content(
-            f"Okay, you will not be verified with {TEST_EMAIL}")
+    mock_interaction.response.assert_eq("This email is already assigned to a different account. Would you like to verify anyway? (y/n)")
+    mock_interaction.response.assert_eq(f"Okay, you will not be verified with {TEST_EMAIL}")
 
 
 @pytest.mark.asyncio
-async def test_verify_alternate_account_yes():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        member = guild.members[0]
-        member2 = await dpytest.member_join(guild)
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+async def test_verify_alternate_account_yes(verify_cog: Verification, mock_interaction, session):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    channel = guild.channels[0]
+    member = guild.members[0]
+    member2 = await dpytest.member_join(guild)
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
 
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm)
-        assert dpytest.verify().message().content("Please verify yourself using the command you have been emailed")
+    await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
+    mock_interaction.response.assert_eq("Please verify yourself using `/verify confirm` and the token you have been emailed")
 
-        token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
+    token = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member.id, email=TEST_EMAIL)).scalar()
 
-        assert role not in member.roles
+    assert role not in member.roles
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"confirm {token}", dm)
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, token)
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
 
-        assert role in member.roles
-        assert role not in member2.roles
+    assert role in member.roles
+    assert role not in member2.roles
 
-        dm2 = await member2.create_dm()
+    msg_mock: discord.Message = dpytest.back.make_message("n", member2, channel)
+    with mock.patch('discord.client.Client.wait_for',
+                    mock.AsyncMock(return_value=msg_mock)):
+        await verify_cog.verify.callback(verify_cog, mock_interaction, TEST_EMAIL)
 
-        msg_mock: discord.Message = dpytest.back.make_message("y", member2, dm2)
-        with mock.patch('discord.client.Client.wait_for',
-                        mock.AsyncMock(return_value=msg_mock)):
-            await dpytest.message(koalabot.COMMAND_PREFIX + f"verify {TEST_EMAIL}", dm2, member2)
-        assert dpytest.verify().message().content(
-            "This email is already assigned to a different account. Would you like to verify anyway? (y/n)")
-        assert dpytest.verify().message().content(
-            "Please verify yourself using the command you have been emailed")
+    mock_interaction.response.assert_eq("This email is already assigned to a different account. Would you like to verify anyway? (y/n)")
+    mock_interaction.response.assert_eq(f"Okay, please wait")
 
-        assert role not in member.roles
+    assert role not in member.roles
 
-        token2 = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member2.id, email=TEST_EMAIL)).scalar()
+    token2 = session.execute(select(NonVerifiedEmails.token).filter_by(u_id=member2.id, email=TEST_EMAIL)).scalar()
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"confirm {token2}", dm2, member2)
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, token2)
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
 
-        assert role in member2.roles
+    assert role in member2.roles
 
 
 @pytest.mark.asyncio
-async def test_verify_list():
-    with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
-        member = guild.members[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"addVerification {TEST_EMAIL_DOMAIN} testRole")
-        assert dpytest.verify().message().content(
-            f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+async def test_verify_list(verify_cog: Verification, mock_interaction):
+    config = dpytest.get_config()
+    guild = config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + f"verifyList")
+    await verify_cog.enable_verification.callback(verify_cog, mock_interaction, TEST_EMAIL_DOMAIN, role)
+    mock_interaction.response.assert_eq(f"Verification enabled for testRole for emails ending with `{TEST_EMAIL_DOMAIN}`")
+    
+    await verify_cog.check_verifications.callback(verify_cog, mock_interaction)
 
-        expected_embeds = discord.Embed(title=f"Current verification setup for {guild.name}")
-        expected_embeds.add_field(name=TEST_EMAIL_DOMAIN, value=f"@{role}")
+    expected_embeds = discord.Embed(title=f"Current verification setup for {guild.name}")
+    expected_embeds.add_field(name=TEST_EMAIL_DOMAIN, value=f"@{role}")
 
-        assert dpytest.verify().message().embed(expected_embeds)
-
-
+    mock_interaction.response.assert_eq(embed=expected_embeds)
 
 
 @pytest.mark.asyncio
-async def test_confirm():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = test_config.guilds[0]
-        member = guild.members[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        test_role = Roles(s_id=guild.id, r_id=555, email_suffix="egg.com")
-        test_verified_email = NonVerifiedEmails(u_id=member.id, email='test@egg.com', token='testtoken')
-        session.add(test_verified_email)
-        session.add(test_role)
-        session.commit()
+async def test_confirm(verify_cog: Verification, mock_interaction, session):
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    member = guild.members[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    test_role = Roles(s_id=guild.id, r_id=555, email_suffix="egg.com")
+    test_verified_email = NonVerifiedEmails(u_id=member.id, email='test@egg.com', token='testtoken')
+    session.add(test_verified_email)
+    session.add(test_role)
+    session.commit()
 
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + "confirm testtoken", dm)
-        verified = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
-        exists = session.execute(select(NonVerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
-        assert verified
-        assert not exists
-        await asyncio.sleep(0.5)
-        assert role in member.roles
-        assert dpytest.verify().message().content("Your email has been verified, thank you")
-        session.delete(test_role)
-        session.execute(delete(VerifiedEmails).filter_by(u_id=member.id))
-        session.commit()
+    await verify_cog.confirm.callback(verify_cog, mock_interaction, "testtoken")
+    verified = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
+    exists = session.execute(select(NonVerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
+    assert verified
+    assert not exists
+    await asyncio.sleep(0.5)
+    assert role in member.roles
+    mock_interaction.response.assert_eq("Your email has been verified, thank you")
+    session.delete(test_role)
+    session.execute(delete(VerifiedEmails).filter_by(u_id=member.id))
+    session.commit()
 
 
 @pytest.mark.asyncio
-async def test_un_verify():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = test_config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555)
-        member = test_config.members[0]
-        await dpytest.add_role(member, role)
-        test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
-        test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
-        session.add(test_verified_email)
-        session.add(test_role)
-        session.commit()
+async def test_un_verify(verify_cog: Verification, mock_interaction, session):
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555)
+    member = test_config.members[0]
+    await dpytest.add_role(member, role)
+    test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
+    test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
+    session.add(test_verified_email)
+    session.add(test_role)
+    session.commit()
 
-        dm = await member.create_dm()
-        await dpytest.message(koalabot.COMMAND_PREFIX + "unVerify test@egg.com", dm)
-        assert dpytest.verify().message().content(
-            "test@egg.com has been un-verified and relevant roles have been removed")
-        entry = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
-        assert not entry
-        assert role not in member.roles
-        session.delete(test_role)
-        session.commit()
+    await verify_cog.un_verify.callback(verify_cog, mock_interaction, "test@egg.com")
+    mock_interaction.response.assert_eq("test@egg.com has been un-verified and relevant roles have been removed")
+    entry = session.execute(select(VerifiedEmails).filter_by(u_id=member.id, email="test@egg.com")).all()
+    assert not entry
+    assert role not in member.roles
+    session.delete(test_role)
+    session.commit()
 
 
 @pytest.mark.asyncio
-async def test_get_emails():
-    with session_manager() as session:
-        test_verified_email = VerifiedEmails(u_id=123, email=TEST_EMAIL)
-        session.add(test_verified_email)
-        session.commit()
-    await dpytest.message(koalabot.COMMAND_PREFIX + "getEmails 123")
-    assert dpytest.verify().message().content(f"""This user has registered with:\n{TEST_EMAIL}""")
-    with session_manager() as session:
-        session.delete(test_verified_email)
-        session.commit()
+async def test_get_emails(verify_cog: Verification, mock_interaction, session):
+    test_verified_email = VerifiedEmails(u_id=123, email=TEST_EMAIL)
+    session.add(test_verified_email)
+    session.commit()
+    await verify_cog.get_emails.callback(verify_cog, mock_interaction, 123)
+    mock_interaction.response.assert_eq(f"""This user has registered with:\n{TEST_EMAIL}""", ephemeral=True)
+    session.delete(test_verified_email)
+    session.commit()
 
 
 @pytest.mark.asyncio
-async def test_re_verify():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = test_config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555555555555555)
-        member = test_config.members[0]
-        await dpytest.add_role(member, role)
-        test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
-        test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
-        session.add(test_verified_email)
-        session.add(test_role)
-        session.commit()
+async def test_re_verify(verify_cog: Verification, mock_interaction, session):
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555555555555555)
+    member = test_config.members[0]
+    await dpytest.add_role(member, role)
+    test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
+    test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
+    session.add(test_verified_email)
+    session.add(test_role)
+    session.commit()
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555555555555555>")
-        assert role not in member.roles
-        blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
-        assert blacklisted
-        assert dpytest.verify().message().content(
-            "That role has now been removed from all users and they will need to re-verify the associated email.")
-        session.delete(test_verified_email)
-        session.delete(test_role)
-        session.execute(delete(ToReVerify).filter_by(u_id=member.id))
-        session.commit()
+    await verify_cog.re_verify.callback(verify_cog, mock_interaction, role)
+    assert role not in member.roles
+    blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
+    assert blacklisted
+    mock_interaction.response.assert_eq("That role has now been removed from all users and they will need to re-verify the associated email.")
+    session.delete(test_verified_email)
+    session.delete(test_role)
+    session.execute(delete(ToReVerify).filter_by(u_id=member.id))
+    session.commit()
 
 @pytest.mark.asyncio
-async def test_re_verify_duplicate():
-    with session_manager() as session:
-        test_config = dpytest.get_config()
-        guild = test_config.guilds[0]
-        role = dpytest.back.make_role("testRole", guild, id_num=555555555555555)
-        member = test_config.members[0]
-        await dpytest.add_role(member, role)
-        test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
-        test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
-        test_re_verify = ToReVerify(u_id=member.id, r_id=role.id)
-        session.add(test_verified_email)
-        session.add(test_role)
-        session.add(test_re_verify)
-        session.commit()
+async def test_re_verify_duplicate(verify_cog: Verification, mock_interaction, session):
+    test_config = dpytest.get_config()
+    guild = test_config.guilds[0]
+    role = dpytest.back.make_role("testRole", guild, id_num=555555555555555)
+    member = test_config.members[0]
+    await dpytest.add_role(member, role)
+    test_verified_email = VerifiedEmails(u_id=member.id, email='test@egg.com')
+    test_role = Roles(s_id=guild.id, r_id=role.id, email_suffix='egg.com')
+    test_re_verify = ToReVerify(u_id=member.id, r_id=role.id)
+    session.add(test_verified_email)
+    session.add(test_role)
+    session.add(test_re_verify)
+    session.commit()
 
-        await dpytest.message(koalabot.COMMAND_PREFIX + "reVerify <@&555555555555555>")
-        assert role not in member.roles
-        blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
-        assert blacklisted
-        assert dpytest.verify().message().content(
-            "That role has now been removed from all users and they will need to re-verify the associated email.")
-        session.delete(test_verified_email)
-        session.delete(test_role)
-        session.execute(delete(ToReVerify).filter_by(u_id=member.id))
-        session.commit()
+    await verify_cog.re_verify.callback(verify_cog, mock_interaction, role)
+    assert role not in member.roles
+    blacklisted = session.execute(select(ToReVerify).filter_by(u_id=member.id)).all()
+    assert blacklisted
+    mock_interaction.response.assert_eq("That role has now been removed from all users and they will need to re-verify the associated email.")
+    session.delete(test_verified_email)
+    session.delete(test_role)
+    session.execute(delete(ToReVerify).filter_by(u_id=member.id))
+    session.commit()
 
