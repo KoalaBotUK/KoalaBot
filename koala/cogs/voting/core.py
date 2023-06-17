@@ -148,24 +148,23 @@ def set_channel(bot: koalabot.KoalaBot, author_id, channel_id=None):
 # OPTION ATTRIBUTES TITLE, DESCRPTION (OBJECT!)
 # NO MORE +
 
-def add_option(author_id, option):
+def add_option(author_id, option: Option):
     vote = vm.get_configuring_vote(author_id)
     
     if len(vote.options) > 9:
         return "Vote has maximum number of options already (10)"
     
-    if 'header' not in option or 'body' not in option:
+    if option.head is None or option.body is None:
         return "Option should have both header and body."
     
     current_option_length = sum([len(x.head) + len(x.body) for x in vote.options])
 
-    if current_option_length + len(option['header']) + len(option['body']) > 1500:
+    if current_option_length + len(option.head) + len(option.body) > 1500:
         return "Option string is too long. The total length of all the vote options cannot be over 1500 characters."
     
-    # moved check for '+' in string to cog
-    
-    vote.add_option(Option(option['header'], option['body'], vm.generate_unique_opt_id()))
-    return f"Option {option['header']} with description {option['body']} added to vote"
+    option.opt_id = vm.generate_unique_opt_id()
+    vote.add_option(option)
+    return f"Option {option.head} with description {option.body} added to vote"
 
 
 def remove_option(author_id, index):
@@ -274,8 +273,7 @@ async def close(bot: koalabot.KoalaBot, author_id, title):
     
 
 async def results(bot: koalabot.KoalaBot, author_id, title):
-    vote_id = vm.vote_lookup.get((author_id, title))
-    # author = bot.get_user(author_id)
+    vote_id = vm.vote_lookup[(author_id, title)]
 
     if vote_id is None:
         raise ValueError(f"{title} is not a valid vote title for user with id {author_id}")

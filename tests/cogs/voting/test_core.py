@@ -8,16 +8,17 @@ from discord.ext import commands
 from sqlalchemy import select
 from koala.cogs import Voting
 from koala.cogs.voting.models import Votes
+from koala.cogs.voting.option import Option
 
 # Own modules
 import koalabot
-from koala.db import assign_session, session_manager, insert_extension
+from koala.db import assign_session
 from tests.log import logger
 from koala.cogs.voting import core
 
 # Variables
-option1 = {'header': 'option1', 'body': 'desc1'}
-option2 = {'header': 'option2', 'body': 'desc2'}
+option1 = Option('option1', 'body1', 1)
+option2 = Option('option2', 'body2', 2)
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -27,12 +28,6 @@ async def cog(bot: commands.Bot):
     dpytest.configure(bot)
     logger.info("Tests starting")
     return cog
-
-
-@pytest.mark.asyncio
-async def test_update_vote_message(bot: commands.Bot):
-    pass
-    # await core.update_vote_message(bot)
 
 
 def test_create_vote(bot: commands.Bot, cog):
@@ -146,7 +141,7 @@ def test_add_option(bot: commands.Bot, cog):
 
     core.start_vote(bot, "Test Vote", author.id, guild.id)
 
-    assert core.add_option(author.id, option1) == "Option option1 with description desc1 added to vote"
+    assert core.add_option(author.id, option1) == "Option option1 with description body1 added to vote"
 
 def test_add_option_wrong_formatting(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
@@ -154,7 +149,7 @@ def test_add_option_wrong_formatting(bot: commands.Bot, cog):
 
     core.start_vote(bot, "Test Vote", author.id, guild.id)
 
-    option = {'header': 'Option 1'}
+    option = Option("head", None, 1)
 
     assert core.add_option(author.id, option) == "Option should have both header and body."
 
@@ -178,7 +173,7 @@ def test_add_option_too_long(bot: commands.Bot, cog):
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
 
-    test_option = {'header': "i am trying to write a lot of words here. needs to be over fifteen thousand words to be exact. but i'm separating it so it does not all get clustered into the same paragraph and become a word soup", 'body': 'i was wrong, it is actually fifteen hundred words. whoever actually reads this will get a little entertainment i hope. is there a better way to test this? probably.'}
+    test_option = Option("i am trying to write a lot of words here. needs to be over fifteen thousand words to be exact. but i'm separating it so it does not all get clustered into the same paragraph and become a word soup", 'i was wrong, it is actually fifteen hundred words. whoever actually reads this will get a little entertainment i hope. is there a better way to test this? probably.', 3)
     x = 0
     while (x < 5):
         core.add_option(author.id, test_option)

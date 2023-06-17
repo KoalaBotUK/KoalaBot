@@ -14,8 +14,9 @@ from discord.ext import commands, tasks
 import koalabot
 from koala.db import insert_extension
 from . import core
-from .db import VoteManager, add_reactions
+from .db import add_reactions
 from .log import logger
+from .option import Option
 
 
 # Constants
@@ -195,7 +196,9 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send("Example usage: k!vote addOption option title+option description")
         else:
             header, body = option_string.split("+")
-            option = {'header': header, 'body': body}
+            option = Option()
+            option.head = header
+            option.body = body
             await ctx.send(core.add_option(ctx.author.id, option))
 
 
@@ -302,4 +305,3 @@ async def setup(bot: koalabot) -> None:
     :param bot: the bot client for KoalaBot
     """
     await bot.add_cog(Voting(bot))
-    logger.info("Voting is ready.")
