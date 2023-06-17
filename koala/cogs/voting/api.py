@@ -1,13 +1,13 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import BAD_REQUEST, CREATED, OK, UNPROCESSABLE_ENTITY
-from typing import Optional
+from http.client import BAD_REQUEST, CREATED, OK
 
 import discord
 from aiohttp import web
 from discord.ext.commands import Bot
 from koala.cogs.voting.db import VoteManager
+from koala.cogs.voting.option import Option
 
 from koala.rest.api import parse_request, build_response
 # Own modules
@@ -15,10 +15,12 @@ from . import core
 from .log import logger
 
 # Constants
+VOTING_ENDPOINT = 'vote'
 CONFIG_ENDPOINT = 'config'
 RESULTS_ENDOPINT = 'results'
 
 # Variables
+vm = VoteManager()
 
 class VotingEndpoint:
     """
@@ -43,7 +45,7 @@ class VotingEndpoint:
 
     @parse_request(raw_response=True)
     async def post_new_vote(self, title, author_id, guild_id, options: list,
-                            roles=None, chair_id=None, end_time=None):
+                            roles=None, chair_id=None, channel_id=None, end_time=None):
         """
         Create a new vote.
         :param title: The name of the vote
@@ -52,6 +54,7 @@ class VotingEndpoint:
         :param options: The options for the votes
         :param roles: The target roles for the votes
         :param chair_id: The chair id of the vote
+        :param channel_id: Channel id of the vote
         :param end_time: The end time of the vote
         :return:
         """
@@ -59,7 +62,7 @@ class VotingEndpoint:
             core.start_vote(self._bot, title, author_id, guild_id)
 
             for item in options:
-                core.add_option(author_id, item)
+                core.add_option(author_id, Option(item[0], item[1], vm.generate_unique_opt_id()))
 
             if roles is not None:
                 for item in roles:
@@ -67,6 +70,9 @@ class VotingEndpoint:
 
             if chair_id is not None:
                 await core.set_chair(self._bot, author_id, chair_id)
+
+            if channel_id is not None:
+                await core.set_channel(self._bot, author_id, channel_id)
 
             if end_time is not None:
                 core.set_end_time(author_id, end_time)
@@ -156,7 +162,7 @@ class VotingEndpoint:
                 return build_response(BAD_REQUEST, {'message': message})
         
         except ValueError as e:
-            return build_response(UNPROCESSABLE_ENTITY, {'message': message})
+            raise web.HTTPUnprocessableEntity(reason="{}".format(e))
         
         except Exception as e:
             logger.error(e)

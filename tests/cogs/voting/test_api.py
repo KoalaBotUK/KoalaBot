@@ -5,12 +5,12 @@ import discord
 import discord.ext.test as dpytest
 import pytest
 from aiohttp import web
-from mock import mock
-import json
 
-import koalabot
 from koala.cogs.voting.api import VotingEndpoint
 
+# Variables
+options = [["option1", "body1"],
+            ["option2", "body2"]]
 
 @pytest.fixture
 def api_client(bot: discord.ext.commands.Bot, aiohttp_client, loop):
@@ -32,8 +32,7 @@ async def test_post_new_vote_no_optionals(api_client):
         'title': 'Test',
         'author_id': author.id,
         'guild_id': guild.id,
-        'options': [{'header': 'option1', 'body': 'desc1'},
-                    {'header': 'option2', 'body': 'desc2'}]
+        'options': options
     })
     
     assert resp.status == CREATED
@@ -49,8 +48,7 @@ async def test_post_new_vote_with_optionals(api_client):
         'title': 'Test2',
         'author_id': author.id,
         'guild_id': guild.id,
-        'options': [{'header': 'option1', 'body': 'desc1'},
-                    {'header': 'option2', 'body': 'desc2'}],
+        'options': options,
         'roles': [guild.roles[0].id],
         'chair_id': guild.members[1].id,
         'end_time': '2025-01-01 00:00:00'
@@ -71,8 +69,7 @@ async def test_get_current_votes(api_client):
         'title': 'Test',
         'author_id': author.id,
         'guild_id': guild.id,
-        'options': [{'header': 'option1', 'body': 'desc1'},
-                    {'header': 'option2', 'body': 'desc2'}]
+        'options': options
     })
 
     resp = await api_client.get('/config?author_id={}&guild_id={}'.format(author.id, guild.id))
@@ -107,8 +104,7 @@ async def test_post_results(api_client):
         'title': 'Test',
         'author_id': author.id,
         'guild_id': guild.id,
-        'options': [{'header': 'option1', 'body': 'desc1'},
-                    {'header': 'option2', 'body': 'desc2'}]
+        'options': options
     })
 
     resp = await api_client.post('/results', json={
@@ -135,27 +131,26 @@ async def test_get_results(api_client):
 
     resp2 = await api_client.post('/config', json=
     {
-        'title': 'Test',
+        'title': 'Test2',
         'author_id': author.id,
         'guild_id': guild.id,
-        'options': [{'header': 'option1', 'body': 'desc1'},
-                    {'header': 'option2', 'body': 'desc2'}]
+        'options': options
     })
 
     assert resp2.status == CREATED
-    assert (await resp2.json())['message'] == "Vote Test created"
+    assert (await resp2.json())['message'] == "Vote Test2 created"
 
     # for SOME REASON it thinks its an invalid vote; the post is fine
 
-    resp = await api_client.get('/results?author_id={}&title=Test'.format(author.id))
+    resp = await api_client.get('/results?author_id={}&title=Test2'.format(author.id))
     assert resp.status == OK
     jresp = await resp.json()
 
-    assert jresp['embed_title'] == "Test Results:"
+    assert jresp['embed_title'] == "Test2 Results:"
     assert jresp['embed_body'] == "option1, 1 votes\noption2, 0 votes\n"
 
     # checking vote hasn't closed
     resp = await api_client.get('/config?author_id={}&guild_id={}'.format(author.id, guild.id))
     
-    assert (await resp.json())['embed_body'] == "Test\n"
+    assert (await resp.json())['embed_body'] == "Test2\n"
     

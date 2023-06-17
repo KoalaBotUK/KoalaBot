@@ -85,4 +85,4 @@ def setup(bot: Bot):
     endpoint = VerifyEndpoint(bot)
     endpoint.register(sub_app)
     getattr(bot, "koala_web_app").add_subapp('/{}'.format(VERIFY_ENDPOINT), sub_app)
-    logger.info("Base API is ready.")
+    logger.info("Verify API is ready.")
