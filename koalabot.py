@@ -192,7 +192,8 @@ async def run_bot():
     await load_all_cogs(bot)
 
     cors = aiohttp_cors.setup(app, defaults={
-        env.FRONTEND_URL: aiohttp_cors.ResourceOptions()
+        env.FRONTEND_URL: aiohttp_cors.ResourceOptions(
+                expose_headers="*", allow_headers="*")
     })
     for route in list(app.router.routes()):
         cors.add(route)
