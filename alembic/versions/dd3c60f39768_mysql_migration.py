@@ -136,6 +136,7 @@ def upgrade():
         unsafe_upgrade()
     except Exception as e:
         downgrade(exception=e)
+        exit(1)
 
 
 def unsafe_upgrade():
@@ -158,7 +159,7 @@ def unsafe_upgrade():
                                                   comment="-1: unknown, 0: Playing, 1: Streaming, 2: Listening, "
                                                           "3: Watching, 4: Custom, 5: Competing"),
                                            Column('stream_url', VARCHAR(100), nullable=True),
-                                           Column('message', VARCHAR(100)),
+                                           Column('message', VARCHAR(100, collation="utf8mb4_general_ci")),
                                            Column('time_start', TIMESTAMP),
                                            Column('time_end', TIMESTAMP))
     guild_usage = op.create_table('GuildUsage',
@@ -176,7 +177,7 @@ def unsafe_upgrade():
 
     guild_welcome_messages = op.create_table('GuildWelcomeMessages',
                                              Column('guild_id', DiscordSnowflake, primary_key=True),
-                                             Column('welcome_message', String(2000, collation="utf8mb4_general_ci"), nullable=True))
+                                             Column('welcome_message', VARCHAR(2000, collation="utf8mb4_general_ci"), nullable=True))
 
     guild_rfr_messages = op.create_table('GuildRFRMessages',
                                          Column('guild_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE')),

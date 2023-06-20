@@ -44,7 +44,7 @@ class ScheduledActivities(BaseModel):
     activity_type = Column(DiscordActivityType, comment="-1: unknown, 0: Playing, 1: Streaming, 2: Listening, "
                                                         "3: Watching, 4: Custom, 5: Competing")
     stream_url = Column(VARCHAR(100), nullable=True)
-    message = Column(VARCHAR(100))
+    message = Column(VARCHAR(100, collation="utf8mb4_general_ci"))
     time_start = Column(TIMESTAMP)
     time_end = Column(TIMESTAMP)
 
