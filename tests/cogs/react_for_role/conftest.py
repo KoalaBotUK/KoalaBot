@@ -49,7 +49,7 @@ async def rfr_cog(bot: commands.Bot):
 @pytest_asyncio.fixture(scope='function', autouse=True)
 async def setup_clean_db():
     with session_manager() as session:
-        session.execute(delete(GuildRFRMessages))
-        session.execute(delete(RFRMessageEmojiRoles))
         session.execute(delete(GuildRFRRequiredRoles))
+        session.execute(delete(RFRMessageEmojiRoles))
+        session.execute(delete(GuildRFRMessages))
         session.commit()

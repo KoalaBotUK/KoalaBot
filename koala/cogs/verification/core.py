@@ -22,6 +22,8 @@ from koala.cogs.verification.log import logger
 from koala.cogs.verification.models import VerifiedEmails, ToReVerify, VerifyBlacklist, Roles, NonVerifiedEmails
 from koala.cogs.verification.utils import send_email
 from koala.db import assign_session
+from koala.enums import DatabaseType
+from koala.env import DB_TYPE
 # Constants
 # Variables
 from koala.errors import InvalidArgumentError
@@ -321,13 +323,13 @@ async def assign_role_to_guild(guild, role, suffix, session):
 @assign_session
 async def assign_roles_for_user(user_id, email, bot, *, session):
     results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
-                              .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+                              .where(value_suffix_like_column(":email", "email_suffix")), {"email": email}).all()
 
     for g_id, r_id, suffix in results:
         should_re_verify = session.execute(select(ToReVerify).filter_by(r_id=r_id, u_id=user_id)).all()
 
         blacklisted = session.execute(select(VerifyBlacklist).filter_by(user_id=user_id, role_id=r_id)
-                                      .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+                                      .where(value_suffix_like_column(":email", "email_suffix")), {"email": email}).all()
 
         if blacklisted or should_re_verify:
             continue
@@ -354,7 +356,7 @@ async def assign_roles_for_user(user_id, email, bot, *, session):
 @assign_session
 async def remove_roles_for_user(user_id, email, bot, *, session):
     results = session.execute(select(Roles.s_id, Roles.r_id, Roles.email_suffix)
-                              .where(text(":email like ('%' || email_suffix)")), {"email": email}).all()
+                              .where(value_suffix_like_column(":email", "email_suffix")), {"email": email}).all()
 
     for g_id, r_id, suffix in results:
         try:
@@ -369,3 +371,25 @@ async def remove_roles_for_user(user_id, email, bot, *, session):
             logger.error(e)
         except discord.errors.NotFound:
             logger.error(f"user with id {user_id} not found in {g_id}")
+
+
+def value_suffix_like_column(value, column):
+    """
+    Creates a sqlalchemy where query value for a given value that contains
+    a suffix which is found in the db
+
+    example:
+
+        value_suffix_like_column(":email", "email_suffix")
+
+        text(":email like ('%' || email_suffix)")       SQLITE
+        text(":email like CONCAT('%', email_suffix)")   MYSQL
+
+    :param value: full value, or alias
+    :param column: column name
+    :return:
+    """
+    if DB_TYPE == DatabaseType.SQLITE:
+        return text(f"{value} like ('%' || {column})")
+    else:
+        return text(f"{value} like CONCAT('%', {column})")

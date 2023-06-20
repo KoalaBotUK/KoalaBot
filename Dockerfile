@@ -47,4 +47,4 @@ EXPOSE 8080
 # run app
 #########
 
-CMD [ "python3", "koalabot.py"]
+CMD [ "bash", "startup.sh"]

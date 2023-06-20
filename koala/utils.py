@@ -11,7 +11,6 @@ Commented using reStructuredText (reST)
 import argparse
 import datetime
 import typing
-from pathlib import Path
 from pathlib import PurePath
 # Libs
 from typing import Tuple, Optional
@@ -20,9 +19,8 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import BadArgument
 
-from koala.colours import ERROR_RED
 # Own modules
-from koala.env import CONFIG_PATH
+from koala.colours import ERROR_RED
 
 # Constants
 ID_LENGTH = 18
@@ -119,23 +117,12 @@ def __parse_args(args):
     return args
 
 
-def get_arg_config_path():
-    """
-    Gets config directory if given from arguments when running koalabot.py
-
-    :return: Valid config dir
-    """
-    config_dir = CONFIG_PATH
-    path = Path(config_dir)
-    path.mkdir(exist_ok=True, parents=True)
-    return str(path.absolute())
-
-
 def convert_iso_datetime(argument):
     try:
         return datetime.datetime.fromisoformat(argument)
     except ValueError:
         raise BadArgument('Invalid ISO format "%s", instead use the format "2020-01-01 00:00:00"' % argument)
+
 
 
 def cast(type_class, value):

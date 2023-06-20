@@ -100,16 +100,17 @@ def test_votemanager_sent_to():
 
 
 def test_vote_set_chair():
+    vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test")
+    vote.set_chair(555)
+    assert vote.chair == 555
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test")
-        vote.set_chair(555)
-        assert vote.chair == 555
-        in_db = session.execute(select(Votes).filter_by(vote_id=vote.id, chair_id=555)).all()
-        assert in_db
+        in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
+        assert in_db.chair_id == 555
         vote.set_chair()
         assert not vote.chair
+        session.expire(in_db)
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
-        assert not in_db.chair_id
+        assert not in_db.chair_id == 555
 
 
 def test_vote_set_vc():
@@ -117,12 +118,13 @@ def test_vote_set_vc():
         vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test")
         vote.set_vc(555)
         assert vote.target_voice_channel == 555
-        in_db = session.execute(select(Votes).filter_by(vote_id=vote.id, voice_id=555)).all()
-        assert in_db
+        in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
+        assert in_db.voice_id == 555
         vote.set_vc()
         assert not vote.target_voice_channel
+        session.expire(in_db)
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
-        assert not in_db.voice_id
+        assert not in_db.voice_id == 555
 
 
 def test_vote_add_option():

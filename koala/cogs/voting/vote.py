@@ -97,7 +97,8 @@ class Vote:
             if self.sent_to:
                 return
             self.chair = chair_id
-            session.execute(update(Votes).filter_by(vote_id=self.id).values(chair_id=chair_id))
+            vote: Votes = session.execute(select(Votes).filter_by(vote_id=self.id)).scalar()
+            vote.chair_id = chair_id
             session.commit()
 
     def set_vc(self, channel_id=None):

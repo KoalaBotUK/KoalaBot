@@ -38,7 +38,7 @@ class AnnounceDBManager:
             guild_usage = session.execute(select(GuildUsage).filter_by(guild_id=guild_id)).scalars().one_or_none()
             if not guild_usage:
                 guild_usage = GuildUsage(guild_id=guild_id, last_message_epoch_time=last_time)
+                session.add(guild_usage)
             else:
                 guild_usage.last_message_epoch_time = last_time
-            session.add(guild_usage)
             session.commit()

@@ -71,6 +71,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         core.activity_clear_current()
         await self.update_activity()
+        core.add_all_guilds(self.bot)
         self.update_activity.start()
         self.started = True
         logger.info("Bot is ready.")
