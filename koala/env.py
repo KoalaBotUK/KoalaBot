@@ -17,6 +17,9 @@ API_PORT = os.environ.get("API_PORT", 8080)
 # Logging
 LOGGING_FILE = eval(os.environ.get("LOGGING_FILE", "True"))
 
+# CORS
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+
 # Config Path
 CONFIG_PATH = os.environ.get("CONFIG_PATH")
 

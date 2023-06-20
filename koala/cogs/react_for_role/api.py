@@ -55,7 +55,7 @@ class RfrEndpoint:
                            colour: str = colours.KOALA_GREEN.__str__(),
                            thumbnail: str = None,
                            inline: bool = None,
-                           roles: List[dict] = None
+                           roles: List[ReactRole] = None
                            ):
         """
         Create a React For Role message
@@ -72,7 +72,7 @@ class RfrEndpoint:
         """
         guild = self._bot.get_guild(guild_id)
         if roles is not None:
-            roles = [ReactRole(r["emoji"], r["role_id"]).to_tuple(guild) for r in roles]
+            roles = [r.to_tuple(guild) for r in roles]
 
         return await core.create_rfr_message(bot=self._bot,
                                              guild_id=guild_id,
@@ -98,7 +98,7 @@ class RfrEndpoint:
         :param channel_id: Channel ID of RFR message
         :return:
         """
-        return await core.get_rfr_message_dto(self._bot, int(message_id), int(guild_id), int(channel_id))
+        return await core.get_rfr_message_dto(self._bot, message_id, guild_id, channel_id)
 
     @parse_request
     async def put_message(self,
@@ -150,7 +150,7 @@ class RfrEndpoint:
                             colour: str = None,
                             thumbnail: str = None,
                             inline: bool = None,
-                            roles: List[dict] = None
+                            roles: List[ReactRole] = None
                             ):
         """
         Edit a React For Role message
@@ -168,7 +168,7 @@ class RfrEndpoint:
         """
         guild = self._bot.get_guild(guild_id)
         if roles is not None:
-            roles = [ReactRole(r["emoji"], r["role_id"]).to_tuple(guild) for r in roles]
+            roles = [r.to_tuple(guild) for r in roles]
 
         if colour is not None:
             colour = discord.Colour.from_str(colour)
@@ -198,7 +198,7 @@ class RfrEndpoint:
         :param channel_id: Channel ID of RFR message
         :return:
         """
-        await core.delete_rfr_message(self._bot, int(message_id), int(guild_id), int(channel_id))
+        await core.delete_rfr_message(self._bot, message_id, guild_id, channel_id)
         return {"status": "DELETED",  "message_id": message_id}
 
     @parse_request
@@ -214,7 +214,7 @@ class RfrEndpoint:
         :return:
         """
         core.edit_guild_rfr_required_roles(self._bot, guild_id, role_ids)
-        return core.rfr_list_guild_required_roles(self._bot.get_guild(int(guild_id)))
+        return core.rfr_list_guild_required_roles(self._bot.get_guild(guild_id))
 
     @parse_request
     async def get_required_roles(self, guild_id: int):
@@ -224,7 +224,7 @@ class RfrEndpoint:
         :param guild_id: Guild ID of RFR message
         :return:
         """
-        return core.rfr_list_guild_required_roles(self._bot.get_guild(int(guild_id)))
+        return core.rfr_list_guild_required_roles(self._bot.get_guild(guild_id))
 
 
 def setup(bot: Bot):

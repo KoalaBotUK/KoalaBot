@@ -4,6 +4,7 @@ import dataclasses
 import datetime
 import inspect
 import json
+import typing
 # Libs
 from functools import wraps
 from http.client import OK, BAD_REQUEST
@@ -16,7 +17,8 @@ from koala.errors import KoalaException
 from koala.log import logger
 # Own modules
 from koala.models import BaseModel
-from koala.rest.dto import ApiError
+from koala.rest.dto import ApiError, StringApiResponse
+from koala.utils import cast
 
 
 # Constants
@@ -110,26 +112,32 @@ def parse_request(*args, **kwargs) -> Handler:
                 body = await request.json()
                 for arg in wanted_args.keys():
                     if arg in body:
-                        available_args[arg] = body[arg]
+                        if wanted_args[arg].annotation == inspect.Parameter.empty:
+                            available_args[arg] = body[arg]
+                        else:
+                            available_args[arg] = cast(wanted_args[arg].annotation, body[arg])
             else:
                 for arg in wanted_args.keys():
                     if arg in request.query:
-                        available_args[arg] = request.query[arg]
+                        if wanted_args[arg].annotation == inspect.Parameter.empty:
+                            available_args[arg] = request.query[arg]
+                        else:
+                            available_args[arg] = cast(wanted_args[arg].annotation, request.query[arg])
 
             unsatisfied_args = set(required_args.keys()) - set(available_args.keys())
             if unsatisfied_args:
                 # Expected match info that doesn't exist
-                raise aiohttp.web.HTTPBadRequest(reason="Unsatisfied Arguments: %s" % unsatisfied_args)
+                return build_response(BAD_REQUEST, ApiError("BAD_REQUEST",
+                                                            "Unsatisfied Arguments: %s" % unsatisfied_args))
 
             try:
                 result = await func(self, **{arg_name: available_args[arg_name] for arg_name in available_args.keys()})
+                if isinstance(result, str):
+                    result = StringApiResponse(result)
 
-            except KoalaException as e:
-                logger.error("API Failed", exc_info=e)
-                return build_response(BAD_REQUEST, ApiError(type(e).__name__, str(e)))
             except Exception as e:
                 logger.error("API Failed", exc_info=e)
-                raise e
+                return build_response(BAD_REQUEST, ApiError(type(e).__name__, str(e)))
             if raw_response:
                 return result
             else:
