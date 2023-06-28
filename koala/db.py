@@ -24,7 +24,10 @@ from .enums import DatabaseType
 # Constants
 
 # Variables
-engine = create_engine(DB_URL, future=True, pool_size=10, max_overflow=20)
+if not DB_URL or DB_TYPE == DatabaseType.SQLITE:
+    engine = create_engine(DB_URL, future=True)
+else:
+    engine = create_engine(DB_URL, future=True, pool_size=10, max_overflow=20)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 
