@@ -24,7 +24,7 @@ from .enums import DatabaseType
 # Constants
 
 # Variables
-engine = create_engine(DB_URL, future=True)
+engine = create_engine(DB_URL, future=True, pool_size=10, max_overflow=20)
 Session = sessionmaker(future=True)
 Session.configure(bind=engine)
 
