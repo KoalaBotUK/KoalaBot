@@ -17,8 +17,10 @@ from tests.log import logger
 from koala.cogs.voting import core
 
 # Variables
-option1 = Option('option1', 'body1', 1)
-option2 = Option('option2', 'body2', 2)
+opt1_header = "option1"
+opt1_body = "desc1"
+opt2_header = "option2"
+opt2_body = "desc2"
 
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
@@ -141,17 +143,7 @@ def test_add_option(bot: commands.Bot, cog):
 
     core.start_vote(bot, "Test Vote", author.id, guild.id)
 
-    assert core.add_option(author.id, option1) == "Option option1 with description body1 added to vote"
-
-def test_add_option_wrong_formatting(bot: commands.Bot, cog):
-    guild: discord.Guild = dpytest.get_config().guilds[0]
-    author: discord.Member = guild.members[0]
-
-    core.start_vote(bot, "Test Vote", author.id, guild.id)
-
-    option = Option("head", None, 1)
-
-    assert core.add_option(author.id, option) == "Option should have both header and body."
+    assert core.add_option(author.id, opt1_header, opt1_body) == "Option option1 with description desc1 added to vote"
 
 
 def test_add_option_too_many(bot: commands.Bot, cog):
@@ -162,10 +154,10 @@ def test_add_option_too_many(bot: commands.Bot, cog):
     
     x = 0
     while (x < 11):
-        core.add_option(author.id, option1)
+        core.add_option(author.id, opt1_header, opt1_body)
         x += 1
 
-    assert core.add_option(author.id, option1) == "Vote has maximum number of options already (10)"
+    assert core.add_option(author.id, opt1_header, opt1_body) == "Vote has maximum number of options already (10)"
 
 
 def test_add_option_too_long(bot: commands.Bot, cog):
@@ -173,13 +165,14 @@ def test_add_option_too_long(bot: commands.Bot, cog):
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
 
-    test_option = Option("i am trying to write a lot of words here. needs to be over fifteen thousand words to be exact. but i'm separating it so it does not all get clustered into the same paragraph and become a word soup", 'i was wrong, it is actually fifteen hundred words. whoever actually reads this will get a little entertainment i hope. is there a better way to test this? probably.', 3)
+    test_option_header = "i am trying to write a lot of words here. needs to be over fifteen thousand words to be exact. but i'm separating it so it does not all get clustered into the same paragraph and become a word soup"
+    test_option_body = 'i was wrong, it is actually fifteen hundred words. whoever actually reads this will get a little entertainment i hope. is there a better way to test this? probably.'
     x = 0
     while (x < 5):
-        core.add_option(author.id, test_option)
+        core.add_option(author.id, test_option_header, test_option_body)
         x += 1
 
-    assert core.add_option(author.id, test_option) == "Option string is too long. The total length of all the vote options cannot be over 1500 characters."
+    assert core.add_option(author.id, test_option_header, test_option_body) == "Option string is too long. The total length of all the vote options cannot be over 1500 characters."
 
 
 def test_remove_option(bot: commands.Bot, cog):
@@ -187,7 +180,7 @@ def test_remove_option(bot: commands.Bot, cog):
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
 
-    core.add_option(author.id, option1)
+    core.add_option(author.id, opt1_header, opt1_body)
 
     assert core.remove_option(author.id, 0) == "Option number 0 removed"
 
@@ -230,8 +223,8 @@ async def test_cancel_sent_vote(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
-    core.add_option(author.id, option1)
-    core.add_option(author.id, option2)
+    core.add_option(author.id, opt1_header, opt1_body)
+    core.add_option(author.id, opt2_header, opt2_body)
 
     await core.send_vote(bot, author.id, guild.id)
 
@@ -269,8 +262,8 @@ async def test_close_no_chair(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
-    core.add_option(author.id, option1)
-    core.add_option(author.id, option2)
+    core.add_option(author.id, opt1_header, opt1_body)
+    core.add_option(author.id, opt2_header, opt2_body)
 
     await core.send_vote(bot, author.id, guild.id)
 
@@ -286,8 +279,8 @@ async def test_close_with_chair(bot: commands.Bot, cog):
     author: discord.Member = guild.members[0]
     chair: discord.Member = guild.members[1]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
-    core.add_option(author.id, option1)
-    core.add_option(author.id, option2)
+    core.add_option(author.id, opt1_header, opt1_body)
+    core.add_option(author.id, opt2_header, opt2_body)
     await core.set_chair(bot, author.id, chair.id)
 
     await core.send_vote(bot, author.id, guild.id)
@@ -300,8 +293,8 @@ async def test_send_vote(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
-    core.add_option(author.id, option1)
-    core.add_option(author.id, option2)
+    core.add_option(author.id, opt1_header, opt1_body)
+    core.add_option(author.id, opt2_header, opt2_body)
 
     # not sure how to assert DM sent
 
@@ -318,7 +311,7 @@ async def test_send_vote_bad_options(bot: commands.Bot, cog):
     assert await core.send_vote(bot, author.id, guild.id) == "Please add more than 1 option to vote for"
 
     # only 1 option
-    core.add_option(author.id, option1)
+    core.add_option(author.id, opt1_header, opt1_body)
     assert await core.send_vote(bot, author.id, guild.id) == "Please add more than 1 option to vote for"
 
 
@@ -327,8 +320,8 @@ async def test_get_results(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
-    core.add_option(author.id, option1)
-    core.add_option(author.id, option2)
+    core.add_option(author.id, opt1_header, opt1_body)
+    core.add_option(author.id, opt2_header, opt2_body)
 
     await core.send_vote(bot, author.id, guild.id)
 
@@ -343,8 +336,8 @@ async def test_results_vote_not_sent(bot: commands.Bot, cog):
     guild: discord.Guild = dpytest.get_config().guilds[0]
     author: discord.Member = guild.members[0]
     core.start_vote(bot, "Test Vote", author.id, guild.id)
-    core.add_option(author.id, option1)
-    core.add_option(author.id, option2)
+    core.add_option(author.id, opt1_header, opt1_body)
+    core.add_option(author.id, opt2_header, opt2_body)
 
     assert await core.results(bot, author.id, "Test Vote") == "That vote has not been sent yet. Please send it to your audience with k!vote send Test Vote"
 
