@@ -62,7 +62,7 @@ class VotingEndpoint:
             core.start_vote(self._bot, title, author_id, guild_id)
 
             for item in options:
-                core.add_option(author_id, Option(item[0], item[1], vm.generate_unique_opt_id()))
+                core.add_option(author_id, item.get("header"), item.get("body"))
 
             if roles is not None:
                 for item in roles:
