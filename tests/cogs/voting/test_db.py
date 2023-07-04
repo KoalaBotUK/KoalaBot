@@ -66,7 +66,7 @@ def test_votemanager_has_active_vote():
 
 def test_votemanager_create_vote():
     with session_manager() as session:
-        vote = vote_manager.create_vote(123, 456, "Create Vote Test")
+        vote = vote_manager.create_vote(123, 456, "Create Vote Test", session)
         assert vote.title == "Create Vote Test"
         in_db = session.execute(select(Votes).filter_by(author_id=123, title="Create Vote Test")).all()
         assert in_db
@@ -101,7 +101,7 @@ def test_votemanager_sent_to():
 
 def test_vote_set_chair():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test")
+        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test", session)
         vote.set_chair(555)
         assert vote.chair == 555
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id, chair_id=555)).all()
@@ -114,7 +114,7 @@ def test_vote_set_chair():
 
 def test_vote_set_vc():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test")
+        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test", session)
         vote.set_vc(555)
         assert vote.target_voice_channel == 555
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id, voice_id=555)).all()
@@ -127,7 +127,7 @@ def test_vote_set_vc():
 
 def test_vote_add_option():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Add Option Test")
+        vote = vote_manager.create_vote(111, 222, "Add Option Test", session)
         vote.add_option(Option("head", "body", 123))
         assert vote.options[0].head == "head"
         assert vote.options[0].body == "body"
@@ -137,7 +137,7 @@ def test_vote_add_option():
 
 def test_vote_remove_option():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Remove Option Test")
+        vote = vote_manager.create_vote(111, 222, "Remove Option Test", session)
         vote.add_option(Option("head", "body", 123))
         vote.remove_option(0)
         in_db = session.execute(select(VoteOptions).filter_by(opt_id=123)).all()
@@ -146,7 +146,7 @@ def test_vote_remove_option():
 
 def test_vote_register_sent():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Register Sent Test")
+        vote = vote_manager.create_vote(111, 222, "Register Sent Test", session)
         vote.register_sent(555, 666)
         assert vote.sent_to[555] == 666
         in_db = session.execute(select(VoteSent).filter_by(vote_receiver_message=666)).all()

@@ -10,6 +10,7 @@ from random import randint
 # Libs
 import discord
 from sqlalchemy import select, delete
+from sqlalchemy.orm import Session
 
 # Own modules
 from koala.db import session_manager
@@ -151,7 +152,7 @@ class VoteManager:
         """
         return author_id in self.configuring_votes.keys()
 
-    def create_vote(self, author_id, guild_id, title):
+    def create_vote(self, author_id, guild_id, title, session: Session):
         """
         Creates a vote object and assigns it to a users ID
         :param author_id: id of the author of the vote

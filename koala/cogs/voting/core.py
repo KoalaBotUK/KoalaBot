@@ -100,7 +100,7 @@ def start_vote(bot: koalabot.KoalaBot, title, author_id, guild_id, session: Sess
     if len(title) > 200:
         return "Title too long"
 
-    vm.create_vote(author_id, guild_id, title)
+    vm.create_vote(author_id, guild_id, title, session)
     return f"Vote titled `{title}` created for guild {guild_name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it."
 
 
@@ -145,17 +145,11 @@ def set_channel(bot: koalabot.KoalaBot, author_id, channel_id=None):
         return "Removed channel restriction on vote"
     
 
-# OPTION ATTRIBUTES TITLE, DESCRPTION (OBJECT!)
-# NO MORE +
-
 def add_option(author_id, option_header, option_body):
     vote = vm.get_configuring_vote(author_id)
     
     if len(vote.options) > 9:
         return "Vote has maximum number of options already (10)"
-    
-    if option_header is None or option_body is None:
-        return "Option should have both header and body."
     
     current_option_length = sum([len(x.head) + len(x.body) for x in vote.options])
 
@@ -272,7 +266,11 @@ async def close(bot: koalabot.KoalaBot, author_id, title):
     
 
 async def results(bot: koalabot.KoalaBot, author_id, title):
-    vote_id = vm.vote_lookup[(author_id, title)]
+    try:
+        vote_id = vm.vote_lookup[(author_id, title)]
+    except KeyError as e:
+        logger.error(e)
+        raise ValueError(f"{title} is not a valid vote title for user with id {author_id}")
 
     if vote_id is None:
         raise ValueError(f"{title} is not a valid vote title for user with id {author_id}")

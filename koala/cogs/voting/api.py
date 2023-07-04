@@ -2,6 +2,7 @@
 # Built-in/Generic Imports
 # Libs
 from http.client import BAD_REQUEST, CREATED, OK
+from typing import List
 
 import discord
 from aiohttp import web
@@ -18,9 +19,6 @@ from .log import logger
 VOTING_ENDPOINT = 'vote'
 CONFIG_ENDPOINT = 'config'
 RESULTS_ENDOPINT = 'results'
-
-# Variables
-vm = VoteManager()
 
 class VotingEndpoint:
     """
@@ -44,7 +42,7 @@ class VotingEndpoint:
     
 
     @parse_request(raw_response=True)
-    async def post_new_vote(self, title, author_id, guild_id, options: list,
+    async def post_new_vote(self, title, author_id, guild_id, options: List[dict],
                             roles=None, chair_id=None, channel_id=None, end_time=None):
         """
         Create a new vote.
@@ -61,8 +59,11 @@ class VotingEndpoint:
         try:
             core.start_vote(self._bot, title, author_id, guild_id)
 
+            if channel_id is not None:
+                await core.set_channel(self._bot, author_id, channel_id)
+
             for item in options:
-                core.add_option(author_id, item.get("header"), item.get("body"))
+                core.add_option(author_id, item["header"], item["body"])
 
             if roles is not None:
                 for item in roles:
@@ -70,9 +71,6 @@ class VotingEndpoint:
 
             if chair_id is not None:
                 await core.set_chair(self._bot, author_id, chair_id)
-
-            if channel_id is not None:
-                await core.set_channel(self._bot, author_id, channel_id)
 
             if end_time is not None:
                 core.set_end_time(author_id, end_time)

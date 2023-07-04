@@ -181,8 +181,6 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(core.set_channel(self.bot, ctx.author.id, channel.id))
 
 
-# PROCESS THE + IN OPTIONS HERE
-# NO + IN CORE!!!
     @currently_configuring()
     @commands.check(vote_is_enabled)
     @vote.command(name="addOption")

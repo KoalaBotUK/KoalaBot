@@ -18,7 +18,7 @@ options = [
             "header": "option2",
             "body": "option2desc"
         }
-    ],
+    ]
 
 @pytest.fixture
 def api_client(bot: discord.ext.commands.Bot, aiohttp_client, loop):
