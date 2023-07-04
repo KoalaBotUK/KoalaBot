@@ -196,10 +196,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send("Example usage: k!vote addOption option title+option description")
         else:
             header, body = option_string.split("+")
-            option = Option()
-            option.head = header
-            option.body = body
-            await ctx.send(core.add_option(ctx.author.id, option))
+            await ctx.send(core.add_option(ctx.author.id, header, body))
 
 
     @currently_configuring()

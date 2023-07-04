@@ -9,8 +9,16 @@ from aiohttp import web
 from koala.cogs.voting.api import VotingEndpoint
 
 # Variables
-options = [["option1", "body1"],
-            ["option2", "body2"]]
+options = [
+        {
+            "header": "option1",
+            "body": "option1desc"
+        },
+        {
+            "header": "option2",
+            "body": "option2desc"
+        }
+    ],
 
 @pytest.fixture
 def api_client(bot: discord.ext.commands.Bot, aiohttp_client, loop):
