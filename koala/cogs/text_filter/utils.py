@@ -24,33 +24,33 @@ def type_exists(filter_type):
     return filter_type == "risky" or filter_type == "banned"
 
 
-def build_moderation_channel_embed(ctx, channel, action):
+def build_moderation_channel_embed(guild_id, channel, action):
     """
     Builds a moderation embed which display some information about the mod channel being created/removed
 
-    :param ctx: The discord context
+    :param guild_id: the guild ID
     :param channel: The channel to be created/removed
     :param action: either "Added" or "Removed" to tell the user what happened to the mod channel
     :return embed: The moderation embed to be sent to the user
     """
-    embed = create_default_embed(ctx)
+    embed = create_default_embed(guild_id)
     embed.title = "Koala Moderation - Mod Channel " + action
     embed.add_field(name="Channel Name", value=channel.mention)
     embed.add_field(name="Channel ID", value=channel.id)
     return embed
 
 
-def build_word_list_embed(ctx, all_words, all_types, all_regex):
+def build_word_list_embed(guild_id, all_words, all_types, all_regex):
     """
     Builds the embed that is sent to list all the filtered words
 
-    :param ctx: The discord context
+    :param guild_id: the guild ID
     :param all_words: List of all the filtered words in the guild
     :param all_types: List of all the corresponding filter types for the words in the guild
     :param all_regex: List of all regex in the guild
     :return embed with information about the deleted message:
     """
-    embed = create_default_embed(ctx)
+    embed = create_default_embed(guild_id)
     embed.title = "Koala Moderation - Filtered Words"
     if not all_words and not all_types and not all_regex:
         embed.add_field(name="No words found", value="For more help with using the Text Filter try k!help TextFilter")
@@ -61,16 +61,16 @@ def build_word_list_embed(ctx, all_words, all_types, all_regex):
     return embed
 
 
-def create_default_embed(ctx):
+def create_default_embed(guild_id):
     """
     Creates a default embed that all embeds share
 
-    :param ctx: The discord context
+    :param guild_id: the guild ID
     :return embed with basic information which should be built upon:
     """
     embed = discord.Embed()
     embed.colour = KOALA_GREEN
-    embed.set_footer(text=f"Guild ID: {ctx.guild.id}")
+    embed.set_footer(text=f"Guild ID: {guild_id}")
     return embed
 
 
