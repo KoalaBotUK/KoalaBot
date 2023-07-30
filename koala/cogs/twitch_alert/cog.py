@@ -14,13 +14,13 @@ import koalabot
 from koala.colours import KOALA_GREEN
 from koala.db import insert_extension
 from koala.utils import error_embed, is_channel_in_guild
-from koalabot import COMMAND_PREFIX as CP
 from . import core
 from .db import TwitchAlertDBManager
 from .env import TWITCH_KEY, TWITCH_SECRET
 from .log import logger
-from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
+from .utils import TWITCH_USERNAME_REGEX, \
     LOOP_CHECK_LIVE_DELAY, REFRESH_TEAMS_DELAY, TEAMS_LOOP_CHECK_LIVE_DELAY
+from ... import checks
 
 
 # Constants
@@ -28,20 +28,14 @@ from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
 
 # Variables
 
-
-def twitch_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled twitch alert
-    e.g. @commands.check(koalabot.is_admin)
-    :param ctx: The context of the message
-    :return: True if admin or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "TwitchAlert")
-    except PermissionError:
-        result = False
-
-    return result
+class TwitchUsernameTransformer(app_commands.Transformer):
+    async def transform(self, interaction: discord.Interaction, value: str) -> str:
+        twitch_username = str.lower(value)
+        if not re.search(TWITCH_USERNAME_REGEX, twitch_username):
+            interaction.data[checks.FAILURE_DESC_ATTR] = \
+                "The given twitch_username is not a valid username (please use lowercase)"
+            raise ValueError(interaction.data[checks.FAILURE_DESC_ATTR])
+        return twitch_username
 
 
 @app_commands.guilds(590643624358969350)
@@ -50,6 +44,9 @@ class TwitchAlert(commands.GroupCog, group_name="twitch", group_description="Twi
     """
         A discord.py cog for alerting when someone goes live on twitch
     """
+    message_group = app_commands.Group(name="message", description="View or modify the message sent with an alert")
+    user_group = app_commands.Group(name="user", description="Add or remove user twitch alerts")
+    team_group = app_commands.Group(name="team", description="Add or remove team twitch alerts")
 
     def __init__(self, bot: discord.ext.commands.Bot):
 
@@ -66,282 +63,189 @@ class TwitchAlert(commands.GroupCog, group_name="twitch", group_description="Twi
         self.running = False
         self.stop_loop = False
 
-    @commands.check(koalabot.is_guild_channel)
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    @commands.group(name="twitch", short_doc="Group of commands for Twitch Alert functionality.")
-    async def twitch_group(self, ctx: commands.Context):
+    @message_group.command(name="edit",
+                           description="Edit the default message used in a Twitch Alert notification")
+    async def edit_default_message(self, interaction: discord.Interaction, channel: discord.TextChannel = None,
+                                   default_live_message: app_commands.Range[str, None, 1000] = None):
         """
-        Group of commands for Twitch Alert functionality.
-        """
-        pass
+        Edit the default message used in a Twitch Alert notification
 
-    @twitch_group.command(name="editMsg",
-                          brief="Edit the default message used in a Twitch Alert notification",
-                          usage=f"{CP}twitch editMsg <channel> [message]",
-                          help=("""Edit the default message used in a Twitch Alert notification
-                                
-                                <channel>: The channel to be modified (e.g. #text-channel)
-                                [message]: *optional* The default notification message for this text channel """
-                                f"""(e.g. Your favourite stream is now live!)
-                                
-                                Example: {CP}twitch editMsg #text-channel \"Your favourite stream is now live!\""""))
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def edit_default_message(self, ctx, channel: discord.TextChannel, *default_live_message):
-        """
-        Edit the default message put in a Twitch Alert Notification
-        :param ctx: The discord context of the command
+        <channel>: The channel to be modified (e.g. #text-channel)
+        [message]: *optional* The default notification message for this text channel
+        (e.g. Your favourite stream is now live!)
+
+        Example: /twitch editMsg #text-channel "Your favourite stream is now live!"
+
+        :param interaction: The discord interaction of the command
         :param channel: The channel where the twitch alert is being used
         :param default_live_message: The default live message of users within this Twitch Alert,
         leave empty for program default
         :return:
         """
-        channel_id = channel.id
-
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
-            return
-
-        # Assigning default message if provided
-        if default_live_message is not None and default_live_message != (None,):
-            default_message = " ".join(default_live_message)
-            if len(default_message) > 1000:
-                await ctx.send(embed=error_embed(
-                    "custom_message is too long, try something with less than 1000 characters"))
-                return
-
-        else:
-            default_message = None
+        channel = channel if channel else interaction.channel
 
         # Creates a new Twitch Alert with the used guild ID and default message if provided
-        default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id, default_message,
+        default_message = core.new_ta(channel.guild.id, channel.id, default_live_message,
                                                           replace=True)
 
         # Returns an embed with information altered
         new_embed = discord.Embed(title="Default Message Edited", colour=KOALA_GREEN,
-                                  description=f"Guild: {ctx.message.guild.id}\n"
-                                              f"Channel: {channel_id}\n"
+                                  description=f"Guild: {channel.guild.id}\n"
+                                              f"Channel: {channel.id}\n"
                                               f"Default Message: {default_message}")
-        await ctx.send(embed=new_embed)
+        await interaction.response.send_message(embed=new_embed)
 
-    @twitch_group.command(name="viewMsg",
-                          brief="Shows the current default message for Twitch Alerts",
-                          usage=f"{CP}twitch viewMsg <channel>",
-                          help=f"""Shows the current default message for Twitch Alerts
-                          
-                          <channel>: The channel to be modified (e.g. #text-channel)
-                          
-                          Example: {CP}twitch viewMsg #text-channel""")
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def view_default_message(self, ctx, channel: discord.TextChannel):
+    @message_group.command(name="view",
+                           description="Shows the current default message for Twitch Alerts")
+    async def view_default_message(self, interaction: discord.Interaction, channel: discord.TextChannel = None):
         """
         Shows the current default message for Twitch Alerts
-        :param ctx: The discord context of the command
+
+        <channel>: The channel to be modified (e.g. #text-channel)
+        Example: /twitch viewMsg #text-channel
+
+        :param interaction: The discord interaction of the command
         :param channel: The channel where the twitch alert is being used
         leave empty for program default
         :return:
         """
-        channel_id = channel.id
-
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
-            return
+        channel = channel if channel else interaction.channel
 
         # Creates a new Twitch Alert with the used guild ID and default message if provided
-        default_message = self.ta_database_manager.get_default_message(channel_id)
+        default_message = self.ta_database_manager.get_default_message(channel.id)
 
         # Returns an embed with information altered
         new_embed = discord.Embed(title="Default Message", colour=KOALA_GREEN,
-                                  description=f"Guild: {ctx.message.guild.id}\n"
-                                              f"Channel: {channel_id}\n"
+                                  description=f"Guild: {channel.guild.id}\n"
+                                              f"Channel: {channel.id}\n"
                                               f"Default Message: {default_message}")
         # new_embed.set_footer(text=f"Twitch Alert ID: {new_id}")
-        await ctx.send(embed=new_embed)
+        await interaction.response.send_message(embed=new_embed)
 
-    @twitch_group.command(name="add",
-                          brief="Add a Twitch user to a Twitch Alert",
-                          usage=f"{CP}twitch add <username> <channel> [message]",
-                          help=f"""Add a Twitch user to a Twitch Alert
-                          
-                          <username>: The twitch username to be added (e.g. thenuel)
-                          <channel> : The channel to be modified (e.g. #text-channel)
-                          [message] : *optional* The notification message for this user """
-                          f"""(e.g. Your favourite streamer is now live!)
-                          
-                          Example: {CP}twitch add thenuel #text-channel \"Come watch us play games!\"""")
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def add_user_to_twitch_alert(self, ctx, twitch_username,
-                                       channel: discord.TextChannel, *custom_live_message):
+    @user_group.command(name="add",
+                        description="Add a Twitch user to a Twitch Alert")
+    async def add_user_to_twitch_alert(self, interaction: discord.Interaction,
+                                       twitch_username: app_commands.Transform[str, TwitchUsernameTransformer],
+                                       channel: discord.TextChannel = None,
+                                       custom_live_message: app_commands.Range[str, None, 1000] = None):
         """
         Add a Twitch user to a Twitch Alert
-        :param ctx: The discord context of the command
+
+          <username>: The twitch username to be added (e.g. thenuel)
+          <channel> : The channel to be modified (e.g. #text-channel)
+          [message] : *optional* The notification message for this user
+          (e.g. Your favourite streamer is now live!)
+
+          Example: /twitch add thenuel #text-channel "Come watch us play games!"
+
+        :param interaction: The discord interaction of the command
         :param twitch_username: The Twitch Username of the user being added (lowercase)
         :param channel: The channel ID where the twitch alert is being used
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
-        channel_id = channel.id
-        twitch_username = str.lower(twitch_username)
-        if not re.search(TWITCH_USERNAME_REGEX, twitch_username):
-            raise ValueError(
-                "The given twitch_username is not a valid username (please use lowercase)")
+        channel = channel if channel else interaction.channel
+        default_message = core.new_ta(channel.guild.id, channel.id)
+        custom_live_message = custom_live_message if custom_live_message else default_message
 
-        # Check the channel specified is in this guild
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
-            return
-
-        default_message = self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id)
-
-        # Setting the custom message as required
-        if custom_live_message is not None and custom_live_message != (None,):
-            custom_message = " ".join(custom_live_message)
-            default_message = custom_message
-            if len(default_message) > 1000:
-                await ctx.send(embed=error_embed(
-                    "custom_message is too long, try something with less than 1000 characters"))
-                return
-        else:
-            custom_message = None
-
-        self.ta_database_manager.add_user_to_ta(channel_id, twitch_username, custom_message, ctx.message.guild.id)
+        core.add_user_to_ta(channel.id, twitch_username, custom_live_message, channel.guild.id)
 
         # Response Message
         new_embed = discord.Embed(title="Added User to Twitch Alert", colour=KOALA_GREEN,
-                                  description=f"Channel: {channel_id}\n"
+                                  description=f"Channel: {channel.id}\n"
                                               f"User: {twitch_username}\n"
-                                              f"Message: {default_message}")
+                                              f"Message: {custom_live_message}")
 
-        await ctx.send(embed=new_embed)
+        await interaction.response.send_message(embed=new_embed)
 
-    @twitch_group.command(name="remove",
-                          brief="Removes a user from a Twitch Alert",
-                          usage=f"{CP}twitch remove <username> <channel>",
-                          help=f"""Removes a user from a Twitch Alert
-                          
-                          <username>: The twitch username to be removed (e.g. thenuel)
-                          <channel> : The channel to be modified (e.g. #text-channel)
-                          
-                          Example: {CP}twitch remove thenuel #text-channel""")
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def remove_user_from_twitch_alert(self, ctx, twitch_username, channel: discord.TextChannel):
+    @user_group.command(name="remove",
+                        description="Removes a user from a Twitch Alert")
+    async def remove_user_from_twitch_alert(self, interaction: discord.Interaction,
+                                            twitch_username: app_commands.Transform[str, TwitchUsernameTransformer],
+                                            channel: discord.TextChannel = None):
         """
         Removes a user from a Twitch Alert
-        :param ctx: the discord context
+
+          <username>: The twitch username to be removed (e.g. thenuel)
+          <channel> : The channel to be modified (e.g. #text-channel)
+
+          Example: /twitch remove thenuel #text-channel
+
+        :param interaction: the discord interaction
         :param twitch_username: The username of the user to be removed
         :param channel: The discord channel ID of the Twitch Alert
         :return:
         """
-
-        channel_id = channel.id
-
-        # Check the channel specified is in this guild
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
-            return
-
-        await self.ta_database_manager.remove_user_from_ta(channel_id, twitch_username)
+        channel = channel if channel else interaction.channel
+        await core.remove_user_from_ta(self.bot, channel.id, twitch_username)
         # Response Message
         new_embed = discord.Embed(title="Removed User from Twitch Alert", colour=KOALA_GREEN,
-                                  description=f"Channel: {channel_id}\n"
+                                  description=f"Channel: {channel.id}\n"
                                               f"User: {twitch_username}")
 
-        await ctx.send(embed=new_embed)
+        await interaction.response.send_message(embed=new_embed)
 
-    @twitch_group.command(name="addTeam",
-                          brief="Add a Twitch team to a Twitch Alert",
-                          usage=f"{CP}twitch addTeam <team> <channel> [message]",
-                          help=f"""Add a Twitch team to a Twitch Alert
-                          
-                          <team>    : The Twitch team to be added (e.g. thenuel)
-                          <channel> : The channel to be modified (e.g. #text-channel)
-                          [message] : *optional* The notification message for this user """
-                          f"""(e.g. Your favourite streamer is now live!)
-                          
-                          Example: {CP}twitch addTeam thenuel #text-channel \"Come watch us play games!\"""")
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def add_team_to_twitch_alert(self, ctx, team_name, channel: discord.TextChannel, *custom_live_message):
+    @team_group.command(name="add",
+                        description="Add a Twitch team to a Twitch Alert")
+    async def add_team_to_twitch_alert(self, interaction: discord.Interaction,
+                                       team_name: app_commands.Transform[str, TwitchUsernameTransformer],
+                                       channel: discord.TextChannel = None,
+                                       custom_live_message: app_commands.Range[str, None, 1000] = None):
         """
         Add a Twitch team to a Twitch Alert
-        :param ctx: The discord context of the command
+
+          <team>    : The Twitch team to be added (e.g. thenuel)
+          <channel> : The channel to be modified (e.g. #text-channel)
+          [message] : *optional* The notification message for this user
+          (e.g. Your favourite streamer is now live!)
+
+          Example: /twitch addTeam thenuel #text-channel "Come watch us play games!"
+        :param interaction: The discord interaction of the command
         :param team_name: The Twitch team being added (lowercase)
         :param channel: The channel ID where the twitch alert is being used
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
-        channel_id = channel.id
-        team_name = str.lower(team_name)
+        channel = channel if channel else interaction.channel
 
-        if not re.search(TWITCH_USERNAME_REGEX, team_name):
-            raise ValueError(
-                "The given team_name is not a valid twitch team name (please use lowercase)")
+        default_message = core.new_ta(channel.guild.id, channel.id)
+        custom_live_message = custom_live_message if custom_live_message else default_message
 
-        # Check the channel specified is in this guild
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
-            return
-
-        self.ta_database_manager.new_ta(ctx.message.guild.id, channel_id)
-
-        # Setting the custom message as required
-        if custom_live_message is not None and custom_live_message != (None,):
-            default_message = " ".join(custom_live_message)
-            if len(default_message) > 1000:
-                await ctx.send(embed=error_embed(
-                    "custom_message is too long, try something with less than 1000 characters"))
-                return
-        else:
-            default_message = DEFAULT_MESSAGE
-
-        self.ta_database_manager.add_team_to_ta(channel_id, team_name, default_message, ctx.message.guild.id)
+        core.add_team_to_ta(channel.id, team_name, custom_live_message, channel.guild.id)
 
         # Response Message
         new_embed = discord.Embed(title="Added Team to Twitch Alert", colour=KOALA_GREEN,
-                                  description=f"Channel: {channel_id}\n"
+                                  description=f"Channel: {channel.id}\n"
                                               f"Team: {team_name}\n"
-                                              f"Message: {default_message}")
+                                              f"Message: {custom_live_message}")
         # new_embed.set_footer(text=f"Twitch Alert ID: {channel_id}")
-        await ctx.send(embed=new_embed)
+        await interaction.response.send_message(embed=new_embed)
 
-    @twitch_group.command(name="removeTeam",
-                          brief="Removes a team from a Twitch Alert",
-                          usage=f"{CP}twitch removeTeam <team> <channel>",
-                          help=f"""Removes a team from a Twitch Alert
-                          
-                          <team>    : The Twitch team to be added (e.g. thenuel)
-                          <channel> : The channel to be modified (e.g. #text-channel)
-                          
-                          Example: {CP}twitch removeTeam thenuel #text-channel""")
-    @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
-    async def remove_team_from_twitch_alert(self, ctx, team_name, channel: discord.TextChannel):
+    @team_group.command(name="remove",
+                        description="Removes a team from a Twitch Alert")
+    async def remove_team_from_twitch_alert(self, interaction: discord.Interaction,
+                                            team_name: app_commands.Transform[str, TwitchUsernameTransformer],
+                                            channel: discord.TextChannel = None):
         """
         Removes a team from a Twitch Alert
-        :param ctx: the discord context
+
+          <team>    : The Twitch team to be added (e.g. thenuel)
+          <channel> : The channel to be modified (e.g. #text-channel)
+
+          Example: /twitch removeTeam thenuel #text-channel
+        :param interaction: the discord interaction
         :param team_name: The Twitch team being added (lowercase)
         :param channel: The discord channel ID of the Twitch Alert
         :return:
         """
-
-        channel_id = channel.id
-
-        # Check the channel specified is in this guild
-        if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
-            await ctx.send(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
-            return
-
-        await self.ta_database_manager.remove_team_from_ta(channel_id, team_name)
+        channel = channel if channel else interaction.channel
+        await core.remove_team_from_ta(self.bot, channel.id, team_name)
         # Response Message
         new_embed = discord.Embed(title="Removed Team from Twitch Alert", colour=KOALA_GREEN,
-                                  description=f"Channel: {channel_id}\n"
+                                  description=f"Channel: {channel.id}\n"
                                               f"Team: {team_name}")
 
-        await ctx.send(embed=new_embed)
+        await interaction.response.send_message(embed=new_embed)
 
     @app_commands.command(name="list",
                           description="Show twitch alerts in a channel")
@@ -351,20 +255,18 @@ class TwitchAlert(commands.GroupCog, group_name="twitch", group_description="Twi
         :param interaction:
         :param channel: The discord channel ID of the Twitch Alert
         """
-        if channel:
-            channel_id = channel.id
-        else:
-            channel_id = interaction.channel_id
+        channel = channel if channel else interaction.channel
 
-        if not is_channel_in_guild(self.bot, interaction.guild_id, channel_id):
-            await interaction.response.send_message(embed=error_embed("The channel ID provided is either invalid, or not in this server."))
+        if not is_channel_in_guild(self.bot, interaction.guild_id, channel.id):
+            await interaction.response.send_message(
+                embed=error_embed("The channel ID provided is either invalid, or not in this server."))
             return
         embed = discord.Embed()
         embed.title = "Twitch Alerts"
         embed.colour = KOALA_GREEN
-        embed.set_footer(text=f"Channel ID: {channel_id}")
+        embed.set_footer(text=f"Channel ID: {channel.id}")
 
-        results = self.ta_database_manager.get_users_in_ta(channel_id)
+        results = core.get_users_in_ta(channel.id)
         if results:
             users = ""
             for result in results:
@@ -373,7 +275,7 @@ class TwitchAlert(commands.GroupCog, group_name="twitch", group_description="Twi
         else:
             embed.add_field(name=":bust_in_silhouette: Users", value="None")
 
-        results = self.ta_database_manager.get_teams_in_ta(channel_id)
+        results = core.get_teams_in_ta(channel.id)
         if results:
             teams = ""
             for result in results:
@@ -390,7 +292,6 @@ class TwitchAlert(commands.GroupCog, group_name="twitch", group_description="Twi
         When the bot is started up, the loop begins
         :return:
         """
-        await self.ta_database_manager.setup_twitch_handler()
         if not self.running:
             self.start_loops()
 

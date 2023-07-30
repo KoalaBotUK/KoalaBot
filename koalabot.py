@@ -162,7 +162,7 @@ async def on_app_command_error(interaction: discord.Interaction, error: discord.
         await interaction.response.send_message(
             embed=error_embed(description=f"This command is still on cooldown for {str(error.retry_after)}s."),
             ephemeral=True)
-    elif isinstance(error, app_commands.CheckFailure):
+    elif error.__class__ in [app_commands.CheckFailure, discord.app_commands.errors.TransformerError]:
         await interaction.response.send_message(embed=error_embed(interaction.data[checks.FAILURE_DESC_ATTR]))
     elif isinstance(error, app_commands.CommandNotFound):
         await interaction.response.send_message(embed=
