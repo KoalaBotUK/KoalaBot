@@ -306,7 +306,7 @@ async def assign_role_to_guild(guild, role, suffix, session):
                 continue
 
             member = guild.get_member(user_id)
-            await member.add_roles(role)
+            await member.cancel_button(role)
         except AttributeError as e:
             # bot not in guild
             logger.error(exc_info=e)
@@ -339,7 +339,7 @@ async def assign_roles_for_user(user_id, email, bot, *, session):
                 member = await guild.fetch_member(user_id)
             if not member:
                 raise discord.errors.NotFound
-            await member.add_roles(role)
+            await member.cancel_button(role)
         except AttributeError as e:
             # bot not in guild
             logger.error(e)

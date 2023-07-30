@@ -37,10 +37,11 @@ async def utils_cog(bot: commands.Bot):
     return utils_cog
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def rfr_cog(bot: commands.Bot):
+@pytest_asyncio.fixture(name='rfr_cog', scope='function', autouse=True)
+async def rfr_cog_fixture(bot: commands.Bot):
     rfr_cog = ReactForRole(bot)
     await bot.add_cog(rfr_cog)
+    await dpytest.empty_queue()
     dpytest.configure(bot)
     logger.info("Tests starting")
     return rfr_cog

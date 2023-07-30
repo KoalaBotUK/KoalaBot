@@ -56,19 +56,19 @@ ENABLED_COGS = ["base", "announce", "colour_role", "intro_cog", "react_for_role"
 
 # Variables
 intent = discord.Intents.default()
-intent.guilds = True        # on_guild_join, on_guild_remove
-intent.members = True       # on_member_join
-intent.reactions = True     # on_raw_reaction_add
-intent.messages = True      # on_message
+intent.guilds = True  # on_guild_join, on_guild_remove
+intent.members = True  # on_member_join
+intent.reactions = True  # on_raw_reaction_add
+intent.messages = True  # on_message
 intent.message_content = True
 is_dpytest = False
 
 
 class KoalaBot(commands.Bot):
-
     """
     The commands.Bot subclass for Koala
     """
+
     async def setup_hook(self) -> None:
         """
         To perform asynchronous setup after the bot is logged in but before it has connected to the Websocket.
@@ -159,21 +159,29 @@ class OwnerGroup(app_commands.Group, name='owner', description='owner only comma
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError) -> None:
     if isinstance(error, app_commands.CommandOnCooldown):
-        await interaction.response.send_message(
-            embed=error_embed(description=f"This command is still on cooldown for {str(error.retry_after)}s."),
-            ephemeral=True)
+        await send_or_update_message(interaction,
+                                     embed=error_embed(
+                                         description=f"This command is still on cooldown for {str(error.retry_after)}s."),
+                                     ephemeral=True)
     elif isinstance(error, app_commands.CheckFailure):
-        await interaction.response.send_message(embed=error_embed(interaction.data[checks.FAILURE_DESC_ATTR]))
+        await send_or_update_message(interaction, embed=error_embed(interaction.data[checks.FAILURE_DESC_ATTR]))
     elif isinstance(error, app_commands.CommandNotFound):
-        await interaction.response.send_message(embed=
-                                                error_embed(description="This command is unavailable in your Guild"),
-                                                ephemeral=True)
+        await send_or_update_message(interaction, embed=
+        error_embed(description="This command is unavailable in your Guild"),
+                                     ephemeral=True)
     else:
         logger.error(f"Unknown error in guild: {interaction.guild_id} for command: "
                      f"`{interaction_data_to_str(interaction.data)}`", exc_info=error)
-        await interaction.response.send_message(embed=error_embed(
-                    description=f"An unexpected error occurred, "
-                                f"please contact an administrator Timestamp: {datetime.datetime.now()}"))
+        await send_or_update_message(interaction, embed=error_embed(
+            description=f"An unexpected error occurred, "
+                        f"please contact an administrator Timestamp: {datetime.datetime.now()}"))
+
+
+async def send_or_update_message(interaction, **kwargs):
+    if interaction.response.is_done:
+        await interaction.edit_original_response(**kwargs)
+    else:
+        await interaction.response.send_message(**kwargs)
 
 
 def is_owner(interaction: discord.Interaction):

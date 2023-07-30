@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from typing import List
 
 import discord
+import emoji
+from discord import PartialEmoji
 
 
 @dataclass
@@ -11,6 +13,9 @@ class ReactRole:
 
     def to_tuple(self, guild: discord.Guild):
         return self.emoji, guild.get_role(self.role_id)
+
+    def partial_emoji(self):
+        return PartialEmoji.from_str(emoji.emojize(self.emoji))
 
 
 @dataclass

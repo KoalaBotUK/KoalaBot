@@ -3,6 +3,7 @@ from http.client import OK
 # Libs
 import discord
 import discord.ext.test as dpytest
+import mock
 import pytest
 from aiohttp import web
 
@@ -17,6 +18,7 @@ def api_client(bot: discord.ext.commands.Bot, aiohttp_client, loop):
     return loop.run_until_complete(aiohttp_client(app))
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_post_partial(api_client):
     resp = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,
@@ -30,6 +32,7 @@ async def test_message_post_partial(api_client):
     assert "message_id" in resp_json.keys()
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_post_full(api_client):
     resp = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,
@@ -49,6 +52,7 @@ async def test_message_post_full(api_client):
     assert "message_id" in resp_json.keys()
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_get(api_client):
     resp1 = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,
@@ -70,6 +74,7 @@ async def test_message_get(api_client):
     assert resp_json.get("colour") == "#0000ff"
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_put(api_client):
     resp1 = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,
@@ -106,6 +111,7 @@ async def test_message_put(api_client):
     }]
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_patch_partial(api_client):
     resp1 = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,
@@ -132,6 +138,7 @@ async def test_message_patch_partial(api_client):
     assert resp_json.get("description") == "desc2"
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_patch_full(api_client):
     resp1 = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,
@@ -173,6 +180,7 @@ async def test_message_patch_full(api_client):
     }]
 
 
+@mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms', mock.AsyncMock())
 async def test_message_delete(api_client):
     resp1 = await api_client.post('/{}'.format(MESSAGE), json={
         "guild_id": dpytest.get_config().guilds[0].id,

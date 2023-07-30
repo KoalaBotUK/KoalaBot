@@ -10,8 +10,10 @@ from koala.db import assign_session
 from . import db
 from .db import get_rfr_message
 from .dto import ReactMessage, ReactRole, RequiredRoles
+from .errors import PermissionsException
 from .log import logger
 from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP, FLAG_EMOJI_REGEXP
+from ...errors import KoalaException
 
 # Constants
 
@@ -57,6 +59,7 @@ async def create_rfr_message(bot: koalabot.KoalaBot, guild_id: int, channel_id: 
                              **kwargs) -> ReactMessage:
     guild = bot.get_guild(guild_id)
     channel = guild.get_channel(channel_id)
+    # await overwrite_channel_add_reaction_perms(bot, guild, channel)
 
     embed: discord.Embed = discord.Embed(title=title, description=description, colour=colour)
     embed.set_footer(text="ReactForRole")
@@ -73,15 +76,14 @@ async def create_rfr_message(bot: koalabot.KoalaBot, guild_id: int, channel_id: 
 
     if inline:
         await use_inline_rfr_specific(rfr_msg)
-
     return await get_rfr_message_dto(bot, rfr_msg.id, guild_id, channel_id, **kwargs)
 
 
 @assign_session
 async def update_rfr_message(bot: koalabot.KoalaBot, message_id: int, guild_id: int, channel_id: int,
                              title: str, description: str, colour: discord.Colour,
-                             thumbnail: str, inline: bool,
-                             roles: List[Tuple[Union[discord.Emoji, str], discord.Role]],
+                             thumbnail: str, inline: bool = None,
+                             roles: List[Tuple[Union[discord.Emoji, str], discord.Role]] = None,
                              **kwargs):
     guild = bot.get_guild(guild_id)
     channel = guild.get_channel(channel_id)
@@ -372,3 +374,26 @@ async def get_first_emoji_from_str(bot: Bot, guild: discord.Guild,
        return content, None
 
     return None, "No emoji found."
+
+
+async def overwrite_channel_add_reaction_perms(bot: Bot, guild: discord.Guild, channel: discord.TextChannel):
+    """
+    Overwrites a text channel's reaction perms so that nobody can add new reactions to any message sent in the
+    channel, only the bot, to make sure people don't mess with the system. Relies on roles tending not to be added/
+    removed constantly to keep performance satisfactory.
+    :param guild: Guild that the rfr message is in
+    :param channel: Channel that the rfr message is in
+    :return:
+    """
+    try:
+        #  Get the @everyone role.
+        role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
+        overwrite: discord.PermissionOverwrite = discord.PermissionOverwrite()
+        overwrite.update(add_reactions=False)
+        await channel.set_permissions(role, overwrite=overwrite)
+        bot_members = [member for member in guild.members if member.bot and member.id == bot.user.id]
+        overwrite.update(add_reactions=True)
+        for bot_member in bot_members:
+            await channel.set_permissions(bot_member, overwrite=overwrite)
+    except discord.errors.Forbidden:
+        raise PermissionsException("Koala needs the manage_roles permission to create a RFR in this channel.")

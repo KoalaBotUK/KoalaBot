@@ -23,6 +23,7 @@ from koala.cogs import ReactForRole
 # Own modules
 from koala.cogs.react_for_role import core
 from koala.cogs.react_for_role.db import *
+from koala.cogs.react_for_role.ui import ReactForRoleCreate
 from koala.colours import KOALA_GREEN
 from tests.log import logger
 from tests.tests_utils import utils as testutils
@@ -206,7 +207,7 @@ async def test_overwrite_channel_add_reaction_perms(rfr_cog: ReactForRole):
             await guild.create_role(name=f"TestRole{i}", permissions=discord.Permissions.all())
         role: discord.Role = discord.utils.get(guild.roles, id=guild.id)
         # await core.setup_rfr_reaction_permissions(guild, channel, bot)
-        await rfr_cog.overwrite_channel_add_reaction_perms(guild, channel)
+        await core.overwrite_channel_add_reaction_perms(rfr_cog.bot, guild, channel)
         calls = [mock.call(channel.id, role.id, '0', '64', discord.abc._Overwrites.ROLE, reason=None),
                  mock.call(channel.id, config.client.user.id, '64', '0', discord.abc._Overwrites.MEMBER,
                            reason=None)]  # assert it's called the role perms change first, then the member change
@@ -288,54 +289,35 @@ async def test_get_first_emoji_from_str(bot, utils_cog, rfr_cog):
 
 
 @pytest.mark.asyncio
-async def test_rfr_create_message(bot):
+async def test_rfr_create_message(rfr_cog: ReactForRole, mock_interaction):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]
     channel: discord.TextChannel = guild.text_channels[0]
-    embed_channel: discord.TextChannel = dpytest.back.make_text_channel('EmbedChannel', guild)
-    author: discord.Member = config.members[0]
-    test_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KOALA_GREEN)
-    test_embed.set_footer(text="ReactForRole")
-    test_embed.set_thumbnail(
+
+    expected_embed = discord.Embed(title="React for Role", description="Roles below!", colour=KOALA_GREEN)
+    expected_embed.set_footer(text="ReactForRole")
+    expected_embed.set_thumbnail(
         url=koalabot.KOALA_IMAGE_URL)
-    with mock.patch('koala.cogs.ReactForRole.prompt_for_input',
-                    mock.AsyncMock(return_value=embed_channel.mention)):
-        with mock.patch('discord.client.Client.wait_for',
-                        mock.AsyncMock(return_value=None)):
-            with mock.patch('koala.cogs.ReactForRole.is_user_alive', mock.AsyncMock(return_value=True)):
-                with mock.patch(
-                        'koala.cogs.ReactForRole.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
-                    with mock.patch('discord.Message.delete') as mock_delete:
-                        await dpytest.message(koalabot.COMMAND_PREFIX + "rfr createMessage")
-                        mock_edit_channel_perms.assert_called_once_with(guild, embed_channel)
-                        assert dpytest.verify().message().content(
-                            "Okay, this will create a new react for role message in a channel of your choice."
-                            "\nNote: The channel you specify will have its permissions edited to make it such that the "
-                            "@ everyone role is unable to add new reactions to messages, they can only reaction with "
-                            "existing ones. Please keep this in mind, or setup another channel entirely for this.")
-                        assert dpytest.verify().message().content("This should be a thing sent in the right channel.")
-                        assert dpytest.verify().message().content(
-                            "Okay, what would you like the title of the react for role message to be? Please enter within 60 seconds.")
-                        assert dpytest.verify().message().content(
-                            "Okay, didn't receive a title. Do you actually want to continue? Send anything to confirm this.")
-                        assert dpytest.verify().message().content(
-                            "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit commands.")
-                        assert dpytest.verify().message().content(
-                            "Okay, the title of the message will be \"React for Role\". What do you want the description to be? I'll wait 60 seconds, don't worry")
-                        assert dpytest.verify().message().content(
-                            "Okay, didn't receive a description. Do you actually want to continue? Send anything to confirm this.")
-                        assert dpytest.verify().message().content(
-                            "Okay, I'll just put in a default value for you, you can edit it later by using the k!rfr edit command.")
-                        assert dpytest.verify().message().content(
-                            "Okay, the description of the message will be \"Roles below!\".\n Okay, I'll create the react for role message now.")
-                        assert dpytest.verify().message()
-                        msg = dpytest.sent_queue.get_nowait()
-                        assert "You can use the other k!rfr subcommands to change the message and add functionality as required." in msg.content
-                        mock_delete.assert_called_once()
+
+    await rfr_cog.rfr_create_message.callback(rfr_cog, mock_interaction, channel)
+
+    modal: ReactForRoleCreate = mock_interaction.response.sent_modal
+    modal.title_text._value = "React for Role"
+    modal.description_text._value = "Roles below!"
+    with mock.patch('koala.cogs.react_for_role.core.overwrite_channel_add_reaction_perms') as mock_edit_channel_perms:
+        await modal.on_submit(mock_interaction)
+        mock_edit_channel_perms.assert_called_once_with(rfr_cog.bot, guild, channel)
+
+    msg = dpytest.sent_queue.peek()
+    assert dpytest.verify().message().embed(expected_embed)
+
+    mock_interaction.response.assert_eq(f"Your react for role message ID is {msg.id}, "
+                                        f"in {channel.mention}. \n"
+                                        f"Please use `/rfr edit` to add role options")
 
 
 @pytest.mark.asyncio
-async def test_rfr_delete_message():
+async def test_rfr_delete_message(rfr_cog: ReactForRole, mock_interaction):
     with session_manager() as session:
         config: dpytest.RunnerConfig = dpytest.get_config()
         guild: discord.Guild = config.guilds[0]
@@ -344,18 +326,11 @@ async def test_rfr_delete_message():
         msg_id = message.id
         add_rfr_message(guild.id, channel.id, msg_id)
         await dpytest.empty_queue()
-        with mock.patch('koala.cogs.ReactForRole.get_rfr_message_from_prompts',
-                        mock.AsyncMock(return_value=(message, channel))):
-            with mock.patch('koala.cogs.ReactForRole.prompt_for_input', mock.AsyncMock(return_value="Y")):
-                with mock.patch('discord.Message.delete') as mock_msg_delete:
-                    await dpytest.message(koalabot.COMMAND_PREFIX + "rfr deleteMessage")
-                    mock_msg_delete.assert_called_once()
-                    assert dpytest.verify().message().content(
-                        "Okay, this will delete an existing react for role message. I'll need some details first though.")
-                    assert dpytest.verify().message()
-                    assert dpytest.verify().message()
-                    assert dpytest.verify().message()
-                    assert not independent_get_guild_rfr_message(session, guild.id, channel.id, msg_id)
+        with mock.patch('discord.Message.delete') as mock_msg_delete:
+            await rfr_cog.rfr_delete_message.callback(rfr_cog, mock_interaction, channel, msg_id)
+            mock_msg_delete.assert_called_once()
+            assert not independent_get_guild_rfr_message(session, guild.id, channel.id, msg_id)
+            mock_interaction.response.assert_eq("ReactForRole Message deleted")
 
 
 @pytest.mark.asyncio

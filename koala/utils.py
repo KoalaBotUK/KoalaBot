@@ -70,7 +70,7 @@ def extract_id(raw_id):
         raise TypeError("ID given is not a valid ID")
 
 
-async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: float = TIMEOUT_TIME) \
+async def wait_for_message(bot: discord.Client, ctx: typing.Union[commands.Context, discord.Interaction], timeout: float = TIMEOUT_TIME) \
         -> Tuple[Optional[discord.Message], Optional[discord.TextChannel]]:
     """
         Wraps bot.wait_for with message event, checking that message author is the original context author. Has default
@@ -80,10 +80,10 @@ async def wait_for_message(bot: discord.Client, ctx: commands.Context, timeout: 
         :param timeout: Time to wait before raising TimeoutError
         :return: If a message (msg) was received, returns a tuple (msg, None). Else returns (None, ctx.channel)
         """
-    try:
-        msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.author)
-    except (Exception, TypeError):
-        return None, ctx.channel
+    # try:
+    msg = await bot.wait_for('message', timeout=timeout, check=lambda message: message.author == ctx.user)
+    # except (Exception, TypeError):
+    #     return None, ctx.channel
     if not msg:
         return msg, ctx.channel
     return msg, None
