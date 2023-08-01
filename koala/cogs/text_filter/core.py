@@ -172,6 +172,10 @@ def filter_new_regex(guild_id, regex, filter_type, too_many_arguments):
                     or you have entered the command incorrectly. Try again with: `k!filterRegex 
                     [filtered_regex] [[risky] or [banned]]`. One example for a regex could be to block emails
                     with: [a-zA-Z0-9\._]+@herts\.ac\.uk where EMAIL is the university type (e.g herts)""")
+    elif too_many_arguments:
+        raise Exception("type doesn't exist")
+    else:
+        raise Exception("too many arguments")
     
 
 def unfilter_word(guild_id, word, too_many_arguments):
@@ -242,3 +246,19 @@ def remove_ignore(msg_mentions, channel_mentions, guild_id, ignore):
 def list_ignored(bot: koalabot.KoalaBot, guild_id):
     ignored = tf_database_manager.get_all_ignored(guild_id)
     return build_ignore_list_embed(bot, guild_id, ignored)
+
+
+def scan_message(message):
+    if message.author.bot:
+        return
+    if message.content.startswith(koalabot.COMMAND_PREFIX + "filter") or \
+            message.content.startswith(koalabot.COMMAND_PREFIX + "unfilter") or \
+            message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "filter") or \
+            message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "unfilter"):
+        return
+    elif str(message.channel.type) == 'text' and message.channel.guild is not None:
+        censor_list = tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
+        for word, filter_type, is_regex in censor_list:
+            if (word in message.content or (
+                    is_regex == '1' and re.search(word, message.content))) and not is_ignored(message):
+                return filter_type

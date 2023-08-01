@@ -195,7 +195,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param ignore: the ignoreId to be removed
         :return:
         """
-        await ctx.channel.send(core.remove_ignore(ctx.message.mentions, ctx.channel_mentions, ctx.guild.id, ignore))
+        await ctx.channel.send(core.remove_ignore(ctx.message.mentions, ctx.message.channel_mentions, ctx.guild.id, ignore))
 
     @commands.command(name="ignoreList", aliases=["list_ignored", "listIgnored"])
     @commands.check(koalabot.is_admin)
@@ -217,29 +217,17 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param message: The newly received message
         :return:
         """
-        if message.author.bot:
-            return
-        if message.content.startswith(koalabot.COMMAND_PREFIX + "filter") or \
-                message.content.startswith(koalabot.COMMAND_PREFIX + "unfilter") or \
-                message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "filter") or \
-                message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "unfilter"):
-            return
-        elif str(message.channel.type) == 'text' and message.channel.guild is not None:
-            censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
-            for word, filter_type, is_regex in censor_list:
-                if (word in message.content or (
-                        is_regex == '1' and re.search(word, message.content))) and not self.is_ignored(message):
-                    if filter_type == "risky":
-                        await message.author.send("Watch your language! Your message: '*" + message.content + "*' in " +
-                                                  message.channel.mention + " contains a 'risky' word. "
-                                                                            "This is a warning.")
-                        return
-                    elif filter_type == "banned":
-                        await message.author.send("Watch your language! Your message: '*" + message.content + "*' in " +
-                                                  message.channel.mention + " has been deleted by KoalaBot.")
-                        await self.send_to_moderation_channels(message)
-                        await message.delete()
-                        return
+        result = core.scan_message(message)
+        if result == "risky":
+            await message.author.send("Watch your language! Your message: '*" + message.content + "*' in " +
+                                                message.channel.mention + " contains a 'risky' word. "
+                                                                        "This is a warning.")
+        
+        elif result == "banned":
+            await message.author.send("Watch your language! Your message: '*" + message.content + "*' in " +
+                                                message.channel.mention + " has been deleted by KoalaBot.")
+            await core.send_to_moderation_channels(message)
+            await message.delete()
 
 
 async def setup(bot: koalabot) -> None:
