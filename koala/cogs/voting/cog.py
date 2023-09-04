@@ -185,7 +185,7 @@ class Voting(commands.Cog, name="Vote"):
                 await ctx.send("Title too long")
                 return
 
-            self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title)
+            self.vote_manager.create_vote(ctx.author.id, ctx.guild.id, title, session=session)
             await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it.")
 
     @currently_configuring()
