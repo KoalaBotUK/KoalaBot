@@ -151,35 +151,35 @@ class TwitchAlertDBManager:
                                       .filter_by(twitch_username=twitch_username, channel_id=channel_id)
                                       ).scalars().first()
             if message is not None:
-                await self.delete_message(message.message_id, channel_id)
+                await self.delete_message(message.message_id, channel_id, session=session)
                 session.delete(message)
                 session.commit()
 
-    async def delete_message(self, message_id, channel_id):
+    async def delete_message(self, message_id, channel_id, *, session):
         """
         Deletes a given discord message
         :param message_id: discord message ID of the message to delete
         :param channel_id: discord channel ID which has the message
+        :param session: db session
         :return:
         """
-        with session_manager() as session:
-            try:
-                channel = self.bot.get_channel(int(channel_id))
-                if channel is None:
-                    logger.warning(f"TwitchAlert: Channel ID {channel_id} does not exist, removing from database")
-                    sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel_id)
-                    session.execute(sql_remove_invalid_channel)
-                    session.commit()
-                    return
-                message = await channel.fetch_message(message_id)
-                await message.delete()
-            except discord.errors.NotFound as err:
-                logger.warning(f"TwitchAlert: Message ID {message_id} does not exist, skipping \nError: {err}")
-            except discord.errors.Forbidden as err:
-                logger.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
+        try:
+            channel = self.bot.get_channel(int(channel_id))
+            if channel is None:
+                logger.warning(f"TwitchAlert: Channel ID {channel_id} does not exist, removing from database")
                 sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel_id)
                 session.execute(sql_remove_invalid_channel)
                 session.commit()
+                return
+            message = await channel.fetch_message(message_id)
+            await message.delete()
+        except discord.errors.NotFound as err:
+            logger.warning(f"TwitchAlert: Message ID {message_id} does not exist, skipping \nError: {err}")
+        except discord.errors.Forbidden as err:
+            logger.warning(f"TwitchAlert: {err}  Channel ID: {channel_id}")
+            sql_remove_invalid_channel = delete(TwitchAlerts).where(TwitchAlerts.channel_id == channel_id)
+            session.execute(sql_remove_invalid_channel)
+            session.commit()
 
     def get_users_in_ta(self, channel_id):
         """
@@ -241,7 +241,7 @@ class TwitchAlertDBManager:
             if users is not None:
                 for user in users:
                     if user.message_id is not None:
-                        await self.delete_message(user.message_id, channel_id)
+                        await self.delete_message(user.message_id, channel_id, session=session)
                     session.delete(user)
 
             session.delete(team)
@@ -302,7 +302,7 @@ class TwitchAlertDBManager:
         logger.debug("Deleting offline streams: %s" % results)
         for result in results:
             if result.team:
-                await self.delete_message(result.message_id, result.team.channel_id)
+                await self.delete_message(result.message_id, result.team.channel_id, session=session)
                 result.message_id = None
             else:
                 logger.debug("Result team not found: %s", result)
@@ -310,28 +310,28 @@ class TwitchAlertDBManager:
                 # session.delete(result)
         session.commit()
 
-    async def delete_all_offline_streams(self, usernames):
+    async def delete_all_offline_streams(self, usernames, *, session):
         """
         A method that deletes all currently offline streams
         :param usernames: The usernames of the twitch members
+        :param session: db session
         :return:
         """
-        with session_manager() as session:
-            results = session.execute(
-                select(
-                    UserInTwitchAlert
-                ).where(
-                    and_(
-                        UserInTwitchAlert.message_id != null(),
-                        UserInTwitchAlert.twitch_username.in_(usernames)))
-            ).scalars().all()
+        results = session.execute(
+            select(
+                UserInTwitchAlert
+            ).where(
+                and_(
+                    UserInTwitchAlert.message_id != null(),
+                    UserInTwitchAlert.twitch_username.in_(usernames)))
+        ).scalars().all()
 
-            if results is None:
-                return
-            for result in results:
-                await self.delete_message(result.message_id, result.channel_id)
-                result.message_id = None
-            session.commit()
+        if results is None:
+            return
+        for result in results:
+            await self.delete_message(result.message_id, result.channel_id, session=session)
+            result.message_id = None
+        session.commit()
 
     # def translate_names_to_ids(self):
     #     """
