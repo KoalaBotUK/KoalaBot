@@ -53,7 +53,7 @@ def session_manager():
     Provide a transactional scope around a series of operations
     """
     i = random.randint(0, 1000000)
-    logger.debug(f"Session Debug: CREATED {i} {traceback.format_stack()}")
+    logger.debug(f"Session Debug: CREATED {i}\n{engine.pool.status()}\n{traceback.format_stack()}")
     session = Session()
     try:
         yield session
@@ -62,7 +62,7 @@ def session_manager():
         raise
     finally:
         session.close()
-        logger.debug(f"Session Debug: CLOSED {i} {traceback.format_stack()}")
+        logger.debug(f"Session Debug: CLOSED {i}\n{engine.pool.status()}\n{traceback.format_stack()}")
 
 
 def __create_sqlite_tables():
