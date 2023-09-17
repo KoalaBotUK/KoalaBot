@@ -217,7 +217,7 @@ async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tabl
 
     with mock.patch.object(TwitchAlertDBManager, 'delete_message') as mock1:
         await twitch_alert_db_manager_tables.remove_team_from_ta(605, "monstercat")
-    mock1.assert_called_with(1, 605)
+    mock1.assert_called_with(1, 605, session=mock.ANY)
 
 
 @pytest.mark.asyncio()

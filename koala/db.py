@@ -57,7 +57,7 @@ def session_manager():
     """
     global pool_count
     i = random.randint(0, 1000000)
-    if pool_count == 0 and engine.pool.checkedout() >= 10:
+    if pool_count == 0 and isinstance(engine.pool, QueuePool) and engine.pool.checkedout() >= 10:
         logger.debug(f"Session Debug: CLEARING POOL {engine.pool.status()}")
         engine.pool.dispose()
         logger.debug(f"Session Debug: CLEARED POOL {engine.pool.status()}")
