@@ -44,11 +44,14 @@ class Verification(commands.Cog, name="Verify"):
 
     def __init__(self, bot):
         self.bot = bot
+        self.on_ready_ran=False
         insert_extension("Verify", 0, True, True)
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await core.assign_roles_on_startup(self.bot)
+        if not self.on_ready_ran:
+            self.on_ready_ran = True
+            await core.assign_roles_on_startup(self.bot)
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

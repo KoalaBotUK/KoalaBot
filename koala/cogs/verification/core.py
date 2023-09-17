@@ -249,7 +249,7 @@ async def assign_roles_on_startup(bot: koalabot.KoalaBot, *, session: Session):
 
         role = guild.get_role(r_id)
         try:
-            await assign_role_to_guild(guild, role, suffix)
+            await assign_role_to_guild(guild, role, suffix, session=session)
         except VerifyException as e:
             logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles",
                          exc_info=e)
@@ -292,7 +292,7 @@ UTILS
 
 
 @assign_session
-async def assign_role_to_guild(guild, role, suffix, session):
+async def assign_role_to_guild(guild, role, suffix, *, session):
     results = session.execute(select(VerifiedEmails.u_id).where(VerifiedEmails.email.endswith(suffix),
                                                                 VerifiedEmails.u_id.in_(
                                                                     [member.id for member in guild.members]
