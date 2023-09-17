@@ -16,6 +16,7 @@ from functools import wraps
 
 from sqlalchemy import select, delete, and_, create_engine, VARCHAR
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
 
 from koala.env import DB_URL, DB_TYPE
 from koala.log import logger
@@ -26,6 +27,8 @@ from .enums import DatabaseType
 # Constants
 
 # Variables
+pool_count = 0
+
 if not DB_URL or DB_TYPE == DatabaseType.SQLITE:
     engine = create_engine(DB_URL, future=True)
 else:
@@ -52,9 +55,15 @@ def session_manager():
     """
     Provide a transactional scope around a series of operations
     """
+    global pool_count
     i = random.randint(0, 1000000)
-    logger.debug(f"Session Debug: CREATED {i}\n{engine.pool.status()}\n{traceback.format_stack()}")
+    if pool_count == 0 and engine.pool.checkedout() >= 10:
+        logger.debug(f"Session Debug: CLEARING POOL {engine.pool.status()}")
+        engine.pool.dispose()
+        logger.debug(f"Session Debug: CLEARED POOL {engine.pool.status()}")
     session = Session()
+    pool_count += 1
+    logger.debug(f"Session Debug: CREATED {i}/{pool_count}\n{engine.pool.status()}\n{traceback.format_stack()}")
     try:
         yield session
     except Exception:
@@ -62,7 +71,8 @@ def session_manager():
         raise
     finally:
         session.close()
-        logger.debug(f"Session Debug: CLOSED {i}\n{engine.pool.status()}\n{traceback.format_stack()}")
+        pool_count -= 1
+        logger.debug(f"Session Debug: CLOSED {i}/{pool_count}\n{engine.pool.status()}\n{traceback.format_stack()}")
 
 
 def __create_sqlite_tables():

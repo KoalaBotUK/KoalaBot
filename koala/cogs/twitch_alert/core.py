@@ -13,7 +13,7 @@ from .models import UserInTwitchTeam, TeamInTwitchAlert, TwitchAlerts, UserInTwi
 
 
 @assign_session
-async def create_team_alerts(bot: Bot, ta_database_manager, session):
+async def create_team_alerts(bot: Bot, ta_database_manager, *, session):
     start = time.time()
 
     sql_select_team_users = select(func.distinct(UserInTwitchTeam.twitch_username)) \
