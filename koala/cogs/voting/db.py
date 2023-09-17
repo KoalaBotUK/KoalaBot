@@ -168,27 +168,27 @@ class VoteManager:
         session.commit()
         return vote
 
-    def cancel_sent_vote(self, v_id):
+    def cancel_sent_vote(self, v_id, *, session):
         """
         Removed a vote from the list of active votes
         :param v_id: the vote id
+        :param session: db session
         :return: None
         """
         vote = self.sent_votes.pop(v_id)
-        self.cancel_vote(vote)
+        self.cancel_vote(vote, session=session)
 
-    def cancel_configuring_vote(self, author_id):
+    def cancel_configuring_vote(self, author_id, *, session):
         vote = self.configuring_votes.pop(author_id)
-        self.cancel_vote(vote)
+        self.cancel_vote(vote, session=session)
 
-    def cancel_vote(self, vote):
-        with session_manager() as session:
-            self.vote_lookup.pop((vote.author, vote.title))
-            session.execute(delete(Votes).filter_by(vote_id=vote.id))
-            session.execute(delete(VoteTargetRoles).filter_by(vote_id=vote.id))
-            session.execute(delete(VoteOptions).filter_by(vote_id=vote.id))
-            session.execute(delete(VoteSent).filter_by(vote_id=vote.id))
-            session.commit()
+    def cancel_vote(self, vote, *, session):
+        self.vote_lookup.pop((vote.author, vote.title))
+        session.execute(delete(Votes).filter_by(vote_id=vote.id))
+        session.execute(delete(VoteTargetRoles).filter_by(vote_id=vote.id))
+        session.execute(delete(VoteOptions).filter_by(vote_id=vote.id))
+        session.execute(delete(VoteSent).filter_by(vote_id=vote.id))
+        session.commit()
 
     def was_sent_to(self, msg_id):
         """

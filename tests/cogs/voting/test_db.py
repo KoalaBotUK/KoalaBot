@@ -76,7 +76,7 @@ def test_votemanager_cancel_sent_vote():
     with session_manager() as session:
         populate_vote_tables(session)
         vote_manager.load_from_db()
-        vote_manager.cancel_sent_vote(111)
+        vote_manager.cancel_sent_vote(111, session=session)
         assert 111 not in vote_manager.sent_votes.keys()
         in_db = session.execute(select(Votes).filter_by(vote_id=111)).all()
         assert not in_db
@@ -86,7 +86,7 @@ def test_votemanager_cancel_configuring_vote():
     with session_manager() as session:
         populate_vote_tables(session)
         vote_manager.load_from_db()
-        vote_manager.cancel_configuring_vote(223)
+        vote_manager.cancel_configuring_vote(223, session=session)
         assert 223 not in vote_manager.configuring_votes.keys()
         in_db = session.execute(select(Votes).filter_by(vote_id=112)).all()
         assert not in_db

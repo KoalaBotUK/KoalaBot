@@ -124,7 +124,7 @@ class Voting(commands.Cog, name="Vote"):
                                     await user.send(embed=embed)
                             session.execute(delete(Votes).filter_by(vote_id=vote.id))
                             session.commit()
-                            self.vote_manager.cancel_sent_vote(vote.id)
+                            self.vote_manager.cancel_sent_vote(vote.id, session=session)
                         except Exception as e:
                             session.execute(update(Votes).filter_by(vote_id=vote.id).values(end_time=time.time() + 86400))
                             session.commit()
@@ -330,12 +330,13 @@ class Voting(commands.Cog, name="Vote"):
         Cancels a vote you are setting up or have sent
         :param title: title of the vote to cancel
         """
-        v_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
-        if v_id in self.vote_manager.sent_votes.keys():
-            self.vote_manager.cancel_sent_vote(v_id)
-        else:
-            self.vote_manager.cancel_configuring_vote(ctx.author.id)
-        await ctx.send(f"Vote {title} has been cancelled.")
+        with session_manager() as session:
+            v_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
+            if v_id in self.vote_manager.sent_votes.keys():
+                self.vote_manager.cancel_sent_vote(v_id, session=session)
+            else:
+                self.vote_manager.cancel_configuring_vote(ctx.author.id, session=session)
+            await ctx.send(f"Vote {title} has been cancelled.")
 
     @commands.check(vote_is_enabled)
     @has_current_votes()
@@ -406,7 +407,8 @@ class Voting(commands.Cog, name="Vote"):
 
         vote = self.vote_manager.get_vote_from_id(vote_id)
         results = await get_results(self.bot, vote)
-        self.vote_manager.cancel_sent_vote(vote.id)
+        with session_manager() as session:
+            self.vote_manager.cancel_sent_vote(vote.id, session=session)
         embed = await make_result_embed(vote, results)
         if vote.chair:
             try:

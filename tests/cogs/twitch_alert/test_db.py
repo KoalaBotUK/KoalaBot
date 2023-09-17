@@ -296,7 +296,7 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'], session=session)
 
         sql_select_messages = select(UserInTwitchTeam.message_id, UserInTwitchTeam.twitch_username).where(
             and_(or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),

@@ -280,35 +280,35 @@ class TwitchAlertDBManager:
         for team_info in teams_info:
             await self.update_team_members(team_info.team_twitch_alert_id, team_info.twitch_team_name)
 
-    async def delete_all_offline_team_streams(self, usernames):
+    async def delete_all_offline_team_streams(self, usernames, *, session):
         """
         A method that deletes all currently offline streams
         :param usernames: The usernames of the team members
+        :param session: db session
         :return:
         """
-        with session_manager() as session:
-            results = session.execute(
-                select(UserInTwitchTeam).where(
-                    and_(
-                        UserInTwitchTeam.message_id != null(),
-                        UserInTwitchTeam.twitch_username.in_(usernames))
-                    ).options(
-                        joinedload(UserInTwitchTeam.team)
-                    )
-            ).scalars().all()
+        results = session.execute(
+            select(UserInTwitchTeam).where(
+                and_(
+                    UserInTwitchTeam.message_id != null(),
+                    UserInTwitchTeam.twitch_username.in_(usernames))
+                ).options(
+                    joinedload(UserInTwitchTeam.team)
+                )
+        ).scalars().all()
 
-            if not results:
-                return
-            logger.debug("Deleting offline streams: %s" % results)
-            for result in results:
-                if result.team:
-                    await self.delete_message(result.message_id, result.team.channel_id)
-                    result.message_id = None
-                else:
-                    logger.debug("Result team not found: %s", result)
-                    logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)).scalars().all())
-                    # session.delete(result)
-            session.commit()
+        if not results:
+            return
+        logger.debug("Deleting offline streams: %s" % results)
+        for result in results:
+            if result.team:
+                await self.delete_message(result.message_id, result.team.channel_id)
+                result.message_id = None
+            else:
+                logger.debug("Result team not found: %s", result)
+                logger.debug("Existing teams: %s", session.execute(select(TeamInTwitchAlert)).scalars().all())
+                # session.delete(result)
+        session.commit()
 
     async def delete_all_offline_streams(self, usernames):
         """
