@@ -213,7 +213,9 @@ async def email_verify_confirm(user_id, token, bot, *, session: Session):
     if not entry:
         raise InvalidArgumentError("That is not a valid token")
 
-    session.add(VerifiedEmails(u_id=user_id, email=entry.email))
+    verified_email = session.execute(select(VerifiedEmails).filter_by(u_id=user_id, email=entry.email)).one_or_none()
+    if verified_email is None:
+        session.add(VerifiedEmails(u_id=user_id, email=entry.email))
 
     session.execute(delete(NonVerifiedEmails).filter_by(token=token, u_id=user_id))
 
