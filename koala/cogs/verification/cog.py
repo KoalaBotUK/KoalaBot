@@ -105,6 +105,18 @@ class Verification(commands.Cog, name="Verify"):
         await core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email suffix")
 
+    @commands.check(koalabot.is_admin)
+    @commands.command(name="verifyBlacklistList")
+    @commands.check(verify_is_enabled)
+    async def blacklist_list(self, ctx):
+        embed = discord.Embed(title=f"Current verification blacklist for {ctx.guild.name}")
+        blacklist_map = core.grouped_list_blacklist(ctx.guild.id, self.bot)
+
+        for rd_suffix, rd_roles in blacklist_map.items():
+            embed.add_field(name=rd_suffix, value='\n'.join(rd_roles))
+
+        await ctx.send(embed=embed)
+
     @commands.check(koalabot.is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email: str):

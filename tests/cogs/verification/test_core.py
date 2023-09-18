@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from koala.cogs.verification import core
-from koala.cogs.verification.models import ToReVerify, VerifiedEmails, NonVerifiedEmails, Roles
+from koala.cogs.verification.models import ToReVerify, VerifiedEmails, NonVerifiedEmails, Roles, VerifyBlacklist
 
 
 @pytest.mark.asyncio
@@ -29,3 +29,29 @@ async def test_confirm_reverify(bot, session: Session):
     assert session.execute(select(ToReVerify)).all() == []
     assert session.execute(select(NonVerifiedEmails)).all() == []
     assert len(session.execute(select(VerifiedEmails)).all()) == 1
+
+
+def test_grouped_list_blacklist(bot, session):
+    guild = dpytest.get_config().guilds[0]
+    user = guild.members[0]
+    role = guild.roles[0]
+
+    session.add(VerifyBlacklist(user_id=user.id, role_id=role.id, email_suffix="@test.com"))
+
+    blacklist_map = core.grouped_list_blacklist(guild.id, bot, session=session)
+
+    assert blacklist_map == {user.name: [role.mention+" / @test.com"]}
+
+
+def test_grouped_list_blacklist_multiple(bot, session):
+    guild = dpytest.get_config().guilds[0]
+    user = guild.members[0]
+    role = guild.roles[0]
+
+    session.add(VerifyBlacklist(user_id=user.id, role_id=role.id, email_suffix="@test.com"))
+    session.add(VerifyBlacklist(user_id=user.id, role_id=role.id, email_suffix="@test2.com"))
+
+    blacklist_map = core.grouped_list_blacklist(guild.id, bot, session=session)
+
+    assert blacklist_map == {user.name: [role.mention+" / @test.com", role.mention+" / @test2.com"]}
+
