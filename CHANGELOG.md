@@ -9,7 +9,7 @@ administrators
 - Add backend API
 - Fix regional indicators as reactions
 ### Verify
-- Added new commands `verifyBlacklist` and `verifyBlacklistRemove` for blacklisting a given user from being verified
+- Added new commands `verifyBlacklist`, `verifyBlacklistRemove` & `verifyBlacklistList` for blacklisting a given user from being verified
 - Updated look of verify emails
 - made email verification case insensitive
 - Added optimisations for verified roles

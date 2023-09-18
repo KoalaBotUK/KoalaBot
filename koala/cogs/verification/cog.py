@@ -95,6 +95,14 @@ class Verification(commands.Cog, name="Verify"):
     @commands.command(name="verifyBlacklist")
     @commands.check(verify_is_enabled)
     async def blacklist(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
+        """
+        Blacklist a user from gaining a specified role using a given email
+        :param ctx: context of the discord message
+        :param user: user to be blacklisted
+        :param role: role to be blacklisted for user
+        :param suffix: suffix of email to be blacklisted for user
+        :return:
+        """
         await core.blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will no longer receive {role} upon verifying with this email suffix")
 
@@ -102,6 +110,14 @@ class Verification(commands.Cog, name="Verify"):
     @commands.command(name="verifyBlacklistRemove")
     @commands.check(verify_is_enabled)
     async def blacklist_remove(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
+        """
+        Remove a blacklisted user
+        :param ctx: context of the discord message
+        :param user: user to be un-blacklisted
+        :param role: role to be un-blacklisted for user
+        :param suffix: suffix of email to be un-blacklisted for user
+        :return:
+        """
         await core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email suffix")
 
@@ -109,6 +125,11 @@ class Verification(commands.Cog, name="Verify"):
     @commands.command(name="verifyBlacklistList")
     @commands.check(verify_is_enabled)
     async def blacklist_list(self, ctx):
+        """
+        List the blacklisted user and role mappings
+        :param ctx: context of the discord message
+        :return:
+        """
         embed = discord.Embed(title=f"Current verification blacklist for {ctx.guild.name}")
         blacklist_map = core.grouped_list_blacklist(ctx.guild.id, self.bot)
 
