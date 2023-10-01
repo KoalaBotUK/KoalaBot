@@ -41,8 +41,9 @@ def verify_is_enabled(ctx):
     return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
-class Verification(commands.Cog, name="Verify"):
-    verify_group = app_commands.Group(name="verify", description="lmao get verified")
+class Verification(commands.GroupCog, group_name="verify", group_description="Verify"):
+    config_group = app_commands.Group(name="config", description="Verify commands for admins")
+    user_group = app_commands.Group(name="user", description="Verify commands for users")
 
     def __init__(self, bot):
         self.bot = bot
@@ -62,7 +63,7 @@ class Verification(commands.Cog, name="Verify"):
         await core.send_verify_intro_message(member)
 
     @commands.check(koalabot.is_admin)
-    @verify_group.command(name="add", description="Set up a role and email pair to verify users with")
+    @config_group.command(name="add", description="Set up a role and email pair to verify users with")
     @commands.check(verify_is_enabled)
     async def enable_verification(self, interaction: discord.Interaction, suffix: str, role: discord.Role):
         """
@@ -76,7 +77,7 @@ class Verification(commands.Cog, name="Verify"):
         await interaction.response.send_message(f"Verification enabled for {role} for emails ending with `{suffix}`")
 
     @commands.check(koalabot.is_admin)
-    @verify_group.command(name="remove", description="Disable an existing verification pair")
+    @config_group.command(name="remove", description="Disable an existing verification pair")
     @commands.check(verify_is_enabled)
     async def disable_verification(self, interaction: discord.Interaction, suffix: str, role: discord.Role):
         """
@@ -91,21 +92,21 @@ class Verification(commands.Cog, name="Verify"):
         await interaction.response.send_message(f"Emails ending with `{suffix}` no longer give {role}")
 
     @commands.check(koalabot.is_admin)
-    @verify_group.command(name="blacklist", description="Prevent a user from receiving a specific role")
+    @config_group.command(name="blacklist", description="Prevent a user from receiving a specific role")
     @commands.check(verify_is_enabled)
     async def blacklist(self, interaction: discord.Interaction, user: discord.Member, role: discord.Role, suffix: str):
         await core.blacklist_member(user.id, interaction.guild_id, role.id, suffix, self.bot)
         await interaction.response.send_message(f"{user} will no longer receive {role} upon verifying with this email suffix")
 
     @commands.check(koalabot.is_admin)
-    @verify_group.command(name="blacklistremove", description="Lift a blacklist restriction on a user")
+    @config_group.command(name="blacklistremove", description="Lift a blacklist restriction on a user")
     @commands.check(verify_is_enabled)
     async def blacklist_remove(self, interaction: discord.Interaction, user: discord.Member, role: discord.Role, suffix: str):
         await core.remove_blacklist_member(user.id, interaction.guild_id, role.id, suffix, self.bot)
         await interaction.response.send_message(f"{user} will now be able to receive {role} upon verifying with this email suffix")
 
     @commands.check(koalabot.is_dm_channel)
-    @verify_group.command(name="me", description="Verify an email")
+    @user_group.command(name="email", description="Verify an email")
     async def verify(self, interaction: discord.Interaction, email: str):
         """
         Send to KoalaBot in dms to verify an email with our system
@@ -136,7 +137,7 @@ class Verification(commands.Cog, name="Verify"):
 
 
     @commands.check(koalabot.is_dm_channel)
-    @verify_group.command(name="unverify", description="Unverify an email")
+    @user_group.command(name="remove", description="Unverify an email")
     async def un_verify(self, interaction: discord.Interaction, email: str):
         """
         Send to KoalaBot in dms to un-verify an email with our system
@@ -149,7 +150,7 @@ class Verification(commands.Cog, name="Verify"):
 
 
     @commands.check(koalabot.is_dm_channel)
-    @verify_group.command(name="confirm", description="Confirm verification of an email")
+    @user_group.command(name="confirm", description="Confirm verification of an email")
     async def confirm(self, interaction: discord.Interaction, token: str):
         """
         Confirm the verification of an email
@@ -161,20 +162,20 @@ class Verification(commands.Cog, name="Verify"):
         await interaction.response.send_message("Your email has been verified, thank you", ephemeral=True)
 
 
-    @commands.check(koalabot.is_owner_ctx)
-    @verify_group.command(name="getemails", description="See the emails a user is verified with")
-    async def get_emails(self, interaction: discord.Interaction, user_id: str):
-        """
-        See the emails a user is verified with
-        :param interaction:
-        :param user_id: the id of the user whose emails you want to find
-        :return:
-        """
-        emails = '\n'.join(core.email_verify_list(int(user_id)))
-        await interaction.response.send_message(f"This user has registered with:\n{emails}", ephemeral=True)
+    # @commands.check(koalabot.is_owner)
+    # @verify_group.command(name="getemails", description="See the emails a user is verified with")
+    # async def get_emails(self, interaction: discord.Interaction, user_id: str):
+    #     """
+    #     See the emails a user is verified with
+    #     :param interaction:
+    #     :param user_id: the id of the user whose emails you want to find
+    #     :return:
+    #     """
+    #     emails = '\n'.join(core.email_verify_list(int(user_id)))
+    #     await interaction.response.send_message(f"This user has registered with:\n{emails}", ephemeral=True)
 
-
-    @verify_group.command(name="list", description="List the current verification setup for the server")
+    @commands.check(koalabot.is_admin)
+    @config_group.command(name="list", description="List the current verification setup for the server")
     @commands.check(verify_is_enabled)
     async def check_verifications(self, interaction: discord.Interaction):
         """
@@ -192,7 +193,7 @@ class Verification(commands.Cog, name="Verify"):
 
 
     @commands.check(koalabot.is_admin)
-    @verify_group.command(name="reverify", description="Remove a role from all users and marks them as needing to reverify before giving it back")
+    @config_group.command(name="reverify", description="Remove a role from all users and marks them as needing to reverify before giving it back")
     @commands.check(verify_is_enabled)
     async def re_verify(self, interaction: discord.Interaction, role: discord.Role):
         """
