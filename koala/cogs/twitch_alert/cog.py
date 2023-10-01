@@ -347,7 +347,6 @@ async def setup(bot: koalabot) -> None:
     :param bot: the bot client for KoalaBot
     """
     if TWITCH_SECRET is None or TWITCH_KEY is None:
-        logger.error("TwitchAlert not started. API keys not found in environment.")
         insert_extension("TwitchAlert", 0, False, False)
     else:
         await bot.add_cog(TwitchAlert(bot))
