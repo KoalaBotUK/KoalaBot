@@ -22,7 +22,7 @@ def get_insights(bot):
     :param bot: The bot for which information is being gathered
     """
 
-    message = f"Insights:\nThis bot is in a total of {len(bot.guilds)} servers. \nThere are a total " +\
+    message = f"Insights:\nThis bot is in a total of {len(bot.guilds)} servers.\nThere are a total " +\
               f"of {sum([len(guild.members) for guild in bot.guilds])} members across these servers."
 
     return message
