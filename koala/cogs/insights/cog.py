@@ -13,6 +13,7 @@ from discord.ext import commands
 # Own modules
 import koalabot
 from .log import logger
+from .core import get_insights, get_servers
 
 # Constants
 
@@ -36,10 +37,7 @@ class Insights(commands.Cog, name="Insights"):
         :param ctx: Context of the command
         """
 
-        message = (f"Insights:\nThis bot is in a total of {len(self.bot.guilds)} servers.\nThere are a total "
-                   f"of {sum([len(guild.members) for guild in self.bot.guilds])} members across these servers.")
-
-        await ctx.send(message)
+        await ctx.send(get_insights(self.bot))
         
     @commands.command(name="servers")
     @commands.check(koalabot.is_owner)
@@ -51,23 +49,8 @@ class Insights(commands.Cog, name="Insights"):
         :param filter_string: The string used to filter servers listed
         """
 
-        if filter_string != "":
-            server_list = [guild.name for guild in self.bot.guilds if filter_string.lower() in guild.name.lower()]
-        else:
-            server_list = [guild.name for guild in self.bot.guilds]
-        
-        if len(server_list) > 0:
-            partial_message = server_list[0]
-            for guild in server_list[1:]:
-                guild_length = len(guild)
-                if len(partial_message) + guild_length + 2 > 2000:
-                    await ctx.send(partial_message)
-                    partial_message = guild
-                else:
-                    partial_message += f", {guild}"
-            await ctx.send(partial_message)
-        else:
-            await ctx.send(f"No servers found containing the string \"{filter_string}\".")
+        for message in get_servers(self.bot, filter_string):
+            await ctx.send(message)
         
 
 async def setup(bot: koalabot) -> None:

@@ -55,8 +55,8 @@ async def test_insights(bot, insights_cog, members, guilds):
     
     await dpytest.message(koalabot.COMMAND_PREFIX + "insights")
 
-    expected_message = (f"Insights:\nThis bot is in a total of {total_guilds} servers."
-                        f"\nThere are a total of {total_members} members across these servers.")
+    expected_message = f"Insights:\nThis bot is in a total of {total_guilds} servers." +\
+                       f"\nThere are a total of {total_members} members across these servers."
 
     assert dpytest.verify().message().content(expected_message)
 
