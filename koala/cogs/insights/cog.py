@@ -43,15 +43,27 @@ class Insights(commands.Cog, name="Insights"):
     @commands.check(koalabot.is_owner)
     async def list_servers(self, ctx, filter_string=""):
         """
-        Lists all servers that the bot is in, optional parameter for specifying that the servers must contain
-        a specific string
+        Lists all servers that the bot is in, packaged into 2000 character messages, optional parameter for specifying
+        that the servers must contain a specific string
         :param ctx: Context of the command
         :param filter_string: The string used to filter servers listed
         """
 
-        for message in get_servers(self.bot, filter_string):
-            await ctx.send(message)
-        
+        server_list = get_servers(self.bot, filter_string)
+
+        if len(server_list) > 0:
+            partial_message = server_list[0]
+            for guild in server_list[1:]:
+                guild_length = len(guild)
+                if len(partial_message) + guild_length + 2 > 2000:
+                    await ctx.send(partial_message)
+                    partial_message = guild
+                else:
+                    partial_message += f", {guild}"
+            await ctx.send(partial_message)
+        else:
+            await ctx.send(f"No servers found containing the string \"{filter_string}\".")
+
 
 async def setup(bot: koalabot) -> None:
     """

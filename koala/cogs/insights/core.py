@@ -30,30 +30,14 @@ def get_insights(bot):
 
 def get_servers(bot, filter_string):
     """
-    Processes a list of servers the bot is in, packaged into 2000 character messages, can also use a filter to select
-    only servers containing that string
+    Retrieves a list of servers that the bot is in, can also use a filter to select only servers containing that string
     :param bot: The bot for which information is being gathered
     :param filter_string: A filter string which allows only servers containing that string to be selected
     """
-
-    messages = []
 
     if filter_string != "":
         server_list = [guild.name for guild in bot.guilds if filter_string.lower() in guild.name.lower()]
     else:
         server_list = [guild.name for guild in bot.guilds]
 
-    if len(server_list) > 0:
-        partial_message = server_list[0]
-        for guild in server_list[1:]:
-            guild_length = len(guild)
-            if len(partial_message) + guild_length + 2 > 2000:
-                messages.append(partial_message)
-                partial_message = guild
-            else:
-                partial_message += f", {guild}"
-        messages.append(partial_message)
-    else:
-        return [f"No servers found containing the string \"{filter_string}\"."]
-
-    return messages
+    return server_list
