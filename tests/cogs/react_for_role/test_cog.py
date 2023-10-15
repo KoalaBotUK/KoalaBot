@@ -488,7 +488,7 @@ async def test_rfr_edit_thumbnail_links(image_url):
                 assert embed.thumbnail.url != "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg"
 
 
-@pytest.mark.skip("Unsupported API Calls")
+# @pytest.mark.skip("Unsupported API Calls")
 @pytest.mark.parametrize("arg", ["Y", "N"])
 @pytest.mark.asyncio
 async def test_rfr_edit_inline_all(arg):
@@ -505,12 +505,12 @@ async def test_rfr_edit_inline_all(arg):
     msg2_id = message2.id
     add_rfr_message(guild.id, channel.id, msg1_id)
     add_rfr_message(guild.id, channel.id, msg2_id)
-    await dpytest.sent_queue.empty()
+    # await dpytest.sent_queue.empty()
     calls = [mock.call(0, name="field1", value="value1", inline=(arg == "Y")),
              mock.call(0, name="field2", value="value2", inline=(arg == "Y"))]
-    with mock.patch("koala.cogs.ReactForRole.prompt_for_input", side_effects=["all", arg]):
-        with mock.patch("discord.abc.Messageable.fetch_message", side_effects=[message1, message2]):
-            with mock.patch("koala.cogs.react_for_role.core.get_embed_from_message", side_effects=[embed1, embed2]):
+    with mock.patch("koala.cogs.ReactForRole.prompt_for_input", side_effect=["all", arg]):
+        with mock.patch("discord.abc.Messageable.fetch_message", side_effect=[message1, message2]):
+            with mock.patch("koala.cogs.react_for_role.core.get_embed_from_message", side_effect=[embed1, embed2]):
                 with mock.patch('discord.Embed.set_field_at') as mock_call:
                     await dpytest.message("k!rfr edit inline")
                     assert dpytest.verify().message()
