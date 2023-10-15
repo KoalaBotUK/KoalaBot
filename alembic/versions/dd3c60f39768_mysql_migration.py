@@ -159,7 +159,7 @@ def unsafe_upgrade():
                                                   comment="-1: unknown, 0: Playing, 1: Streaming, 2: Listening, "
                                                           "3: Watching, 4: Custom, 5: Competing"),
                                            Column('stream_url', VARCHAR(100), nullable=True),
-                                           Column('message', VARCHAR(100, collation="utf8mb4_general_ci")),
+                                           Column('message', VARCHAR(100, collation="utf8mb4_unicode_520_ci")),
                                            Column('time_start', TIMESTAMP),
                                            Column('time_end', TIMESTAMP))
     guild_usage = op.create_table('GuildUsage',
@@ -177,7 +177,7 @@ def unsafe_upgrade():
 
     guild_welcome_messages = op.create_table('GuildWelcomeMessages',
                                              Column('guild_id', DiscordSnowflake, primary_key=True),
-                                             Column('welcome_message', VARCHAR(2000, collation="utf8mb4_general_ci"), nullable=True))
+                                             Column('welcome_message', VARCHAR(2000, collation="utf8mb4_unicode_520_ci"), nullable=True))
 
     guild_rfr_messages = op.create_table('GuildRFRMessages',
                                          Column('guild_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
@@ -188,7 +188,7 @@ def unsafe_upgrade():
     rfr_message_emoji_roles = op.create_table('RFRMessageEmojiRoles',
                                               Column('emoji_role_id', INT,
                                                      ForeignKey("GuildRFRMessages.emoji_role_id", ondelete='CASCADE'), primary_key=True),
-                                              Column('emoji_raw', VARCHAR(50, collation="utf8mb4_general_ci"), primary_key=True),
+                                              Column('emoji_raw', VARCHAR(50, collation="utf8mb4_unicode_520_ci"), primary_key=True),
                                               Column('role_id', DiscordSnowflake, primary_key=True))
     op.create_unique_constraint('uniq_emoji', 'RFRMessageEmojiRoles', ['emoji_role_id', 'emoji_raw'])
     op.create_unique_constraint('uniq_role_emoji', 'RFRMessageEmojiRoles', ['emoji_role_id', 'role_id'])
@@ -199,9 +199,9 @@ def unsafe_upgrade():
     op.create_unique_constraint('uniq_guild_role', 'GuildRFRRequiredRoles', ['guild_id', 'role_id'])
 
     text_filter = op.create_table('TextFilter',
-                                  Column('filtered_text_id', String(100, collation="utf8mb4_general_ci"), primary_key=True),
+                                  Column('filtered_text_id', String(100, collation="utf8mb4_unicode_520_ci"), primary_key=True),
                                   Column('guild_id', DiscordSnowflake),
-                                  Column('filtered_text', VARCHAR(100, collation="utf8mb4_general_ci")),
+                                  Column('filtered_text', VARCHAR(100, collation="utf8mb4_unicode_520_ci")),
                                   Column('filter_type', VARCHAR(10)),
                                   Column('is_regex', BOOLEAN))
     text_filter_moderation = op.create_table('TextFilterModeration',
@@ -217,19 +217,19 @@ def unsafe_upgrade():
                                     Column('guild_id', DiscordSnowflake,
                                            ForeignKey("Guilds.guild_id", ondelete='CASCADE')),
                                     Column('channel_id', DiscordSnowflake, primary_key=True),
-                                    Column('default_message', VARCHAR(1000, collation="utf8mb4_general_ci")))
+                                    Column('default_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci")))
     user_in_twitch_alert = op.create_table('UserInTwitchAlert',
                                            Column('channel_id', DiscordSnowflake,
                                                   ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'), primary_key=True),
                                            Column('twitch_username', VARCHAR(25), primary_key=True),
-                                           Column('custom_message', VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True),
+                                           Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True),
                                            Column('message_id', DiscordSnowflake, nullable=True))
     team_in_twitch_alert = op.create_table('TeamInTwitchAlert',
                                            Column('team_twitch_alert_id', INT,
                                                   autoincrement=True, primary_key=True),
                                            Column('channel_id', DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')),
                                            Column('twitch_team_name', VARCHAR(25)),
-                                           Column('custom_message', VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True))
+                                           Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True))
     user_in_twitch_team = op.create_table('UserInTwitchTeam',
                                           Column('team_twitch_alert_id', INT,
                                                  ForeignKey("TeamInTwitchAlert.team_twitch_alert_id", ondelete='CASCADE'),
@@ -261,7 +261,7 @@ def unsafe_upgrade():
                             Column('vote_id', DiscordSnowflake, primary_key=True),
                             Column('author_id', DiscordSnowflake),
                             Column('guild_id', DiscordSnowflake),
-                            Column('title', VARCHAR(200, collation="utf8mb4_general_ci")),
+                            Column('title', VARCHAR(200, collation="utf8mb4_unicode_520_ci")),
                             Column('chair_id', DiscordSnowflake, nullable=True),
                             Column('voice_id', DiscordSnowflake, nullable=True),
                             Column('end_time', FLOAT, nullable=True))
@@ -271,8 +271,8 @@ def unsafe_upgrade():
     vote_options = op.create_table('VoteOptions',
                                    Column('vote_id', DiscordSnowflake, primary_key=True),
                                    Column('opt_id', DiscordSnowflake, primary_key=True),
-                                   Column('option_title', VARCHAR(150, collation="utf8mb4_general_ci")),
-                                   Column('option_desc', VARCHAR(150, collation="utf8mb4_general_ci")))
+                                   Column('option_title', VARCHAR(150, collation="utf8mb4_unicode_520_ci")),
+                                   Column('option_desc', VARCHAR(150, collation="utf8mb4_unicode_520_ci")))
     vote_sent = op.create_table('VoteSent',
                                 Column('vote_id', DiscordSnowflake, primary_key=True),
                                 Column('vote_receiver_id', DiscordSnowflake, primary_key=True),
