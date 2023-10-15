@@ -516,7 +516,8 @@ class ReactForRole(commands.Cog):
             input_emoji_roles = (await wait_for_message(self.bot, ctx, 120))[0].content
             wanted_removals = await self.parse_emoji_or_roles_input_str(ctx, input_emoji_roles)
 
-            new_embed, errors = core.rfr_remove_emojis_roles(self.bot, ctx.guild, msg, rfr_msg_row, wanted_removals)
+            new_embed, errors = await core.rfr_remove_emojis_roles(self.bot, ctx.guild, msg,
+                                                                   rfr_msg_row, wanted_removals)
             for e in errors:
                 await ctx.send(e)
 
