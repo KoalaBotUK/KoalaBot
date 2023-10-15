@@ -242,7 +242,7 @@ async def email_verify_confirm(user_id, token, bot, *, session: Session):
     session.execute(delete(NonVerifiedEmails).filter_by(token=token, u_id=user_id))
 
     potential_roles = session.execute(select(Roles.r_id)
-                                      .where(text(":email like ('%' || email_suffix)")),
+                                      .where(value_suffix_like_column(":email", "email_suffix")),
                                       {"email": entry.email}).all()
     if potential_roles:
         for role_id in potential_roles:
