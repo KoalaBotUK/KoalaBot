@@ -17,12 +17,7 @@ from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP, FLAG_EMOJI_REGEXP
 
 koala_logo = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 
-
 # Variables
-# current_activity = None
-
-def create_ctx(bot: Bot, guild: discord.Guild):
-    return {'bot': bot, 'guild': guild}
 
 
 @assign_session
