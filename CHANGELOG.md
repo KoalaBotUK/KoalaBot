@@ -8,6 +8,7 @@ administrators
 ### RFR
 - Add backend API
 - Fix regional indicators as reactions
+- Fix disable inline not working
 ### Verify
 - Added new commands `verifyBlacklist`, `verifyBlacklistRemove` & `verifyBlacklistList` for blacklisting a given user from being verified
 - Updated look of verify emails

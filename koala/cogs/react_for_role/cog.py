@@ -342,7 +342,7 @@ class ReactForRole(commands.Cog):
                     await ctx.send(
                         "Keep in mind that this process may take a while if you have a lot of RFR messages on your "
                         "server.")
-                    await core.use_inline_rfr_all(ctx.guild)
+                    await core.use_inline_rfr_all(ctx.guild, change_all == "Y")
                     await ctx.send("Okay, the process should be finished now. Please check.")
             elif input_comm.lstrip().rstrip().lower() == "specific":
                 # try and get specific message
@@ -362,7 +362,7 @@ class ReactForRole(commands.Cog):
                         await ctx.send("Invalid input, cancelling command")
                     else:
                         await ctx.send("Okay, I'll change it as requested.")
-                        await core.use_inline_rfr_specific(msg)
+                        await core.use_inline_rfr_specific(msg, yes_no == "Y")
                         await ctx.send("Okay, should be done. Please check.")
 
     @commands.check(koalabot.is_admin)
@@ -516,7 +516,8 @@ class ReactForRole(commands.Cog):
             input_emoji_roles = (await wait_for_message(self.bot, ctx, 120))[0].content
             wanted_removals = await self.parse_emoji_or_roles_input_str(ctx, input_emoji_roles)
 
-            new_embed, errors = core.rfr_remove_emojis_roles(self.bot, ctx.guild, msg, rfr_msg_row, wanted_removals)
+            new_embed, errors = await core.rfr_remove_emojis_roles(self.bot, ctx.guild, msg,
+                                                                   rfr_msg_row, wanted_removals)
             for e in errors:
                 await ctx.send(e)
 
