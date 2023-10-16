@@ -6,9 +6,9 @@ from koala.models import mapper_registry, DiscordSnowflake
 @mapper_registry.mapped
 class TextFilter:
     __tablename__ = 'TextFilter'
-    filtered_text_id = Column(VARCHAR(100, collation="utf8mb4_general_ci"), primary_key=True)
+    filtered_text_id = Column(VARCHAR(100, collation="utf8mb4_unicode_520_ci"), primary_key=True)
     guild_id = Column(DiscordSnowflake)
-    filtered_text = Column(VARCHAR(100, collation="utf8mb4_general_ci"))
+    filtered_text = Column(VARCHAR(100, collation="utf8mb4_unicode_520_ci"))
     filter_type = Column(VARCHAR(10))
     is_regex = Column(BOOLEAN)
 

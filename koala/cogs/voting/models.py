@@ -13,7 +13,7 @@ class Votes:
     vote_id = Column(DiscordSnowflake, primary_key=True)
     author_id = Column(DiscordSnowflake)
     guild_id = Column(DiscordSnowflake)
-    title = Column(VARCHAR(200, collation="utf8mb4_general_ci"))
+    title = Column(VARCHAR(200, collation="utf8mb4_unicode_520_ci"))
     chair_id = Column(DiscordSnowflake, nullable=True)
     voice_id = Column(DiscordSnowflake, nullable=True)
     end_time = Column(FLOAT, nullable=True)
@@ -39,8 +39,8 @@ class VoteOptions:
     __tablename__ = 'VoteOptions'
     vote_id = Column(DiscordSnowflake, primary_key=True)
     opt_id = Column(DiscordSnowflake, primary_key=True)
-    option_title = Column(VARCHAR(150, collation="utf8mb4_general_ci"))
-    option_desc = Column(VARCHAR(150, collation="utf8mb4_general_ci"))
+    option_title = Column(VARCHAR(150, collation="utf8mb4_unicode_520_ci"))
+    option_desc = Column(VARCHAR(150, collation="utf8mb4_unicode_520_ci"))
 
     def __repr__(self):
         return "<VoteOptions(%s, %s, %s, %s)>" % \

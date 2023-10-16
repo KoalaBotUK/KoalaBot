@@ -17,12 +17,7 @@ from .utils import CUSTOM_EMOJI_REGEXP, UNICODE_EMOJI_REGEXP, FLAG_EMOJI_REGEXP
 
 koala_logo = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
 
-
 # Variables
-# current_activity = None
-
-def create_ctx(bot: Bot, guild: discord.Guild):
-    return {'bot': bot, 'guild': guild}
 
 
 @assign_session
@@ -71,8 +66,8 @@ async def create_rfr_message(bot: koalabot.KoalaBot, guild_id: int, channel_id: 
     if roles is not None:
         await rfr_add_emoji_role(guild, channel, rfr_msg, roles, **kwargs)
 
-    if inline:
-        await use_inline_rfr_specific(rfr_msg)
+    if inline is not None:
+        await use_inline_rfr_specific(rfr_msg, inline)
 
     return await get_rfr_message_dto(bot, rfr_msg.id, guild_id, channel_id, **kwargs)
 
@@ -92,7 +87,7 @@ async def update_rfr_message(bot: koalabot.KoalaBot, message_id: int, guild_id: 
     await rfr_edit(await channel.fetch_message(message_id), title=title, description=description, thumbnail_url=thumbnail, colour=colour)
 
     if inline is not None:
-        await use_inline_rfr_specific(await channel.fetch_message(message_id))
+        await use_inline_rfr_specific(await channel.fetch_message(message_id), inline)
 
     return await get_rfr_message_dto(bot, message_id, guild_id, channel_id, **kwargs)
 
@@ -111,7 +106,7 @@ async def delete_rfr_message(bot: koalabot.KoalaBot, message_id: int, guild_id: 
 
 
 @assign_session
-async def use_inline_rfr_all(guild: discord.Guild, **kwargs):
+async def use_inline_rfr_all(guild: discord.Guild, inline: bool, **kwargs):
     text_channels: List[discord.TextChannel] = guild.text_channels
     guild_rfr_messages = db.get_guild_rfr_messages(guild.id, **kwargs)
     for rfr_message in guild_rfr_messages:
@@ -121,16 +116,16 @@ async def use_inline_rfr_all(guild: discord.Guild, **kwargs):
         length = get_number_of_embed_fields(embed)
         for i in range(length):
             field = embed.fields[i]
-            embed.set_field_at(i, name=field.name, value=field.value, inline=True)
+            embed.set_field_at(i, name=field.name, value=field.value, inline=inline)
         await msg.edit(embed=embed)
 
 
-async def use_inline_rfr_specific(msg: discord.Message):
+async def use_inline_rfr_specific(msg: discord.Message, inline: bool):
     rfr_embed = get_embed_from_message(msg)
     length = get_number_of_embed_fields(rfr_embed)
     for i in range(length):
         field = rfr_embed.fields[i]
-        rfr_embed.set_field_at(i, name=field.name, value=field.value, inline=True)
+        rfr_embed.set_field_at(i, name=field.name, value=field.value, inline=inline)
     await msg.edit(embed=rfr_embed)
 
 

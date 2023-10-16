@@ -24,7 +24,7 @@ class GuildRFRMessages:
 class RFRMessageEmojiRoles:
     __tablename__ = 'RFRMessageEmojiRoles'
     emoji_role_id = Column(INT, ForeignKey("GuildRFRMessages.emoji_role_id", ondelete='CASCADE'), primary_key=True)
-    emoji_raw = Column(VARCHAR(50, collation="utf8mb4_general_ci"), primary_key=True)
+    emoji_raw = Column(VARCHAR(50, collation="utf8mb4_unicode_520_ci"), primary_key=True)
     role_id = Column(DiscordSnowflake, primary_key=True)
     __table_args__ = (UniqueConstraint('emoji_role_id', 'emoji_raw', name="uniq_emoji"),
                       UniqueConstraint('emoji_role_id', 'role_id', name="uniq_role_emoji"))

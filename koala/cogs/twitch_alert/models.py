@@ -8,7 +8,7 @@ class TwitchAlerts:
     __tablename__ = 'TwitchAlerts'
     guild_id = Column(DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'))
     channel_id = Column(DiscordSnowflake, primary_key=True)
-    default_message = Column(VARCHAR(1000, collation="utf8mb4_general_ci"))
+    default_message = Column(VARCHAR(1000, collation="utf8mb4_unicode_520_ci"))
 
     def __repr__(self):
         return "<TwitchAlerts(%s, %s, %s)>" % \
@@ -20,7 +20,7 @@ class UserInTwitchAlert:
     __tablename__ = 'UserInTwitchAlert'
     channel_id = Column(DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'), primary_key=True)
     twitch_username = Column(VARCHAR(25), primary_key=True)
-    custom_message = Column(VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True)
+    custom_message = Column(VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True)
     message_id = Column(DiscordSnowflake, nullable=True)
     twitch_alert = orm.relationship("TwitchAlerts")
 
@@ -35,7 +35,7 @@ class TeamInTwitchAlert:
     team_twitch_alert_id = Column(INT, autoincrement=True, primary_key=True)
     channel_id = Column(DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'))
     twitch_team_name = Column(VARCHAR(25))
-    custom_message = Column(VARCHAR(1000, collation="utf8mb4_general_ci"), nullable=True)
+    custom_message = Column(VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True)
     twitch_alert = orm.relationship("TwitchAlerts")
 
     def __repr__(self):

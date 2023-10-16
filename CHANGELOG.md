@@ -8,6 +8,7 @@ administrators
 ### RFR
 - Add backend API
 - Fix regional indicators as reactions
+- Fix disable inline not working
 ### Verify
 - Added new commands `verifyBlacklist`, `verifyBlacklistRemove` & `verifyBlacklistList` for blacklisting a given user from being verified
 - Updated look of verify emails
@@ -15,6 +16,8 @@ administrators
 - Added optimisations for verified roles
 - Add backend API
 - Fix an issue where multiple emails can be passed to bypass domain-specific verification
+### Insights
+- Added new commands `insights` and `servers` under the insights cog
 
 ## [0.6.0] - 01-01-2023
 - Upgraded to discord.py 2.1.0
