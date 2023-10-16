@@ -10,6 +10,7 @@ from random import randint
 # Libs
 import discord
 from sqlalchemy import select, delete
+from sqlalchemy.orm import Session
 
 # Own modules
 from koala.db import session_manager

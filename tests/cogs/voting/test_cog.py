@@ -9,6 +9,7 @@ Commented using reStructuredText (reST)
 # Built-in/Generic Imports
 
 # Libs
+import discord
 import discord.ext.test as dpytest
 import pytest
 import pytest_asyncio
@@ -18,6 +19,7 @@ from sqlalchemy import select
 # Own modules
 import koalabot
 from koala.cogs import Voting
+from koala.cogs.voting import core
 from koala.cogs.voting.models import Votes
 from koala.db import session_manager, insert_extension
 from tests.log import logger
@@ -36,8 +38,7 @@ async def cog(bot: commands.Bot):
 @pytest.mark.asyncio
 async def test_discord_create_vote():
     with session_manager() as session:
-        config = dpytest.get_config()
-        guild = config.guilds[0]
+        guild: discord.Guild = dpytest.get_config().guilds[0]
         await dpytest.message(f"{koalabot.COMMAND_PREFIX}vote create Test Vote")
         assert dpytest.verify().message().content(
             f"Vote titled `Test Vote` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote`"
@@ -80,10 +81,12 @@ async def test_discord_vote_add_and_remove_role(cog):
     assert dpytest.verify().message().content(
         f"Vote titled `Test Vote` created for guild {guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how "
         f"to configure it.")
+    
     await dpytest.message(f"{koalabot.COMMAND_PREFIX}vote addRole {guild.roles[0].id}")
     assert dpytest.verify().message().content(f"Vote will be sent to those with the {guild.roles[0].name} role")
-    vote = cog.vote_manager.get_configuring_vote(guild.members[0].id)
+    vote = core.vm.get_configuring_vote(guild.members[0].id)
     assert guild.roles[0].id in vote.target_roles
+
     await dpytest.message(f"{koalabot.COMMAND_PREFIX}vote removeRole {guild.roles[0].id}")
     assert dpytest.verify().message().content(
         f"Vote will no longer be sent to those with the {guild.roles[0].name} role")
