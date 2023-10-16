@@ -145,9 +145,9 @@ async def test_remove_user_from_ta(twitch_alert_db_manager_tables):
 
 
 @pytest.mark.asyncio()
-async def test_delete_message(twitch_alert_db_manager_tables):
+async def test_delete_message(twitch_alert_db_manager_tables, session):
     with mock.patch.object(discord.TextChannel, 'fetch_message') as mock1:
-        await twitch_alert_db_manager_tables.delete_message(1234, dpytest.get_config().channels[0].id)
+        await twitch_alert_db_manager_tables.delete_message(1234, dpytest.get_config().channels[0].id, session=session)
     mock1.assert_called_with(1234)
 
 
@@ -217,7 +217,7 @@ async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tabl
 
     with mock.patch.object(TwitchAlertDBManager, 'delete_message') as mock1:
         await twitch_alert_db_manager_tables.remove_team_from_ta(605, "monstercat")
-    mock1.assert_called_with(1, 605)
+    mock1.assert_called_with(1, 605, session=mock.ANY)
 
 
 @pytest.mark.asyncio()
@@ -271,7 +271,7 @@ async def test_delete_all_offline_streams(twitch_alert_db_manager_tables, bot: d
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_streams(['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_streams(['monstercat'], session=session)
 
         sql_select_messages = select(UserInTwitchAlert).where(and_(
             UserInTwitchAlert.twitch_username == 'monstercat',
@@ -296,7 +296,7 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'], session=session)
 
         sql_select_messages = select(UserInTwitchTeam.message_id, UserInTwitchTeam.twitch_username).where(
             and_(or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),

@@ -13,7 +13,7 @@ from .models import UserInTwitchTeam, TeamInTwitchAlert, TwitchAlerts, UserInTwi
 
 
 @assign_session
-async def create_team_alerts(bot: Bot, ta_database_manager, session):
+async def create_team_alerts(bot: Bot, ta_database_manager, *, session):
     start = time.time()
 
     sql_select_team_users = select(func.distinct(UserInTwitchTeam.twitch_username)) \
@@ -116,7 +116,7 @@ async def create_team_alerts(bot: Bot, ta_database_manager, session):
             logger.error(f"TwitchAlert: Team Loop error {err}")
 
     # Deals with remaining offline streams
-    await ta_database_manager.delete_all_offline_team_streams(usernames)
+    await ta_database_manager.delete_all_offline_team_streams(usernames, session=session)
     time_diff = time.time() - start
     if time_diff > 5:
         logger.warning(f"TwitchAlert: Teams Loop Finished in > 5s | {time_diff}s")
@@ -216,7 +216,7 @@ async def create_user_alerts(bot: Bot, ta_database_manager, session):
             logger.error(f"TwitchAlert: User Loop error {err}")
 
     # Deals with remaining offline streams
-    await ta_database_manager.delete_all_offline_streams(usernames)
+    await ta_database_manager.delete_all_offline_streams(usernames, session=session)
     time_diff = time.time() - start
     if time_diff > 5:
         logger.warning(f"TwitchAlert: User Loop Finished in > 5s | {time_diff}s")

@@ -66,7 +66,7 @@ def test_votemanager_has_active_vote():
 
 def test_votemanager_create_vote():
     with session_manager() as session:
-        vote = vote_manager.create_vote(123, 456, "Create Vote Test", session)
+        vote = vote_manager.create_vote(123, 456, "Create Vote Test", session=session)
         assert vote.title == "Create Vote Test"
         in_db = session.execute(select(Votes).filter_by(author_id=123, title="Create Vote Test")).all()
         assert in_db
@@ -76,7 +76,7 @@ def test_votemanager_cancel_sent_vote():
     with session_manager() as session:
         populate_vote_tables(session)
         vote_manager.load_from_db()
-        vote_manager.cancel_sent_vote(111)
+        vote_manager.cancel_sent_vote(111, session=session)
         assert 111 not in vote_manager.sent_votes.keys()
         in_db = session.execute(select(Votes).filter_by(vote_id=111)).all()
         assert not in_db
@@ -86,7 +86,7 @@ def test_votemanager_cancel_configuring_vote():
     with session_manager() as session:
         populate_vote_tables(session)
         vote_manager.load_from_db()
-        vote_manager.cancel_configuring_vote(223)
+        vote_manager.cancel_configuring_vote(223, session=session)
         assert 223 not in vote_manager.configuring_votes.keys()
         in_db = session.execute(select(Votes).filter_by(vote_id=112)).all()
         assert not in_db
@@ -101,12 +101,12 @@ def test_votemanager_sent_to():
 
 def test_vote_set_chair():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test", session)
+        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test", session=session)
         vote.set_chair(555)
         assert vote.chair == 555
-        in_db = session.execute(select(Votes).filter_by(vote_id=vote.id, chair_id=555)).all()
-        assert in_db
-        vote.set_chair()
+        in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
+        assert in_db.chair_id == 555
+        vote.set_chair(session=session)
         assert not vote.chair
         session.expire(in_db)
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
@@ -115,12 +115,12 @@ def test_vote_set_chair():
 
 def test_vote_set_vc():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test", session)
-        vote.set_vc(555)
+        vote = vote_manager.create_vote(111, 222, "Set Chair Vote Test", session=session)
+        vote.set_vc(555, session=session)
         assert vote.target_voice_channel == 555
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
         assert in_db.voice_id == 555
-        vote.set_vc()
+        vote.set_vc(session=session)
         assert not vote.target_voice_channel
         session.expire(in_db)
         in_db = session.execute(select(Votes).filter_by(vote_id=vote.id)).scalar()
@@ -129,8 +129,8 @@ def test_vote_set_vc():
 
 def test_vote_add_option():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Add Option Test", session)
-        vote.add_option(Option("head", "body", 123))
+        vote = vote_manager.create_vote(111, 222, "Add Option Test", session=session)
+        vote.add_option(Option("head", "body", 123), session=session)
         assert vote.options[0].head == "head"
         assert vote.options[0].body == "body"
         in_db = session.execute(select(VoteOptions).filter_by(opt_id=123)).all()
@@ -139,17 +139,17 @@ def test_vote_add_option():
 
 def test_vote_remove_option():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Remove Option Test", session)
-        vote.add_option(Option("head", "body", 123))
-        vote.remove_option(0)
+        vote = vote_manager.create_vote(111, 222, "Remove Option Test", session=session)
+        vote.add_option(Option("head", "body", 123), session=session)
+        vote.remove_option(0, session=session)
         in_db = session.execute(select(VoteOptions).filter_by(opt_id=123)).all()
         assert not in_db
 
 
 def test_vote_register_sent():
     with session_manager() as session:
-        vote = vote_manager.create_vote(111, 222, "Register Sent Test", session)
-        vote.register_sent(555, 666)
+        vote = vote_manager.create_vote(111, 222, "Register Sent Test", session=session)
+        vote.register_sent(555, 666, session=session)
         assert vote.sent_to[555] == 666
         in_db = session.execute(select(VoteSent).filter_by(vote_receiver_message=666)).all()
         assert in_db

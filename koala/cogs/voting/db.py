@@ -109,27 +109,27 @@ class VoteManager:
                                                     Votes.title, Votes.chair_id, Votes.voice_id, Votes.end_time)).all()
             for v_id, a_id, g_id, title, chair_id, voice_id, end_time in existing_votes:
                 vote = Vote(v_id, title, a_id, g_id)
-                vote.set_chair(chair_id)
-                vote.set_vc(voice_id)
+                vote.set_chair(chair_id, session=session)
+                vote.set_vc(voice_id, session=session)
                 self.vote_lookup[(a_id, title)] = v_id
 
                 target_roles = session.execute(select(VoteTargetRoles.role_id).filter_by(vote_id=v_id)).all()
                 if target_roles:
                     for r_id in target_roles:
-                        vote.add_role(r_id[0])
+                        vote.add_role(r_id[0], session=session)
 
                 options = session.execute(select(VoteOptions.opt_id, VoteOptions.option_title,
                                                  VoteOptions.option_desc).filter_by(vote_id=v_id)).all()
                 if options:
                     for o_id, o_title, o_desc in options:
-                        vote.add_option(Option(o_title, o_desc, opt_id=o_id))
+                        vote.add_option(Option(o_title, o_desc, opt_id=o_id), session=session)
 
                 delivered = session.execute(select(VoteSent.vote_receiver_id, VoteSent.vote_receiver_message)
                                             .filter_by(vote_id=v_id)).all()
                 if delivered:
                     self.sent_votes[v_id] = vote
                     for rec_id, msg_id in delivered:
-                        vote.register_sent(rec_id, msg_id)
+                        vote.register_sent(rec_id, msg_id, session=session)
                 else:
                     self.configuring_votes[a_id] = vote
 
@@ -152,7 +152,7 @@ class VoteManager:
         """
         return author_id in self.configuring_votes.keys()
 
-    def create_vote(self, author_id, guild_id, title, session: Session):
+    def create_vote(self, author_id, guild_id, title, *, session):
         """
         Creates a vote object and assigns it to a users ID
         :param author_id: id of the author of the vote
@@ -160,37 +160,36 @@ class VoteManager:
         :param title: title of the vote
         :return: the newly created Vote object
         """
-        with session_manager() as session:
-            v_id = self.gen_vote_id()
-            vote = Vote(v_id, title, author_id, guild_id)
-            self.vote_lookup[(author_id, title)] = v_id
-            self.configuring_votes[author_id] = vote
-            session.add(Votes(vote_id=vote.id, author_id=author_id, guild_id=vote.guild, title=vote.title,
-                              chair_id=vote.chair, voice_id=vote.target_voice_channel, end_time=vote.end_time))
-            session.commit()
-            return vote
+        v_id = self.gen_vote_id()
+        vote = Vote(v_id, title, author_id, guild_id)
+        self.vote_lookup[(author_id, title)] = v_id
+        self.configuring_votes[author_id] = vote
+        session.add(Votes(vote_id=vote.id, author_id=author_id, guild_id=vote.guild, title=vote.title,
+                          chair_id=vote.chair, voice_id=vote.target_voice_channel, end_time=vote.end_time))
+        session.commit()
+        return vote
 
-    def cancel_sent_vote(self, v_id):
+    def cancel_sent_vote(self, v_id, *, session):
         """
         Removed a vote from the list of active votes
         :param v_id: the vote id
+        :param session: db session
         :return: None
         """
         vote = self.sent_votes.pop(v_id)
-        self.cancel_vote(vote)
+        self.cancel_vote(vote, session=session)
 
-    def cancel_configuring_vote(self, author_id):
+    def cancel_configuring_vote(self, author_id, *, session):
         vote = self.configuring_votes.pop(author_id)
-        self.cancel_vote(vote)
+        self.cancel_vote(vote, session=session)
 
-    def cancel_vote(self, vote):
-        with session_manager() as session:
-            self.vote_lookup.pop((vote.author, vote.title))
-            session.execute(delete(Votes).filter_by(vote_id=vote.id))
-            session.execute(delete(VoteTargetRoles).filter_by(vote_id=vote.id))
-            session.execute(delete(VoteOptions).filter_by(vote_id=vote.id))
-            session.execute(delete(VoteSent).filter_by(vote_id=vote.id))
-            session.commit()
+    def cancel_vote(self, vote, *, session):
+        self.vote_lookup.pop((vote.author, vote.title))
+        session.execute(delete(Votes).filter_by(vote_id=vote.id))
+        session.execute(delete(VoteTargetRoles).filter_by(vote_id=vote.id))
+        session.execute(delete(VoteOptions).filter_by(vote_id=vote.id))
+        session.execute(delete(VoteSent).filter_by(vote_id=vote.id))
+        session.commit()
 
     def was_sent_to(self, msg_id):
         """

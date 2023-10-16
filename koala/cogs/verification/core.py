@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import random
 import string
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import re
 
 # Futures
@@ -160,9 +160,31 @@ async def remove_blacklist_member(user_id, guild_id, role_id, suffix, bot: Bot, 
 
 
 @assign_session
+def grouped_list_blacklist(guild_id, bot: koalabot.KoalaBot, *, session: Session) -> Dict[str, List[str]]:
+    guild = bot.get_guild(guild_id)
+    blacklist_array = session.execute(
+        select(VerifyBlacklist)
+        .where(VerifyBlacklist.role_id.in_([r.id for r in guild.roles]))
+    ).scalars().all()
+    blacklist_map = {}
+    for blacklist in blacklist_array:
+        d_role = guild.get_role(blacklist.role_id)
+        if d_role is None:
+            session.execute(delete(VerifyBlacklist).filter_by(role_id=blacklist.role_id))
+        elif blacklist.user_id in blacklist_map:
+            blacklist_map[blacklist.user_id].append(f"{d_role.mention} / {blacklist.email_suffix}")
+        else:
+            blacklist_map[blacklist.user_id] = [f"{d_role.mention} / {blacklist.email_suffix}"]
+    session.commit()
+    blacklist_map = {guild.get_member(k).name: v for (k, v) in blacklist_map.items()}
+
+    return blacklist_map
+
+
+@assign_session
 async def email_verify_send(user_id, email, bot, force=False, *, session: Session):
     email = email.lower()
-    
+
     # Take only the first email, preventing injection / verification bypass with ',' , ';' , ':', etc.
     email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
     valid_emails = re.findall(email_regex, email)
@@ -170,8 +192,8 @@ async def email_verify_send(user_id, email, bot, force=False, *, session: Sessio
         email = valid_emails[0]
     else:
         raise errors.VerifyException("No Valid Emails found")
-    
-    
+
+
     already_verified = session.execute(select(VerifiedEmails).filter_by(email=email)).scalar()
 
     to_reverify = session.execute(select(ToReVerify).filter_by(u_id=user_id)).all()
@@ -213,7 +235,9 @@ async def email_verify_confirm(user_id, token, bot, *, session: Session):
     if not entry:
         raise InvalidArgumentError("That is not a valid token")
 
-    session.add(VerifiedEmails(u_id=user_id, email=entry.email))
+    verified_email = session.execute(select(VerifiedEmails).filter_by(u_id=user_id, email=entry.email)).one_or_none()
+    if verified_email is None:
+        session.add(VerifiedEmails(u_id=user_id, email=entry.email))
 
     session.execute(delete(NonVerifiedEmails).filter_by(token=token, u_id=user_id))
 
@@ -249,7 +273,7 @@ async def assign_roles_on_startup(bot: koalabot.KoalaBot, *, session: Session):
 
         role = guild.get_role(r_id)
         try:
-            await assign_role_to_guild(guild, role, suffix)
+            await assign_role_to_guild(guild, role, suffix, session=session)
         except VerifyException as e:
             logger.error(f"Guild {g_id} has not given Koala sufficient permissions to give roles",
                          exc_info=e)
@@ -292,7 +316,7 @@ UTILS
 
 
 @assign_session
-async def assign_role_to_guild(guild, role, suffix, session):
+async def assign_role_to_guild(guild, role, suffix, *, session):
     results = session.execute(select(VerifiedEmails.u_id).where(VerifiedEmails.email.endswith(suffix),
                                                                 VerifiedEmails.u_id.in_(
                                                                     [member.id for member in guild.members]
