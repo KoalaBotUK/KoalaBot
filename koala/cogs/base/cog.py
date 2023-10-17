@@ -44,7 +44,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
     """
         A discord.py cog with general commands useful to managers of the bot and servers
     """
-    owner_group = koalabot.OwnerGroup()
+    owner_group = koalabot.owner_group
     cog_group = app_commands.Group(name="cog", description="control running cogs",
                                         parent=owner_group)
     activity_group = app_commands.Group(name="activity", description="Modify the activity of the bot",

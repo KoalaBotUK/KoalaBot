@@ -140,9 +140,6 @@ class KoalaBot(commands.Bot):
             raise error
 
 
-bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
-
-
 @app_commands.guilds(BOT_OWNER_GUILD)
 class OwnerGroup(app_commands.Group, name='owner', description='owner only commands'):
     # todo: check implementation works across multiple cogs
@@ -154,6 +151,10 @@ class OwnerGroup(app_commands.Group, name='owner', description='owner only comma
         if not success:
             interaction.data[checks.FAILURE_DESC_ATTR] = "You do not have permission to access this command: not owner"
         return success
+
+
+bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
+owner_group = OwnerGroup()
 
 
 @bot.tree.error

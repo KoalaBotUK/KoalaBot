@@ -161,18 +161,17 @@ class Verification(commands.GroupCog, group_name="verify", group_description="Ve
         await core.email_verify_confirm(interaction.user.id, token, self.bot)
         await interaction.response.send_message("Your email has been verified, thank you", ephemeral=True)
 
-
     # @commands.check(koalabot.is_owner)
-    # @verify_group.command(name="getemails", description="See the emails a user is verified with")
-    # async def get_emails(self, interaction: discord.Interaction, user_id: str):
-    #     """
-    #     See the emails a user is verified with
-    #     :param interaction:
-    #     :param user_id: the id of the user whose emails you want to find
-    #     :return:
-    #     """
-    #     emails = '\n'.join(core.email_verify_list(int(user_id)))
-    #     await interaction.response.send_message(f"This user has registered with:\n{emails}", ephemeral=True)
+    @koalabot.owner_group.command(name="getemails", description="See the emails a user is verified with")
+    async def get_emails(self, interaction: discord.Interaction, user: discord.User):
+        """
+        See the emails a user is verified with
+        :param interaction:
+        :param user_id: the id of the user whose emails you want to find
+        :return:
+        """
+        emails = '\n'.join(core.email_verify_list(user.id))
+        await interaction.response.send_message(f"This user has registered with:\n{emails}", ephemeral=True)
 
     @commands.check(koalabot.is_admin)
     @config_group.command(name="list", description="List the current verification setup for the server")
