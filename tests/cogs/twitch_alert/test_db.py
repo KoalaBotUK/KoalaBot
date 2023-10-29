@@ -96,7 +96,7 @@ def test_new_ta_message(twitch_alert_db_manager_tables):
 
 
 def test_new_ta_replace(twitch_alert_db_manager_tables):
-    test_message = "Test message"
+    test_message = "Test message2"
     test_new_ta_message(twitch_alert_db_manager_tables=twitch_alert_db_manager_tables)
     assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=23456,
                                                                  default_message=test_message, replace=True)

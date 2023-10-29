@@ -88,9 +88,9 @@ class TwitchAlertDBManager:
         if default_message is None:
             default_message = DEFAULT_MESSAGE
         with session_manager() as session:
-            sql_find_ta = select(TwitchAlerts.default_message).where(
+            sql_find_ta = select(TwitchAlerts).where(
                 and_(TwitchAlerts.channel_id == channel_id, TwitchAlerts.guild_id == guild_id))
-            message: TwitchAlerts = session.execute(sql_find_ta).one_or_none()
+            message: TwitchAlerts = session.execute(sql_find_ta).scalar()
             if message and ((not replace) or (default_message == message.default_message)):
                 return message.default_message
 
