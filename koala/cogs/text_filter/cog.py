@@ -166,7 +166,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
                 use `k!listModChannels` to get information on your mod channels."""
         channel = self.bot.get_channel(int(extract_id(channel_id)))
         if channel is not None and too_many_arguments is None:
-            self.tf_database_manager.remove_mod_channel(ctx.guild.id, channel_id)
+            self.tf_database_manager.remove_mod_channel(ctx.guild.id, channel.id)
             await ctx.channel.send(embed=build_moderation_channel_embed(ctx, channel, "Removed"))
             return
         raise Exception(error)
