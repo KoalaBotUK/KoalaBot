@@ -397,7 +397,7 @@ class Voting(commands.Cog, name="Vote"):
         """
         Ends a vote, and collects the results
         """
-        vote_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
+        vote_id = self.vote_manager.vote_lookup.get((ctx.author.id, title))
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
                 await ctx.send(f"That vote has not been sent yet. Please send it to your audience with {koalabot.COMMAND_PREFIX}vote send {title}")
