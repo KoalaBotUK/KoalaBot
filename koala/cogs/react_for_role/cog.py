@@ -814,8 +814,6 @@ class ReactForRole(commands.Cog):
         for row in rows:
             # Try and match it to an raw_emoji first
             raw_emoji, err = await core.get_first_emoji_from_str(self.bot, ctx.guild, row.strip())
-            if err:
-                await ctx.send(err)
             if not raw_emoji:
                 role = await commands.RoleConverter().convert(ctx, row.strip())
                 if not role:
