@@ -380,7 +380,7 @@ class ReactForRole(commands.Cog):
             logger.error(
                 f"RFR: Can't find embed for message id {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}.")
         else:
-            er_id, _, _, _ = get_rfr_message(ctx.guild.id, chnl.id, msg.id)
+            _, _, _, er_id = get_rfr_message(ctx.guild.id, chnl.id, msg.id)
             if not er_id:
                 logger.error(
                     f"RFR: Can't find rfr message with {msg.id}, channel {chnl.id}, guild id {ctx.guild.id}. DB ER_ID : {er_id}")
