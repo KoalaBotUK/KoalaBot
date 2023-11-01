@@ -243,3 +243,11 @@ def add_all_guilds(bot: koalabot.KoalaBot, *, session: Session):
         if db_guild is None:
             session.add(Guilds(guild_id=guild.id, subscription=0))
     session.commit()
+
+
+@assign_session
+def add_guild(guild_id: int, *, session: Session):
+    db_guild = session.execute(select(Guilds).where(Guilds.guild_id == guild_id)).one_or_none()
+    if db_guild is None:
+        session.add(Guilds(guild_id=guild_id, subscription=0))
+        session.commit()

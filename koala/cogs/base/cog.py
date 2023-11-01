@@ -76,6 +76,17 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         self.started = True
         logger.info("Bot is ready.")
 
+
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        """
+        On bot joining guild, add this guild to the database of guild welcome messages.
+        :param guild: Guild KoalaBot just joined
+        """
+        core.add_guild(guild.id)
+        logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
+
     @commands.group(name="activity")
     @commands.check(koalabot.is_owner)
     async def activity_group(self, ctx: commands.Context):
