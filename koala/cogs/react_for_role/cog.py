@@ -392,11 +392,11 @@ class ReactForRole(commands.Cog):
                 else:
                     combos = ""
                     for er in rfr_er:
-                        combos += er[1] + ", " + str(er[2]) + "\n"
+                        combos += emoji.emojize(er[1]) + ", " + str(er[2]) + "\n"
                     er_list = await self.parse_emoji_and_role_input_str(ctx, combos, 20)
                     embed: discord.Embed = discord.Embed(title=emb.title, description=emb.description,
                                                          colour=KOALA_GREEN)
-                    embed.set_footer(text=emb.footer)
+                    embed.set_footer(text=emb.footer.text)
                     embed.set_thumbnail(url=emb.thumbnail.url)
                     emb.set_image(url=emb.image.url)
                     for e in reacts:
