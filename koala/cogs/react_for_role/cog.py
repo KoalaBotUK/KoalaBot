@@ -23,7 +23,8 @@ from koala.db import insert_extension
 from koala.utils import wait_for_message
 # Own modules
 from . import core
-from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_required_roles
+from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_required_roles, get_guild_rfr_roles, \
+    get_guild_rfr_messages
 from .exception import ReactionException, ReactionErrorCode
 from .log import logger
 
@@ -542,8 +543,7 @@ class ReactForRole(commands.Cog):
         :return:
         """
         if payload.guild_id is not None and not payload.member.bot:
-            rfr_message = self.rfr_database_manager.get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                    payload.message_id)
+            rfr_message = get_rfr_message(payload.guild_id, payload.channel_id, payload.message_id)
             if not rfr_message:
                 return
 
@@ -563,7 +563,7 @@ class ReactForRole(commands.Cog):
                     await member_role[0].add_roles(member_role[1])
                 else:
                     # Remove all rfr roles from member
-                    role_ids = self.rfr_database_manager.get_guild_rfr_roles(payload.guild_id)
+                    role_ids = get_guild_rfr_roles(payload.guild_id)
                     roles: List[discord.Role] = []
                     for role_id in role_ids:
                         role = discord.utils.get(member_role[0].guild.roles, id=role_id)
@@ -573,7 +573,7 @@ class ReactForRole(commands.Cog):
                     for role_to_remove in roles:
                         await member_role[0].remove_roles(role_to_remove)
                     # Remove members' reaction from all rfr messages in guild
-                    guild_rfr_messages = self.rfr_database_manager.get_guild_rfr_messages(payload.guild_id)
+                    guild_rfr_messages = get_guild_rfr_messages(payload.guild_id)
                     if not guild_rfr_messages:
                         logger.error(
                             f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
