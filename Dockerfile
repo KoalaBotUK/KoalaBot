@@ -19,19 +19,19 @@ RUN \
     python3-pip
 
 RUN apt-get install -y software-properties-common && \
-  add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
+#   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
   apt-get update
 
-RUN apt-get install -y \
-        sqlcipher=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1 \
-        libsqlcipher-dev=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1
+# RUN apt-get install -y \
+#         sqlcipher=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1 \
+#         libsqlcipher-dev=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1
 
 COPY . /app
 WORKDIR /app
 
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
-RUN python3 -m pip install pysqlcipher3
+# RUN python3 -m pip install pysqlcipher3
 
 
 # docker settings

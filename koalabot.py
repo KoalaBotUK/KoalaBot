@@ -10,10 +10,9 @@ __author__ = "KoalaBotUK"
 __copyright__ = "Copyright (c) 2020 KoalaBotUK"
 __credits__ = ["See full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.6.0"
+__version__ = "1.0.0"
 __maintainer__ = "Jack Draper"
-__email__ = "koalabotuk@gmail.com"
-__status__ = "Development"  # "Prototype", "Development", or "Production"
+__status__ = "Production"  # "Prototype", "Development", or "Production"
 
 # Futures
 # Built-in/Generic Imports

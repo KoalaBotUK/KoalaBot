@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+
+## [1.0.0] - 11-11-2023
 ### BaseCog
 - Add backend API
 ### RFR
@@ -21,6 +23,10 @@ administrators
 
 ## [0.6.0] - 01-01-2023
 - Upgraded to discord.py 2.1.0
+
+## [0.5.10] - 15-09-2022
+### ReactForRole
+- Fix an issue where errors cause all reactions to be deleted
 
 ## [0.5.9] - 13-07-2022
 ### Verify
@@ -308,8 +314,10 @@ manually if a timer is deleted.
 - `removeCustomColourAllowedRole <role_str>` Removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
-[Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
-[0.6.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.9...v0.6.0
+[Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.6.0...v1.0.0
+[0.6.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.10...v0.6.0
+[0.5.10]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.9...v0.5.10
 [0.5.9]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
 [0.5.8]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.7...v0.5.8
 [0.5.7]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.6...v0.5.7

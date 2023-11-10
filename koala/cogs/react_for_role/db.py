@@ -147,25 +147,25 @@ def get_guild_rfr_messages(guild_id: int, session: sqlalchemy.orm.Session) -> Li
 
 
 @assign_session
-def get_guild_rfr_roles(guild_id: int) -> List[int]:
+def get_guild_rfr_roles(guild_id: int, *, session) -> List[int]:
     """
     Returns all role IDs of roles given by RFR messages in a guild
 
     :param guild_id: Guild ID to check in.
+    :param session: database session
     :return: Role IDs of RFR roles in a specific guild
     """
-    with session_manager() as session:
-        rfr_messages = session.execute(select(GuildRFRMessages).filter_by(guild_id=guild_id)).scalars().all()
-        if not rfr_messages:
-            return []
-        role_ids: List[int] = []
-        for rfr_message in rfr_messages:
-            roles: List[Tuple[int, str, int]] = get_rfr_message_emoji_roles(rfr_message.emoji_role_id)
-            if not roles:
-                continue
-            ids: List[int] = [x[2] for x in roles]
-            role_ids.extend(ids)
-        return role_ids
+    rfr_messages = session.execute(select(GuildRFRMessages).filter_by(guild_id=guild_id)).scalars().all()
+    if not rfr_messages:
+        return []
+    role_ids: List[int] = []
+    for rfr_message in rfr_messages:
+        roles: List[Tuple[int, str, int]] = get_rfr_message_emoji_roles(rfr_message.emoji_role_id)
+        if not roles:
+            continue
+        ids: List[int] = [x[2] for x in roles]
+        role_ids.extend(ids)
+    return role_ids
 
 
 @assign_session

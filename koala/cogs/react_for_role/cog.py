@@ -23,8 +23,9 @@ from koala.db import insert_extension
 from koala.utils import wait_for_message
 # Own modules
 from . import core
-from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_messages, get_guild_rfr_roles, \
-    get_guild_rfr_required_roles
+from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_required_roles, get_guild_rfr_roles, \
+    get_guild_rfr_messages
+from .exception import ReactionException, ReactionErrorCode
 from .log import logger
 
 
@@ -541,50 +542,50 @@ class ReactForRole(commands.Cog):
         :param payload: RawReactionActionEvent that happened
         :return:
         """
-        if payload.guild_id is not None:
-            if not payload.member.bot:
-                rfr_message = get_rfr_message(payload.guild_id, payload.channel_id,
-                                                                        payload.message_id)
-                if not rfr_message:
-                    return
+        if payload.guild_id is not None and not payload.member.bot:
+            rfr_message = get_rfr_message(payload.guild_id, payload.channel_id, payload.message_id)
+            if not rfr_message:
+                return
 
+            try:
                 member_role = await self.get_role_member_info(payload.emoji, payload.guild_id,
                                                               payload.channel_id,
                                                               payload.message_id, payload.user_id)
-                if not member_role:
-                    # Remove the reaction
-                    guild: discord.Guild = self.bot.get_guild(payload.guild_id)
-                    channel: discord.TextChannel = guild.get_channel(payload.channel_id)
-                    msg: discord.Message = await channel.fetch_message(payload.message_id)
-                    await msg.clear_reaction(payload.emoji)
+            except ReactionException as e:
+                logger.error("RFR Member role not found", exc_info=e)
+                # Remove the reaction
+                guild: discord.Guild = self.bot.get_guild(payload.guild_id)
+                channel: discord.TextChannel = guild.get_channel(payload.channel_id)
+                msg: discord.Message = await channel.fetch_message(payload.message_id)
+                await msg.remove_reaction(payload.emoji, payload.member)
+            else:
+                if self.can_have_rfr_role(member_role[0]):
+                    await member_role[0].add_roles(member_role[1])
                 else:
-                    if self.can_have_rfr_role(member_role[0]):
-                        await member_role[0].add_roles(member_role[1])
-                    else:
-                        # Remove all rfr roles from member
-                        role_ids = get_guild_rfr_roles(payload.guild_id)
-                        roles: List[discord.Role] = []
-                        for role_id in role_ids:
-                            role = discord.utils.get(member_role[0].guild.roles, id=role_id)
-                            if not role:
-                                continue
-                            roles.append(role)
-                        for role_to_remove in roles:
-                            await member_role[0].remove_roles(role_to_remove)
-                        # Remove members' reaction from all rfr messages in guild
-                        guild_rfr_messages = get_guild_rfr_messages(payload.guild_id)
-                        if not guild_rfr_messages:
-                            logger.error(
-                                f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
-                                f" guild ID {payload.guild_id}")
+                    # Remove all rfr roles from member
+                    role_ids = get_guild_rfr_roles(payload.guild_id)
+                    roles: List[discord.Role] = []
+                    for role_id in role_ids:
+                        role = discord.utils.get(member_role[0].guild.roles, id=role_id)
+                        if not role:
+                            continue
+                        roles.append(role)
+                    for role_to_remove in roles:
+                        await member_role[0].remove_roles(role_to_remove)
+                    # Remove members' reaction from all rfr messages in guild
+                    guild_rfr_messages = get_guild_rfr_messages(payload.guild_id)
+                    if not guild_rfr_messages:
+                        logger.error(
+                            f"ReactForRole: Guild RFR messages is empty on raw reaction add. Please check"
+                            f" guild ID {payload.guild_id}")
 
-                        else:
-                            for guild_rfr_message in guild_rfr_messages:
-                                guild: discord.Guild = member_role[0].guild
-                                channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
-                                msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
-                                for x in msg.reactions:
-                                    await x.remove(payload.member)
+                    else:
+                        for guild_rfr_message in guild_rfr_messages:
+                            guild: discord.Guild = member_role[0].guild
+                            channel: discord.TextChannel = guild.get_channel(guild_rfr_message[1])
+                            msg: discord.Message = await channel.fetch_message(guild_rfr_message[2])
+                            for x in msg.reactions:
+                                await x.remove(payload.member)
 
     @commands.check(koalabot.is_admin)
     @commands.check(rfr_is_enabled)
@@ -640,7 +641,7 @@ class ReactForRole(commands.Cog):
             role: discord.Role = discord.utils.get(ctx.guild.roles, id=role_id)
             if not role:
                 logger.error(f"ReactForRole: Couldn't find role {role_id} in guild {ctx.guild.id}. Please "
-                                      f"check.")
+                             f"check.")
             else:
                 msg_str += f"{role.mention}\n"
         if msg_str == "You will need one of these roles to react to rfr messages on this server:\n":
@@ -722,44 +723,36 @@ class ReactForRole(commands.Cog):
         guild: discord.Guild = self.bot.get_guild(guild_id)
         member: discord.Member = discord.utils.get(guild.members, id=user_id)
         if not member:
-            return
+            raise ReactionException(ReactionErrorCode.UNKNOWN_MEMBER_REACTION, user_id, guild_id)
         channel: discord.TextChannel = discord.utils.get(guild.text_channels, id=channel_id)
         if not channel:
-            return
+            raise ReactionException(ReactionErrorCode.UNKNOWN_CHANNEL_REACTION, channel_id, guild_id)
         message: discord.Message = await channel.fetch_message(message_id)
         if not message:
-            return
-        embed: discord.Embed = core.get_embed_from_message(message)
+            raise ReactionException(ReactionErrorCode.UNKNOWN_MESSAGE_REACTION, message_id, guild_id)
+        embed: discord.Embed = self.get_embed_from_message(message)
 
-        if emoji_reacted.is_unicode_emoji():
+        if emoji_reacted.is_unicode_emoji():  # Unicode Emoji
             rep = emoji.emojize(emoji_reacted.name)
             if not rep:
                 rep = emoji.emojize(emoji_reacted.name, use_aliases=True)
 
             field = await self.get_field_by_emoji(embed, rep)
             if not field:
-                return
+                raise ReactionException(ReactionErrorCode.UNKNOWN_REACTION_FIELD, message_id, guild_id)
             role_str: str = field
             if not role_str:
-                return
+                raise ReactionException(ReactionErrorCode.UNKNOWN_REACTION_ROLE, field, guild_id)
             role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
             if not role:
-                return
-        elif emoji_reacted.is_custom_emoji():
+                raise ReactionException(ReactionErrorCode.UNKNOWN_REACTION_ROLE, role, guild_id)
+        else:  # Custom Emoji
             rep = str(emoji_reacted)
             field = await self.get_field_by_emoji(embed, rep)
             if not field:
-                # Look for animated version
-                field = await self.get_field_by_emoji(embed, rep[0]+"a"+rep[1:])
-            if not field:
-                return
+                raise ReactionException(ReactionErrorCode.UNKNOWN_REACTION_FIELD, message_id, guild_id)
             role_str = field
             role: discord.Role = discord.utils.get(guild.roles, mention=role_str.lstrip().rstrip())
-        else:
-            logger.error(
-                f"ReactForRole: Database error, guild {guild_id} has no entry in rfr database for message_id "
-                f"{message_id} in channel_id {channel_id}. Please check this.")
-            return
         return member, role
 
     async def parse_emoji_and_role_input_str(self, ctx: commands.Context, input_str: str, remaining_slots: int) -> List[
