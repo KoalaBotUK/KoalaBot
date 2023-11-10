@@ -3,6 +3,8 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+
+## [1.0.0] - 11-11-2023
 ### BaseCog
 - Add backend API
 ### RFR
@@ -312,7 +314,8 @@ manually if a timer is deleted.
 - `removeCustomColourAllowedRole <role_str>` Removes a role, via ID, mention or name, from the list of roles allowed to have a custom colour.
 - `removeProtectedRoleColour <role_str>` Removes a role, via ID, mention or name, from the list of protected roles.
 
-[Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/KoalaBotUK/KoalaBot/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.6.0...v1.0.0
 [0.6.0]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.10...v0.6.0
 [0.5.10]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.9...v0.5.10
 [0.5.9]: https://github.com/KoalaBotUK/KoalaBot/compare/v0.5.8...v0.5.9
