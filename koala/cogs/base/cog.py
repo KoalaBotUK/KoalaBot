@@ -14,15 +14,15 @@ Commented using reStructuredText (reST)
 import discord
 from discord import app_commands
 from discord.ext import commands, tasks
-
 # Own modules
 from discord.ext.commands import BadArgument
-from koala.utils import convert_iso_datetime
 
 import koalabot
+from koala.utils import convert_iso_datetime
 from . import core
-from .utils import AUTO_UPDATE_ACTIVITY_DELAY
 from .log import logger
+from .utils import AUTO_UPDATE_ACTIVITY_DELAY
+
 
 # Constants
 
@@ -71,9 +71,21 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         """
         core.activity_clear_current()
         await self.update_activity()
+        core.add_all_guilds(self.bot)
         self.update_activity.start()
         self.started = True
         logger.info("Bot is ready.")
+
+
+
+    @commands.Cog.listener()
+    async def on_guild_join(self, guild: discord.Guild):
+        """
+        On bot joining guild, add this guild to the database of guild welcome messages.
+        :param guild: Guild KoalaBot just joined
+        """
+        core.add_guild(guild.id)
+        logger.info(f"KoalaBot joined new guild, id = {guild.id}, name = {guild.name}.")
 
     @commands.group(name="activity")
     @commands.check(koalabot.is_owner)
@@ -188,7 +200,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.load_cog(self.bot, extension, koalabot.COGS_PACKAGE))
+        await ctx.send(await core.load_cog(self.bot, extension))
 
     @commands.command(name="unloadCog", aliases=["unload_cog"])
     @commands.check(koalabot.is_owner)
@@ -198,7 +210,7 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         :param ctx: Context of the command
         :param extension: The name of the cog
         """
-        await ctx.send(await core.unload_cog(self.bot, extension, koalabot.COGS_PACKAGE))
+        await ctx.send(await core.unload_cog(self.bot, extension))
 
     @commands.command(name="enableExt", aliases=["enable_koala_ext"])
     @commands.check(koalabot.is_admin)

@@ -1,34 +1,31 @@
-import sys
 import logging
+import sys
 from datetime import date
-
 from pathlib import Path
 
-from koala.utils import format_config_path
 from koala.env import CONFIG_PATH, LOGGING_FILE
 
-# load_dotenv()
 _LOG_LEVEL = logging.DEBUG
 _FORMATTER = logging.Formatter("%(asctime)s %(levelname)-8s %(message)s")
-_LOG_DIR = format_config_path(CONFIG_PATH, "logs", str(date.today()))
+_LOG_DIR = Path(CONFIG_PATH, "logs", str(date.today()))
 
 Path(_LOG_DIR).mkdir(exist_ok=True, parents=True)
 
 
-# logging.basicConfig(filename=format_config_path(_LOG_DIR, 'KoalaBot.log'),
-#                     level=logging.WARN,
-#                     format='%(asctime)s %(levelname)-8s %(message)s')
+logging.basicConfig(filename=Path(_LOG_DIR, 'KoalaBot.log'),
+                    level=logging.WARN,
+                    format='%(asctime)s %(levelname)-8s %(message)s')
 
 
 def _get_default_warn_log():
-    koala_log = logging.FileHandler(filename=format_config_path(_LOG_DIR, "KoalaBotWarn.log"))
+    koala_log = logging.FileHandler(filename=Path(_LOG_DIR, "KoalaBotWarn.log"))
     koala_log.setFormatter(_FORMATTER)
     koala_log.setLevel(logging.WARN)
     return koala_log
 
 
 def _get_file_handler(log_name, log_level):
-    file_handler = logging.FileHandler(filename=format_config_path(_LOG_DIR, log_name))
+    file_handler = logging.FileHandler(filename=Path(_LOG_DIR, log_name))
     file_handler.setFormatter(_FORMATTER)
     file_handler.setLevel(log_level)
     return file_handler

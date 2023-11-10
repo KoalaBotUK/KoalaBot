@@ -5,27 +5,36 @@ new Koala Bot database manager
 
 Commented using reStructuredText (reST)
 """
+import random
+import traceback
 # Futures
 
 # Built-in/Generic Imports
-import os
 # Libs
 from contextlib import contextmanager
 from functools import wraps
-from pathlib import Path
 
-from sqlalchemy import select, delete, and_, create_engine, func as sql_func
+from sqlalchemy import select, delete, and_, create_engine, VARCHAR
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
 
-# Own modules
-from koala.env import DB_KEY, ENCRYPTED_DB
-from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
-from koala.utils import get_arg_config_path, format_config_path
+from koala.env import DB_URL, DB_TYPE
 from koala.log import logger
+from koala.models import mapper_registry, KoalaExtensions, GuildExtensions
+# Own modules
+from .enums import DatabaseType
 
 # Constants
 
 # Variables
+pool_count = 0
+
+if not DB_URL or DB_TYPE == DatabaseType.SQLITE:
+    engine = create_engine(DB_URL, future=True)
+else:
+    engine = create_engine(DB_URL, future=True, pool_size=10, max_overflow=20)
+Session = sessionmaker(future=True)
+Session.configure(bind=engine)
 
 
 def assign_session(func):
@@ -41,29 +50,20 @@ def assign_session(func):
     return with_session
 
 
-def _get_sql_url(db_path, encrypted: bool, db_key=None):
-    if encrypted:
-        return "sqlite+pysqlcipher://:x'" + db_key + "'@/" + db_path
-    else:
-        return "sqlite:///" + db_path
-
-
-CONFIG_DIR = get_arg_config_path()
-DATABASE_PATH = format_config_path(CONFIG_DIR, "Koala.db" if ENCRYPTED_DB else "windows_Koala.db")
-logger.debug("Database Path: "+DATABASE_PATH)
-engine = create_engine(_get_sql_url(db_path=DATABASE_PATH,
-                                    encrypted=ENCRYPTED_DB,
-                                    db_key=DB_KEY), future=True)
-Session = sessionmaker(future=True)
-Session.configure(bind=engine)
-
-
 @contextmanager
 def session_manager():
     """
     Provide a transactional scope around a series of operations
     """
+    global pool_count
+    # i = random.randint(0, 1000000)
+    if pool_count == 0 and isinstance(engine.pool, QueuePool) and engine.pool.checkedout() >= 20:
+        logger.debug(f"Session Debug: CLEARING POOL {engine.pool.status()}")
+        engine.pool.dispose()
+        logger.debug(f"Session Debug: CLEARED POOL {engine.pool.status()}")
     session = Session()
+    pool_count += 1
+    # logger.debug(f"Session Debug: CREATED {i}/{pool_count}\n{engine.pool.status()}\n{traceback.format_stack()}")
     try:
         yield session
     except Exception:
@@ -71,33 +71,23 @@ def session_manager():
         raise
     finally:
         session.close()
+        pool_count -= 1
+        # logger.debug(f"Session Debug: CLOSED {i}/{pool_count}\n{engine.pool.status()}\n{traceback.format_stack()}")
 
 
-def setup():
-    """
-    Creates the database and tables
-    """
-    __create_db(DATABASE_PATH)
-    __create_tables()
-
-
-def __create_db(file_path):
-    """
-    Creates the database, with correct permissions on unix
-    :param file_path: The file path of the database
-    """
-    Path(get_arg_config_path()).mkdir(exist_ok=True)
-    Path(file_path).touch()
-    if ENCRYPTED_DB:
-        os.system("chown www-data "+file_path)
-        os.system("chmod 777 "+file_path)
-
-
-def __create_tables():
+def __create_sqlite_tables():
     """
     Creates all tables currently in the metadata of Base
     """
-    mapper_registry.metadata.create_all(engine, mapper_registry.metadata.tables.values(), checkfirst=True)
+    logger.debug("Creating database tables for SQLite")
+    tables = mapper_registry.metadata.tables.values()
+    for table in tables:
+        for column in table.columns:
+            existing_type = column.type
+            if type(existing_type) == VARCHAR:
+                existing_type.collation = None
+                column.type = existing_type
+    mapper_registry.metadata.create_all(engine, tables, checkfirst=True)
 
 
 def insert_extension(extension_id: str, subscription_required: int, available: bool, enabled: bool):
@@ -152,15 +142,15 @@ def give_guild_extension(guild_id, extension_id: str, session: Session):
 
     :raises NotImplementedError: extension_id doesnt exist
     """
-    extension_exists = extension_id == "All" or session.execute(
-            select(sql_func.count(KoalaExtensions.extension_id))
-            .filter_by(extension_id=extension_id, available=1)).scalars().one() > 0
+    db_extension: KoalaExtensions = session.execute(
+            select(KoalaExtensions)
+            .filter_by(extension_id=extension_id, available=1)).scalar()
 
-    if extension_exists:
+    if db_extension is not None:
         if session.execute(
                 select(GuildExtensions)
-                .filter_by(extension_id=extension_id, guild_id=guild_id)).one_or_none() is None:
-            session.add(GuildExtensions(extension_id=extension_id, guild_id=guild_id))
+                .filter_by(extension_id=db_extension.extension_id, guild_id=guild_id)).one_or_none() is None:
+            session.add(GuildExtensions(extension_id=db_extension.extension_id, guild_id=guild_id))
             session.commit()
     else:
         raise NotImplementedError(f"{extension_id} is not a valid extension")
@@ -218,8 +208,11 @@ def fetch_all_tables():
     Fetches all table names within the database
     """
     with session_manager() as session:
-        return [table.name for table in
-                session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
+        if DB_TYPE == DatabaseType.SQLITE:
+            return [table.name for table in
+                    session.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;").all()]
+        else:
+            return [row[0] for row in session.execute("SHOW Tables;").all()]
 
 
 def clear_all_tables(tables):
@@ -231,7 +224,4 @@ def clear_all_tables(tables):
     with session_manager() as session:
         for table in tables:
             session.execute('DELETE FROM ' + table + ';')
-            session.commit()
-
-
-setup()
+        session.commit()

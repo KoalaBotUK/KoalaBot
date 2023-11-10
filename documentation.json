@@ -336,6 +336,21 @@
         "command": "confirm",
         "parameters": ["token"],
         "description": "Send to KoalaBot in dms to confirm the verification of an email"
+      },
+      {
+        "command": "verifyBlacklist",
+        "parameters": ["user", "role", "email_suffix"],
+        "description": "Blacklist a user from gaining a specified role using a given email"
+      },
+      {
+        "command": "verifyBlacklistRemove",
+        "parameters": ["user", "role", "email_suffix"],
+        "description": "Remove a blacklisted user"
+      },
+      {
+        "command": "verifyBlacklistList",
+        "parameters": [],
+        "description": "List the blacklisted user and role mappings"
       }
     ]
   },

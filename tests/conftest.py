@@ -6,17 +6,18 @@ A configuration file for methods useful in all testing with pytest
 # Built-in/Generic Imports
 import shutil
 
+import discord
+import discord.ext.test as dpytest
 # Libs
 import pytest
-import discord
-import discord.ext.commands as commands
-import discord.ext.test as dpytest
 import pytest_asyncio
 
+import koala.db as db
 # Own modules
 import koalabot
 from koala.db import session_manager
 from tests.log import logger
+
 # Constants
 
 pytest_plugins = 'aiohttp.pytest_plugin'
@@ -31,9 +32,9 @@ def teardown_config():
     # tear_down: then clear table at the end of the scope
     logger.info("Tearing down session")
 
-    from koala.utils import get_arg_config_path
+    from koala.env import CONFIG_PATH
 
-    shutil.rmtree(get_arg_config_path(), ignore_errors=True)
+    shutil.rmtree(CONFIG_PATH, ignore_errors=True)
 
 
 @pytest_asyncio.fixture
@@ -53,6 +54,7 @@ async def bot():
 
 @pytest.fixture(autouse=True)
 def setup_is_dpytest():
+    db.__create_sqlite_tables()
     koalabot.is_dpytest = True
     yield
     koalabot.is_dpytest = False

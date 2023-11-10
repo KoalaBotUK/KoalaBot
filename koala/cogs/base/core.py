@@ -3,13 +3,17 @@ from typing import List, Optional
 
 import discord
 from discord.ext.commands import Bot
+from sqlalchemy import select, exists
+from sqlalchemy.orm import Session
 
 import koalabot
+from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, \
+    give_guild_extension, remove_guild_extension
 from . import db
 from .log import logger
 from .models import ScheduledActivities
-from koala.db import assign_session, get_all_available_guild_extensions, get_enabled_guild_extensions, give_guild_extension, remove_guild_extension
 from .utils import DEFAULT_ACTIVITY, activity_eq, list_ext_embed
+from ...models import GuildExtensions, Guilds
 
 # Constants
 
@@ -127,18 +131,18 @@ async def purge(bot: Bot, channel_id, amount):
     return await channel.purge(limit=amount+1)
 
 
-async def load_cog(bot: Bot, extension, package):
+async def load_cog(bot: Bot, extension):
     """
     Loads a cog from the cogs folder
     :param extension:
     :param package:
     :return:
     """
-    await bot.load_extension("."+extension, package=package)
+    await bot.load_extension("."+extension, package=koalabot.COGS_PACKAGE)
     return f'{extension} Cog Loaded'
 
 
-async def unload_cog(bot: Bot, extension, package):
+async def unload_cog(bot: Bot, extension):
     """
     Unloads a cog from the cogs folder
     :param extension:
@@ -148,7 +152,7 @@ async def unload_cog(bot: Bot, extension, package):
     if extension == "base" or extension == "BaseCog":
         raise discord.ext.commands.errors.ExtensionError(message=f"Sorry, you can't unload the base cog", name=extension)
     else:
-        await bot.unload_extension("."+extension, package=package)
+        await bot.unload_extension("."+extension, package=koalabot.COGS_PACKAGE)
         return f'{extension} Cog Unloaded'
 
 
@@ -177,23 +181,26 @@ async def enable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
 
 
 @assign_session
-async def disable_extension(bot: Bot, guild_id, koala_extension, **kwargs):
+async def disable_extension(bot: Bot, guild_id, koala_extension, *, session: Session):
     """
     Disables a koala extension
     :param guild_id:
     :param koala_extension:
     :return:
     """
-    all_ext = get_enabled_guild_extensions(guild_id, **kwargs)
 
-    if koala_extension.lower() in ["all"]:
+    if koala_extension.lower() == "all":
+        all_ext = get_enabled_guild_extensions(guild_id, session=session)
         for ext in all_ext:
-            remove_guild_extension(guild_id, ext, **kwargs)
-    elif koala_extension not in all_ext:
-        raise NotImplementedError(f"{koala_extension} is not an enabled extension")
-    
-    remove_guild_extension(guild_id, koala_extension, **kwargs)
-    embed = list_ext_embed(guild_id, **kwargs)
+            remove_guild_extension(guild_id, ext, session=session)
+    else:
+        enabled_ext = session.execute(select(GuildExtensions)
+                                      .filter_by(guild_id=guild_id, extension_id=koala_extension)).scalar()
+        if enabled_ext is None:
+            raise NotImplementedError(f"{koala_extension} is not an enabled extension")
+        koala_extension = enabled_ext.extension_id
+        remove_guild_extension(guild_id, koala_extension, session=session)
+    embed = list_ext_embed(guild_id, session=session)
     embed.title = koala_extension + " disabled"
 
     return embed
@@ -226,3 +233,21 @@ def get_version():
     :return:
     """
     return "version: "+koalabot.__version__
+
+
+@assign_session
+def add_all_guilds(bot: koalabot.KoalaBot, *, session: Session):
+    guilds = bot.guilds
+    for guild in guilds:
+        db_guild = session.execute(select(Guilds).where(Guilds.guild_id == guild.id)).one_or_none()
+        if db_guild is None:
+            session.add(Guilds(guild_id=guild.id, subscription=0))
+    session.commit()
+
+
+@assign_session
+def add_guild(guild_id: int, *, session: Session):
+    db_guild = session.execute(select(Guilds).where(Guilds.guild_id == guild_id)).one_or_none()
+    if db_guild is None:
+        session.add(Guilds(guild_id=guild_id, subscription=0))
+        session.commit()

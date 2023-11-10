@@ -11,6 +11,7 @@ KoalaBot Cog for guild members wishing to change their role colour
 import math
 import re
 from typing import List, Tuple, Any
+
 # Libs
 import discord
 from discord.ext import commands
@@ -21,6 +22,7 @@ from koala.db import insert_extension
 from .db import ColourRoleDBManager
 from .log import logger
 from .utils import COLOUR_ROLE_NAMING
+
 
 # Variables
 

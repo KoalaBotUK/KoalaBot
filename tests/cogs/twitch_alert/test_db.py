@@ -9,21 +9,22 @@ Commented using reStructuredText (reST)
 
 # Built-in/Generic Imports
 
+import discord
 # Libs
 import discord.ext.test as dpytest
 import mock
-import pytest_ordering as pytest
 import pytest
-import discord
+import pytest_asyncio
 from discord.ext import commands
 from sqlalchemy import select, update, insert, delete, and_, or_
+from twitchAPI.object import Stream
 
+from koala.cogs.twitch_alert import utils
 # Own modules
 from koala.cogs.twitch_alert.cog import TwitchAlert
 from koala.cogs.twitch_alert.db import TwitchAlertDBManager
-from koala.cogs.twitch_alert import utils
 from koala.cogs.twitch_alert.models import TwitchAlerts, TeamInTwitchAlert, UserInTwitchTeam, UserInTwitchAlert
-from koala.db import session_manager, setup
+from koala.db import session_manager
 
 # Constants
 DB_PATH = "Koala.db"
@@ -31,7 +32,7 @@ DB_PATH = "Koala.db"
 
 # Variables
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = TwitchAlert(bot)
@@ -41,9 +42,11 @@ async def twitch_cog(bot: discord.ext.commands.Bot):
     return twitch_cog
 
 
-@pytest.fixture
-def twitch_alert_db_manager(twitch_cog: TwitchAlert):
-    return TwitchAlertDBManager(twitch_cog.bot)
+@pytest_asyncio.fixture
+async def twitch_alert_db_manager(twitch_cog: TwitchAlert):
+    twitch_alert_db_manager = TwitchAlertDBManager(twitch_cog.bot)
+    await twitch_alert_db_manager.setup_twitch_handler()
+    return twitch_alert_db_manager
 
 
 @pytest.fixture(autouse=True)
@@ -54,13 +57,10 @@ def twitch_alert_db_manager_tables(twitch_alert_db_manager):
         session.execute(delete(UserInTwitchAlert))
         session.execute(delete(UserInTwitchTeam))
         session.commit()
-
-        setup()
         return twitch_alert_db_manager
 
 
 def test_create_tables():
-    setup()
     tables = ['TwitchAlerts', 'UserInTwitchAlert', 'TeamInTwitchAlert', 'UserInTwitchTeam']
     sql_check_table_exists = "SELECT name FROM sqlite_master " \
                              "WHERE type='table' AND " \
@@ -96,7 +96,7 @@ def test_new_ta_message(twitch_alert_db_manager_tables):
 
 
 def test_new_ta_replace(twitch_alert_db_manager_tables):
-    test_message = "Test message"
+    test_message = "Test message2"
     test_new_ta_message(twitch_alert_db_manager_tables=twitch_alert_db_manager_tables)
     assert test_message == twitch_alert_db_manager_tables.new_ta(guild_id=1234, channel_id=23456,
                                                                  default_message=test_message, replace=True)
@@ -145,9 +145,9 @@ async def test_remove_user_from_ta(twitch_alert_db_manager_tables):
 
 
 @pytest.mark.asyncio()
-async def test_delete_message(twitch_alert_db_manager_tables):
+async def test_delete_message(twitch_alert_db_manager_tables, session):
     with mock.patch.object(discord.TextChannel, 'fetch_message') as mock1:
-        await twitch_alert_db_manager_tables.delete_message(1234, dpytest.get_config().channels[0].id)
+        await twitch_alert_db_manager_tables.delete_message(1234, dpytest.get_config().channels[0].id, session=session)
     mock1.assert_called_with(1234)
 
 
@@ -217,7 +217,7 @@ async def test_remove_team_from_ta_deletes_messages(twitch_alert_db_manager_tabl
 
     with mock.patch.object(TwitchAlertDBManager, 'delete_message') as mock1:
         await twitch_alert_db_manager_tables.remove_team_from_ta(605, "monstercat")
-    mock1.assert_called_with(1, 605)
+    mock1.assert_called_with(1, 605, session=mock.ANY)
 
 
 @pytest.mark.asyncio()
@@ -228,7 +228,7 @@ async def test_update_team_members(twitch_alert_db_manager_tables):
         session.execute(sql_insert_monstercat_team)
         session.commit()
 
-        twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
+        await twitch_alert_db_manager_tables.update_team_members(604, "monstercat")
 
         sql_select_monstercat_team = select(UserInTwitchTeam).where(and_(UserInTwitchTeam.team_twitch_alert_id == 604,
                                                                          UserInTwitchTeam.twitch_username == 'monstercat'))
@@ -249,7 +249,7 @@ async def test_update_all_teams_members(twitch_alert_db_manager_tables):
         session.execute(sql_insert_monstercat_team)
         session.commit()
 
-        twitch_alert_db_manager_tables.update_all_teams_members()
+        await twitch_alert_db_manager_tables.update_all_teams_members()
 
         sql_select_monstercats_team = select(UserInTwitchTeam.twitch_username).where(and_(
                 or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
@@ -271,7 +271,7 @@ async def test_delete_all_offline_streams(twitch_alert_db_manager_tables, bot: d
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_streams(['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_streams(['monstercat'], session=session)
 
         sql_select_messages = select(UserInTwitchAlert).where(and_(
             UserInTwitchAlert.twitch_username == 'monstercat',
@@ -296,7 +296,7 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
         session.execute(sql_add_message)
         session.commit()
 
-        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'])
+        await twitch_alert_db_manager_tables.delete_all_offline_team_streams(['monstercat'], session=session)
 
         sql_select_messages = select(UserInTwitchTeam.message_id, UserInTwitchTeam.twitch_username).where(
             and_(or_(UserInTwitchTeam.team_twitch_alert_id == 614, UserInTwitchTeam.team_twitch_alert_id == 616),
@@ -310,8 +310,7 @@ async def test_delete_all_offline_streams_team(twitch_alert_db_manager_tables, b
 
 @pytest.mark.asyncio
 async def test_create_alert_embed(twitch_alert_db_manager_tables):
-    stream_data = {'id': '3215560150671170227', 'user_id': '27446517',
-                   "user_name": "Monstercat", 'user_login': "monstercat", 'game_id': "26936", 'type': 'live',
-                   'title': 'Music 24/7'}
+    stream_data = Stream(id='3215560150671170227', user_id='27446517', user_name="Monstercat", user_login="monstercat",
+                         game_id="26936", type='live', title='Music 24/7')
 
     assert type(await twitch_alert_db_manager_tables.create_alert_embed(stream_data, None)) is discord.Embed

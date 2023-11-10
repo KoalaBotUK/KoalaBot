@@ -8,13 +8,10 @@ Commented using reStructuredText (reST)
 """
 __author__ = "KoalaBotUK"
 __copyright__ = "Copyright (c) 2020 KoalaBotUK"
-__credits__ = ["Jack Draper", "Zoe Tam", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh",
-               "Harry Nelson", "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
-               "see full list of developers at: https://koalabot.uk/"]
+__credits__ = ["See full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
 __version__ = "1.0.0"
 __maintainer__ = "Jack Draper"
-__email__ = "koalabotuk@gmail.com"
 __status__ = "Production"  # "Prototype", "Development", or "Production"
 
 # Futures
@@ -22,16 +19,19 @@ __status__ = "Production"  # "Prototype", "Development", or "Production"
 import asyncio
 import time
 
+import discord
 # Libs
 from aiohttp import web
-import discord
+import aiohttp_cors
 from discord.ext import commands
 
+from koala import env
 # Own modules
 from koala.db import extension_enabled
-from koala.utils import error_embed
-from koala.log import logger
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
+from koala.errors import KoalaException
+from koala.log import logger
+from koala.utils import error_embed
 
 # Constants
 COMMAND_PREFIX = "k!"
@@ -44,8 +44,8 @@ KOALA_GREEN = discord.Colour.from_rgb(0, 170, 110)
 PERMISSION_ERROR_TEXT = "This guild does not have this extension enabled, go to http://koalabot.uk, " \
                         "or use `k!help enableExt` to enable it"
 KOALA_IMAGE_URL = "https://cdn.discordapp.com/attachments/737280260541907015/752024535985029240/discord1.png"
-ENABLED_COGS = ["base", "announce", "colour_role", "intro_cog", "react_for_role", "text_filter", "twitch_alert",
-                "verification", "voting"]
+ENABLED_COGS = ["base", "announce", "colour_role", "insights", "intro_cog", "react_for_role", "text_filter",
+                "twitch_alert", "verification", "voting"]
 
 # Variables
 intent = discord.Intents.default()
@@ -75,7 +75,8 @@ class KoalaBot(commands.Bot):
         else:
             guild_id = ctx.guild.id
 
-        if error.__class__ in [commands.MissingRequiredArgument,
+        if error.__class__ in [KoalaException,
+                               commands.MissingRequiredArgument,
                                commands.CommandNotFound]:
             await ctx.send(embed=error_embed(description=error))
         if error.__class__ in [commands.CheckFailure]:
@@ -102,7 +103,8 @@ class KoalaBot(commands.Bot):
 
 def is_owner(ctx: commands.Context):
     """
-    A command used to check if the user of a command is the owner, or the testing bot
+    A command used to check if the user of a command is the owner, or the testing bot.
+    The command also allows Senior Devs of KoalaBot to use owner only commands (as given by Admin role in the dev portal)
     e.g. @commands.check(koalabot.is_owner)
     :param ctx: The context of the message
     :return: True if owner or test, False otherwise
@@ -110,7 +112,7 @@ def is_owner(ctx: commands.Context):
     if is_dm_channel(ctx):
         return False
     elif BOT_OWNER is not None:
-        return ctx.author.id == int(BOT_OWNER) or is_dpytest
+        return ctx.author.id in BOT_OWNER or is_dpytest
     else:
         return ctx.bot.is_owner(ctx.author) or is_dpytest
 
@@ -183,10 +185,17 @@ def check_guild_has_ext(ctx, extension_id):
 
 async def run_bot():
     app = web.Application()
-    bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
 
+    bot = KoalaBot(command_prefix=[COMMAND_PREFIX, OPT_COMMAND_PREFIX], intents=intent)
     setattr(bot, "koala_web_app", app)
     await load_all_cogs(bot)
+
+    cors = aiohttp_cors.setup(app, defaults={
+        env.FRONTEND_URL: aiohttp_cors.ResourceOptions(
+                expose_headers="*", allow_headers="*")
+    })
+    for route in list(app.router.routes()):
+        cors.add(route)
 
     runner = web.AppRunner(app)
     await runner.setup()

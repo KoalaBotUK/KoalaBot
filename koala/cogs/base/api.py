@@ -1,16 +1,17 @@
 # Futures
 # Built-in/Generic Imports
 # Libs
-from http.client import CREATED, OK, BAD_REQUEST
-from aiohttp import web
+from http.client import CREATED
+
 import discord
+from aiohttp import web
 from discord.ext.commands import Bot
 
+from koala.rest.api import parse_request, build_response
+from koala.utils import convert_iso_datetime
 # Own modules
 from . import core
 from .log import logger
-from koala.rest.api import parse_request, build_response
-from koala.utils import convert_iso_datetime
 
 # Constants
 BASE_ENDPOINT = 'base'
@@ -130,15 +131,14 @@ class BaseEndpoint:
         return core.get_version()
 
     @parse_request
-    async def post_load_cog(self, extension, package):
+    async def post_load_cog(self, extension):
         """
         Loads a cog from the cogs folder
         :param extension: name of the cog
-        :param package: package of the cogs
         :return:
         """
         try:
-            await core.load_cog(self._bot, extension, package)
+            await core.load_cog(self._bot, extension)
         except BaseException as e:
             error = 'Error loading cog: {}'.format(handleActivityError(e))
             logger.error(error)
@@ -147,15 +147,14 @@ class BaseEndpoint:
         return {'message': 'Cog loaded'}
 
     @parse_request
-    async def post_unload_cog(self, extension, package):
+    async def post_unload_cog(self, extension):
         """
         Unloads a cog from the cogs folder
         :param extension: name of the cog
-        :param package: package of the cogs
         :return:
         """
         try:
-            await core.unload_cog(self._bot, extension, package)
+            await core.unload_cog(self._bot, extension)
         except BaseException as e:
             error = 'Error unloading cog: {}'.format(handleActivityError(e))
             logger.error(error)
@@ -189,7 +188,7 @@ class BaseEndpoint:
         """
         Disables a koala extension onto a server
         :param guild_id: id for the Discord guild
-        :param koala_extension: name of the extension
+        :param koala_ext: name of the extension
         :return:
         """
         try:

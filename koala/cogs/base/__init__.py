@@ -1,5 +1,5 @@
-from . import cog
 from . import api
+from . import cog
 from .cog import BaseCog
 
 

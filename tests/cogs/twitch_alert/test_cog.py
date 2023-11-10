@@ -3,23 +3,22 @@
 # Built-in/Generic Imports
 import asyncio
 
+import discord
 # Libs
 import discord.ext.test as dpytest
 import mock
-import pytest_ordering as pytest
 import pytest
-import discord
+import pytest_asyncio
 from discord.ext import commands
 from sqlalchemy import select, and_
 
-
 # Own modules
 import koalabot
-from koala.db import session_manager
 from koala.cogs import twitch_alert
 from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.colours import KOALA_GREEN
+from koala.db import session_manager
 from tests.tests_utils.last_ctx_cog import LastCtxCog
 
 # Constants
@@ -35,7 +34,7 @@ async def test_setup(bot):
     mock1.assert_called()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def twitch_cog(bot: discord.ext.commands.Bot):
     """ setup any state specific to the execution of the given module."""
     twitch_cog = cog.TwitchAlert(bot)
@@ -68,7 +67,8 @@ async def test_twitch_is_enabled_false(twitch_cog: cog.TwitchAlert):
 
 
 # @mock.patch("koala.utils.random_id", mock.MagicMock(return_value=7357))
-@pytest.mark.asyncio(order=1)
+@pytest.mark.order(1)
+@pytest.mark.asyncio
 async def test_edit_default_message_default_from_none(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
     assert_embed = discord.Embed(title="Default Message Edited",
@@ -81,7 +81,8 @@ async def test_edit_default_message_default_from_none(twitch_cog):
 
 
 # @mock.patch("koala.utils.random_id", mock.MagicMock(return_value=7357))
-@pytest.mark.asyncio(order=2)
+@pytest.mark.order(2)
+@pytest.mark.asyncio
 async def test_edit_default_message_existing(twitch_cog):
     this_channel = dpytest.get_config().channels[0]
     assert_embed = discord.Embed(title="Default Message Edited",
@@ -92,8 +93,8 @@ async def test_edit_default_message_existing(twitch_cog):
     await dpytest.message(koalabot.COMMAND_PREFIX + "twitch editMsg " + str(this_channel.id) + " {user} is bad")
     assert dpytest.verify().message().embed(embed=assert_embed)
 
-
-@pytest.mark.asyncio(order=3)
+@pytest.mark.order(3)
+@pytest.mark.asyncio
 async def test_add_user_to_twitch_alert(twitch_cog):
     assert_embed = discord.Embed(title="Added User to Twitch Alert",
                                  description=f"Channel: {dpytest.get_config().channels[0].id}\n"
@@ -105,8 +106,8 @@ async def test_add_user_to_twitch_alert(twitch_cog):
         f"{koalabot.COMMAND_PREFIX}twitch add monstercat {dpytest.get_config().channels[0].id}")
     assert dpytest.verify().message().embed(embed=assert_embed)
 
-
-@pytest.mark.asyncio(order=3)
+@pytest.mark.order(3)
+@pytest.mark.asyncio
 async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: twitch_alert.cog.TwitchAlert):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
@@ -121,8 +122,8 @@ async def test_add_user_to_twitch_alert_wrong_guild(twitch_cog: twitch_alert.cog
         f"{koalabot.COMMAND_PREFIX}twitch add monstercat {dpytest.get_config().guilds[0].channels[0].id}",
         channel=-1, member=member)
 
-
-@pytest.mark.asyncio(order=3)
+@pytest.mark.order(3)
+@pytest.mark.asyncio
 async def test_add_user_to_twitch_alert_custom_message(twitch_cog: twitch_alert.cog.TwitchAlert):
     test_custom_message = "We be live gamers!"
 
@@ -184,8 +185,8 @@ async def test_remove_user_from_twitch_alert_with_message(twitch_cog: twitch_ale
         result_after = session.execute(sql_check_updated_server).one_or_none()
         assert result_after is None
 
-
-@pytest.mark.asyncio(order=3)
+@pytest.mark.order(3)
+@pytest.mark.asyncio
 async def test_remove_user_from_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)
@@ -283,8 +284,8 @@ async def test_remove_team_from_twitch_alert_with_message(twitch_cog):
     assert dpytest.verify().message().embed(new_embed)
     pass
 
-
-@pytest.mark.asyncio(order=3)
+@pytest.mark.order(3)
+@pytest.mark.asyncio
 async def test_remove_team_from_twitch_alert_wrong_guild(twitch_cog):
     guild = dpytest.backend.make_guild(name="TestGuild")
     channel = dpytest.backend.make_text_channel(name="TestChannel", guild=guild)

@@ -1,14 +1,13 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, VARCHAR, ForeignKey
 
-from koala.db import setup
-from koala.models import mapper_registry
+from koala.models import mapper_registry, DiscordSnowflake
 
 
 @mapper_registry.mapped
 class VerifiedEmails:
     __tablename__ = 'verified_emails'
-    u_id = Column(Integer, primary_key=True)
-    email = Column(String, primary_key=True)
+    u_id = Column(DiscordSnowflake, primary_key=True)
+    email = Column(VARCHAR(100, collation="utf8_bin"), primary_key=True)
 
     def __repr__(self):
         return "<verified_emails(%s, %s)>" % \
@@ -18,9 +17,9 @@ class VerifiedEmails:
 @mapper_registry.mapped
 class NonVerifiedEmails:
     __tablename__ = 'non_verified_emails'
-    u_id = Column(Integer)
-    email = Column(String)
-    token = Column(String, primary_key=True)
+    u_id = Column(DiscordSnowflake)
+    email = Column(VARCHAR(100))
+    token = Column(VARCHAR(8), primary_key=True)
 
     def __repr__(self):
         return "<non_verified_emails(%s, %s, %s)>" % \
@@ -30,9 +29,9 @@ class NonVerifiedEmails:
 @mapper_registry.mapped
 class Roles:
     __tablename__ = 'roles'
-    s_id = Column(Integer, ForeignKey("GuildExtensions.guild_id"), primary_key=True)
-    r_id = Column(Integer, primary_key=True)
-    email_suffix = Column(String, primary_key=True)
+    s_id = Column(DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True)
+    r_id = Column(DiscordSnowflake, primary_key=True)
+    email_suffix = Column(VARCHAR(100), primary_key=True)
 
     def __repr__(self):
         return "<roles(%s, %s, %s)>" % \
@@ -42,12 +41,21 @@ class Roles:
 @mapper_registry.mapped
 class ToReVerify:
     __tablename__ = 'to_re_verify'
-    u_id = Column(Integer, primary_key=True)
-    r_id = Column(String, primary_key=True)
+    u_id = Column(DiscordSnowflake, primary_key=True)
+    r_id = Column(DiscordSnowflake, primary_key=True)
 
     def __repr__(self):
         return "<to_re_verify(%s, %s)>" % \
                (self.u_id, self.r_id)
 
 
-setup()
+@mapper_registry.mapped
+class VerifyBlacklist:
+    __tablename__ = 'VerifyBlacklist'
+    user_id = Column(DiscordSnowflake, primary_key=True)
+    role_id = Column(DiscordSnowflake, primary_key=True)
+    email_suffix = Column(VARCHAR(100), primary_key=True)
+
+    def __repr__(self):
+        return "<VerifyBlacklist(%s, %s, %s)>" % \
+               (self.user_id, self.role_id, self.email_suffix)

@@ -8,15 +8,15 @@ Created by: Stefan Cooper
 # Built-in/Generic Imports
 import re
 
+import discord
 # Libs
 from discord.ext import commands
 
 # Own modules
 import koalabot
-from koala.db import insert_extension
 from koala.colours import KOALA_GREEN
+from koala.db import insert_extension
 from koala.utils import extract_id
-
 from .db import TextFilterDBManager
 from .utils import type_exists, build_word_list_embed, build_moderation_channel_embed, \
     create_default_embed, build_moderation_deleted_embed
@@ -166,7 +166,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
                 use `k!listModChannels` to get information on your mod channels."""
         channel = self.bot.get_channel(int(extract_id(channel_id)))
         if channel is not None and too_many_arguments is None:
-            self.tf_database_manager.remove_mod_channel(ctx.guild.id, channel_id)
+            self.tf_database_manager.remove_mod_channel(ctx.guild.id, channel.id)
             await ctx.channel.send(embed=build_moderation_channel_embed(ctx, channel, "Removed"))
             return
         raise Exception(error)
@@ -209,7 +209,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
     @commands.command(name="ignoreChannel")
     @commands.check(koalabot.is_admin)
     @commands.check(text_filter_is_enabled)
-    async def ignore_channel(self, ctx, channel, too_many_arguments=None):
+    async def ignore_channel(self, ctx, channel: discord.TextChannel, too_many_arguments=None):
         """
         Add a new ignored channel to the database
 
@@ -220,11 +220,11 @@ class TextFilter(commands.Cog, name="TextFilter"):
         """
         error = """Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID, 
                 use `k!listModChannels` to get information on your mod channels."""
-        ignore_id = ctx.message.channel_mentions[0].id
+        ignore_id = channel.id
         ignore_exists = self.bot.get_channel(int(ignore_id))
         if ignore_exists is not None:
             self.tf_database_manager.new_ignore(ctx.guild.id, 'channel', ignore_id)
-            await ctx.channel.send("New ignore added: " + channel)
+            await ctx.channel.send(f"New ignore added: {channel.mention}")
             return
         raise (Exception(error))
 

@@ -15,10 +15,10 @@ RUN \
 	curl \
     jq \
     unzip \
-    python3=3.8.2-0ubuntu2 \
-    python3-pip=20.0.2-5ubuntu1.6
+    python3 \
+    python3-pip
 
-RUN apt-get install -y software-properties-common=0.99.9.8 && \
+RUN apt-get install -y software-properties-common && \
   add-apt-repository -y ppa:linuxgndu/sqlitebrowser && \
   apt-get update
 
@@ -47,4 +47,4 @@ EXPOSE 8080
 # run app
 #########
 
-CMD [ "python3", "koalabot.py"]
+CMD [ "bash", "startup.sh"]
