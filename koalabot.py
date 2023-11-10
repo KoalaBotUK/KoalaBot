@@ -8,14 +8,14 @@ Commented using reStructuredText (reST)
 """
 __author__ = "KoalaBotUK"
 __copyright__ = "Copyright (c) 2020 KoalaBotUK"
-__credits__ = ["Jack Draper", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh", "Harry Nelson",
-               "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
+__credits__ = ["Jack Draper", "Zoe Tam", "Kieran Allinson", "Viraj Shah", "Stefan Cooper", "Anan Venkatesh",
+               "Harry Nelson", "Bill Cao", "Aqeel Little", "Charlie Bowe", "Ponmile Femi-Sunmaila",
                "see full list of developers at: https://koalabot.uk/"]
 __license__ = "MIT License"
-__version__ = "0.6.0"
-__maintainer__ = "Jack Draper, Kieran Allinson, Viraj Shah, Stefan Cooper, Otto Hooper"
+__version__ = "1.0.0"
+__maintainer__ = "Jack Draper"
 __email__ = "koalabotuk@gmail.com"
-__status__ = "Development"  # "Prototype", "Development", or "Production"
+__status__ = "Production"  # "Prototype", "Development", or "Production"
 
 # Futures
 # Built-in/Generic Imports
