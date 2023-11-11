@@ -242,10 +242,10 @@ def unsafe_upgrade():
 
     verified_emails = op.create_table('verified_emails',
                                       Column('u_id', DiscordSnowflake, primary_key=True),
-                                      Column('email', VARCHAR(100, collation="utf8_bin"), primary_key=True))
+                                      Column('email', VARCHAR(255, collation="utf8_bin"), primary_key=True))
     non_verified_emails = op.create_table('non_verified_emails',
                                           Column('u_id', DiscordSnowflake),
-                                          Column('email', VARCHAR(100)),
+                                          Column('email', VARCHAR(255)),
                                           Column('token', VARCHAR(8), primary_key=True))
     roles = op.create_table('roles',
                             Column('s_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
