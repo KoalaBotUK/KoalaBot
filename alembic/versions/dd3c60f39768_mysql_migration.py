@@ -364,8 +364,8 @@ def unsafe_upgrade():
     c.execute("SELECT * FROM to_re_verify")
     op.bulk_insert(to_re_verify, c.fetchall())
 
-    c.execute("SELECT * FROM VerifyBlacklist")
-    op.bulk_insert(verify_blacklist, c.fetchall())
+    # c.execute("SELECT * FROM VerifyBlacklist")
+    # op.bulk_insert(verify_blacklist, c.fetchall())
 
     # voting
     c.execute("SELECT * FROM Votes")
