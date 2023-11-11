@@ -220,7 +220,8 @@ def unsafe_upgrade():
                                     Column('default_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci")))
     user_in_twitch_alert = op.create_table('UserInTwitchAlert',
                                            Column('channel_id', DiscordSnowflake,
-                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'), primary_key=True),
+                                                  # ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'),
+                                                  primary_key=True),
                                            Column('twitch_username', VARCHAR(25), primary_key=True),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True),
                                            Column('message_id', DiscordSnowflake, nullable=True))
