@@ -23,6 +23,7 @@ from koala.db import insert_extension
 from koala.utils import wait_for_message
 # Own modules
 from . import core
+from .core import get_embed_from_message
 from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_required_roles, get_guild_rfr_roles, \
     get_guild_rfr_messages
 from .exception import ReactionException, ReactionErrorCode
@@ -730,7 +731,7 @@ class ReactForRole(commands.Cog):
         message: discord.Message = await channel.fetch_message(message_id)
         if not message:
             raise ReactionException(ReactionErrorCode.UNKNOWN_MESSAGE_REACTION, message_id, guild_id)
-        embed: discord.Embed = self.get_embed_from_message(message)
+        embed: discord.Embed = get_embed_from_message(message)
 
         if emoji_reacted.is_unicode_emoji():  # Unicode Emoji
             rep = emoji.emojize(emoji_reacted.name)

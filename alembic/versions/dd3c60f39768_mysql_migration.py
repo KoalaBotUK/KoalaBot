@@ -220,7 +220,7 @@ def unsafe_upgrade():
                                     Column('default_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci")))
     user_in_twitch_alert = op.create_table('UserInTwitchAlert',
                                            Column('channel_id', DiscordSnowflake,
-                                                  # ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'),
+                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'),
                                                   primary_key=True),
                                            Column('twitch_username', VARCHAR(25), primary_key=True),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True),
@@ -229,13 +229,13 @@ def unsafe_upgrade():
                                            Column('team_twitch_alert_id', INT,
                                                   autoincrement=True, primary_key=True),
                                            Column('channel_id', DiscordSnowflake,
-                                                  # ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')
+                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')
                                                   ),
                                            Column('twitch_team_name', VARCHAR(25)),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True))
     user_in_twitch_team = op.create_table('UserInTwitchTeam',
                                           Column('team_twitch_alert_id', INT,
-                                                 # ForeignKey("TeamInTwitchAlert.team_twitch_alert_id", ondelete='CASCADE'),
+                                                 ForeignKey("TeamInTwitchAlert.team_twitch_alert_id", ondelete='CASCADE'),
                                                  primary_key=True),
                                           Column('twitch_username', VARCHAR(25), primary_key=True),
                                           Column('message_id', DiscordSnowflake, nullable=True))
