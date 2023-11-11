@@ -23,8 +23,8 @@ RUN apt-get install -y software-properties-common && \
   apt-get update
 
 RUN apt-get install -y \
-        sqlcipher=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1 \
-        libsqlcipher-dev=4.3.0-0~202102181541~462~202104031456~ubuntu20.04.1
+        sqlcipher=4.5.5-0~202308171705~568~202311061504~ubuntu20.04.1 \
+        libsqlcipher-dev=4.5.5-0~202308171705~568~202311061504~ubuntu20.04.1
 
 COPY . /app
 WORKDIR /app
