@@ -7,6 +7,7 @@ from koala import env
 
 error_versions = {}
 
+
 class ExtensionAttr(MapAttribute):
     id: str = UnicodeAttribute(hash_key=True)
     version: int = NumberAttribute()
@@ -31,4 +32,3 @@ map_ext = {
     "Verify": "verify",
     "Vote": "vote"
 }
-

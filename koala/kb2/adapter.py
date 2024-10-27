@@ -18,6 +18,9 @@ class AutherOAuthToken:
     expires_at: int = 0
 
     def request_token(self):
+        """
+        Request OAuth2 JWT Token from Auther
+        """
         logger.debug("Auther Token Request")
         response = requests.post(env.AUTHER_URL + "/token",
                                  data={"grant_type": "client_credentials", "scope": "owner"},
@@ -32,6 +35,13 @@ class AutherOAuthToken:
 
     @property
     def token(self) -> str:
+        """
+        Get OAuth2 JWT Token
+        If expired, requests a new one
+
+        :return: OAuth2 JWT Token
+        :rtype: str
+        """
         if time.time() > self.expires_at:
             self.request_token()
         return self._token
@@ -45,6 +55,12 @@ class KB2Adapter:
     token: AutherOAuthToken = AutherOAuthToken()
 
     async def on_raw_interaction(self, raw_interaction: dict):
+        """
+        Handle a raw interaction from Discord.
+
+        :param raw_interaction: The raw interaction data from Discord.
+        :type raw_interaction: dict
+        """
         try:
             logger.debug("Interact New Interaction: %s", raw_interaction)
             requests.post(env.KB2_URL + '/gateway-interactions',
