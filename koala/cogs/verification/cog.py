@@ -134,7 +134,7 @@ class Verification(commands.Cog, name="Verify"):
 
         await ctx.send(embed=embed)
 
-    @commands.check(is_enabled)
+    @commands.check(koalabot.is_dm_channel)
     @commands.command(name="verify")
     async def verify(self, ctx, email: str):
         """
@@ -195,6 +195,7 @@ class Verification(commands.Cog, name="Verify"):
         emails = '\n'.join(core.email_verify_list(user_id))
         await ctx.send(f"This user has registered with:\n{emails}")
 
+    @commands.check(is_enabled)
     @commands.command(name="verifyList", aliases=["checkVerifications"])
     async def check_verifications(self, ctx):
         """
