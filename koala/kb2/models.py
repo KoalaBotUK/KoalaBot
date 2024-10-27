@@ -1,3 +1,5 @@
+from typing import List
+
 from pynamodb.attributes import NumberAttribute, BooleanAttribute, UnicodeAttribute, MapAttribute, ListAttribute
 from pynamodb.models import Model
 
@@ -17,7 +19,7 @@ class Guild(Model):
         region = 'eu-west-2'
 
     guild_id: str = UnicodeAttribute(hash_key=True)
-    extensions: list[ExtensionAttr] = ListAttribute(of=ExtensionAttr, default=list)
+    extensions: List[ExtensionAttr] = ListAttribute(of=ExtensionAttr, default=list)
 
 
 map_ext = {
