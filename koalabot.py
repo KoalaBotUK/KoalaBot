@@ -197,8 +197,9 @@ def check_guild_has_ext(ctx=None, extension_id=None, channel=None, guild_id=None
     :param extension_id: The koala extension ID
     :return: True if has ext
     """
-    if ctx is not None:
+    if channel is None and ctx is not None:
         channel = ctx.channel
+    if guild_id is None and ctx is not None and ctx.guild is not None:
         guild_id = ctx.guild.id
 
     if is_dpytest:
@@ -213,6 +214,7 @@ def check_guild_has_ext(ctx=None, extension_id=None, channel=None, guild_id=None
         return "This guild doesn't have this extension enabled"
     else:
         return None
+
 
 def ext_enabled_func(extension_id):
     return lambda ctx: check_guild_has_ext(ctx, extension_id) is None
