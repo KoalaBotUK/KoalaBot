@@ -27,15 +27,15 @@ pytest-asyncio==0.20.3
 pytest-env==0.8.1
 pytest-order==1.1.0
 python-dotenv==1.0.0
-requests==2.28.2
+requests==2.31.0
 six==1.16.0
 sqlalchemy==1.4.37
 toml==0.10.2
 twitchAPI==3.9.0
-urllib3==1.26.14
+urllib3==2.0.7
 wcwidth==0.2.6
 websockets==10.4
 yarl==1.8.2
 
 discord-interactions~=0.4.0
-requests~=2.31.0
+pynamodb~=6.0

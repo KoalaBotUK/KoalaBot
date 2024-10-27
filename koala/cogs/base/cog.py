@@ -21,6 +21,7 @@ from koala.utils import convert_iso_datetime
 from . import core
 from .log import logger
 from .utils import AUTO_UPDATE_ACTIVITY_DELAY
+from ... import env
 
 
 # Constants
@@ -228,11 +229,47 @@ class BaseCog(commands.Cog, name='KoalaBot'):
         await ctx.send(core.get_version())
 
 
+class BaseCogV2(commands.Cog, name="KoalaBot"):
+    def __init__(self, bot: commands.Bot):
+        self._bot = bot
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        logger.info("Bot is ready.")
+
+    @commands.command(name="enableExt")
+    @commands.check(koalabot.is_admin)
+    async def enable_koala_ext(self, ctx, koala_extension):
+        """
+        /extension
+        """
+        await ctx.send("This command has been moved > `/extension`")
+
+    @commands.command(name="disableExt")
+    @commands.check(koalabot.is_admin)
+    async def disable_koala_ext(self, ctx, koala_extension):
+        """
+        /extension
+        """
+        await ctx.send("This command has been moved > `/extension`")
+
+    @commands.command(name="listExt")
+    @commands.check(koalabot.is_admin)
+    async def list_koala_ext(self, ctx):
+        """
+        /extension
+        """
+        await ctx.send("This command has been moved > `/extension`")
+
+
 async def setup(bot: koalabot) -> None:
     """
     Load this cog to the KoalaBot.
 
     :param bot: the bot client for KoalaBot
     """
-    await bot.add_cog(BaseCog(bot))
+    if env.KB2_ENABLED:
+        await bot.add_cog(BaseCogV2(bot))
+    else:
+        await bot.add_cog(BaseCog(bot))
     logger.info("BaseCog is ready.")

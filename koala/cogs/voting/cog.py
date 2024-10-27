@@ -24,9 +24,10 @@ from .utils import make_result_embed
 
 
 # Constants
+EXTENSION_ID = "Vote"
 
 # Variables
-
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 def currently_configuring():
     """
@@ -50,21 +51,6 @@ def has_current_votes():
         return ctx.author.id in map(lambda x: x[0], cog.vote_manager.vote_lookup.keys())
 
     return commands.check(predicate)
-
-
-def vote_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled verify
-    e.g. @commands.check(vote_is_enabled)
-    :param ctx: The context of the message
-    :return: True if enabled or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "Vote")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class Voting(commands.Cog, name="Vote"):
@@ -152,24 +138,28 @@ class Voting(commands.Cog, name="Vote"):
         """
         await self.update_vote_message(payload.message_id, payload.user_id)
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(vote_is_enabled)
     @commands.group(name="vote")
     async def vote(self, ctx):
         """
         Use k!vote create <title> to create a vote!
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{koalabot.COMMAND_PREFIX}help vote` for more information")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(vote_is_enabled)
     @vote.command(name="create")
     async def start_vote(self, ctx, *, title):
         """
         Creates a new vote
         :param title: The title of the vote
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         with session_manager() as session:
             if self.vote_manager.has_active_vote(ctx.author.id):
                 guild_name = self.bot.get_guild(self.vote_manager.get_configuring_vote(ctx.author.id).guild)
@@ -189,7 +179,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(f"Vote titled `{title}` created for guild {ctx.guild.name}. Use `{koalabot.COMMAND_PREFIX}help vote` to see how to configure it.")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="addRole")
     async def add_role(self, ctx, *, role: discord.Role):
         """
@@ -197,24 +187,28 @@ class Voting(commands.Cog, name="Vote"):
         If no roles are added, the vote will go to all users in a guild (unless a target voice channel has been set)
         :param role: role id (e.g. 135496683009081345) or a role ping (e.g. @Student)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         vote.add_role(role.id)
         await ctx.send(f"Vote will be sent to those with the {role.name} role")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="removeRole")
     async def remove_role(self, ctx, *, role: discord.Role):
         """
        Removes a role to the list of roles the vote will be sent to
        :param role: role id (e.g. 135496683009081345) or a role ping (e.g. @Student)
        """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         vote.remove_role(role.id)
         await ctx.send(f"Vote will no longer be sent to those with the {role.name} role")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="setChair")
     async def set_chair(self, ctx, *, chair: discord.Member = None):
         """
@@ -222,6 +216,8 @@ class Voting(commands.Cog, name="Vote"):
         If no chair defaults to sending the message to the channel the vote is closed in
         :param chair: user id (e.g. 135496683009081345) or ping (e.g. @ito#8813)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         if chair:
             try:
@@ -235,7 +231,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(f"Results will be sent to the channel vote is closed in")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="setChannel")
     async def set_channel(self, ctx, *, channel: discord.VoiceChannel = None):
         """
@@ -243,6 +239,8 @@ class Voting(commands.Cog, name="Vote"):
         If there isn't one set votes will go to all users in a guild (unless target roles have been added)
         :param channel: channel id (e.g. 135496683009081345) or mention (e.g. #cool-channel)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         if channel:
             vote.set_vc(channel.id)
@@ -252,7 +250,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send("Removed channel restriction on vote")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="addOption")
     async def add_option(self, ctx, *, option_string):
         """
@@ -260,6 +258,8 @@ class Voting(commands.Cog, name="Vote"):
         separate the title and description with a "+" e.g. option title+option description
         :param option_string: a title and description for the option separated by a '+'
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         if len(vote.options) > 9:
             await ctx.send("Vote has maximum number of options already (10)")
@@ -276,19 +276,21 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Option {header} with description {body} added to vote")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="removeOption")
     async def remove_option(self, ctx, index: int):
         """
         Removes an option from a vote based on it's index
         :param index: the number of the option
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         vote.remove_option(index)
         await ctx.send(f"Option number {index} removed")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="setEndTime")
     async def set_end_time(self, ctx, *, time_string):
         """
@@ -297,6 +299,8 @@ class Voting(commands.Cog, name="Vote"):
         :param time_string: string representing a time e.g. "2021-03-22 12:56" or "tomorrow at 10am" or "in 5 days and 15 minutes"
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         now = time.time()
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         cal = parsedatetime.Calendar()
@@ -312,24 +316,28 @@ class Voting(commands.Cog, name="Vote"):
         await ctx.send(f"Vote set to end at {time.strftime('%Y-%m-%d %H:%M:%S', end_time_readable)} UTC")
 
     @currently_configuring()
-    @commands.check(vote_is_enabled)
+    @commands.check(is_enabled)
     @vote.command(name="preview")
     async def preview_vote(self, ctx):
         """
         Generates a preview of what users will see with the current configuration of the vote
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote = self.vote_manager.get_configuring_vote(ctx.author.id)
         msg = await ctx.send(embed=create_embed(vote))
         await add_reactions(vote, msg)
 
-    @commands.check(vote_is_enabled)
     @has_current_votes()
+    @commands.check(is_enabled)
     @vote.command(name="cancel")
     async def cancel_vote(self, ctx, *, title):
         """
         Cancels a vote you are setting up or have sent
         :param title: title of the vote to cancel
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         with session_manager() as session:
             v_id = self.vote_manager.vote_lookup[(ctx.author.id, title)]
             if v_id in self.vote_manager.sent_votes.keys():
@@ -338,14 +346,16 @@ class Voting(commands.Cog, name="Vote"):
                 self.vote_manager.cancel_configuring_vote(ctx.author.id, session=session)
             await ctx.send(f"Vote {title} has been cancelled.")
 
-    @commands.check(vote_is_enabled)
     @has_current_votes()
+    @commands.check(is_enabled)
     @vote.command("list", aliases=["currentVotes"])
     async def check_current_votes(self, ctx):
         """
         Return a list of all votes you have in this guild.
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         with session_manager() as session:
             embed = discord.Embed(title="Your current votes")
             votes = session.execute(select(Votes.title).filter_by(author_id=ctx.author.id, guild_id=ctx.guild.id)).all()
@@ -356,6 +366,7 @@ class Voting(commands.Cog, name="Vote"):
             await ctx.send(embed=embed)
 
     @currently_configuring()
+    @commands.check(is_enabled)
     @vote.command(name="send")
     async def send_vote(self, ctx):
         """
@@ -390,13 +401,15 @@ class Voting(commands.Cog, name="Vote"):
                 logger.error(f"tried to send vote to user {user.id} but direct messages are turned off.")
         await ctx.send(f"Sent vote to {len(users)} users")
 
-    @commands.check(vote_is_enabled)
     @has_current_votes()
+    @commands.check(is_enabled)
     @vote.command(name="close")
     async def close(self, ctx, *, title):
         """
         Ends a vote, and collects the results
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote_id = self.vote_manager.vote_lookup.get((ctx.author.id, title))
         if vote_id not in self.vote_manager.sent_votes.keys():
             if ctx.author.id in self.vote_manager.configuring_votes.keys():
@@ -421,13 +434,14 @@ class Voting(commands.Cog, name="Vote"):
         else:
             await ctx.send(embed=embed)
 
-    @commands.check(vote_is_enabled)
     @has_current_votes()
     @vote.command(name="checkResults")
     async def check_results(self, ctx,  *, title):
         """
         Checks the results of a vote without closing it
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         vote_id = self.vote_manager.vote_lookup.get((ctx.author.id, title))
         if vote_id is None:
             raise ValueError(f"{title} is not a valid vote title for user {ctx.author.name}")

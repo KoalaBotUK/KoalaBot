@@ -16,21 +16,8 @@ from .db import AnnounceDBManager
 from .log import logger
 from .utils import ANNOUNCE_SEPARATION_DAYS, SECONDS_IN_A_DAY, MAX_MESSAGE_LENGTH
 
-
-def announce_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled announce
-    e.g. @commands.check(announce_is_enabled)
-
-    :param ctx: The context of the message
-    :return: True if enabled or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "Announce")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.guild) == koalabot.TEST_USER and koalabot.is_dpytest)
+EXTENSION_ID = "Announce"
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 
 class Announce(commands.Cog):
@@ -111,23 +98,29 @@ class Announce(commands.Cog):
             embed.set_thumbnail(url=message.thumbnail)
         return embed
 
-    @commands.check(announce_is_enabled)
     @commands.group(name="announce")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def announce(self, ctx):
         """
         Use k!announce create to create an announcement
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if ctx.invoked_subcommand is None:
             await ctx.send(f"Please use `{koalabot.COMMAND_PREFIX}help announce` for more information")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="create")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def create(self, ctx):
         """
         Create a new message that will be available for sending
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if not self.not_exceeded_limit(ctx.guild.id):
             remaining_days = math.ceil(
                 ANNOUNCE_SEPARATION_DAYS - ((int(time.time()) - self.announce_database_manager.get_last_use_date(
@@ -155,14 +148,17 @@ class Announce(commands.Cog):
             await ctx.send(embed=self.construct_embed(ctx.guild))
             await ctx.send(self.receiver_msg(ctx.guild))
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="changeTitle")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def change_title(self, ctx):
         """
         Change the title of the embedded message
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the new title, I'll wait for 60 seconds, no rush.")
             title, channel = await wait_for_message(self.bot, ctx)
@@ -174,14 +170,17 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="changeContent")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def change_content(self, ctx):
         """
         Change the content of the embedded message
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the new message, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
@@ -196,14 +195,17 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="addRole", aliases=["add"])
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def add_role(self, ctx):
         """
         Add a role to list of people to send the announcement to
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the roles you want to tag separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
@@ -219,14 +221,17 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="removeRole", aliases=["remove"])
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def remove_role(self, ctx):
         """
         Remove a role from a list of people to send the announcement to
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             await ctx.send("Please enter the roles you want to remove separated by space, I'll wait for 60 seconds, no rush.")
             message, channel = await wait_for_message(self.bot, ctx)
@@ -241,28 +246,34 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="preview")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def preview(self, ctx):
         """
         Post a constructed embedded message to the channel where the command is invoked
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             await ctx.send(embed=self.construct_embed(ctx.guild))
             await ctx.send(self.receiver_msg(ctx.guild))
         else:
             await ctx.send("There is currently no active announcement")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="send")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def send(self, ctx):
         """
         Send a pending announcement
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             embed = self.construct_embed(ctx.guild)
             if self.roles[ctx.guild.id]:
@@ -285,14 +296,17 @@ class Announce(commands.Cog):
         else:
             await ctx.send("There is currently no active announcement")
 
-    @commands.check(announce_is_enabled)
     @announce.command(name="cancel")
+    @commands.check(is_enabled)
+    @commands.check(koalabot.is_admin)
     async def cancel(self, ctx):
         """
         Cancel a pending announcement
         :param ctx: The context of the bot
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if self.has_active_msg(ctx.guild.id):
             self.messages.pop(ctx.guild.id)
             self.roles.pop(ctx.guild.id)

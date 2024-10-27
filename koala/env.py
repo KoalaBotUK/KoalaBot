@@ -47,3 +47,7 @@ if not DB_URL or DB_TYPE == DatabaseType.SQLITE:
         DB_URL = f"sqlite+pysqlcipher://:x'{DB_KEY}'@/{SQLITE_DB_PATH.absolute()}?charset=utf8mb4"
     else:
         DB_URL = f"sqlite:///{SQLITE_DB_PATH.absolute()}?charset=utf8mb4"
+
+ENV_PREFIX = os.environ.get("ENV_PREFIX", "")
+
+KB2_ENABLED = eval(os.environ.get("KB2_ENABLED", "True"))
