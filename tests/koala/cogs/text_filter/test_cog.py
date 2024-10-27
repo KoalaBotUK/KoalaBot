@@ -20,7 +20,7 @@ from koala.colours import KOALA_GREEN
 from koala.db import session_manager
 from koala.utils import is_int
 from tests.log import logger
-from tests.tests_utils.last_ctx_cog import LastCtxCog
+from tests.koala.tests_utils.last_ctx_cog import LastCtxCog
 
 
 # Variables

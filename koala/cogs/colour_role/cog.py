@@ -23,8 +23,11 @@ from .db import ColourRoleDBManager
 from .log import logger
 from .utils import COLOUR_ROLE_NAMING
 
+# Constants
+EXTENSION_ID = "ColourRole"
 
 # Variables
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 
 def is_allowed_to_change_colour(ctx: commands.Context):
@@ -44,21 +47,6 @@ def is_allowed_to_change_colour(ctx: commands.Context):
     author_role_ids = [role.id for role in author.roles]
     author_set = set(author_role_ids)
     return allowed_set & author_set
-
-
-def colour_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled twitch alert
-    e.g. @commands.check(koalabot.is_admin)
-    :param ctx: The context of the message
-    :return: True if admin or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "ColourRole")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
 
 
 class ColourRole(commands.Cog):
@@ -111,7 +99,7 @@ class ColourRole(commands.Cog):
 
     @commands.cooldown(1, 15, commands.BucketType.member)
     @commands.check(is_allowed_to_change_colour)
-    @commands.check(colour_is_enabled)
+    @commands.check(is_enabled)
     @commands.command(name="customColour", aliases=["custom_colour", "customColor", "custom_color"])
     async def custom_colour(self, ctx: commands.Context, colour_str: str):
         """
@@ -125,6 +113,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param colour_str: The colour hex string specified, or "no" in case of cancelling colour
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         colour_str = colour_str.upper()
         if colour_str[0] == "#":
             colour_str = colour_str[1:]
@@ -401,8 +391,8 @@ class ColourRole(commands.Cog):
         guild: discord.Guild = ctx.guild
         return role_name in [role.name for role in guild.roles]
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(colour_is_enabled)
     @commands.command(name="listProtectedRoleColours",
                       aliases=["list_protected_role_colours", "listInvalidCustomColours", "listProtectedRoleColors",
                                "listInvalidCustomColors"])
@@ -414,6 +404,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: Sends a message with the mentions of the roles that are protected in a guild
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         roles = self.get_protected_roles(ctx.guild)
         # logger.debug(roles)
         msg = "Roles whose colour is protected are:\r\n"
@@ -421,8 +413,8 @@ class ColourRole(commands.Cog):
             msg += f"{role.mention}\n"
         await ctx.send(msg[:-1])
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(colour_is_enabled)
     @commands.command(name="listCustomColourAllowedRoles",
                       aliases=["list_custom_colour_allowed_roles"])
     async def list_custom_colour_allowed_roles(self, ctx: commands.Context):
@@ -433,6 +425,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :return: Sends a message with the mentions of the roles that are protected in a guild.
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         roles = self.get_custom_colour_allowed_roles(ctx)
         # logger.debug(roles)
         msg = "Roles allowed to have a custom colour are:\r\n"
@@ -469,8 +463,8 @@ class ColourRole(commands.Cog):
         roles = [guild.get_role(role_id) for role_id in role_ids]
         return roles
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(colour_is_enabled)
     @commands.command(name="addProtectedRoleColour",
                       aliases=["add_protected_role_colour", "addInvalidCustomColourRole", "addInvalidCustomColorRole",
                                "addProtectedRoleColor"])
@@ -482,6 +476,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -490,8 +486,8 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Added {role.mention} to the list of roles whose colours are protected.")
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(colour_is_enabled)
     @commands.command(name="removeProtectedRoleColour",
                       aliases=["remove_protected_role_colour", "removeProtectedRoleColor",
                                "removeInvalidCustomColourRole", "removeInvalidCustomColorRole"])
@@ -503,6 +499,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to remove (ID, name or mention)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -511,8 +509,8 @@ class ColourRole(commands.Cog):
             await ctx.send(f"Removed {role.mention} from the list of roles whose colours are protected.")
             await self.rearrange_custom_colour_role_positions(ctx.guild)
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(colour_is_enabled)
     @commands.command(name="addCustomColourAllowedRole",
                       aliases=["add_custom_colour_allowed_role", "addCustomColorAllowedRole"])
     async def add_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
@@ -523,6 +521,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to add (ID, name or mention)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")
@@ -530,8 +530,8 @@ class ColourRole(commands.Cog):
             self.cr_database_manager.add_colour_change_role_perms(ctx.guild.id, role.id)
             await ctx.send(f"Added {role.mention} to the list of roles allowed to have a custom colour.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(colour_is_enabled)
     @commands.command(name="removeCustomColourAllowedRole",
                       aliases=["remove_custom_colour_allowed_role", "removeCustomColorAllowedRole"])
     async def remove_custom_colour_allowed_role(self, ctx: commands.Context, *, role_str: str):
@@ -542,6 +542,8 @@ class ColourRole(commands.Cog):
         :param ctx: Context of the command
         :param role_str: The role to remove (ID, name or mention)
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         role: discord.Role = await commands.RoleConverter().convert(ctx, role_str)
         if not role:
             await ctx.send("Please specify a single valid role's mention, ID or name.")

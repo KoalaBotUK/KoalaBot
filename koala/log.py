@@ -18,14 +18,14 @@ logging.basicConfig(filename=Path(_LOG_DIR, 'KoalaBot.log'),
 
 
 def _get_default_warn_log():
-    koala_log = logging.FileHandler(filename=Path(_LOG_DIR, "KoalaBotWarn.log"))
+    koala_log = logging.FileHandler(filename=Path(_LOG_DIR, "KoalaBotWarn.log"), encoding="utf-8")
     koala_log.setFormatter(_FORMATTER)
     koala_log.setLevel(logging.WARN)
     return koala_log
 
 
 def _get_file_handler(log_name, log_level):
-    file_handler = logging.FileHandler(filename=Path(_LOG_DIR, log_name))
+    file_handler = logging.FileHandler(filename=Path(_LOG_DIR, log_name), encoding="utf-8")
     file_handler.setFormatter(_FORMATTER)
     file_handler.setLevel(log_level)
     return file_handler

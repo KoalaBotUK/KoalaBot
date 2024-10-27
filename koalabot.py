@@ -18,18 +18,20 @@ __status__ = "Production"  # "Prototype", "Development", or "Production"
 # Built-in/Generic Imports
 import asyncio
 import time
+from typing import Any
 
+import aiohttp_cors
 import discord
 # Libs
 from aiohttp import web
-import aiohttp_cors
 from discord.ext import commands
 
 from koala import env
 # Own modules
-from koala.db import extension_enabled
 from koala.env import BOT_TOKEN, BOT_OWNER, API_PORT
 from koala.errors import KoalaException
+from koala.kb2.adapter import kb2_adapter
+from koala.kb2.models import Guild, map_ext
 from koala.log import logger
 from koala.utils import error_embed
 
@@ -56,17 +58,22 @@ intent.messages = True      # on_message
 intent.message_content = True
 is_dpytest = False
 
+check_error: [int, str] = {}
+
 
 class KoalaBot(commands.Bot):
     """
     The commands.Bot subclass for Koala
     """
-    async def setup_hook(self) -> None:
-        """
-        To perform asynchronous setup after the bot is logged in but before it has connected to the Websocket.
-        """
-        logger.debug("hook setup")
-        await self.tree.sync()
+    def parse_interaction_create(self, data: dict) -> None:
+        self.dispatch('raw_interaction', data)
+
+    async def on_raw_interaction(self, raw_interaction: dict):
+        await kb2_adapter.on_raw_interaction(raw_interaction)
+
+    async def on_error(self, event_method: str, /, *args: Any, **kwargs: Any) -> None:
+        logger.error("Error in %s: %s", event_method, args[0], exc_info=args[0])
+
 
     async def on_command_error(self, ctx, error: Exception):
         if ctx.guild is None:
@@ -100,6 +107,18 @@ class KoalaBot(commands.Bot):
                 description=f"An unexpected error occurred, please contact an administrator Timestamp: {time.time()}"))  # FIXME: better timestamp
             raise error
 
+    async def setup_hook(self) -> None:
+        """
+        To perform asynchronous setup after the bot is logged in but before it has connected to the Websocket.
+        """
+        logger.debug("hook setup started")
+        # await self.tree.sync()
+        # kb2.main.client.sync_commands()
+        # kb2.main.client.sync_commands(guild_ids=[g.id for g in kb2.main.client.guilds])
+
+        self._connection.parsers['INTERACTION_CREATE'] = self.parse_interaction_create
+
+        logger.debug("hook setup complete")
 
 def is_owner(ctx: commands.Context):
     """
@@ -130,8 +149,10 @@ def is_admin(ctx):
         return ctx.author.guild_permissions.administrator or is_dpytest
 
 
-def is_dm_channel(ctx):
-    return isinstance(ctx.channel, discord.channel.DMChannel)
+def is_dm_channel(ctx=None, channel=None):
+    if ctx is not None:
+        channel = ctx.channel
+    return isinstance(channel, discord.channel.DMChannel)
 
 
 def is_guild_channel(ctx):
@@ -169,18 +190,44 @@ async def dm_group_message(members: [discord.Member], message: str):
     return count
 
 
-def check_guild_has_ext(ctx, extension_id):
+def check_guild_has_ext(ctx=None, extension_id=None, channel=None, guild_id=None):
     """
     A check for if a guild has a given koala extension
     :param ctx: A discord context
     :param extension_id: The koala extension ID
     :return: True if has ext
     """
-    if is_dm_channel(ctx):
-        return False
-    if (not extension_enabled(ctx.message.guild.id, extension_id)) and (not is_dpytest):
-        raise PermissionError(PERMISSION_ERROR_TEXT)
-    return True
+    if channel is None and ctx is not None:
+        channel = ctx.channel
+    if guild_id is None and ctx is not None and ctx.guild is not None:
+        guild_id = ctx.guild.id
+
+    if is_dpytest:
+        return None
+    if is_dm_channel(channel=channel):
+        return "DM Channels don't support this command"
+
+    ext = next((e for e in Guild.get(str(guild_id)).extensions
+                if e.id == map_ext[extension_id] and e.enabled),
+               None)
+    if ext is None:
+        return "This guild doesn't have this extension enabled"
+    else:
+        return None
+
+
+def ext_enabled_func(extension_id):
+    return lambda ctx: check_guild_has_ext(ctx, extension_id) is None
+
+
+def is_kb2(ctx, extension_id):
+    if is_dpytest:
+        return
+    ext = next((e for e in Guild.get(str(ctx.guild.id)).extensions
+                if e.id == map_ext[extension_id] and e.enabled),
+               None)
+    if ext.version == 2:
+        raise PermissionError("Please use the new slash commands\n> type `/`")
 
 
 async def run_bot():

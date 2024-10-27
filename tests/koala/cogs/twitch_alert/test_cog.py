@@ -19,7 +19,9 @@ from koala.cogs.twitch_alert import cog
 from koala.cogs.twitch_alert.models import UserInTwitchAlert
 from koala.colours import KOALA_GREEN
 from koala.db import session_manager
-from tests.tests_utils.last_ctx_cog import LastCtxCog
+from koala.kb2.models import Guild, ExtensionAttr
+from koala.models import Guilds
+from tests.koala.tests_utils.last_ctx_cog import LastCtxCog
 
 # Constants
 DB_PATH = "Koala.db"
@@ -44,18 +46,20 @@ async def twitch_cog(bot: discord.ext.commands.Bot):
     return twitch_cog
 
 
-@mock.patch("koalabot.check_guild_has_ext", mock.MagicMock(return_value=True))
+@mock.patch("koalabot.check_guild_has_ext", mock.MagicMock(return_value=None))
 def test_twitch_is_enabled_true(twitch_cog):
-    assert cog.twitch_is_enabled(None)
+    assert cog.is_enabled(None)
 
 
 @mock.patch("koalabot.is_dm_channel", mock.MagicMock(return_value=True))
+@mock.patch("koalabot.is_dpytest", False)
 def test_twitch_is_enabled_dm():
-    assert not cog.twitch_is_enabled(None)
+    assert not cog.is_enabled(None)
 
 
 @mock.patch("koalabot.is_dm_channel", mock.MagicMock(return_value=False))
 @mock.patch("koalabot.is_dpytest", False)
+@mock.patch("koala.kb2.models.Guild.get", mock.MagicMock(return_value=Guild(extensions=[ExtensionAttr(id="TwitchAlert",version=1,enabled=True)])))
 @pytest.mark.asyncio
 async def test_twitch_is_enabled_false(twitch_cog: cog.TwitchAlert):
     last_ctx_cog = LastCtxCog(bot=twitch_cog.bot)
@@ -63,7 +67,7 @@ async def test_twitch_is_enabled_false(twitch_cog: cog.TwitchAlert):
     await dpytest.message(koalabot.COMMAND_PREFIX + "store_ctx", channel=-1)
     ctx: commands.Context = last_ctx_cog.get_last_ctx()
 
-    assert not cog.twitch_is_enabled(ctx)
+    assert not cog.is_enabled(ctx)
 
 
 # @mock.patch("koala.utils.random_id", mock.MagicMock(return_value=7357))

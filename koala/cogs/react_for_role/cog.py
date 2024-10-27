@@ -23,25 +23,17 @@ from koala.db import insert_extension
 from koala.utils import wait_for_message
 # Own modules
 from . import core
+from .core import get_embed_from_message
 from .db import get_rfr_message, get_rfr_message_emoji_roles, get_guild_rfr_required_roles, get_guild_rfr_roles, \
     get_guild_rfr_messages
 from .exception import ReactionException, ReactionErrorCode
 from .log import logger
 
+# Constants
+EXTENSION_ID = "ReactForRole"#
 
-def rfr_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled rfr
-    e.g. @commands.check(rfr_is_enabled)
-    :param ctx: The context of the message
-    :return: True if enabled or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "ReactForRole")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
+# Variables
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 
 class ReactForRole(commands.Cog):
@@ -55,7 +47,7 @@ class ReactForRole(commands.Cog):
 
     @commands.check(koalabot.is_guild_channel)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
+    @commands.check(is_enabled)
     @commands.group(name="rfr", aliases=["reactForRole", "react_for_role"])
     async def react_for_role_group(self, ctx: commands.Context):
         """
@@ -63,6 +55,7 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         return
 
     @staticmethod
@@ -120,8 +113,8 @@ class ReactForRole(commands.Cog):
         else:
             return mime.startswith("image/")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="create", aliases=["createMsg", "createMessage"])
     async def rfr_create_message(self, ctx: commands.Context):
         """
@@ -131,6 +124,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send(
             "Okay, this will create a new react for role message in a channel of your choice."
             "\nNote: The channel you specify will have its permissions edited to make it such that the @ everyone role "
@@ -192,8 +187,8 @@ class ReactForRole(commands.Cog):
                 "k!rfr subcommands to change the message and add functionality as required.")
             await del_msg.delete()
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @react_for_role_group.command(name="delete", aliases=["deleteMsg", "deleteMessage"])
     async def rfr_delete_message(self, ctx: commands.Context):
         """
@@ -202,6 +197,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send(
             "Okay, this will delete an existing react for role message. I'll need some details first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -217,8 +214,8 @@ class ReactForRole(commands.Cog):
     async def edit_group(self, ctx: commands.Context):
         return
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="description", aliases=["desc"])
     async def rfr_edit_description(self, ctx: commands.Context):
         """
@@ -227,6 +224,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send("Okay, this will edit the description of an existing react for role message. I'll need some "
                        "details first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -242,8 +241,8 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="title")
     async def rfr_edit_title(self, ctx: commands.Context):
         """
@@ -252,6 +251,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send("Okay, this will edit the title of an existing react for role message. I'll need some details "
                        "first though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -267,8 +268,8 @@ class ReactForRole(commands.Cog):
         else:
             await ctx.send("Okay, cancelling command.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="thumbnail", aliases=["image", "picture"])
     async def rfr_edit_thumbnail(self, ctx: commands.Context):
         """
@@ -277,6 +278,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send("Okay, this will edit the thumbnail of a react for role message. I'll need some details first "
                        "though.")
         msg, channel = await self.get_rfr_message_from_prompts(ctx)
@@ -305,8 +308,8 @@ class ReactForRole(commands.Cog):
         else:
             raise commands.BadArgument("Couldn't get an image from the message you sent.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="inline")
     async def rfr_edit_inline(self, ctx: commands.Context):
         """
@@ -316,15 +319,17 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send("Okay, this will change how your embeds look. By default fields are not inline. However, you can"
                        " choose to change this for a specific message or all rfr messages on the server. To do this, I'"
                        "ll need some information though. Can you say if you want a specific message edited, or all mess"
                        "ages on the server?")
-        input = await self.prompt_for_input(ctx, "all or specific")
-        if not isinstance(input, str) or not input:
+        _input = await self.prompt_for_input(ctx, "all or specific")
+        if not isinstance(_input, str) or not _input:
             await ctx.send("Okay, cancelling command")
         else:
-            input_comm = input.lstrip().rstrip().lower()
+            input_comm = _input.lstrip().rstrip().lower()
             if input_comm not in ["all", "specific"]:
                 await ctx.send("Okay, cancelling command.")
             elif input_comm == "all":
@@ -366,13 +371,15 @@ class ReactForRole(commands.Cog):
                         await core.use_inline_rfr_specific(msg, yes_no == "Y")
                         await ctx.send("Okay, should be done. Please check.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="fixEmbed")
     async def rfr_fix_embed(self, ctx: commands.Context):
         """
         Cosmetic fix method if the bot ever has a moment and doesn't react with the correct emojis/has duplicates.
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         msg, chnl = await self.get_rfr_message_from_prompts(ctx)
         await core.setup_rfr_reaction_permissions(chnl.guild, chnl, self.bot)
         emb = core.get_embed_from_message(msg)
@@ -410,8 +417,8 @@ class ReactForRole(commands.Cog):
                     await msg.edit(embed=embed)
                     await ctx.send("Tried fixing the message, please check that it's fixed.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="addRoles")
     async def rfr_add_roles_to_msg(self, ctx: commands.Context):
         """
@@ -424,6 +431,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command.
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
 
         await ctx.send(
             "Okay. This will add roles to an already created react for role message. I'll need some details first "
@@ -469,8 +478,8 @@ class ReactForRole(commands.Cog):
         if (duplicateRolesFound): await ctx.send("Found duplicate roles in the message, I'm not accepting it.")
         await ctx.send("Okay, you should see the message with its new emojis now.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @edit_group.command(name="removeRoles")
     async def rfr_remove_roles_from_msg(self, ctx: commands.Context):
         """
@@ -484,6 +493,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command.
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await ctx.send(
             "Okay, this will remove roles from an already existing react for role message. I'll need some details first"
             " though.")
@@ -587,8 +598,8 @@ class ReactForRole(commands.Cog):
                             for x in msg.reactions:
                                 await x.remove(payload.member)
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @react_for_role_group.command("addRequiredRole")
     async def rfr_add_guild_required_role(self, ctx: commands.Context, role: discord.Role):
         """
@@ -599,14 +610,16 @@ class ReactForRole(commands.Cog):
         :param role: Role ID/name/mention
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         try:
             core.add_guild_rfr_required_role(ctx.guild, role.id)
             await ctx.send(f"Okay, I'll add {role.name} to the list of roles required for RFR usage on the server.")
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @react_for_role_group.command("removeRequiredRole")
     async def rfr_remove_guild_required_role(self, ctx: commands.Context, role: discord.Role):
         """
@@ -617,6 +630,8 @@ class ReactForRole(commands.Cog):
         :param role: Role ID/name/mention
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         try:
             core.remove_guild_rfr_required_role(ctx.guild, role.id)
             await ctx.send(
@@ -624,8 +639,8 @@ class ReactForRole(commands.Cog):
         except (commands.CommandError, commands.BadArgument):
             await ctx.send("Found an issue with your provided argument, couldn't get an actual role. Please try again.")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(rfr_is_enabled)
     @react_for_role_group.command("listRequiredRoles")
     async def rfr_list_guild_required_roles(self, ctx: commands.Context):
         """
@@ -634,6 +649,8 @@ class ReactForRole(commands.Cog):
         :param ctx: Context of the command.
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         role_ids = core.rfr_list_guild_required_roles(ctx.guild).role_ids
         msg_str = "You will need one of these roles to react to rfr messages on this server:\n"
         for role_id in role_ids:
@@ -730,7 +747,7 @@ class ReactForRole(commands.Cog):
         message: discord.Message = await channel.fetch_message(message_id)
         if not message:
             raise ReactionException(ReactionErrorCode.UNKNOWN_MESSAGE_REACTION, message_id, guild_id)
-        embed: discord.Embed = self.get_embed_from_message(message)
+        embed: discord.Embed = get_embed_from_message(message)
 
         if emoji_reacted.is_unicode_emoji():  # Unicode Emoji
             rep = emoji.emojize(emoji_reacted.name)

@@ -21,24 +21,10 @@ from .log import logger
 
 
 # Constants
+EXTENSION_ID = "Verify"
 
 # Variables
-
-
-def verify_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled verify
-    e.g. @commands.check(verify_is_enabled)
-    :param ctx: The context of the message
-    :return: True if enabled or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "Verify")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
-
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 class Verification(commands.Cog, name="Verify"):
 
@@ -62,9 +48,9 @@ class Verification(commands.Cog, name="Verify"):
         """
         await core.send_verify_intro_message(member)
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyAdd", aliases=["addVerification"])
-    @commands.check(verify_is_enabled)
     async def enable_verification(self, ctx: commands.Context, suffix: str, role: discord.Role):
         """
         Set up a role and email pair for KoalaBot to verify users with
@@ -73,12 +59,14 @@ class Verification(commands.Cog, name="Verify"):
         :param role: the role to give users with that email verified (e.g. @students)
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await core.add_verify_role(ctx.guild.id, suffix, role.id, self.bot)
         await ctx.send(f"Verification enabled for {role} for emails ending with `{suffix}`")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyRemove", aliases=["removeVerification"])
-    @commands.check(verify_is_enabled)
     async def disable_verification(self, ctx, suffix: str, role: discord.Role):
         """
         Disable an existing verification listener
@@ -87,13 +75,15 @@ class Verification(commands.Cog, name="Verify"):
         :param role: the role paired with the email (e.g. @students)
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         core.remove_verify_role(ctx.guild.id, suffix, role.id)
 
         await ctx.send(f"Emails ending with {suffix} no longer give {role}")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyBlacklist")
-    @commands.check(verify_is_enabled)
     async def blacklist(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
         """
         Blacklist a user from gaining a specified role using a given email
@@ -103,12 +93,14 @@ class Verification(commands.Cog, name="Verify"):
         :param suffix: suffix of email to be blacklisted for user
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await core.blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will no longer receive {role} upon verifying with this email suffix")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyBlacklistRemove")
-    @commands.check(verify_is_enabled)
     async def blacklist_remove(self, ctx, user: discord.Member, role: discord.Role, suffix: str):
         """
         Remove a blacklisted user
@@ -118,18 +110,22 @@ class Verification(commands.Cog, name="Verify"):
         :param suffix: suffix of email to be un-blacklisted for user
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await core.remove_blacklist_member(user.id, ctx.guild.id, role.id, suffix, self.bot)
         await ctx.send(f"{user} will now be able to receive {role} upon verifying with this email suffix")
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
     @commands.command(name="verifyBlacklistList")
-    @commands.check(verify_is_enabled)
     async def blacklist_list(self, ctx):
         """
         List the blacklisted user and role mappings
         :param ctx: context of the discord message
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         embed = discord.Embed(title=f"Current verification blacklist for {ctx.guild.name}")
         blacklist_map = core.grouped_list_blacklist(ctx.guild.id, self.bot)
 
@@ -199,14 +195,16 @@ class Verification(commands.Cog, name="Verify"):
         emails = '\n'.join(core.email_verify_list(user_id))
         await ctx.send(f"This user has registered with:\n{emails}")
 
+    @commands.check(is_enabled)
     @commands.command(name="verifyList", aliases=["checkVerifications"])
-    @commands.check(verify_is_enabled)
     async def check_verifications(self, ctx):
         """
         List the current verification setup for the server
         :param ctx: the context of the discord message
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         embed = discord.Embed(title=f"Current verification setup for {ctx.guild.name}")
         role_dict = core.grouped_list_verify_role(ctx.guild.id, self.bot)
 
@@ -215,9 +213,9 @@ class Verification(commands.Cog, name="Verify"):
 
         await ctx.send(embed=embed)
 
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
     @commands.command(name="reVerify")
-    @commands.check(verify_is_enabled)
     async def re_verify(self, ctx, role: discord.Role):
         """
         Removes a role from all users who have it and marks them as needing to re-verify before giving it back
@@ -225,6 +223,8 @@ class Verification(commands.Cog, name="Verify"):
         :param role: the role to be removed and re-verified (e.g. @students)
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         await core.re_verify_role(ctx.guild.id, role.id, self.bot)
         await ctx.send("That role has now been removed from all users and they will need to "
                        "re-verify the associated email.")

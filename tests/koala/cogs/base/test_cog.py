@@ -45,7 +45,7 @@ async def base_cog(bot: commands.Bot):
     return cog
 
 
-@mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
+@mock.patch("koalabot.COGS_PACKAGE", "tests.koala.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ["greetings_cog"])
 @pytest.mark.asyncio
 async def test_list_koala_ext_disabled(bot, base_cog):
@@ -59,7 +59,7 @@ async def test_list_koala_ext_disabled(bot, base_cog):
     assert dpytest.verify().message().embed(embed=expected_embed)
 
 
-@mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
+@mock.patch("koalabot.COGS_PACKAGE", "tests.koala.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
 @pytest.mark.asyncio
 async def test_enable_koala_ext(bot, base_cog):
@@ -73,7 +73,7 @@ async def test_enable_koala_ext(bot, base_cog):
     assert dpytest.verify().message().embed(embed=expected_embed)
 
 
-@mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
+@mock.patch("koalabot.COGS_PACKAGE", "tests.koala.tests_utils.fake_load_all_cogs")
 @mock.patch("koalabot.ENABLED_COGS", ['greetings_cog'])
 @pytest.mark.asyncio
 async def test_disable_koala_ext(bot, base_cog):
@@ -153,12 +153,6 @@ async def test_ping(base_cog: BaseCog):
 
 
 @pytest.mark.asyncio
-async def test_support():
-    await dpytest.message(koalabot.COMMAND_PREFIX + "support")
-    assert dpytest.verify().message().content("Join our support server for more help! https://discord.gg/5etEjVd")
-
-
-@pytest.mark.asyncio
 async def test_default_clear():
     with mock.patch.object(discord.TextChannel, 'purge') as mock1:
         await dpytest.message(koalabot.COMMAND_PREFIX + "clear")
@@ -199,24 +193,24 @@ async def test_unload_base_cog(base_cog: BaseCog):
         await dpytest.message(koalabot.COMMAND_PREFIX + "unload_cog BaseCog")
 
 
-@mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
+@mock.patch("koalabot.COGS_PACKAGE", "tests.koala.tests_utils.fake_load_all_cogs")
 @pytest.mark.asyncio
 async def test_load_valid_cog(base_cog: BaseCog):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
         await dpytest.message(koalabot.COMMAND_PREFIX + "load_cog Greetings")
-    mock1.assert_called_with(".Greetings", package="tests.tests_utils.fake_load_all_cogs")
+    mock1.assert_called_with(".Greetings", package="tests.koala.tests_utils.fake_load_all_cogs")
 
 
-@mock.patch("koalabot.COGS_PACKAGE", "tests.tests_utils.fake_load_all_cogs")
+@mock.patch("koalabot.COGS_PACKAGE", "tests.koala.tests_utils.fake_load_all_cogs")
 @pytest.mark.asyncio
 async def test_load_and_unload_valid_cog(base_cog: BaseCog):
     with mock.patch.object(discord.ext.commands.bot.Bot, 'load_extension') as mock1:
         await dpytest.message(koalabot.COMMAND_PREFIX + "load_cog Greetings")
-    mock1.assert_called_with(".Greetings", package="tests.tests_utils.fake_load_all_cogs")
+    mock1.assert_called_with(".Greetings", package="tests.koala.tests_utils.fake_load_all_cogs")
 
     with mock.patch.object(discord.ext.commands.bot.Bot, 'unload_extension') as mock1:
         await dpytest.message(koalabot.COMMAND_PREFIX + "unload_cog Greetings")
-    mock1.assert_called_with(".Greetings", package="tests.tests_utils.fake_load_all_cogs")
+    mock1.assert_called_with(".Greetings", package="tests.koala.tests_utils.fake_load_all_cogs")
 
 
 @pytest.mark.asyncio

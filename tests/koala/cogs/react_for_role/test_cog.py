@@ -25,7 +25,7 @@ from koala.cogs.react_for_role import core
 from koala.cogs.react_for_role.db import *
 from koala.colours import KOALA_GREEN
 from tests.log import logger
-from tests.tests_utils import utils as testutils
+from tests.koala.tests_utils import utils as testutils
 from .utils import independent_get_guild_rfr_message, independent_get_guild_rfr_required_role
 
 
@@ -463,10 +463,8 @@ async def test_rfr_edit_thumbnail_bad_attach(attach):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("image_url", [
-    "https://media.discordapp.net/attachments/611574654502699010/756152703801098280/IMG_20200917_150032.jpg",
     "https://images-ext-1.discordapp.net/external/to2H6kvblcjDUm5Smwx4rSqwCPTP-UDFdWp1ToEXJQM/https/cdn.weeb.sh/images/Hk9GpT_Pb.png?width=864&height=660",
-    "https://cdn.weeb.sh/images/Hk9GpT_Pb.png",
-    "https://cdn.discordapp.com/attachments/611574654502699010/828026462552457266/unknown.png"])
+    "https://cdn.weeb.sh/images/Hk9GpT_Pb.png"])
 async def test_rfr_edit_thumbnail_links(image_url):
     config: dpytest.RunnerConfig = dpytest.get_config()
     guild: discord.Guild = config.guilds[0]

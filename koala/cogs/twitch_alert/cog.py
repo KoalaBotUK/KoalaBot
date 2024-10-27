@@ -28,20 +28,9 @@ from .utils import DEFAULT_MESSAGE, TWITCH_USERNAME_REGEX, \
 # Variables
 
 
-def twitch_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled twitch alert
-    e.g. @commands.check(koalabot.is_admin)
-    :param ctx: The context of the message
-    :return: True if admin or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "TwitchAlert")
-    except PermissionError:
-        result = False
+EXTENSION_ID = "TwitchAlert"
 
-    return result
-
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 class TwitchAlert(commands.Cog):
     """
@@ -64,13 +53,14 @@ class TwitchAlert(commands.Cog):
         self.stop_loop = False
 
     @commands.check(koalabot.is_guild_channel)
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     @commands.group(name="twitch", short_doc="Group of commands for Twitch Alert functionality.")
     async def twitch_group(self, ctx: commands.Context):
         """
         Group of commands for Twitch Alert functionality.
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         pass
 
     @twitch_group.command(name="editMsg",
@@ -83,8 +73,8 @@ class TwitchAlert(commands.Cog):
                                 f"""(e.g. Your favourite stream is now live!)
                                 
                                 Example: {CP}twitch editMsg #text-channel \"Your favourite stream is now live!\""""))
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def edit_default_message(self, ctx, channel: discord.TextChannel, *default_live_message):
         """
         Edit the default message put in a Twitch Alert Notification
@@ -94,6 +84,8 @@ class TwitchAlert(commands.Cog):
         leave empty for program default
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         channel_id = channel.id
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -130,8 +122,8 @@ class TwitchAlert(commands.Cog):
                           <channel>: The channel to be modified (e.g. #text-channel)
                           
                           Example: {CP}twitch viewMsg #text-channel""")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def view_default_message(self, ctx, channel: discord.TextChannel):
         """
         Shows the current default message for Twitch Alerts
@@ -140,6 +132,8 @@ class TwitchAlert(commands.Cog):
         leave empty for program default
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         channel_id = channel.id
 
         if not is_channel_in_guild(self.bot, ctx.message.guild.id, channel_id):
@@ -168,8 +162,8 @@ class TwitchAlert(commands.Cog):
                           f"""(e.g. Your favourite streamer is now live!)
                           
                           Example: {CP}twitch add thenuel #text-channel \"Come watch us play games!\"""")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def add_user_to_twitch_alert(self, ctx, twitch_username,
                                        channel: discord.TextChannel, *custom_live_message):
         """
@@ -180,6 +174,8 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this user's alert
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         channel_id = channel.id
         twitch_username = str.lower(twitch_username)
         if not re.search(TWITCH_USERNAME_REGEX, twitch_username):
@@ -223,8 +219,8 @@ class TwitchAlert(commands.Cog):
                           <channel> : The channel to be modified (e.g. #text-channel)
                           
                           Example: {CP}twitch remove thenuel #text-channel""")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def remove_user_from_twitch_alert(self, ctx, twitch_username, channel: discord.TextChannel):
         """
         Removes a user from a Twitch Alert
@@ -233,6 +229,7 @@ class TwitchAlert(commands.Cog):
         :param channel: The discord channel ID of the Twitch Alert
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
 
         channel_id = channel.id
 
@@ -260,8 +257,8 @@ class TwitchAlert(commands.Cog):
                           f"""(e.g. Your favourite streamer is now live!)
                           
                           Example: {CP}twitch addTeam thenuel #text-channel \"Come watch us play games!\"""")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def add_team_to_twitch_alert(self, ctx, team_name, channel: discord.TextChannel, *custom_live_message):
         """
         Add a Twitch team to a Twitch Alert
@@ -271,6 +268,8 @@ class TwitchAlert(commands.Cog):
         :param custom_live_message: the custom live message for this team's alert
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         channel_id = channel.id
         team_name = str.lower(team_name)
 
@@ -314,8 +313,8 @@ class TwitchAlert(commands.Cog):
                           <channel> : The channel to be modified (e.g. #text-channel)
                           
                           Example: {CP}twitch removeTeam thenuel #text-channel""")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def remove_team_from_twitch_alert(self, ctx, team_name, channel: discord.TextChannel):
         """
         Removes a team from a Twitch Alert
@@ -324,6 +323,7 @@ class TwitchAlert(commands.Cog):
         :param channel: The discord channel ID of the Twitch Alert
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
 
         channel_id = channel.id
 
@@ -348,14 +348,16 @@ class TwitchAlert(commands.Cog):
                           <channel> : The discord channel (e.g. #text-channel)
                           
                           Example: {CP}twitch list #text-channel""")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(twitch_is_enabled)
     async def list_twitch_alert(self, ctx: discord.ext.commands.Context, channel: discord.TextChannel):
         """
         Shows all current TwitchAlert users and teams in a channel
         :param ctx:
         :param channel: The discord channel ID of the Twitch Alert
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         if not channel:
             channel = ctx.channel
 

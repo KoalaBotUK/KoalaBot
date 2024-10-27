@@ -3,6 +3,9 @@ All notable changes to KoalaBot will be documented in this file. A lot of these 
 administrators
 
 ## [Unreleased]
+### KB2
+- `/extension` All extension commands have been moved
+- As new commands are moved to KB2, old commands will be blocked
 
 ## [1.0.0] - 11-11-2023
 ### BaseCog

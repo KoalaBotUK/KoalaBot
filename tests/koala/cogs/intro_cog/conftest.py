@@ -16,7 +16,7 @@ from discord.ext import commands
 
 from koala.cogs import IntroCog
 from tests.log import logger
-from tests.tests_utils.last_ctx_cog import LastCtxCog
+from tests.koala.tests_utils.last_ctx_cog import LastCtxCog
 
 
 @pytest_asyncio.fixture(autouse=True)

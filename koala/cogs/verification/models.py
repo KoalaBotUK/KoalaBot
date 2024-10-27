@@ -7,7 +7,7 @@ from koala.models import mapper_registry, DiscordSnowflake
 class VerifiedEmails:
     __tablename__ = 'verified_emails'
     u_id = Column(DiscordSnowflake, primary_key=True)
-    email = Column(VARCHAR(100, collation="utf8_bin"), primary_key=True)
+    email = Column(VARCHAR(255, collation="utf8_bin"), primary_key=True)
 
     def __repr__(self):
         return "<verified_emails(%s, %s)>" % \
@@ -18,7 +18,7 @@ class VerifiedEmails:
 class NonVerifiedEmails:
     __tablename__ = 'non_verified_emails'
     u_id = Column(DiscordSnowflake)
-    email = Column(VARCHAR(100))
+    email = Column(VARCHAR(255))
     token = Column(VARCHAR(8), primary_key=True)
 
     def __repr__(self):

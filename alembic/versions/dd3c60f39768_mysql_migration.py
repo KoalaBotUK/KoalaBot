@@ -220,14 +220,17 @@ def unsafe_upgrade():
                                     Column('default_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci")))
     user_in_twitch_alert = op.create_table('UserInTwitchAlert',
                                            Column('channel_id', DiscordSnowflake,
-                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'), primary_key=True),
+                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE'),
+                                                  primary_key=True),
                                            Column('twitch_username', VARCHAR(25), primary_key=True),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True),
                                            Column('message_id', DiscordSnowflake, nullable=True))
     team_in_twitch_alert = op.create_table('TeamInTwitchAlert',
                                            Column('team_twitch_alert_id', INT,
                                                   autoincrement=True, primary_key=True),
-                                           Column('channel_id', DiscordSnowflake, ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')),
+                                           Column('channel_id', DiscordSnowflake,
+                                                  ForeignKey("TwitchAlerts.channel_id", ondelete='CASCADE')
+                                                  ),
                                            Column('twitch_team_name', VARCHAR(25)),
                                            Column('custom_message', VARCHAR(1000, collation="utf8mb4_unicode_520_ci"), nullable=True))
     user_in_twitch_team = op.create_table('UserInTwitchTeam',
@@ -239,10 +242,10 @@ def unsafe_upgrade():
 
     verified_emails = op.create_table('verified_emails',
                                       Column('u_id', DiscordSnowflake, primary_key=True),
-                                      Column('email', VARCHAR(100, collation="utf8_bin"), primary_key=True))
+                                      Column('email', VARCHAR(255, collation="utf8_bin"), primary_key=True))
     non_verified_emails = op.create_table('non_verified_emails',
                                           Column('u_id', DiscordSnowflake),
-                                          Column('email', VARCHAR(100)),
+                                          Column('email', VARCHAR(255)),
                                           Column('token', VARCHAR(8), primary_key=True))
     roles = op.create_table('roles',
                             Column('s_id', DiscordSnowflake, ForeignKey("Guilds.guild_id", ondelete='CASCADE'), primary_key=True),
@@ -364,8 +367,8 @@ def unsafe_upgrade():
     c.execute("SELECT * FROM to_re_verify")
     op.bulk_insert(to_re_verify, c.fetchall())
 
-    c.execute("SELECT * FROM VerifyBlacklist")
-    op.bulk_insert(verify_blacklist, c.fetchall())
+    # c.execute("SELECT * FROM VerifyBlacklist")
+    # op.bulk_insert(verify_blacklist, c.fetchall())
 
     # voting
     c.execute("SELECT * FROM Votes")

@@ -21,7 +21,7 @@ from discord.ext import commands
 import koalabot
 from koala.utils import __parse_args, format_config_path, wait_for_message
 from tests.log import logger
-from tests.tests_utils.last_ctx_cog import LastCtxCog
+from tests.koala.tests_utils.last_ctx_cog import LastCtxCog
 
 
 # Constants

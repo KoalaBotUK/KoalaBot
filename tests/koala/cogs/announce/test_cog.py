@@ -12,7 +12,7 @@ from discord.ext import commands
 import koalabot
 from koala.cogs import announce
 from tests.log import logger
-from tests.tests_utils.last_ctx_cog import LastCtxCog
+from tests.koala.tests_utils.last_ctx_cog import LastCtxCog
 
 
 @pytest_asyncio.fixture(autouse=True)

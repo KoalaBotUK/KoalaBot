@@ -21,22 +21,9 @@ from .db import TextFilterDBManager
 from .utils import type_exists, build_word_list_embed, build_moderation_channel_embed, \
     create_default_embed, build_moderation_deleted_embed
 
+EXTENSION_ID = "TextFilter"
 
-def text_filter_is_enabled(ctx):
-    """
-    A command used to check if the guild has enabled TextFilter
-    e.g. @commands.check(koalabot.is_admin)
-
-    :param ctx: The context of the message
-    :return: True if admin or test, False otherwise
-    """
-    try:
-        result = koalabot.check_guild_has_ext(ctx, "TextFilter")
-    except PermissionError:
-        result = False
-
-    return result or (str(ctx.author) == koalabot.TEST_USER and koalabot.is_dpytest)
-
+is_enabled = koalabot.ext_enabled_func(EXTENSION_ID)
 
 class TextFilter(commands.Cog, name="TextFilter"):
     """
@@ -49,8 +36,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         self.tf_database_manager = TextFilterDBManager(bot)
 
     @commands.command(name="filter", aliases=["filter_word"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def filter_new_word(self, ctx, word, filter_type="banned", too_many_arguments=None):
         """
         Adds a new word to the filtered text list
@@ -61,6 +48,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
+
         error = """Something has gone wrong, your word may already be filtered or you have entered the 
                 command incorrectly. Try again with: `k!filter [filtered_text] [[risky] or [banned]]`"""
         if too_many_arguments is None and type_exists(filter_type):
@@ -69,9 +58,9 @@ class TextFilter(commands.Cog, name="TextFilter"):
             return
         raise Exception(error)
 
+    @commands.check(is_enabled)
     @commands.command(name="filterRegex", aliases=["filter_regex"])
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def filter_new_regex(self, ctx, regex, filter_type="banned", too_many_arguments=None):
         """
         Adds a new regex to the filtered text list
@@ -82,6 +71,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         error = r"""Something has gone wrong, your regex may be invalid, this regex may already be filtered
                 or you have entered the command incorrectly. Try again with: `k!filterRegex 
                 [filtered_regex] [[risky] or [banned]]`. One example for a regex could be to block emails
@@ -97,8 +87,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="unfilter", aliases=["unfilter_word"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def unfilter_word(self, ctx, word, too_many_arguments=None):
         """
         Remove an existing word/test from the filter list
@@ -108,6 +98,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         error = "Too many arguments, please try again using the following arguments: `k!unfilter [filtered_word]`"
         if too_many_arguments is None:
             await self.unfilter_text(ctx, word)
@@ -116,8 +107,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="filterList", aliases=["check_filtered_words", "checkFilteredWords"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def check_filtered_words(self, ctx):
         """
         Get a list of filtered words on the current guild.
@@ -125,14 +116,15 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param ctx: The discord context
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         all_words_and_types = self.get_list_of_words(ctx)
         await ctx.channel.send(embed=build_word_list_embed(ctx, all_words_and_types[0], all_words_and_types[1],
                                                            all_words_and_types[2]))
 
     @commands.command(name="modChannelAdd", aliases=["setup_mod_channel", "setupModChannel",
                                                      "add_mod_channel", "addModChannel"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def setup_mod_channel(self, ctx, channel_id, too_many_arguments=None):
         """
         Add a mod channel to the current guild
@@ -142,6 +134,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         error = "Channel not found or too many arguments, please try again: `k!setupModChannel [channel_id]`"
         channel = self.bot.get_channel(int(extract_id(channel_id)))
         if channel is not None and too_many_arguments is None:
@@ -151,8 +144,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise (Exception(error))
 
     @commands.command(name="modChannelRemove", aliases=["remove_mod_channel", "deleteModChannel", "removeModChannel"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def remove_mod_channel(self, ctx, channel_id, too_many_arguments=None):
         """
         Remove a mod channel from the guild
@@ -162,6 +155,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         error = """Missing Channel ID or too many arguments remove a mod channel. If you don't know your Channel ID,
                 use `k!listModChannels` to get information on your mod channels."""
         channel = self.bot.get_channel(int(extract_id(channel_id)))
@@ -172,8 +166,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise Exception(error)
 
     @commands.command(name="modChannelList", aliases=["list_mod_channels", "listModChannels"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def list_mod_channels(self, ctx):
         """
         Get a list of filtered mod channels in the guild
@@ -181,12 +175,13 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param ctx: The discord context
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         channels = self.tf_database_manager.get_mod_channel(ctx.guild.id)
         await ctx.channel.send(embed=self.build_channel_list_embed(ctx, channels))
 
     @commands.command(name="ignoreUser")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def ignore_user(self, ctx, user, too_many_arguments=None):
         """
         Add a new ignored user to the database
@@ -196,6 +191,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         error = """Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID,
                 use `k!listModChannels` to get information on your mod channels."""
         ignore_id = ctx.message.mentions[0].id
@@ -207,8 +203,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise (Exception(error))
 
     @commands.command(name="ignoreChannel")
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def ignore_channel(self, ctx, channel: discord.TextChannel, too_many_arguments=None):
         """
         Add a new ignored channel to the database
@@ -218,6 +214,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         error = """Missing Ignore ID or too many arguments remove a mod channel. If you don't know your Channel ID, 
                 use `k!listModChannels` to get information on your mod channels."""
         ignore_id = channel.id
@@ -229,8 +226,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         raise (Exception(error))
 
     @commands.command(name="unignore", aliases=["remove_ignore", "removeIgnore"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def remove_ignore(self, ctx, ignore, too_many_arguments=None):
         """
         Remove an ignore from the guild
@@ -240,6 +237,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param too_many_arguments: Used to check if too many arguments have been given
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         if len(ctx.message.mentions) > 0:
             ignore_id = ctx.message.mentions[0].id
         elif len(ctx.message.channel_mentions) > 0:
@@ -251,8 +249,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
         return
 
     @commands.command(name="ignoreList", aliases=["list_ignored", "listIgnored"])
+    @commands.check(is_enabled)
     @commands.check(koalabot.is_admin)
-    @commands.check(text_filter_is_enabled)
     async def list_ignored(self, ctx):
         """
         Get a list all ignored users/channels
@@ -260,6 +258,7 @@ class TextFilter(commands.Cog, name="TextFilter"):
         :param ctx: The discord context
         :return:
         """
+        koalabot.is_kb2(ctx, EXTENSION_ID)
         ignored = self.tf_database_manager.get_all_ignored(ctx.guild.id)
         await ctx.channel.send(embed=self.build_ignore_list_embed(ctx, ignored))
 
@@ -277,6 +276,8 @@ class TextFilter(commands.Cog, name="TextFilter"):
                 message.content.startswith(koalabot.COMMAND_PREFIX + "unfilter") or \
                 message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "filter") or \
                 message.content.startswith(koalabot.OPT_COMMAND_PREFIX + "unfilter"):
+            return
+        elif koalabot.check_guild_has_ext(None, extension_id=EXTENSION_ID, channel=message.channel, guild_id=message.guild.id):
             return
         elif str(message.channel.type) == 'text' and message.channel.guild is not None:
             censor_list = self.tf_database_manager.get_filtered_text_for_guild(message.channel.guild.id)
